@@ -25,7 +25,7 @@ jobs:
           distribution: temurin
           java-version: 25
 
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: Build, Tests & Lint
         run: ./gradlew build --stacktrace
@@ -59,7 +59,7 @@ jobs:
           distribution: temurin
           java-version: 25
 
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: iOS-Framework (Simulator) linken
         run: ./gradlew :client:composeApp:linkDebugFrameworkIosSimulatorArm64 --stacktrace
