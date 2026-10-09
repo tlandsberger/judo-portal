@@ -44,7 +44,15 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
   Fachliche Autorisierung gehört ins Backend.
 - **API-Verträge** liegen in `shared-api`, keine DTO-Duplikate in Backend oder Client.
   `shared-api` und Android kompilieren auf Java-21-Bytecode, nur das Backend auf Java 25.
-- **Versionen** nur in `gradle/libs.versions.toml`.
-- **Datenbank**-Änderungen nur über Flyway-Migrationen (ab Schritt 4).
+- **API:** Endpunkte unter `/api/**`. Request- und Response-Typen nur aus `shared-api`
+  (`@Serializable`, JSON über kotlinx.serialization, ADR 0006). Controller erhalten den Nutzer als
+  `CurrentUser`-Parameter (`backend.shared`), nie als `Jwt`. Rollen prüfen mit
+  `@PreAuthorize("hasRole('TRAINER')")` o. Ä.
+- **Tests:** Controller per `@WebMvcTest` + `jwt()` (siehe `MeControllerTest`), Ende-zu-Ende mit
+  Testcontainers (siehe `ApiSecurityIT`, braucht Docker oder Podman-Socket).
+- **Versionen** nur in `gradle/libs.versions.toml`. Container-Images in `infra/compose.dev.yaml`
+  und `ApiSecurityIT` synchron halten.
+- **Datenbank**-Änderungen nur über neue Flyway-Migrationen (`backend/src/main/resources/db/migration`,
+  `V<n>__beschreibung.sql`). Bestehende Migrationen nie ändern, Hibernate nur `validate`.
 - **Sprache:** Doku und Kommentare auf Deutsch, Code-Bezeichner auf Englisch.
 - **Neue Architekturentscheidungen** bekommen ein ADR in `docs/adr/`.

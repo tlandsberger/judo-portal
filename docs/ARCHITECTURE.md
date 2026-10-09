@@ -162,6 +162,9 @@ frei, die Kasse zahlt aus. Wer eine Abrechnung eingereicht hat, kann sie nicht s
 - **Keycloak authentifiziert, das Backend autorisiert.** Grobe Rollen kommen aus dem JWT.
   Fachliche Regeln (z. B. „Trainer sieht nur Mitglieder seiner Gruppen“) prüft das Backend
   (Method Security und Domain-Checks).
+- Das Backend akzeptiert nur Tokens mit der Audience `judo-portal-api` und übernimmt nur die
+  fünf Portal-Rollen aus `realm_access.roles`. Fachcode arbeitet mit `CurrentUser` statt mit dem
+  Token, und JSON läuft über kotlinx.serialization wie in den Apps ([ADR 0006](adr/0006-api-vertrag-und-token-pruefung.md)).
 - Clients sind *public clients* mit PKCE und haben kein Client-Secret. Kurzlebige Access-Tokens,
   Refresh-Token-Rotation.
 - Alle Verbindungen laufen über TLS (Caddy). Intern spricht nur Caddy mit der Außenwelt.
@@ -258,7 +261,7 @@ werden vorher geklärt.
 | 1 ✅ | Architektur-Doku | Dieses Dokument und die ADRs |
 | 2 ✅ | Repo-Skelett | Gradle-Monorepo, Version Catalog, leere Module, CI (Build + Lint) |
 | 3 ✅ | Lokale Infrastruktur | `infra/compose.dev.yaml` mit PostgreSQL + Keycloak und Testnutzern |
-| 4 | Backend-Durchstich | Security-Konfiguration, `GET /api/me`, Flyway-Basis, Testcontainers-Test |
+| 4 ✅ | Backend-Durchstich | Security-Konfiguration, `GET /api/me`, Flyway-Basis, Testcontainers-Test |
 | 5 | Client-Durchstich | Login (PKCE) und Anzeige von `/api/me` auf Android, Web und iOS |
 | 6 | Feature: Mitgliederverwaltung | eigene Planung |
 | 7 | Feature: Events | eigene Planung |

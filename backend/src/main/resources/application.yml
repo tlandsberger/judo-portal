@@ -4,3 +4,33 @@ spring:
   threads:
     virtual:
       enabled: true
+
+  # Lokale Defaults passen zu infra/compose.dev.yaml, in anderen Umgebungen per Umgebungsvariable setzen.
+  datasource:
+    url: ${PORTAL_DB_URL:jdbc:postgresql://localhost:5432/portal}
+    username: ${PORTAL_DB_USER:portal}
+    password: ${PORTAL_DB_PASSWORD:portal}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${PORTAL_ISSUER_URI:http://localhost:8081/realms/judo}
+          # Nur Tokens, die ausdrücklich für die Portal-API ausgestellt wurden (ADR 0006).
+          audiences: judo-portal-api
+
+  mvc:
+    problemdetails:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

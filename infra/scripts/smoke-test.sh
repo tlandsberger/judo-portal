@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Smoke-Test der lokalen Dev-Umgebung (infra/compose.dev.yaml):
 #  - wartet, bis Keycloak den Realm "judo" ausliefert
-#  - holt für jeden Testnutzer ein Token und prüft dessen Portal-Rollen
+#  - holt für jeden Testnutzer ein Token und prüft Audience und Portal-Rollen
 #  - prüft, dass die Backend-Datenbank "portal" erreichbar ist
 #
 # Nutzung: infra/scripts/smoke-test.sh   (benötigt curl, jq und podman oder docker)
@@ -42,9 +42,14 @@ for user in "${!EXPECTED[@]}"; do
     # JWT-Payload (Base64URL) dekodieren und nur die Portal-Rollen betrachten.
     payload=$(cut -d. -f2 <<<"${token}" | tr '_-' '/+')
     while (( ${#payload} % 4 )); do payload+="="; done
-    actual=$(base64 -d <<<"${payload}" |
-        jq -r --argjson portal "${PORTAL_ROLES}" \
-            '[.realm_access.roles[] | select(. as $r | $portal | index($r))] | sort | join(",")')
+    claims=$(base64 -d <<<"${payload}")
+    if ! jq -e '.aud | if type == "array" then index("judo-portal-api") else . == "judo-portal-api" end' \
+        <<<"${claims}" >/dev/null; then
+        echo "  FEHLER ${user}@test.local → Audience judo-portal-api fehlt"
+        failed=1
+    fi
+    actual=$(jq <<<"${claims}" -r --argjson portal "${PORTAL_ROLES}" \
+        '[.realm_access.roles[] | select(. as $r | $portal | index($r))] | sort | join(",")')
 
     if [[ "${actual}" == "${EXPECTED[$user]}" ]]; then
         echo "  OK    ${user}@test.local → ${actual}"

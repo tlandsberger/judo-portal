@@ -47,6 +47,9 @@ Passwort jeweils `test`.
 | `judo-portal-app` | Apps (Android, iOS, Web): Authorization Code + PKCE, public |
 | `judo-dev-tools` | **Nur Dev:** Password-Grant für Tokens per `curl` |
 
+Beide Clients schreiben die Audience `judo-portal-api` ins Token. Ohne diesen Eintrag lehnt das
+Backend ein Token ab (ADR 0006).
+
 Ein Token für API-Tests holen:
 
 ```bash
@@ -56,6 +59,10 @@ curl -s http://localhost:8081/realms/judo/protocol/openid-connect/token \
 ```
 
 ## Realm ändern
+
+> **Nach einem Update des Repos mit Realm-Änderungen** (z. B. der Audience-Mapper aus Schritt 4)
+> einmal `down -v` und `up -d` ausführen, sonst arbeitet Keycloak mit dem alten Realm weiter.
+
 
 Die Konfiguration steht in `keycloak/realm-judo-dev.json` und wird nur beim **ersten** Start
 importiert. Wenn der Realm schon existiert, ignoriert Keycloak die Datei. Für Änderungen:

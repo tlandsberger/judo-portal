@@ -11,6 +11,7 @@ geänderte Entscheidung bekommt ein neues ADR, das das alte als „ersetzt“ ma
 | [0003](0003-keycloak-identity.md) | Keycloak als Identity Provider, feste Rollen | angenommen |
 | [0004](0004-modularer-monolith.md) | Modularer Monolith mit Spring Modulith | angenommen |
 | [0005](0005-hosting-container-homecloud.md) | Betrieb per Docker Compose in der Homecloud | angenommen |
+| [0006](0006-api-vertrag-und-token-pruefung.md) | API-Vertrag (kotlinx.serialization) & Token-Prüfung (Audience) | angenommen |
 
 Vorlage für neue ADRs:
 

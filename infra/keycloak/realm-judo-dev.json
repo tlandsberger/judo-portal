@@ -64,7 +64,21 @@
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:3000/*##de.landsberger.judo.portal:/logout"
       },
-      "fullScopeAllowed": false
+      "fullScopeAllowed": false,
+      "protocolMappers": [
+        {
+          "name": "audience-judo-portal-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "judo-portal-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     },
     {
       "clientId": "judo-dev-tools",
@@ -77,7 +91,21 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
-      "fullScopeAllowed": false
+      "fullScopeAllowed": false,
+      "protocolMappers": [
+        {
+          "name": "audience-judo-portal-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "judo-portal-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
