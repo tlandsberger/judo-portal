@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: judo-portal
+  threads:
+    virtual:
+      enabled: true

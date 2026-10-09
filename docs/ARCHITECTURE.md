@@ -60,7 +60,7 @@ festgelegt. Dort steht immer die aktuelle stabile Version, Updates kommen über 
 |---|---|---|
 | Sprache | Kotlin | Backend, gemeinsamer Code und UI |
 | JVM | **Java 25 LTS** | Gradle-Toolchain und Laufzeit-Image (`eclipse-temurin:25-jre`) |
-| Build | Gradle (Kotlin DSL), Monorepo | Version Catalog, Convention Plugins in `build-logic/` |
+| Build | Gradle (Kotlin DSL), Monorepo | Version Catalog `gradle/libs.versions.toml`. Convention Plugins (`build-logic/`) erst, wenn sich Build-Logik spürbar wiederholt |
 | Backend | Spring Boot, Spring Web MVC, Spring Security (OAuth2 Resource Server), Spring Data JPA, Bean Validation, springdoc-openapi | |
 | Modularisierung | Spring Modulith | Modulgrenzen werden per Test erzwungen |
 | Datenbank | PostgreSQL + Flyway | Schema nur über Migrationen |
@@ -70,7 +70,7 @@ festgelegt. Dort steht immer die aktuelle stabile Version, Updates kommen über 
 | Geteilter API-Vertrag | KMP-Modul `shared-api` mit JVM-Target | Backend und Clients nutzen dieselben DTOs |
 | Dokumente/Mail | OpenPDF (o. ä.) für Abrechnungsbelege, SMTP für Mails | Push-Benachrichtigungen kommen später |
 | Tests | JUnit 5, Testcontainers (PostgreSQL, Keycloak), Spring Modulith Tests, kotlin.test | |
-| Qualität | ktlint, detekt, CodeQL, Dependabot | |
+| Qualität | ktlint (über Spotless), Dependabot, später CodeQL | detekt folgt, sobald detekt 2 stabil ist (detekt 1.x unterstützt Kotlin 2.4 nicht) |
 | CI/CD | GitHub Actions, Images in GHCR | iOS-Builds auf macOS-Runnern, Store-Veröffentlichung später |
 | Betrieb | Docker Compose | Caddy, Backend, Keycloak, PostgreSQL, Backup |
 
@@ -94,7 +94,7 @@ des Übungsleiters, ohne dass `events` von `billing` weiß.
 Paketstruktur je Modul (Beispiel):
 
 ```
-de.<verein>.portal.events
+de.landsberger.judo.portal.backend.events
 ├── EventsApi.kt            ← öffentliche Schnittstelle des Moduls
 ├── TrainingHeld.kt         ← veröffentlichtes Domain-Event
 ├── internal/
@@ -109,9 +109,10 @@ de.<verein>.portal.events
 flowchart TB
     subgraph composeApp["client/composeApp"]
         UI[Compose-MP-Screens<br/>Navigation, Theme]
-        EA[androidMain: MainActivity]
         EW[wasmJsMain: main]
+        EI[iosMain: MainViewController]
     end
+    EA["client/androidApp<br/>MainActivity (AGP-9-App-Modul)"]
     iOS["client/iosApp<br/>Xcode-Hülle (SwiftUI → ComposeUIViewController)"]
     subgraph shared["client/shared"]
         VM[ViewModels]
@@ -125,7 +126,7 @@ flowchart TB
     API --> AUTH
     EA --> UI
     EW --> UI
-    iOS --> UI
+    iOS --> EI --> UI
 ```
 
 - Die **UI wird einmal** in Compose Multiplatform geschrieben und läuft auf Android, iOS und
@@ -215,9 +216,9 @@ judo-portal/
 ├── shared-api/            KMP: DTOs, Enums, Validierung (jvm, android, ios, wasmJs)
 ├── client/
 │   ├── shared/            KMP: API-Client, Auth, Repositories, ViewModels
-│   ├── composeApp/        Compose-MP-UI, Einstiegspunkte Android & Web
-│   └── iosApp/            Xcode-Projekt (Hülle für iOS)
-├── build-logic/           Gradle Convention Plugins
+│   ├── composeApp/        Compose-MP-UI (Android-Library, iOS-Framework, Web-App)
+│   ├── androidApp/        Android-App-Modul (MainActivity, Manifest, App-Name)
+│   └── iosApp/            Xcode-Projekt (Hülle für iOS, folgt in Schritt 5)
 ├── gradle/libs.versions.toml
 ├── infra/
 │   ├── docker-compose.dev.yml
@@ -230,6 +231,21 @@ judo-portal/
 └── CLAUDE.md              Build-/Test-Befehle und Konventionen
 ```
 
+### Packages & Namen
+
+| Modul | Basis-Package |
+|---|---|
+| `backend` | `de.landsberger.judo.portal.backend` (Modulith-Module als direkte Unterpakete) |
+| `shared-api` | `de.landsberger.judo.portal.api` |
+| `client/shared` | `de.landsberger.judo.portal.client` |
+| `client/composeApp` | `de.landsberger.judo.portal.ui` |
+| `client/androidApp` | `de.landsberger.judo.portal` (= `applicationId`) |
+
+App-Name auf allen Plattformen: **WTSV Judo**.
+
+Die Android-Clients nutzen das JVM-Target von `shared-api`. Deshalb kompilieren `shared-api` und
+die Android-Teile auf Java-21-Bytecode, das Backend auf Java 25.
+
 ## 9. Roadmap
 
 Wir gehen in kleinen Schritten vor. Jeder Schritt bekommt einen eigenen Plan, die Rückfragen
@@ -237,8 +253,8 @@ werden vorher geklärt.
 
 | # | Schritt | Ergebnis |
 |---|---|---|
-| 1 | Architektur-Doku | Dieses Dokument und die ADRs |
-| 2 | Repo-Skelett | Gradle-Monorepo, Version Catalog, leere Module, CI (Build + Lint) |
+| 1 ✅ | Architektur-Doku | Dieses Dokument und die ADRs |
+| 2 ✅ | Repo-Skelett | Gradle-Monorepo, Version Catalog, leere Module, CI (Build + Lint) |
 | 3 | Lokale Infrastruktur | `docker-compose.dev.yml` mit PostgreSQL + Keycloak und Testnutzern |
 | 4 | Backend-Durchstich | Security-Konfiguration, `GET /api/me`, Flyway-Basis, Testcontainers-Test |
 | 5 | Client-Durchstich | Login (PKCE) und Anzeige von `/api/me` auf Android, Web und iOS |
