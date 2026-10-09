@@ -9,7 +9,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         // Muss sich vom Namespace der Android-App unterscheiden.
         namespace = "de.landsberger.judo.portal.ui"
         compileSdk =

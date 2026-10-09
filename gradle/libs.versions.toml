@@ -15,8 +15,8 @@ spotless = "8.10.4"
 ktlint = "1.8.0"
 
 # Android
-android-compileSdk = "36"
-android-targetSdk = "36"
+android-compileSdk = "37"
+android-targetSdk = "37"
 android-minSdk = "26"
 
 [libraries]

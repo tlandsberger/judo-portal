@@ -8,7 +8,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "de.landsberger.judo.portal.client"
         compileSdk =
             libs.versions.android.compileSdk
