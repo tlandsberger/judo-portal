@@ -23,10 +23,11 @@ Details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), Entscheidungen in [`d
 
 ## Entwickeln
 
-Voraussetzungen: JDK 25 (Gradle lädt es bei Bedarf automatisch), Android SDK für die
-Android-App, macOS + Xcode für iOS.
+Voraussetzungen: JDK 25 (Gradle lädt es bei Bedarf automatisch), Podman (oder Docker) für
+Datenbank und Keycloak, Android SDK für die Android-App, macOS + Xcode für iOS.
 
 ```bash
+podman compose -f infra/compose.dev.yaml up -d       # Postgres + Keycloak starten (infra/README.md)
 ./gradlew build                                      # alles bauen, testen, Code-Stil prüfen
 ./gradlew spotlessApply                              # Code formatieren
 ./gradlew :backend:bootRun                           # Backend starten (Port 8080)
@@ -36,5 +37,6 @@ Android-App, macOS + Xcode für iOS.
 
 ## Status
 
-Schritt 2 von 9: Das Repo-Skelett steht (Module, Build, CI). Fachliche Funktionen gibt es noch
+Schritt 3 von 9: Repo-Skelett (Module, Build, CI) und lokale Infrastruktur (PostgreSQL, Keycloak
+mit Testnutzern) stehen. Fachliche Funktionen gibt es noch
 keine. Die Roadmap steht in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#9-roadmap).

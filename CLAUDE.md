@@ -15,6 +15,16 @@ Architektur: `docs/ARCHITECTURE.md`, Entscheidungen: `docs/adr/`.
 ./gradlew :client:composeApp:linkDebugFrameworkIosSimulatorArm64   # nur macOS
 ```
 
+Lokale Infrastruktur (Postgres :5432, Keycloak :8081, Testnutzer `<rolle>@test.local` / `test`):
+
+```bash
+podman compose -f infra/compose.dev.yaml up -d   # bzw. docker compose
+infra/scripts/smoke-test.sh                      # Tokens + Rollen aller Testnutzer prüfen
+```
+
+Realm-Änderungen nur in `infra/keycloak/realm-judo-dev.json` (Import nur beim ersten Start → `down -v`).
+Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/README.md`).
+
 ## Module
 
 | Modul | Package | Zweck |

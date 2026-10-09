@@ -45,6 +45,29 @@ jobs:
           path: client/composeApp/build/dist/wasmJs/productionExecutable/
           if-no-files-found: error
 
+  infra:
+    name: Dev-Infrastruktur (Postgres + Keycloak)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Container starten
+        run: docker compose -f infra/compose.dev.yaml up -d --wait --wait-timeout 300
+
+      - name: Smoke-Test
+        run: infra/scripts/smoke-test.sh
+        env:
+          CONTAINER_TOOL: docker
+
+      - name: Container-Logs
+        if: failure()
+        run: docker compose -f infra/compose.dev.yaml logs
+
+      - name: Aufräumen
+        if: always()
+        run: docker compose -f infra/compose.dev.yaml down -v
+
   ios:
     name: iOS-Framework kompilieren
     # macOS-Minuten zählen in privaten Repos 10-fach, daher nur manuell.

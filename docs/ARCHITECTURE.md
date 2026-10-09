@@ -205,7 +205,7 @@ Alle Komponenten laufen als OCI-Container per Docker Compose:
 
 | Umgebung | Zweck |
 |---|---|
-| `dev` | Lokal: `infra/docker-compose.dev.yml` (PostgreSQL + Keycloak mit Testnutzern je Rolle). Backend und Clients laufen aus der IDE bzw. per Gradle |
+| `dev` | Lokal mit Podman oder Docker: `infra/compose.dev.yaml` (PostgreSQL auf 5432, Keycloak auf 8081 mit Realm `judo` und Testnutzern je Rolle, siehe [`infra/README.md`](../infra/README.md)). Backend und Clients laufen aus der IDE bzw. per Gradle |
 | `prod` | Homecloud |
 
 ## 8. Repository-Struktur
@@ -221,10 +221,12 @@ judo-portal/
 │   └── iosApp/            Xcode-Projekt (Hülle für iOS, folgt in Schritt 5)
 ├── gradle/libs.versions.toml
 ├── infra/
-│   ├── docker-compose.dev.yml
-│   ├── docker-compose.prod.yml
-│   ├── Caddyfile
-│   └── keycloak/realm-judo.json
+│   ├── compose.dev.yaml   lokale Dev-Umgebung (Postgres + Keycloak)
+│   ├── compose.prod.yaml  Produktion (Schritt 9)
+│   ├── Caddyfile          (Schritt 9)
+│   ├── postgres/init/     Anlage der DBs portal + keycloak
+│   ├── keycloak/          realm-judo-dev.json (Testnutzer), später realm-judo.json (Prod)
+│   └── scripts/           smoke-test.sh
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   └── adr/
@@ -255,7 +257,7 @@ werden vorher geklärt.
 |---|---|---|
 | 1 ✅ | Architektur-Doku | Dieses Dokument und die ADRs |
 | 2 ✅ | Repo-Skelett | Gradle-Monorepo, Version Catalog, leere Module, CI (Build + Lint) |
-| 3 | Lokale Infrastruktur | `docker-compose.dev.yml` mit PostgreSQL + Keycloak und Testnutzern |
+| 3 ✅ | Lokale Infrastruktur | `infra/compose.dev.yaml` mit PostgreSQL + Keycloak und Testnutzern |
 | 4 | Backend-Durchstich | Security-Konfiguration, `GET /api/me`, Flyway-Basis, Testcontainers-Test |
 | 5 | Client-Durchstich | Login (PKCE) und Anzeige von `/api/me` auf Android, Web und iOS |
 | 6 | Feature: Mitgliederverwaltung | eigene Planung |

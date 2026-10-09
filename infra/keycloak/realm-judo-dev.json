@@ -1,0 +1,200 @@
+{
+  "realm": "judo",
+  "displayName": "WTSV Judo",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "bruteForceProtected": true,
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "de"
+  ],
+  "defaultLocale": "de",
+  "accessTokenLifespan": 300,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "roles": {
+    "realm": [
+      {
+        "name": "member",
+        "description": "Mitglied: eigene Daten, Events, An-/Abmeldungen"
+      },
+      {
+        "name": "trainer",
+        "description": "Übungsleiter: eigene Gruppen, Anwesenheit, eigene Abrechnungen"
+      },
+      {
+        "name": "board",
+        "description": "Vorstand: Mitgliedsdaten, vereinsweite Events, fachliche Freigabe von Abrechnungen"
+      },
+      {
+        "name": "treasurer",
+        "description": "Kasse: Bankdaten, Auszahlung/Export freigegebener Abrechnungen"
+      },
+      {
+        "name": "admin",
+        "description": "Technische Administration: Konten, Rollen, Systemeinstellungen"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "judo-portal-app",
+      "name": "WTSV Judo App (Android, iOS, Web)",
+      "description": "Public Client für alle Apps: Authorization Code + PKCE.",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "de.landsberger.judo.portal:/oauth2redirect"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*##de.landsberger.judo.portal:/logout"
+      },
+      "fullScopeAllowed": false
+    },
+    {
+      "clientId": "judo-dev-tools",
+      "name": "Dev-Tools (nur lokal)",
+      "description": "NUR DEV: Password Grant für curl, Smoke-Tests und API-Tests. Nie in Produktion.",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": false
+    }
+  ],
+  "users": [
+    {
+      "username": "mitglied@test.local",
+      "email": "mitglied@test.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Mia",
+      "lastName": "Mitglied",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "member"
+      ]
+    },
+    {
+      "username": "trainer@test.local",
+      "email": "trainer@test.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Tom",
+      "lastName": "Trainer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "member",
+        "trainer"
+      ]
+    },
+    {
+      "username": "vorstand@test.local",
+      "email": "vorstand@test.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Vera",
+      "lastName": "Vorstand",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "member",
+        "board"
+      ]
+    },
+    {
+      "username": "kasse@test.local",
+      "email": "kasse@test.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Karl",
+      "lastName": "Kasse",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "member",
+        "treasurer"
+      ]
+    },
+    {
+      "username": "admin@test.local",
+      "email": "admin@test.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Ada",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin"
+      ]
+    }
+  ],
+  "scopeMappings": [
+    {
+      "client": "judo-portal-app",
+      "roles": [
+        "member",
+        "trainer",
+        "board",
+        "treasurer",
+        "admin"
+      ]
+    },
+    {
+      "client": "judo-dev-tools",
+      "roles": [
+        "member",
+        "trainer",
+        "board",
+        "treasurer",
+        "admin"
+      ]
+    }
+  ]
+}
