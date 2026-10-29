@@ -1,8 +1,11 @@
 package de.landsberger.judo.portal.backend
 
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.web.client.RestClient
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.postgresql.PostgreSQLContainer
@@ -46,4 +49,32 @@ abstract class IntegrationTestBase {
             registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri") { "$keycloakUrl/realms/judo" }
         }
     }
+
+    /** Access-Token per Password-Grant, z. B. für `vorstand@test.local` (Passwort `test`, Admin im Master-Realm: `admin`). */
+    protected fun passwordToken(
+        clientId: String,
+        username: String,
+        realm: String = "judo",
+    ): String {
+        val form =
+            LinkedMultiValueMap<String, String>().apply {
+                add("grant_type", "password")
+                add("client_id", clientId)
+                add("username", username)
+                add("password", if (realm == "master") "admin" else "test")
+            }
+        val response =
+            RestClient
+                .create()
+                .post()
+                .uri("$keycloakUrl/realms/$realm/protocol/openid-connect/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(form)
+                .retrieve()
+                .body(Map::class.java)
+        return response?.get("access_token") as String
+    }
+
+    /** Token eines Dev-Testnutzers für die Portal-API. */
+    protected fun tokenFor(username: String): String = passwordToken("judo-dev-tools", username)
 }

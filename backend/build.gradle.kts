@@ -13,6 +13,13 @@ kotlin {
     }
 }
 
+// JPA-Entities offen lassen, damit Hibernate Proxies für Lazy Loading bilden kann.
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
+
 dependencyManagement {
     imports {
         mavenBom(
@@ -29,6 +36,7 @@ dependencies {
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.flyway)
     implementation(libs.spring.boot.starter.actuator)
+    implementation(libs.spring.boot.starter.validation)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.spring.modulith.starter.core)
     implementation(libs.jackson.module.kotlin)

@@ -28,6 +28,133 @@
         },
         "tags" : [ "me-controller" ]
       }
+    },
+    "/api/members" : {
+      "get" : {
+        "operationId" : "list",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MemberResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      },
+      "post" : {
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MemberRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MemberResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      }
+    },
+    "/api/members/{id}" : {
+      "delete" : {
+        "operationId" : "delete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      },
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MemberResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      },
+      "put" : {
+        "operationId" : "update",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MemberRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MemberResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      }
     }
   },
   "components" : {
@@ -54,6 +181,138 @@
           }
         },
         "required" : [ "displayName", "roles", "subject" ]
+      },
+      "MemberRequest" : {
+        "type" : "object",
+        "properties" : {
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "city" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "email" : {
+            "type" : [ "string", "null" ],
+            "format" : "email",
+            "maxLength" : 254,
+            "minLength" : 0
+          },
+          "entryDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "exitDate" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "firstName" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "gender" : {
+            "type" : "string",
+            "enum" : [ "female", "male", "diverse" ]
+          },
+          "lastName" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "memberNumber" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "membershipType" : {
+            "type" : "string",
+            "enum" : [ "active", "passive" ]
+          },
+          "phone" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "postalCode" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 10,
+            "minLength" : 0
+          },
+          "street" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "version" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        },
+        "required" : [ "birthDate", "entryDate", "firstName", "gender", "lastName", "membershipType" ]
+      },
+      "MemberResponse" : {
+        "type" : "object",
+        "properties" : {
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "city" : {
+            "type" : [ "string", "null" ]
+          },
+          "email" : {
+            "type" : [ "string", "null" ]
+          },
+          "entryDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "exitDate" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "gender" : {
+            "type" : "string",
+            "enum" : [ "female", "male", "diverse" ]
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "left" : {
+            "type" : "boolean"
+          },
+          "memberNumber" : {
+            "type" : [ "string", "null" ]
+          },
+          "membershipType" : {
+            "type" : "string",
+            "enum" : [ "active", "passive" ]
+          },
+          "phone" : {
+            "type" : [ "string", "null" ]
+          },
+          "postalCode" : {
+            "type" : [ "string", "null" ]
+          },
+          "street" : {
+            "type" : [ "string", "null" ]
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "birthDate", "entryDate", "firstName", "gender", "id", "lastName", "left", "membershipType", "version" ]
       }
     },
     "securitySchemes" : {

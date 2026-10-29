@@ -1,10 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
-import { HttpErrorResponse, httpResource } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MatButton } from '@angular/material/button';
 import { MatChip, MatChipSet } from '@angular/material/chips';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { MeResponse } from '../../api/api-types';
+import { CurrentUser } from '../../auth/current-user';
 import { roleLabel } from '../../shared/role-labels';
 
 /** Startseite nach dem Login: zeigt den angemeldeten Benutzer aus GET /api/me. */
@@ -63,7 +63,7 @@ import { roleLabel } from '../../shared/role-labels';
 export class HomePage {
   private readonly oidc = inject(OidcSecurityService);
 
-  protected readonly me = httpResource<MeResponse>(() => '/api/me');
+  protected readonly me = inject(CurrentUser).me;
   protected readonly sessionExpired = computed(() => {
     const error = this.me.error();
     return error instanceof HttpErrorResponse && error.status === 401;

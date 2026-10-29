@@ -1,0 +1,80 @@
+<div class="header">
+  <h1>Mitglieder</h1>
+  @if (permissions().writeMembers) {
+    <a matButton="filled" routerLink="/members/new">Mitglied anlegen</a>
+  }
+</div>
+
+<div class="filters">
+  <mat-form-field class="search" subscriptSizing="dynamic">
+    <mat-label>Suchen (Name, Nummer, Ort)</mat-label>
+    <input matInput type="search" [value]="query()" (input)="search($event)" />
+  </mat-form-field>
+  <mat-button-toggle-group
+    aria-label="Status"
+    [value]="status()"
+    (change)="status.set($event.value)"
+    hideSingleSelectionIndicator
+  >
+    <mat-button-toggle value="current">Aktuell</mat-button-toggle>
+    <mat-button-toggle value="left">Ausgetreten</mat-button-toggle>
+    <mat-button-toggle value="all">Alle</mat-button-toggle>
+  </mat-button-toggle-group>
+</div>
+
+@if (members.isLoading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Mitglieder werden geladen" />
+} @else if (members.error()) {
+  <section class="message" role="alert">
+    <p>Die Mitglieder konnten nicht geladen werden.</p>
+    <button matButton="outlined" type="button" (click)="members.reload()">Erneut versuchen</button>
+  </section>
+} @else {
+  <p class="count" aria-live="polite">
+    {{ rows().length }} {{ rows().length === 1 ? 'Mitglied' : 'Mitglieder' }}
+  </p>
+  <div class="table">
+    <table
+      mat-table
+      [dataSource]="rows()"
+      matSort
+      [matSortActive]="sort().active"
+      [matSortDirection]="sort().direction"
+      (matSortChange)="sort.set($event)"
+    >
+      <ng-container matColumnDef="memberNumber">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="wide">Nr.</th>
+        <td mat-cell *matCellDef="let m" class="wide">{{ m.memberNumber }}</td>
+      </ng-container>
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+        <td mat-cell *matCellDef="let m">
+          <a [routerLink]="['/members', m.id]" (click)="$event.stopPropagation()"
+            >{{ m.lastName }}, {{ m.firstName }}</a
+          >
+          @if (m.left) {
+            <span class="badge">ausgetreten</span>
+          }
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="birthDate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="wide">Geboren</th>
+        <td mat-cell *matCellDef="let m" class="wide">{{ m.birthDate | date: 'dd.MM.yyyy' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="city">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="wide">Ort</th>
+        <td mat-cell *matCellDef="let m" class="wide">{{ m.city }}</td>
+      </ng-container>
+      <ng-container matColumnDef="membershipType">
+        <th mat-header-cell *matHeaderCellDef>Art</th>
+        <td mat-cell *matCellDef="let m">{{ membershipLabel(m) }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let m; columns: columns" (click)="open(m)"></tr>
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell empty" [attr.colspan]="columns.length">Keine Mitglieder gefunden.</td>
+      </tr>
+    </table>
+  </div>
+}

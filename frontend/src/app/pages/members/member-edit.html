@@ -1,0 +1,125 @@
+<a matButton routerLink="/members" class="back">Zur Mitgliederliste</a>
+
+@if (member.isLoading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Mitglied wird geladen" />
+} @else if (notFound()) {
+  <p role="alert">Dieses Mitglied gibt es nicht (mehr).</p>
+} @else if (member.error()) {
+  <section class="message" role="alert">
+    <p>Das Mitglied konnte nicht geladen werden.</p>
+    <button matButton="outlined" type="button" (click)="reload()">Erneut versuchen</button>
+  </section>
+} @else {
+  <h1>{{ title() }}</h1>
+  @if (!permissions().writeMembers) {
+    <p class="readonly-hint">Du kannst die Daten ansehen, aber nicht ändern.</p>
+  }
+  <form novalidate (submit)="$event.preventDefault(); save()">
+    <fieldset>
+      <legend>Person</legend>
+      <mat-form-field>
+        <mat-label>Vorname</mat-label>
+        <input matInput type="text" [formField]="form.firstName" autocomplete="given-name" />
+        <mat-error>{{ errorText(form.firstName) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Nachname</mat-label>
+        <input matInput type="text" [formField]="form.lastName" autocomplete="family-name" />
+        <mat-error>{{ errorText(form.lastName) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Geburtsdatum</mat-label>
+        <input matInput type="date" [formField]="form.birthDate" autocomplete="bday" />
+        <mat-error>{{ errorText(form.birthDate) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Geschlecht</mat-label>
+        <mat-select [formField]="form.gender">
+          @for (option of genders; track option[0]) {
+            <mat-option [value]="option[0]">{{ option[1] }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ errorText(form.gender) }}</mat-error>
+      </mat-form-field>
+    </fieldset>
+
+    <fieldset>
+      <legend>Kontakt</legend>
+      <mat-form-field class="full">
+        <mat-label>Straße und Hausnummer</mat-label>
+        <input matInput type="text" [formField]="form.street" autocomplete="street-address" />
+        <mat-error>{{ errorText(form.street) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>PLZ</mat-label>
+        <input matInput type="text" [formField]="form.postalCode" autocomplete="postal-code" />
+        <mat-error>{{ errorText(form.postalCode) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Ort</mat-label>
+        <input matInput type="text" [formField]="form.city" autocomplete="address-level2" />
+        <mat-error>{{ errorText(form.city) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Telefon</mat-label>
+        <input matInput type="tel" [formField]="form.phone" autocomplete="tel" />
+        <mat-error>{{ errorText(form.phone) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>E-Mail</mat-label>
+        <input matInput type="email" [formField]="form.email" autocomplete="email" />
+        <mat-error>{{ errorText(form.email) }}</mat-error>
+      </mat-form-field>
+    </fieldset>
+
+    <fieldset>
+      <legend>Mitgliedschaft</legend>
+      <mat-form-field>
+        <mat-label>Mitgliedsnummer</mat-label>
+        <input matInput type="text" [formField]="form.memberNumber" />
+        <mat-hint>Optional, z. B. aus der bisherigen Liste</mat-hint>
+        <mat-error>{{ errorText(form.memberNumber) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Art</mat-label>
+        <mat-select [formField]="form.membershipType">
+          @for (option of membershipTypes; track option[0]) {
+            <mat-option [value]="option[0]">{{ option[1] }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ errorText(form.membershipType) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Eintritt</mat-label>
+        <input matInput type="date" [formField]="form.entryDate" />
+        <mat-error>{{ errorText(form.entryDate) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Austritt</mat-label>
+        <input matInput type="date" [formField]="form.exitDate" />
+        <mat-hint>Leer lassen, solange die Mitgliedschaft läuft</mat-hint>
+        <mat-error>{{ errorText(form.exitDate) }}</mat-error>
+      </mat-form-field>
+    </fieldset>
+
+    @if (saveError(); as message) {
+      <section class="message" role="alert">
+        <p>{{ message }}</p>
+        @if (conflict()) {
+          <button matButton="outlined" type="button" (click)="reload()">Neu laden</button>
+        }
+      </section>
+    }
+
+    @if (permissions().writeMembers) {
+      <div class="actions">
+        <button matButton="filled" type="submit" [disabled]="saving()">Speichern</button>
+        <a matButton routerLink="/members">Abbrechen</a>
+        @if (!isNew() && permissions().deleteMembers) {
+          <span class="spacer"></span>
+          <button matButton type="button" class="danger" (click)="remove()">Löschen</button>
+        }
+      </div>
+    }
+  </form>
+}

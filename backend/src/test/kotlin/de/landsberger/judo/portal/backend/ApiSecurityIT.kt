@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
-import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.toEntity
 import kotlin.test.assertEquals
@@ -60,29 +59,6 @@ class ApiSecurityIT(
             .retrieve()
             .onStatus(HttpStatusCode::isError) { _, _ -> }
             .toEntity<String>()
-
-    private fun passwordToken(
-        clientId: String,
-        username: String,
-        realm: String = "judo",
-    ): String {
-        val form =
-            LinkedMultiValueMap<String, String>().apply {
-                add("grant_type", "password")
-                add("client_id", clientId)
-                add("username", username)
-                add("password", if (realm == "master") "admin" else "test")
-            }
-        val response =
-            http
-                .post()
-                .uri("$keycloakUrl/realms/$realm/protocol/openid-connect/token")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(Map::class.java)
-        return response?.get("access_token") as String
-    }
 
     /** Legt per Admin-API einen Client ohne Audience-Mapper an (Token ist gültig, aber nicht für die API). */
     private fun createClientWithoutAudience(clientId: String) {
