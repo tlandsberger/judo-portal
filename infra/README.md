@@ -44,7 +44,7 @@ Passwort jeweils `test`.
 
 | Client | Zweck |
 |---|---|
-| `judo-portal-app` | Apps (Android, iOS, Web): Authorization Code + PKCE, public |
+| `judo-portal-app` | PWA (Dev: `http://localhost:4200`): Authorization Code + PKCE, public |
 | `judo-dev-tools` | **Nur Dev:** Password-Grant für Tokens per `curl` |
 
 Beide Clients schreiben die Audience `judo-portal-api` ins Token. Ohne diesen Eintrag lehnt das

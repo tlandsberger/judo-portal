@@ -2,13 +2,6 @@ rootProject.name = "judo-portal"
 
 pluginManagement {
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
         mavenCentral()
         gradlePluginPortal()
     }
@@ -21,19 +14,8 @@ plugins {
 
 dependencyResolutionManagement {
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
         mavenCentral()
     }
 }
 
 include(":backend")
-include(":shared-api")
-include(":client:shared")
-include(":client:composeApp")
-include(":client:androidApp")

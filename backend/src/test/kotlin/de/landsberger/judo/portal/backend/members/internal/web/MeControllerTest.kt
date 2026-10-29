@@ -29,7 +29,7 @@ class MeControllerTest(
     }
 
     @Test
-    fun `returns the current user with portal roles in kotlinx format`() {
+    fun `returns the current user with portal roles`() {
         mockMvc
             .get("/api/me") {
                 with(
@@ -44,7 +44,7 @@ class MeControllerTest(
             }.andExpect {
                 status { isOk() }
                 content {
-                    // Rollen als Keycloak-Namen (@SerialName) beweisen, dass kotlinx.serialization schreibt.
+                    // Rollen als Keycloak-Namen (@JsonValue), Keycloak-interne Rollen herausgefiltert.
                     json(
                         """
                         {"subject":"user-42","displayName":"Tom Trainer","email":"trainer@test.local",
@@ -63,8 +63,12 @@ class MeControllerTest(
                 with(jwt().jwt { it.subject("user-7").claim("preferred_username", "kasse@test.local") })
             }.andExpect {
                 status { isOk() }
-                // kotlinx.serialization lässt Felder mit Default-Wert (email = null, roles = []) weg (ADR 0006).
-                content { json("""{"subject":"user-7","displayName":"kasse@test.local"}""", strict = true) }
+                content {
+                    json(
+                        """{"subject":"user-7","displayName":"kasse@test.local","email":null,"roles":[]}""",
+                        strict = true,
+                    )
+                }
             }
     }
 }

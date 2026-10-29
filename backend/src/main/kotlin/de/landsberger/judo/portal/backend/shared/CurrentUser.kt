@@ -1,6 +1,5 @@
 package de.landsberger.judo.portal.backend.shared
 
-import de.landsberger.judo.portal.api.Role
 import de.landsberger.judo.portal.backend.shared.security.KeycloakRoles
 import org.springframework.security.oauth2.jwt.Jwt
 

@@ -1,6 +1,6 @@
 # CLAUDE.md – judo-portal
 
-Vereinsportal „WTSV Judo“: Spring-Boot-Backend + Kotlin-Multiplatform-Clients (Android, iOS, Web).
+Vereinsportal „WTSV Judo“: Spring-Boot-Backend (Kotlin) + Angular-PWA (ab Schritt 5b in `frontend/`).
 Architektur: `docs/ARCHITECTURE.md`, Entscheidungen: `docs/adr/`.
 
 ## Befehle
@@ -9,10 +9,7 @@ Architektur: `docs/ARCHITECTURE.md`, Entscheidungen: `docs/adr/`.
 ./gradlew build              # Build, Tests, Spotless/ktlint-Check (alle Module)
 ./gradlew spotlessApply      # Formatierung korrigieren – vor jedem Commit
 ./gradlew :backend:test      # Backend-Tests inkl. Spring-Modulith-Verifikation
-./gradlew :shared-api:jvmTest
-./gradlew :client:androidApp:assembleDebug
-./gradlew :client:composeApp:wasmJsBrowserDistribution
-./gradlew :client:composeApp:linkDebugFrameworkIosSimulatorArm64   # nur macOS
+./gradlew :backend:test -Popenapi.update   # API-Vertrag api/openapi.json nach API-Änderungen neu schreiben
 ```
 
 Lokale Infrastruktur (Postgres :5432, Keycloak :8081, Testnutzer `<rolle>@test.local` / `test`):
@@ -30,10 +27,7 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
 | Modul | Package | Zweck |
 |---|---|---|
 | `backend` | `de.landsberger.judo.portal.backend` | Spring Boot, Java 25 |
-| `shared-api` | `de.landsberger.judo.portal.api` | DTOs für Backend und Clients (KMP: jvm, ios, wasmJs) |
-| `client/shared` | `de.landsberger.judo.portal.client` | API-Client, später Auth und ViewModels |
-| `client/composeApp` | `de.landsberger.judo.portal.ui` | Compose-Multiplatform-UI |
-| `client/androidApp` | `de.landsberger.judo.portal` | Android-App-Modul (AGP 9) |
+| `api/openapi.json` | – | API-Vertrag, aus dem Backend erzeugt (ADR 0007) |
 
 ## Regeln
 
@@ -42,16 +36,17 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
   nie über `internal`-Unterpakete. `ModularityTest` erzwingt das.
 - **Rollen** (`member`, `trainer`, `board`, `treasurer`, `admin`) sind fest, siehe ADR 0003.
   Fachliche Autorisierung gehört ins Backend.
-- **API-Verträge** liegen in `shared-api`, keine DTO-Duplikate in Backend oder Client.
-  `shared-api` und Android kompilieren auf Java-21-Bytecode, nur das Backend auf Java 25.
-- **API:** Endpunkte unter `/api/**`. Request- und Response-Typen nur aus `shared-api`
-  (`@Serializable`, JSON über kotlinx.serialization, ADR 0006). Controller erhalten den Nutzer als
+- **API-Vertrag** ist `api/openapi.json` (springdoc, ADR 0007). Nach jeder API-Änderung neu schreiben
+  (`-Popenapi.update`) und den Diff mit committen, sonst schlägt `OpenApiContractIT` fehl.
+  Nicht-nullbare Kotlin-Felder werden automatisch `required`.
+- **API:** Endpunkte unter `/api/**`, DTOs als Kotlin-Data-Classes im jeweiligen Modul (`internal/web`),
+  JSON über Jackson. Enums im JSON kleingeschrieben (`@JsonValue`, siehe `Role`). Controller erhalten den Nutzer als
   `CurrentUser`-Parameter (`backend.shared`), nie als `Jwt`. Rollen prüfen mit
   `@PreAuthorize("hasRole('TRAINER')")` o. Ä.
 - **Tests:** Controller per `@WebMvcTest` + `jwt()` (siehe `MeControllerTest`), Ende-zu-Ende mit
-  Testcontainers (siehe `ApiSecurityIT`, braucht Docker oder Podman-Socket).
+  Testcontainers (Basis `IntegrationTestBase`, z. B. `ApiSecurityIT`, braucht Docker oder Podman-Socket).
 - **Versionen** nur in `gradle/libs.versions.toml`. Container-Images in `infra/compose.dev.yaml`
-  und `ApiSecurityIT` synchron halten.
+  und `IntegrationTestBase` synchron halten.
 - **Datenbank**-Änderungen nur über neue Flyway-Migrationen (`backend/src/main/resources/db/migration`,
   `V<n>__beschreibung.sql`). Bestehende Migrationen nie ändern, Hibernate nur `validate`.
 - **Sprache:** Doku und Kommentare auf Deutsch, Code-Bezeichner auf Englisch.

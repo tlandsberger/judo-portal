@@ -44,8 +44,8 @@
   "clients": [
     {
       "clientId": "judo-portal-app",
-      "name": "WTSV Judo App (Android, iOS, Web)",
-      "description": "Public Client für alle Apps: Authorization Code + PKCE.",
+      "name": "WTSV Judo PWA",
+      "description": "Public Client der PWA: Authorization Code + PKCE.",
       "enabled": true,
       "publicClient": true,
       "protocol": "openid-connect",
@@ -54,15 +54,14 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
       "redirectUris": [
-        "http://localhost:3000/*",
-        "de.landsberger.judo.portal:/oauth2redirect"
+        "http://localhost:4200/*"
       ],
       "webOrigins": [
-        "http://localhost:3000"
+        "http://localhost:4200"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:3000/*##de.landsberger.judo.portal:/logout"
+        "post.logout.redirect.uris": "http://localhost:4200/*"
       },
       "fullScopeAllowed": false,
       "protocolMappers": [

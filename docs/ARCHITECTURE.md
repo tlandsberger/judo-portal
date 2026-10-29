@@ -9,30 +9,28 @@
 |---|---|
 | Zielgruppe | Mitglieder und Funktionäre (Vorstand, Kasse, Übungsleiter) eines Judo-Vereins |
 | Größe | < 300 Mitglieder. Daten kommen per einmaligem Import aus Excel/CSV, eine laufende Schnittstelle zu Fremdsoftware gibt es nicht |
-| Plattformen | Web, Android, iOS. Alles hinter einem Login |
+| Plattformen | Progressive Web App: im Browser und auf Android/iOS als installierbare App. Alles hinter einem Login |
 | Initiale Features | Mitglieder- und Benutzerverwaltung · Events (Trainings & Veranstaltungen) · Übungsleiterabrechnung |
 | Betrieb | Zunächst in einer container-basierten Homecloud. Auf jeden Container-Host übertragbar |
-| Leitlinien | Eine Sprache (Kotlin) für alle Teile · wenig bewegliche Teile · DSGVO-konform · Komponenten so gewählt, dass auch ehrenamtliche Betreuer damit zurechtkommen |
+| Leitlinien | Kotlin im Backend, TypeScript/Angular im Frontend, OpenAPI als Vertrag dazwischen · wenig bewegliche Teile · DSGVO-konform · Komponenten so gewählt, dass auch ehrenamtliche Betreuer damit zurechtkommen |
 
 ## 2. Systemüberblick
 
 ```mermaid
 flowchart LR
-    subgraph Clients["Clients – Compose Multiplatform"]
-        A[Android App]
-        I[iOS App]
-        W[Web App<br/>Kotlin/Wasm]
+    subgraph Clients["PWA – Angular"]
+        W[Browser · Android · iOS<br/>installierbar, Service Worker]
     end
 
     subgraph Host["Container-Host (Homecloud)"]
-        P[Caddy<br/>Reverse Proxy + TLS<br/>liefert Web-Bundle aus]
+        P[Caddy<br/>Reverse Proxy + TLS<br/>liefert die PWA aus]
         B[Backend<br/>Spring Boot · Kotlin]
         K[Keycloak<br/>Realm „judo“]
         DB[(PostgreSQL<br/>DB portal + DB keycloak)]
         BK[Backup-Job<br/>pg_dump]
     end
 
-    A & I & W -->|HTTPS| P
+    W -->|HTTPS, gleicher Origin| P
     P -->|/api| B
     P -->|/auth| K
     B -->|JWKS / Token-Prüfung| K
@@ -43,35 +41,34 @@ flowchart LR
 
 **Ablauf Login & API-Aufruf**
 
-1. Der Client startet den OIDC-Flow *Authorization Code + PKCE* gegen Keycloak
-   (System-Browser bzw. Custom Tab auf Mobile, Redirect im Web).
+1. Die PWA startet den OIDC-Flow *Authorization Code + PKCE* gegen Keycloak (Redirect im Browser).
 2. Keycloak stellt Access- und Refresh-Token aus. Der Access-Token (JWT) enthält die
    Realm-Rollen.
-3. Der Client ruft `/api/...` mit `Authorization: Bearer <token>` auf.
+3. Die PWA hält die Tokens nur im Speicher und ruft `/api/...` mit `Authorization: Bearer <token>` auf.
 4. Das Backend prüft den JWT (Signatur über die JWKS von Keycloak), mappt die Rollen auf Spring
    Authorities und wendet die fachlichen Berechtigungsregeln an.
 
 ## 3. Technologie-Stack
 
-Konkrete Versionen werden im Gradle Version Catalog (`gradle/libs.versions.toml`)
-festgelegt. Dort steht immer die aktuelle stabile Version, Updates kommen über Dependabot.
+Konkrete Versionen stehen im Gradle Version Catalog (`gradle/libs.versions.toml`) bzw. in
+`frontend/package.json`. Dort steht immer die aktuelle stabile Version, Updates kommen über Dependabot.
 
 | Bereich | Wahl | Anmerkung |
 |---|---|---|
-| Sprache | Kotlin | Backend, gemeinsamer Code und UI |
+| Sprachen | Kotlin (Backend), TypeScript (Frontend) | |
 | JVM | **Java 25 LTS** | Gradle-Toolchain und Laufzeit-Image (`eclipse-temurin:25-jre`) |
 | Build | Gradle (Kotlin DSL), Monorepo | Version Catalog `gradle/libs.versions.toml`. Convention Plugins (`build-logic/`) erst, wenn sich Build-Logik spürbar wiederholt |
 | Backend | Spring Boot, Spring Web MVC, Spring Security (OAuth2 Resource Server), Spring Data JPA, Bean Validation, springdoc-openapi | |
 | Modularisierung | Spring Modulith | Modulgrenzen werden per Test erzwungen |
 | Datenbank | PostgreSQL + Flyway | Schema nur über Migrationen |
 | Identity | Keycloak (OIDC) | Login, Passwort-Reset, optional 2FA/Passkeys |
-| Clients | Kotlin Multiplatform + Compose Multiplatform (Targets: Android, iOS, wasmJs) | Eine UI-Codebasis |
-| Client-Bibliotheken | Ktor Client, kotlinx.serialization, kotlinx.datetime, Koin, AndroidX ViewModel & Navigation für Compose MP | |
-| Geteilter API-Vertrag | KMP-Modul `shared-api` mit JVM-Target | Backend und Clients nutzen dieselben DTOs |
+| Frontend | **Angular** (Standalone-Komponenten) als **PWA** (`@angular/pwa`), Angular Material | Eine Codebasis für Browser, Android, iOS ([ADR 0007](adr/0007-pwa-mit-angular-und-openapi.md)) |
+| Login im Frontend | `angular-auth-oidc-client` (Authorization Code + PKCE, Refresh-Rotation) | Tokens nur im Speicher |
+| API-Vertrag | OpenAPI (springdoc) als `api/openapi.json`, TypeScript-Typen per `openapi-typescript` | CI prüft, dass Datei und Backend übereinstimmen |
 | Dokumente/Mail | OpenPDF (o. ä.) für Abrechnungsbelege, SMTP für Mails | Push-Benachrichtigungen kommen später |
-| Tests | JUnit 5, Testcontainers (PostgreSQL, Keycloak), Spring Modulith Tests, kotlin.test | |
+| Tests | JUnit 5, Testcontainers (PostgreSQL, Keycloak), Spring Modulith Tests; im Frontend Unit-Tests und Playwright-E2E | |
 | Qualität | ktlint (über Spotless), Dependabot, später CodeQL | detekt folgt, sobald detekt 2 stabil ist (detekt 1.x unterstützt Kotlin 2.4 nicht) |
-| CI/CD | GitHub Actions, Images in GHCR | iOS-Builds auf macOS-Runnern, Store-Veröffentlichung später |
+| CI/CD | GitHub Actions, Images in GHCR | |
 | Betrieb | Docker Compose | Caddy, Backend, Keycloak, PostgreSQL, Backup |
 
 ## 4. Backend: modularer Monolith
@@ -103,42 +100,31 @@ de.landsberger.judo.portal.backend.events
 │   └── web/                ← REST-Controller (/api/events/...)
 ```
 
-## 5. Clients: Kotlin Multiplatform
+## 5. Frontend: Progressive Web App (Angular)
 
 ```mermaid
-flowchart TB
-    subgraph composeApp["client/composeApp"]
-        UI[Compose-MP-Screens<br/>Navigation, Theme]
-        EW[wasmJsMain: main]
-        EI[iosMain: MainViewController]
+flowchart LR
+    subgraph PWA["frontend/ (Angular)"]
+        UI[Seiten & Komponenten<br/>Angular Material]
+        AUTH[Login<br/>angular-auth-oidc-client]
+        API[API-Client<br/>Typen aus api/openapi.json]
+        SW[Service Worker<br/>Offline-Cache, später Push]
     end
-    EA["client/androidApp<br/>MainActivity (AGP-9-App-Modul)"]
-    iOS["client/iosApp<br/>Xcode-Hülle (SwiftUI → ComposeUIViewController)"]
-    subgraph shared["client/shared"]
-        VM[ViewModels]
-        REPO[Repositories]
-        API[Ktor-API-Client]
-        AUTH[Auth/Token-Handling<br/>expect/actual pro Plattform]
-    end
-    SA["shared-api<br/>DTOs · Enums · Validierung"]
-
-    UI --> VM --> REPO --> API --> SA
-    API --> AUTH
-    EA --> UI
-    EW --> UI
-    iOS --> EI --> UI
+    C[(api/openapi.json)]
+    UI --> API --> B[Backend /api]
+    UI --> AUTH --> K[Keycloak]
+    C -. generiert .-> API
 ```
 
-- Die **UI wird einmal** in Compose Multiplatform geschrieben und läuft auf Android, iOS und
-  im Web (Kotlin/Wasm).
-- **Plattformspezifisch** über `expect`/`actual` sind nur: der OIDC-Login (Browser-Flow,
-  Redirect-Handling), die sichere Token-Ablage (Android Keystore, iOS Keychain, im Web
-  ausschließlich im Speicher) sowie später Push-Benachrichtigungen.
-- **`shared-api`** enthält die Request/Response-DTOs und einfache Validierungsregeln. Das Backend
-  bindet das Modul über sein JVM-Target ein, deshalb gibt es keinen Drift zwischen Client und Server.
-  Zusätzlich erzeugt springdoc eine OpenAPI-Beschreibung für Dritte.
-- Die Web-App setzt einen aktuellen Browser mit WasmGC-Unterstützung voraus. Weil alles hinter
-  einem Login liegt, spielt SEO keine Rolle.
+- **Eine Codebasis** für Browser, Android und iOS. Installiert wird über „Zum Startbildschirm hinzufügen“.
+  Auf iOS gibt es kein automatisches Angebot, Push dort erst ab iOS 16.4 und nur installiert.
+- **Gleicher Origin:** PWA unter `/`, API unter `/api`. In Produktion stellt Caddy beides bereit, in der
+  Entwicklung der Angular-Dev-Server (:4200) mit Proxy `/api` → Backend (:8080). Kein CORS im Backend.
+- **Login:** Authorization Code + PKCE gegen den Keycloak-Client `judo-portal-app`. Tokens liegen nur im
+  Speicher (nicht in `localStorage`), dazu Refresh-Token-Rotation.
+- **API-Vertrag:** Das Backend erzeugt die OpenAPI-Beschreibung (springdoc), sie liegt als
+  `api/openapi.json` im Repo. `OpenApiContractIT` schlägt fehl, wenn Code und Datei auseinanderlaufen.
+  Das Frontend generiert daraus seine TypeScript-Typen. Swagger-UI: `/swagger-ui.html`.
 
 ## 6. Sicherheit & Berechtigungen
 
@@ -164,7 +150,9 @@ frei, die Kasse zahlt aus. Wer eine Abrechnung eingereicht hat, kann sie nicht s
   (Method Security und Domain-Checks).
 - Das Backend akzeptiert nur Tokens mit der Audience `judo-portal-api` und übernimmt nur die
   fünf Portal-Rollen aus `realm_access.roles`. Fachcode arbeitet mit `CurrentUser` statt mit dem
-  Token, und JSON läuft über kotlinx.serialization wie in den Apps ([ADR 0006](adr/0006-api-vertrag-und-token-pruefung.md)).
+  Token ([ADR 0006](adr/0006-api-vertrag-und-token-pruefung.md)).
+- Die PWA hält Tokens nur im Speicher. XSS-Schutz ist deshalb Pflicht: Angular-Sanitizing und eine
+  strikte Content-Security-Policy über Caddy ([ADR 0007](adr/0007-pwa-mit-angular-und-openapi.md)).
 - Clients sind *public clients* mit PKCE und haben kein Client-Secret. Kurzlebige Access-Tokens,
   Refresh-Token-Rotation.
 - Alle Verbindungen laufen über TLS (Caddy). Intern spricht nur Caddy mit der Außenwelt.
@@ -189,7 +177,7 @@ Alle Komponenten laufen als OCI-Container per Docker Compose:
 
 | Container | Aufgabe |
 |---|---|
-| `caddy` | Reverse Proxy, automatisches TLS, liefert die Web-App (statische Wasm/JS-Dateien) aus, routet `/api` → Backend und `/auth` → Keycloak |
+| `caddy` | Reverse Proxy, automatisches TLS, liefert die PWA (statische Dateien) aus, routet `/api` → Backend und `/auth` → Keycloak, setzt Security-Header (CSP) |
 | `backend` | Spring-Boot-Anwendung |
 | `keycloak` | Identity Provider. Realm-Konfiguration als `infra/keycloak/realm-judo.json` versioniert |
 | `postgres` | Getrennte Datenbanken `portal` und `keycloak` |
@@ -197,7 +185,7 @@ Alle Komponenten laufen als OCI-Container per Docker Compose:
 
 ### 7.2 Homecloud
 
-- Die mobilen Apps brauchen eine **öffentlich per HTTPS erreichbare Domain**. Möglich ist
+- Das Portal braucht eine **öffentlich per HTTPS erreichbare Domain** (PWA und Service Worker setzen HTTPS voraus). Möglich ist
   DynDNS mit Portfreigabe (443) oder ein Tunnel (z. B. Cloudflare Tunnel). Die
   Entscheidung fällt beim Deployment-Schritt.
 - Health-Checks über Spring Boot Actuator (`/actuator/health`, nur intern erreichbar).
@@ -208,7 +196,7 @@ Alle Komponenten laufen als OCI-Container per Docker Compose:
 
 | Umgebung | Zweck |
 |---|---|
-| `dev` | Lokal mit Podman oder Docker: `infra/compose.dev.yaml` (PostgreSQL auf 5432, Keycloak auf 8081 mit Realm `judo` und Testnutzern je Rolle, siehe [`infra/README.md`](../infra/README.md)). Backend und Clients laufen aus der IDE bzw. per Gradle |
+| `dev` | Lokal mit Podman oder Docker: `infra/compose.dev.yaml` (PostgreSQL auf 5432, Keycloak auf 8081 mit Realm `judo` und Testnutzern je Rolle, siehe [`infra/README.md`](../infra/README.md)). Backend aus der IDE bzw. per Gradle, Frontend per `npm start` (:4200) |
 | `prod` | Homecloud |
 
 ## 8. Repository-Struktur
@@ -216,12 +204,8 @@ Alle Komponenten laufen als OCI-Container per Docker Compose:
 ```
 judo-portal/
 ├── backend/               Spring-Boot-App (Module: members, events, billing, shared)
-├── shared-api/            KMP: DTOs, Enums, Validierung (jvm, android, ios, wasmJs)
-├── client/
-│   ├── shared/            KMP: API-Client, Auth, Repositories, ViewModels
-│   ├── composeApp/        Compose-MP-UI (Android-Library, iOS-Framework, Web-App)
-│   ├── androidApp/        Android-App-Modul (MainActivity, Manifest, App-Name)
-│   └── iosApp/            Xcode-Projekt (Hülle für iOS, folgt in Schritt 5)
+├── frontend/              Angular-PWA (folgt in Schritt 5b)
+├── api/openapi.json       API-Vertrag (aus dem Backend erzeugt, per Test abgesichert)
 ├── gradle/libs.versions.toml
 ├── infra/
 │   ├── compose.dev.yaml   lokale Dev-Umgebung (Postgres + Keycloak)
@@ -241,15 +225,8 @@ judo-portal/
 | Modul | Basis-Package |
 |---|---|
 | `backend` | `de.landsberger.judo.portal.backend` (Modulith-Module als direkte Unterpakete) |
-| `shared-api` | `de.landsberger.judo.portal.api` |
-| `client/shared` | `de.landsberger.judo.portal.client` |
-| `client/composeApp` | `de.landsberger.judo.portal.ui` |
-| `client/androidApp` | `de.landsberger.judo.portal` (= `applicationId`) |
 
-App-Name auf allen Plattformen: **WTSV Judo**.
-
-Die Android-Clients nutzen das JVM-Target von `shared-api`. Deshalb kompilieren `shared-api` und
-die Android-Teile auf Java-21-Bytecode, das Backend auf Java 25.
+App-Name der PWA (Manifest, Titel): **WTSV Judo**.
 
 ## 9. Roadmap
 
@@ -262,7 +239,8 @@ werden vorher geklärt.
 | 2 ✅ | Repo-Skelett | Gradle-Monorepo, Version Catalog, leere Module, CI (Build + Lint) |
 | 3 ✅ | Lokale Infrastruktur | `infra/compose.dev.yaml` mit PostgreSQL + Keycloak und Testnutzern |
 | 4 ✅ | Backend-Durchstich | Security-Konfiguration, `GET /api/me`, Flyway-Basis, Testcontainers-Test |
-| 5 | Client-Durchstich | Login (PKCE) und Anzeige von `/api/me` auf Android, Web und iOS |
+| 5a ✅ | Umstieg auf PWA | KMP-Clients entfernt, OpenAPI-Vertrag `api/openapi.json`, Realm auf PWA umgestellt ([ADR 0007](adr/0007-pwa-mit-angular-und-openapi.md)) |
+| 5b | PWA-Durchstich | Angular-PWA mit Login (PKCE), Anzeige von `/api/me`, Logout, E2E-Test |
 | 6 | Feature: Mitgliederverwaltung | eigene Planung |
 | 7 | Feature: Events | eigene Planung |
 | 8 | Feature: Übungsleiterabrechnung | eigene Planung |
@@ -274,4 +252,4 @@ werden vorher geklärt.
   Domain bzw. Erreichbarkeit von außen. Wird in Schritt 9 geklärt, die Compose-Basis entsteht in Schritt 3.
 - Fachliches für die Feature-Planung: Familien-/Elternkonten für Kinder,
   Gürtel- und Prüfungshistorie, Abrechnungsregeln (Stundensätze, Freibetrag nach § 3 Nr. 26 EStG).
-- Veröffentlichung in den App-Stores (Apple-Developer- und Google-Play-Konto des Vereins).
+- Optional später: PWA per Capacitor in die App-Stores bringen, falls Store-Präsenz gewünscht ist.

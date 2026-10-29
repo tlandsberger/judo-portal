@@ -24,14 +24,12 @@ dependencyManagement {
 }
 
 dependencies {
-    implementation(project(":shared-api"))
-
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.spring.boot.starter.security.oauth2.resource.server)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.flyway)
     implementation(libs.spring.boot.starter.actuator)
-    implementation(libs.spring.boot.starter.kotlinx.serialization.json)
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.spring.modulith.starter.core)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.kotlin.reflect)
@@ -54,4 +52,8 @@ tasks.withType<Test> {
     useJUnitPlatform()
     // Der Integrationstest importiert denselben Realm wie die lokale Dev-Umgebung.
     systemProperty("judo.realm-file", rootProject.file("infra/keycloak/realm-judo-dev.json").absolutePath)
+    // API-Vertrag (ADR 0007): OpenApiContractIT vergleicht damit; `-Popenapi.update` schreibt ihn neu.
+    systemProperty("judo.openapi-file", rootProject.file("api/openapi.json").absolutePath)
+    systemProperty("judo.openapi-update", providers.gradleProperty("openapi.update").isPresent.toString())
+    inputs.files(rootProject.file("api/openapi.json")).withPropertyName("openapiContract")
 }

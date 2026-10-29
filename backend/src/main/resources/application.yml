@@ -29,6 +29,13 @@ spring:
     problemdetails:
       enabled: true
 
+springdoc:
+  # Nur die Portal-API beschreiben (kein Actuator), stabil sortiert für den Vertrag api/openapi.json.
+  paths-to-match: /api/**
+  default-produces-media-type: application/json
+  writer-with-order-by-keys: true
+  writer-with-default-pretty-printer: true
+
 management:
   endpoints:
     web:

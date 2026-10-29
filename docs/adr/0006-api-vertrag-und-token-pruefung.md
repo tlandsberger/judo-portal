@@ -1,6 +1,6 @@
 # 0006 – API-Vertrag & Token-Prüfung
 
-- Status: angenommen
+- Status: angenommen; JSON-Format ersetzt durch [0007](0007-pwa-mit-angular-und-openapi.md) (Audience und Rollen-Mapping gelten weiter)
 - Datum: 2026-10-09
 
 ## Kontext

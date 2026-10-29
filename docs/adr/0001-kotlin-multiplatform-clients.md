@@ -1,6 +1,6 @@
 # 0001 – Kotlin Multiplatform + Compose Multiplatform für alle Clients
 
-- Status: angenommen
+- Status: ersetzt durch [0007](0007-pwa-mit-angular-und-openapi.md)
 - Datum: 2026-10-09
 
 ## Kontext

@@ -1,7 +1,7 @@
 # judo-portal
 
 Portal für Mitglieder und Funktionäre unseres Judo-Vereins. Login-geschützt,
-verfügbar als Web-App sowie als Android- und iOS-App.
+als Progressive Web App (PWA) im Browser und auf Android/iOS installierbar.
 
 Initiale Features:
 
@@ -13,7 +13,8 @@ Initiale Features:
 
 | Bereich | Technologie |
 |---|---|
-| Clients (Web, Android, iOS) | Kotlin Multiplatform + Compose Multiplatform |
+| Frontend (PWA) | Angular (folgt in Schritt 5b) |
+| API-Vertrag | OpenAPI (`api/openapi.json`, Swagger-UI unter `/swagger-ui.html`) |
 | Backend | Spring Boot (Kotlin), modularer Monolith mit Spring Modulith, Java 25 LTS |
 | Datenbank | PostgreSQL + Flyway |
 | Login | Keycloak (OIDC) |
@@ -24,15 +25,14 @@ Details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), Entscheidungen in [`d
 ## Entwickeln
 
 Voraussetzungen: JDK 25 (Gradle lädt es bei Bedarf automatisch), Podman (oder Docker) für
-Datenbank und Keycloak, Android SDK für die Android-App, macOS + Xcode für iOS.
+Datenbank und Keycloak, später Node.js für das Frontend.
 
 ```bash
 podman compose -f infra/compose.dev.yaml up -d       # Postgres + Keycloak starten (infra/README.md)
 ./gradlew build                                      # alles bauen, testen, Code-Stil prüfen
 ./gradlew spotlessApply                              # Code formatieren
 ./gradlew :backend:bootRun                           # Backend starten (Port 8080, braucht die Infra)
-./gradlew :client:androidApp:installDebug            # Android-App auf Gerät/Emulator
-./gradlew :client:composeApp:wasmJsBrowserDevelopmentRun   # Web-App im Browser
+./gradlew :backend:test -Popenapi.update            # API-Vertrag api/openapi.json neu schreiben
 ```
 
 Backend ausprobieren (Infra und Backend laufen):
@@ -47,6 +47,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/me
 
 ## Status
 
-Schritt 4 von 9: Repo-Skelett, lokale Infrastruktur (PostgreSQL, Keycloak mit Testnutzern) und
-Backend-Durchstich (Token-Prüfung, Rollen, `GET /api/me`, Flyway) stehen. Fachliche Funktionen gibt es noch
+Schritt 5a: Backend-Durchstich (Token-Prüfung, Rollen, `GET /api/me`, Flyway), lokale Infrastruktur
+und OpenAPI-Vertrag stehen, der Umstieg auf eine PWA ist beschlossen (ADR 0007). Als Nächstes folgt
+die Angular-PWA mit Login (5b). Fachliche Funktionen gibt es noch
 keine. Die Roadmap steht in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#9-roadmap).

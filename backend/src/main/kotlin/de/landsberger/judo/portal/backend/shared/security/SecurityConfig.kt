@@ -26,6 +26,11 @@ class SecurityConfig {
                 authorize("/actuator/health", permitAll)
                 authorize("/actuator/health/**", permitAll)
                 authorize("/error", permitAll)
+                // API-Beschreibung und Swagger-UI enthalten keine Daten, nur die Schnittstelle (ADR 0007).
+                authorize("/v3/api-docs", permitAll)
+                authorize("/v3/api-docs/**", permitAll)
+                authorize("/swagger-ui.html", permitAll)
+                authorize("/swagger-ui/**", permitAll)
                 authorize("/api/**", authenticated)
                 authorize(anyRequest, denyAll)
             }

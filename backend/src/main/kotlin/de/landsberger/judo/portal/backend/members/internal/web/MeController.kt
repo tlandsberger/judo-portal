@@ -1,6 +1,5 @@
 package de.landsberger.judo.portal.backend.members.internal.web
 
-import de.landsberger.judo.portal.api.MeResponse
 import de.landsberger.judo.portal.backend.shared.CurrentUser
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping

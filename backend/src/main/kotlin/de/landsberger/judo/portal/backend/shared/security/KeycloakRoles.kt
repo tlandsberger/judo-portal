@@ -1,6 +1,6 @@
 package de.landsberger.judo.portal.backend.shared.security
 
-import de.landsberger.judo.portal.api.Role
+import de.landsberger.judo.portal.backend.shared.Role
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.jwt.Jwt
@@ -22,9 +22,6 @@ internal object KeycloakRoles {
     fun subject(jwt: Jwt): String = jwt.subject ?: throw InvalidBearerTokenException("Token enthält keinen 'sub'-Claim")
 
     fun authorities(jwt: Jwt): List<GrantedAuthority> = from(jwt).map { SimpleGrantedAuthority(it.authority) }
-
-    /** Name der Realm-Rolle in Keycloak, entspricht dem `@SerialName` in `shared-api`. */
-    private val Role.keycloakName: String get() = name.lowercase()
 
     /** Spring-Authority, z. B. `ROLE_TRAINER` – nutzbar mit `hasRole("TRAINER")`. */
     val Role.authority: String get() = "ROLE_$name"
