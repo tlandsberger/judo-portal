@@ -41,6 +41,9 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
 - **API-Vertrag** ist `api/openapi.json` (springdoc, ADR 0007). Nach jeder API-Änderung neu schreiben
   (`-Popenapi.update`) und den Diff mit committen, sonst schlägt `OpenApiContractIT` fehl.
   Nicht-nullbare Kotlin-Felder werden automatisch `required`.
+- **Fehler** als Problem Details: fachliche Fehler über `NotFoundException`, `ConflictException`,
+  `InvalidInputException` (`backend.shared`), Feldfehler stehen in `errors: [{field, message}]` mit deutschen Texten
+  (`ApiExceptionHandler`). Bean-Validation-Meldungen immer explizit auf Deutsch setzen.
 - **API:** Endpunkte unter `/api/**`, DTOs als Kotlin-Data-Classes im jeweiligen Modul (`internal/web`),
   JSON über Jackson. Enums im JSON kleingeschrieben (`@JsonValue`, siehe `Role`). Controller erhalten den Nutzer als
   `CurrentUser`-Parameter (`backend.shared`), nie als `Jwt`. Rollen prüfen mit
@@ -55,6 +58,8 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
   Die CI prüft `api/openapi.json` und `schema.d.ts`.
 - **Frontend:** Texte nur auf Deutsch (kein i18n), Farben nur über `var(--mat-sys-…)`. Tokens nie im
   `localStorage`, keine externen Fonts oder CDNs (DSGVO). Neue Seiten mit Unit-Tests, wichtige Abläufe in
-  `frontend/e2e/` mit AXE-Check.
+  `frontend/e2e/` mit AXE-Check. Formulare mit Signal Forms; Feature-Bereiche als nachgeladene Routen
+  (`loadChildren`) mit `provideFormDefaults()`. Rechte für die Anzeige nur in `auth/permissions.ts`
+  (spiegelt die `@PreAuthorize`-Regeln), Seiten schützt `permissionGuard`.
 - **Sprache:** Doku und Kommentare auf Deutsch, Code-Bezeichner auf Englisch.
 - **Neue Architekturentscheidungen** bekommen ein ADR in `docs/adr/`.

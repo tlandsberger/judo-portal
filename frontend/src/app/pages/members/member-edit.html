@@ -77,7 +77,7 @@
       <mat-form-field>
         <mat-label>Mitgliedsnummer</mat-label>
         <input matInput type="text" [formField]="form.memberNumber" />
-        <mat-hint>Optional, z. B. aus der bisherigen Liste</mat-hint>
+        <mat-hint>Optional</mat-hint>
         <mat-error>{{ errorText(form.memberNumber) }}</mat-error>
       </mat-form-field>
       <mat-form-field>
@@ -97,7 +97,7 @@
       <mat-form-field>
         <mat-label>Austritt</mat-label>
         <input matInput type="date" [formField]="form.exitDate" />
-        <mat-hint>Leer lassen, solange die Mitgliedschaft läuft</mat-hint>
+        <mat-hint>Leer, solange Mitglied</mat-hint>
         <mat-error>{{ errorText(form.exitDate) }}</mat-error>
       </mat-form-field>
     </fieldset>
@@ -111,15 +111,15 @@
       </section>
     }
 
-    @if (permissions().writeMembers) {
-      <div class="actions">
+    <div class="actions">
+      @if (permissions().writeMembers) {
         <button matButton="filled" type="submit" [disabled]="saving()">Speichern</button>
         <a matButton routerLink="/members">Abbrechen</a>
-        @if (!isNew() && permissions().deleteMembers) {
-          <span class="spacer"></span>
-          <button matButton type="button" class="danger" (click)="remove()">Löschen</button>
-        }
-      </div>
-    }
+      }
+      @if (!isNew() && permissions().deleteMembers) {
+        <span class="spacer"></span>
+        <button matButton type="button" class="danger" (click)="remove()">Löschen</button>
+      }
+    </div>
   </form>
 }

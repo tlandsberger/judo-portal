@@ -1,10 +1,5 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, Page, test } from '@playwright/test';
-
-async function expectNoA11yViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-}
+import { expect, test } from '@playwright/test';
+import { expectNoA11yViolations } from './helpers';
 
 test('Login als Übungsleiter zeigt Name und Rollen, Abmelden führt zurück', async ({ page }) => {
   await page.goto('/');

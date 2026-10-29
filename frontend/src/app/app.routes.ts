@@ -16,24 +16,7 @@ export const routes: Routes = [
   {
     path: 'members',
     canActivate: [authenticatedGuard, permissionGuard('readMembers')],
-    children: [
-      {
-        path: '',
-        title: 'Mitglieder – WTSV Judo',
-        loadComponent: () => import('./pages/members/member-list').then((m) => m.MemberListPage),
-      },
-      {
-        path: 'new',
-        title: 'Mitglied anlegen – WTSV Judo',
-        canActivate: [permissionGuard('writeMembers')],
-        loadComponent: () => import('./pages/members/member-edit').then((m) => m.MemberEditPage),
-      },
-      {
-        path: ':id',
-        title: 'Mitglied – WTSV Judo',
-        loadComponent: () => import('./pages/members/member-edit').then((m) => m.MemberEditPage),
-      },
-    ],
+    loadChildren: () => import('./pages/members/members.routes').then((m) => m.MEMBER_ROUTES),
   },
   { path: '**', redirectTo: '' },
 ];
