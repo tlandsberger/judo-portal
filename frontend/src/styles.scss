@@ -1,0 +1,39 @@
+// Globales Theme (Angular Material, M3). Eigene Styles nutzen ausschließlich die System-Tokens
+// (var(--mat-sys-…)) – so funktioniert das spätere Dark-Theme ohne Änderungen an Komponenten.
+@use '@angular/material' as mat;
+@use './styles/theme-colors' as theme;
+
+// Schriften (Roboto) werden lokal über angular.json eingebunden, nicht über Google Fonts (DSGVO).
+
+// Vereinsfarbe exakt als Primärfarbe (Weiß darauf: Kontrast ~5:1, WCAG AA).
+$club-green: #027d31;
+
+html {
+  height: 100%;
+  // Vorerst nur hell. Für das Dark-Theme später `light dark` bzw. einen Umschalter setzen.
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: theme.$primary-palette,
+        tertiary: theme.$tertiary-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+  @include mat.theme-overrides(
+    (
+      primary: $club-green,
+    )
+  );
+}
+
+body {
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+}

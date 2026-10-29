@@ -17,8 +17,10 @@ zwischen Backend und Client weiterhin abgesichert sein, wenn der Client nicht me
   `@angular/pwa` für Service Worker und Manifest). Eine Codebasis für Browser, Android und iOS. Installiert
   wird über „Zum Startbildschirm hinzufügen“.
 - **Login per Authorization Code + PKCE direkt im Browser** gegen Keycloak (Client
-  `judo-portal-app`). Die Tokens liegen nur im Speicher, dazu Refresh-Token-Rotation. Das Backend bleibt ein reiner
-  Resource Server (ADR 0006).
+  `judo-portal-app`, Bibliothek `angular-auth-oidc-client`). Die Tokens liegen im `sessionStorage`
+  (nur dieses Fenster, weg beim Schließen), nie im `localStorage`, dazu Refresh-Token-Rotation.
+  Reiner Arbeitsspeicher geht nicht, weil der PKCE-Code-Verifier den Redirect zu Keycloak überstehen
+  muss. Das Backend bleibt ein reiner Resource Server (ADR 0006).
 - **Gleicher Origin:** Die PWA läuft unter `/`, die API unter `/api`. In Produktion stellt Caddy beides bereit,
   in der Entwicklung der Proxy des Angular-Dev-Servers (:4200 → :8080). Es gibt kein CORS im Backend.
 - **API-Vertrag = OpenAPI.** springdoc erzeugt die Beschreibung aus dem Backend. Sie liegt als
@@ -39,7 +41,7 @@ zwischen Backend und Client weiterhin abgesichert sein, wenn der Client nicht me
   Push-Benachrichtigungen dort nur bei installierter PWA (ab iOS 16.4).
 - ➖ Keine Präsenz in App-Stores. Bei Bedarf lässt sich dieselbe PWA später mit Capacitor verpacken.
 - ➖ Tokens im Browser-Speicher: Schutz vor XSS ist Pflicht (Angular-Sanitizing, strikte
-  Content-Security-Policy in Caddy, keine Tokens in `localStorage`).
+  Content-Security-Policy in Caddy, Tokens nur im `sessionStorage`, nie im `localStorage`).
 
 ## Verworfene Alternativen
 

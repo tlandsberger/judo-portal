@@ -1,6 +1,7 @@
 # CLAUDE.md – judo-portal
 
-Vereinsportal „WTSV Judo“: Spring-Boot-Backend (Kotlin) + Angular-PWA (ab Schritt 5b in `frontend/`).
+Vereinsportal „WTSV Judo“: Spring-Boot-Backend (Kotlin) + Angular-PWA in `frontend/`
+(eigene Regeln in `frontend/CLAUDE.md`, Befehle in `frontend/README.md`).
 Architektur: `docs/ARCHITECTURE.md`, Entscheidungen: `docs/adr/`.
 
 ## Befehle
@@ -28,6 +29,7 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
 |---|---|---|
 | `backend` | `de.landsberger.judo.portal.backend` | Spring Boot, Java 25 |
 | `api/openapi.json` | – | API-Vertrag, aus dem Backend erzeugt (ADR 0007) |
+| `frontend` | – | Angular-PWA (Node 24, `npm`), Typen aus `api/openapi.json` via `npm run generate:api` |
 
 ## Regeln
 
@@ -49,5 +51,10 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
   und `IntegrationTestBase` synchron halten.
 - **Datenbank**-Änderungen nur über neue Flyway-Migrationen (`backend/src/main/resources/db/migration`,
   `V<n>__beschreibung.sql`). Bestehende Migrationen nie ändern, Hibernate nur `validate`.
+- **API-Änderung = drei Schritte:** Backend ändern → `-Popenapi.update` → im Frontend `npm run generate:api`.
+  Die CI prüft `api/openapi.json` und `schema.d.ts`.
+- **Frontend:** Texte nur auf Deutsch (kein i18n), Farben nur über `var(--mat-sys-…)`. Tokens nie im
+  `localStorage`, keine externen Fonts oder CDNs (DSGVO). Neue Seiten mit Unit-Tests, wichtige Abläufe in
+  `frontend/e2e/` mit AXE-Check.
 - **Sprache:** Doku und Kommentare auf Deutsch, Code-Bezeichner auf Englisch.
 - **Neue Architekturentscheidungen** bekommen ein ADR in `docs/adr/`.

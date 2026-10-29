@@ -13,7 +13,7 @@ Initiale Features:
 
 | Bereich | Technologie |
 |---|---|
-| Frontend (PWA) | Angular (folgt in Schritt 5b) |
+| Frontend (PWA) | Angular 22 + Angular Material, Login per PKCE ([`frontend/`](frontend/README.md)) |
 | API-Vertrag | OpenAPI (`api/openapi.json`, Swagger-UI unter `/swagger-ui.html`) |
 | Backend | Spring Boot (Kotlin), modularer Monolith mit Spring Modulith, Java 25 LTS |
 | Datenbank | PostgreSQL + Flyway |
@@ -25,7 +25,7 @@ Details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), Entscheidungen in [`d
 ## Entwickeln
 
 Voraussetzungen: JDK 25 (Gradle lädt es bei Bedarf automatisch), Podman (oder Docker) für
-Datenbank und Keycloak, später Node.js für das Frontend.
+Datenbank und Keycloak, Node.js 24 für das Frontend (`.nvmrc`).
 
 ```bash
 podman compose -f infra/compose.dev.yaml up -d       # Postgres + Keycloak starten (infra/README.md)
@@ -33,6 +33,7 @@ podman compose -f infra/compose.dev.yaml up -d       # Postgres + Keycloak start
 ./gradlew spotlessApply                              # Code formatieren
 ./gradlew :backend:bootRun                           # Backend starten (Port 8080, braucht die Infra)
 ./gradlew :backend:test -Popenapi.update            # API-Vertrag api/openapi.json neu schreiben
+cd frontend && npm ci && npm start                   # PWA auf http://localhost:4200 (Login: trainer@test.local / test)
 ```
 
 Backend ausprobieren (Infra und Backend laufen):
@@ -47,7 +48,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/me
 
 ## Status
 
-Schritt 5a: Backend-Durchstich (Token-Prüfung, Rollen, `GET /api/me`, Flyway), lokale Infrastruktur
-und OpenAPI-Vertrag stehen, der Umstieg auf eine PWA ist beschlossen (ADR 0007). Als Nächstes folgt
-die Angular-PWA mit Login (5b). Fachliche Funktionen gibt es noch
+Schritt 5b: Der technische Durchstich steht. Die Angular-PWA meldet sich bei Keycloak an und zeigt den
+Nutzer aus `GET /api/me`. Backend, Infrastruktur und OpenAPI-Vertrag sind ebenfalls fertig. Als
+Nächstes folgen die Features, beginnend mit der Mitgliederverwaltung. Fachliche Funktionen gibt es noch
 keine. Die Roadmap steht in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#9-roadmap).

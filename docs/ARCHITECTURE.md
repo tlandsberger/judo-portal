@@ -44,7 +44,7 @@ flowchart LR
 1. Die PWA startet den OIDC-Flow *Authorization Code + PKCE* gegen Keycloak (Redirect im Browser).
 2. Keycloak stellt Access- und Refresh-Token aus. Der Access-Token (JWT) enthält die
    Realm-Rollen.
-3. Die PWA hält die Tokens nur im Speicher und ruft `/api/...` mit `Authorization: Bearer <token>` auf.
+3. Die PWA hält die Tokens im `sessionStorage` (nur dieses Fenster) und ruft `/api/...` mit `Authorization: Bearer <token>` auf.
 4. Das Backend prüft den JWT (Signatur über die JWKS von Keycloak), mappt die Rollen auf Spring
    Authorities und wendet die fachlichen Berechtigungsregeln an.
 
@@ -63,7 +63,7 @@ Konkrete Versionen stehen im Gradle Version Catalog (`gradle/libs.versions.toml`
 | Datenbank | PostgreSQL + Flyway | Schema nur über Migrationen |
 | Identity | Keycloak (OIDC) | Login, Passwort-Reset, optional 2FA/Passkeys |
 | Frontend | **Angular** (Standalone-Komponenten) als **PWA** (`@angular/pwa`), Angular Material | Eine Codebasis für Browser, Android, iOS ([ADR 0007](adr/0007-pwa-mit-angular-und-openapi.md)) |
-| Login im Frontend | `angular-auth-oidc-client` (Authorization Code + PKCE, Refresh-Rotation) | Tokens nur im Speicher |
+| Login im Frontend | `angular-auth-oidc-client` (Authorization Code + PKCE, Refresh-Rotation) | Tokens im `sessionStorage`, nie im `localStorage` |
 | API-Vertrag | OpenAPI (springdoc) als `api/openapi.json`, TypeScript-Typen per `openapi-typescript` | CI prüft, dass Datei und Backend übereinstimmen |
 | Dokumente/Mail | OpenPDF (o. ä.) für Abrechnungsbelege, SMTP für Mails | Push-Benachrichtigungen kommen später |
 | Tests | JUnit 5, Testcontainers (PostgreSQL, Keycloak), Spring Modulith Tests; im Frontend Unit-Tests und Playwright-E2E | |
@@ -120,8 +120,13 @@ flowchart LR
   Auf iOS gibt es kein automatisches Angebot, Push dort erst ab iOS 16.4 und nur installiert.
 - **Gleicher Origin:** PWA unter `/`, API unter `/api`. In Produktion stellt Caddy beides bereit, in der
   Entwicklung der Angular-Dev-Server (:4200) mit Proxy `/api` → Backend (:8080). Kein CORS im Backend.
-- **Login:** Authorization Code + PKCE gegen den Keycloak-Client `judo-portal-app`. Tokens liegen nur im
-  Speicher (nicht in `localStorage`), dazu Refresh-Token-Rotation.
+- **Login:** Authorization Code + PKCE gegen den Keycloak-Client `judo-portal-app`. Die Tokens liegen im
+  `sessionStorage`: nur für dieses Fenster, beim Schließen weg, nie im `localStorage`. Dazu
+  Refresh-Token-Rotation. Reiner Arbeitsspeicher geht nicht, weil der PKCE-Code-Verifier den Redirect
+  überstehen muss.
+- **Design:** Angular Material (M3) mit der Vereinsfarbe `#027d31` als Primärfarbe. Eigene Styles nur über
+  System-Tokens, damit ein Dark-Theme später ohne Komponentenänderungen möglich ist. Schriften werden lokal
+  ausgeliefert (keine Google Fonts, DSGVO). Logos und Icons liegen in `frontend/public/`.
 - **API-Vertrag:** Das Backend erzeugt die OpenAPI-Beschreibung (springdoc), sie liegt als
   `api/openapi.json` im Repo. `OpenApiContractIT` schlägt fehl, wenn Code und Datei auseinanderlaufen.
   Das Frontend generiert daraus seine TypeScript-Typen. Swagger-UI: `/swagger-ui.html`.
@@ -151,7 +156,7 @@ frei, die Kasse zahlt aus. Wer eine Abrechnung eingereicht hat, kann sie nicht s
 - Das Backend akzeptiert nur Tokens mit der Audience `judo-portal-api` und übernimmt nur die
   fünf Portal-Rollen aus `realm_access.roles`. Fachcode arbeitet mit `CurrentUser` statt mit dem
   Token ([ADR 0006](adr/0006-api-vertrag-und-token-pruefung.md)).
-- Die PWA hält Tokens nur im Speicher. XSS-Schutz ist deshalb Pflicht: Angular-Sanitizing und eine
+- Die PWA hält Tokens im `sessionStorage`. XSS-Schutz ist deshalb Pflicht: Angular-Sanitizing und eine
   strikte Content-Security-Policy über Caddy ([ADR 0007](adr/0007-pwa-mit-angular-und-openapi.md)).
 - Clients sind *public clients* mit PKCE und haben kein Client-Secret. Kurzlebige Access-Tokens,
   Refresh-Token-Rotation.
@@ -204,7 +209,7 @@ Alle Komponenten laufen als OCI-Container per Docker Compose:
 ```
 judo-portal/
 ├── backend/               Spring-Boot-App (Module: members, events, billing, shared)
-├── frontend/              Angular-PWA (folgt in Schritt 5b)
+├── frontend/              Angular-PWA (eigene README)
 ├── api/openapi.json       API-Vertrag (aus dem Backend erzeugt, per Test abgesichert)
 ├── gradle/libs.versions.toml
 ├── infra/
@@ -240,7 +245,7 @@ werden vorher geklärt.
 | 3 ✅ | Lokale Infrastruktur | `infra/compose.dev.yaml` mit PostgreSQL + Keycloak und Testnutzern |
 | 4 ✅ | Backend-Durchstich | Security-Konfiguration, `GET /api/me`, Flyway-Basis, Testcontainers-Test |
 | 5a ✅ | Umstieg auf PWA | KMP-Clients entfernt, OpenAPI-Vertrag `api/openapi.json`, Realm auf PWA umgestellt ([ADR 0007](adr/0007-pwa-mit-angular-und-openapi.md)) |
-| 5b | PWA-Durchstich | Angular-PWA mit Login (PKCE), Anzeige von `/api/me`, Logout, E2E-Test |
+| 5b ✅ | PWA-Durchstich | Angular-PWA mit Login (PKCE), Anzeige von `/api/me`, Logout, E2E-Test |
 | 6 | Feature: Mitgliederverwaltung | eigene Planung |
 | 7 | Feature: Events | eigene Planung |
 | 8 | Feature: Übungsleiterabrechnung | eigene Planung |
