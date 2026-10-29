@@ -8,7 +8,7 @@ data class MemberData(
     val firstName: String,
     val lastName: String,
     val birthDate: LocalDate,
-    val gender: Gender,
+    val gender: Gender?,
     val street: String?,
     val postalCode: String?,
     val city: String?,

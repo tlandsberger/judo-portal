@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.context.request.WebRequest
+import org.springframework.web.multipart.MaxUploadSizeExceededException
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
 /**
@@ -32,6 +33,16 @@ class ApiExceptionHandler : ResponseEntityExceptionHandler() {
             ERRORS,
             ex.bindingResult.fieldErrors.map { FieldProblem(it.field, it.defaultMessage ?: "ist ungültig") },
         )
+        return handleExceptionInternal(ex, problem, headers, status, request)
+    }
+
+    override fun handleMaxUploadSizeExceededException(
+        ex: MaxUploadSizeExceededException,
+        headers: HttpHeaders,
+        status: HttpStatusCode,
+        request: WebRequest,
+    ): ResponseEntity<Any>? {
+        val problem = ProblemDetail.forStatusAndDetail(status, "Die Datei ist zu groß (höchstens 1 MB).")
         return handleExceptionInternal(ex, problem, headers, status, request)
     }
 

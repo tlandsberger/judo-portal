@@ -23,7 +23,8 @@ data class MemberRequest(
     val lastName: String,
     @field:PastOrPresent(message = "Das Geburtsdatum darf nicht in der Zukunft liegen.")
     val birthDate: LocalDate,
-    val gender: Gender,
+    /** Optional in der API (Import kennt es nicht immer); die PWA verlangt es im Formular. */
+    val gender: Gender?,
     @field:Size(max = 200, message = "Höchstens 200 Zeichen.")
     val street: String?,
     @field:Size(max = 10, message = "Höchstens 10 Zeichen.")

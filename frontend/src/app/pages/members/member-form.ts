@@ -59,7 +59,7 @@ export function toFormModel(member: MemberResponse): MemberFormModel {
     firstName: member.firstName,
     lastName: member.lastName,
     birthDate: member.birthDate,
-    gender: member.gender,
+    gender: member.gender ?? '',
     street: member.street ?? '',
     postalCode: member.postalCode ?? '',
     city: member.city ?? '',

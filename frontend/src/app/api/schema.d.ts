@@ -36,6 +36,38 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/members/import': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['import'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/members/import/preview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['preview'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/members/{id}': {
     parameters: {
       query?: never;
@@ -56,6 +88,28 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    ImportResponse: {
+      /** Format: int32 */
+      created: number;
+      /** Format: int32 */
+      failed: number;
+      rows: components['schemas']['ImportRow'][];
+      /** Format: int32 */
+      unchanged: number;
+      /** Format: int32 */
+      updated: number;
+    };
+    ImportRow: {
+      /** @enum {string} */
+      action: 'create' | 'update' | 'unchanged' | 'error';
+      changes: string[];
+      errors: string[];
+      /** Format: int64 */
+      line: number;
+      memberNumber?: string | null;
+      name: string;
+      notes: string[];
+    };
     MeResponse: {
       displayName: string;
       email?: string | null;
@@ -73,8 +127,8 @@ export interface components {
       /** Format: date */
       exitDate?: string | null;
       firstName: string;
-      /** @enum {string} */
-      gender: 'female' | 'male' | 'diverse';
+      /** @enum {string|null} */
+      gender?: 'female' | 'male' | 'diverse' | null;
       lastName: string;
       memberNumber?: string | null;
       /** @enum {string} */
@@ -95,8 +149,8 @@ export interface components {
       /** Format: date */
       exitDate?: string | null;
       firstName: string;
-      /** @enum {string} */
-      gender: 'female' | 'male' | 'diverse';
+      /** @enum {string|null} */
+      gender?: 'female' | 'male' | 'diverse' | null;
       /** Format: uuid */
       id: string;
       lastName: string;
@@ -179,6 +233,60 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['MemberResponse'];
+        };
+      };
+    };
+  };
+  import: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'multipart/form-data': {
+          /** Format: binary */
+          file: string;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportResponse'];
+        };
+      };
+    };
+  };
+  preview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'multipart/form-data': {
+          /** Format: binary */
+          file: string;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportResponse'];
         };
       };
     };

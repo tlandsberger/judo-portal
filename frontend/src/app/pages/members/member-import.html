@@ -1,0 +1,111 @@
+<a matButton routerLink="/members" class="back">Zur Mitgliederliste</a>
+<h1>Mitglieder importieren</h1>
+
+<section class="help">
+  <p>Übernimmt die bisherige Mitgliederliste aus Excel:</p>
+  <ol>
+    <li>
+      Liste in Excel öffnen, <strong>Datei → Speichern unter</strong> und als Dateityp
+      <strong>„CSV UTF-8 (durch Trennzeichen getrennt)“</strong> wählen.
+    </li>
+    <li>
+      Die CSV-Datei hier auswählen. Zuerst siehst du eine Vorschau, gespeichert wird noch nichts.
+    </li>
+    <li>Passt die Vorschau, „Import ausführen“ wählen.</li>
+  </ol>
+  <p class="hint">
+    Erwartete Spalten: Mitgliedsnr, Anrede, Name, Vorname, Geburtsdatum, Telefon privat, E-Mail,
+    Vereinseintritt, Vereinsaustritt. Abgeglichen wird über die Mitgliedsnummer: Neue Nummern werden
+    als aktive Mitglieder angelegt, bekannte aktualisiert. Wer nicht in der Datei steht, bleibt
+    unverändert.
+  </p>
+</section>
+
+<div class="picker">
+  <input #picker type="file" accept=".csv,text/csv" hidden (change)="choose($event)" />
+  <button
+    [matButton]="preview() ? 'outlined' : 'filled'"
+    type="button"
+    [disabled]="busy()"
+    (click)="picker.click()"
+  >
+    {{ file() ? 'Andere Datei wählen' : 'CSV-Datei auswählen' }}
+  </button>
+  @if (file(); as chosen) {
+    <span class="file-name">{{ chosen.name }}</span>
+  }
+</div>
+
+@if (busy()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Datei wird verarbeitet" />
+}
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+@if (preview(); as result) {
+  <h2>Vorschau</h2>
+  <p class="summary" aria-live="polite">
+    <span>{{ result.created }} neu</span>
+    <span>{{ result.updated }} geändert</span>
+    <span>{{ result.unchanged }} unverändert</span>
+    <span [class.error]="result.failed > 0">{{ result.failed }} mit Fehlern</span>
+  </p>
+  @if (result.failed > 0) {
+    <p class="hint">
+      Zeilen mit Fehlern werden übersprungen. Du kannst sie in Excel korrigieren und erneut
+      importieren.
+    </p>
+  }
+
+  <div class="actions">
+    <button
+      matButton="filled"
+      type="button"
+      [disabled]="busy() || importable() === 0"
+      (click)="execute()"
+    >
+      Import ausführen ({{ result.created }} neu, {{ result.updated }} geändert)
+    </button>
+  </div>
+
+  <div class="table">
+    <table mat-table [dataSource]="result.rows">
+      <ng-container matColumnDef="line">
+        <th mat-header-cell *matHeaderCellDef class="line">Zeile</th>
+        <td mat-cell *matCellDef="let row" class="line">{{ row.line }}</td>
+      </ng-container>
+      <ng-container matColumnDef="memberNumber">
+        <th mat-header-cell *matHeaderCellDef>Nr.</th>
+        <td mat-cell *matCellDef="let row">{{ row.memberNumber }}</td>
+      </ng-container>
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+      </ng-container>
+      <ng-container matColumnDef="action">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status" [class]="'status ' + row.action">{{ actionLabel(row) }}</span>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="details">
+        <th mat-header-cell *matHeaderCellDef>Details</th>
+        <td mat-cell *matCellDef="let row" class="details">
+          @if (row.changes.length) {
+            <div>Ändert: {{ row.changes.join(', ') }}</div>
+          }
+          @for (message of row.errors; track message) {
+            <div class="error">{{ message }}</div>
+          }
+          @for (note of row.notes; track note) {
+            <div class="note">{{ note }}</div>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+    </table>
+  </div>
+}

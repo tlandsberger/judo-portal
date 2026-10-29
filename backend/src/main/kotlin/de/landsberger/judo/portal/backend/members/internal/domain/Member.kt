@@ -25,8 +25,9 @@ class Member(
     lateinit var lastName: String
     lateinit var birthDate: LocalDate
 
+    /** Kann fehlen, wenn die Anrede beim Import nicht eindeutig war. */
     @Enumerated(EnumType.STRING)
-    lateinit var gender: Gender
+    var gender: Gender? = null
     var street: String? = null
     var postalCode: String? = null
     var city: String? = null

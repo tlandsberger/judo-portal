@@ -20,6 +20,12 @@ export const MEMBER_ROUTES: Routes = [
         loadComponent: () => import('./member-edit').then((m) => m.MemberEditPage),
       },
       {
+        path: 'import',
+        title: 'Mitglieder importieren – WTSV Judo',
+        canActivate: [permissionGuard('writeMembers')],
+        loadComponent: () => import('./member-import').then((m) => m.MemberImportPage),
+      },
+      {
         path: ':id',
         title: 'Mitglied – WTSV Judo',
         loadComponent: () => import('./member-edit').then((m) => m.MemberEditPage),

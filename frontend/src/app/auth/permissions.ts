@@ -6,6 +6,7 @@ import type { Role } from '../api/api-types';
  */
 export interface Permissions {
   readMembers: boolean;
+  /** Anlegen, Ändern und CSV-Import. */
   writeMembers: boolean;
   deleteMembers: boolean;
 }

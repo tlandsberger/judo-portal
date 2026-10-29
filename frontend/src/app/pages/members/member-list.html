@@ -1,7 +1,10 @@
 <div class="header">
   <h1>Mitglieder</h1>
   @if (permissions().writeMembers) {
-    <a matButton="filled" routerLink="/members/new">Mitglied anlegen</a>
+    <div class="actions">
+      <a matButton="outlined" routerLink="/members/import">Importieren</a>
+      <a matButton="filled" routerLink="/members/new">Mitglied anlegen</a>
+    </div>
   }
 </div>
 
@@ -54,6 +57,9 @@
           >
           @if (m.left) {
             <span class="badge">ausgetreten</span>
+          }
+          @if (!m.gender) {
+            <span class="badge warn">Geschlecht fehlt</span>
           }
         </td>
       </ng-container>

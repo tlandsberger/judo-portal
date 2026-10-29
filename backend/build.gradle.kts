@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.spring.modulith.starter.core)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.kotlin.reflect)
+    implementation(libs.commons.csv)
     runtimeOnly(libs.flyway.database.postgresql)
     runtimeOnly(libs.postgresql)
 

@@ -6,5 +6,9 @@ export type Role = MeResponse['roles'][number];
 
 export type MemberResponse = components['schemas']['MemberResponse'];
 export type MemberRequest = components['schemas']['MemberRequest'];
-export type Gender = MemberResponse['gender'];
+export type Gender = NonNullable<MemberResponse['gender']>;
 export type MembershipType = MemberResponse['membershipType'];
+
+export type ImportResponse = components['schemas']['ImportResponse'];
+export type ImportRow = components['schemas']['ImportRow'];
+export type ImportAction = ImportRow['action'];

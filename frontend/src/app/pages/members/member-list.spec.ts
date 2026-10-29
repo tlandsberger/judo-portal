@@ -68,7 +68,12 @@ describe('MemberListPage', () => {
     const fixture = TestBed.createComponent(MemberListPage);
     TestBed.tick();
     http.expectOne('/api/me').flush({ subject: '1', displayName: 'X', email: null, roles });
-    http.expectOne('/api/members').flush([member({ lastName: 'Ahrens', city: 'Hamburg' })]);
+    http
+      .expectOne('/api/members')
+      .flush([
+        member({ lastName: 'Ahrens', city: 'Hamburg' }),
+        member({ lastName: 'Becker', gender: null }),
+      ]);
     await fixture.whenStable();
     return fixture.nativeElement as HTMLElement;
   }
@@ -78,12 +83,23 @@ describe('MemberListPage', () => {
   it('zeigt die Mitglieder und für Abteilungsleiter "Mitglied anlegen"', async () => {
     const element = await render(['member', 'department_head']);
     expect(element.textContent).toContain('Ahrens, Erika');
-    expect(element.textContent).toContain('1 Mitglied');
+    expect(element.textContent).toContain('2 Mitglieder');
     expect(element.textContent).toContain('Mitglied anlegen');
+    expect(element.textContent).toContain('Importieren');
   });
 
-  it('bietet dem Administrator kein Anlegen an', async () => {
+  it('bietet dem Administrator weder Anlegen noch Import an', async () => {
     const element = await render(['admin']);
     expect(element.textContent).not.toContain('Mitglied anlegen');
+    expect(element.textContent).not.toContain('Importieren');
+  });
+
+  it('markiert Mitglieder ohne Geschlecht', async () => {
+    const element = await render(['department_head']);
+    const becker = [...element.querySelectorAll('tr')].find((row) =>
+      row.textContent?.includes('Becker'),
+    );
+    expect(becker?.textContent).toContain('Geschlecht fehlt');
+    expect(element.textContent?.match(/Geschlecht fehlt/g)).toHaveLength(1);
   });
 });

@@ -1,0 +1,5 @@
+Mitgliedsnr;Anrede;Name;Vorname;Geburtsdatum;Telefon privat;E-Mail;Vereinseintritt;Vereinsaustritt
+1001;Frau;Ahrens;Lena;12.05.2013;040 1234567;lena.ahrens@example.org;01.09.2019;
+1002;Herr;Becker;Jonas;03.02.2011;;;15.01.2018;
+1003;;Claussen;Mia;23.11.2015;;;01.03.2022;
+1004;Herr;Dittmer;Paul;30.07.1985;04103 98765;paul@example.org;01.04.2005;31.12.2024

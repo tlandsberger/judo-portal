@@ -249,7 +249,7 @@ werden vorher geklärt.
 | 5a ✅ | Umstieg auf PWA | KMP-Clients entfernt, OpenAPI-Vertrag `api/openapi.json`, Realm auf PWA umgestellt ([ADR 0007](adr/0007-pwa-mit-angular-und-openapi.md)) |
 | 5b ✅ | PWA-Durchstich | Angular-PWA mit Login (PKCE), Anzeige von `/api/me`, Logout, E2E-Test |
 | 6a ✅ | Mitglieder-Stammdaten | Mitglieder anlegen, anzeigen, ändern, löschen; Rechte nach [ADR 0008](adr/0008-rollen-nach-vereinsfunktionen.md); ohne Bankdaten und Graduierungen (Doku-Me) |
-| 6b | CSV-Import | Übernahme der bisherigen Excel-Liste |
+| 6b ✅ | CSV-Import | Übernahme der bisherigen Excel-Liste mit Vorschau und Abgleich über die Mitgliedsnummer ([Anleitung](mitglieder-import.md)) |
 | 6c | Familien & Logins | Erziehungsberechtigte, Familienkonto (Eltern-Login), Verknüpfung Mitglied ↔ Konto |
 | 7 | Feature: Events | eigene Planung |
 | 8 | Feature: Übungsleiterabrechnung | eigene Planung |
@@ -259,6 +259,5 @@ werden vorher geklärt.
 
 - Laufzeitumgebung der Homecloud (Docker Compose, Portainer, k3s, Unraid/Synology …) und
   Domain bzw. Erreichbarkeit von außen. Wird in Schritt 9 geklärt, die Compose-Basis entsteht in Schritt 3.
-- Fachliches für die Feature-Planung: Spalten der bisherigen Excel-Liste (6b),
-  Abrechnungsregeln (Stundensätze, Freibetrag nach § 3 Nr. 26 EStG).
+- Fachliches für die Feature-Planung: Abrechnungsregeln (Stundensätze, Freibetrag nach § 3 Nr. 26 EStG).
 - Optional später: PWA per Capacitor in die App-Stores bringen, falls Store-Präsenz gewünscht ist.

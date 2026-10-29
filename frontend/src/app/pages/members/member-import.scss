@@ -1,0 +1,115 @@
+.back {
+  margin-bottom: 8px;
+}
+
+h1 {
+  font: var(--mat-sys-headline-medium);
+  margin: 0 0 16px;
+}
+
+h2 {
+  font: var(--mat-sys-title-large);
+  margin: 24px 0 8px;
+}
+
+.help {
+  background: var(--mat-sys-surface-container);
+  border-radius: var(--mat-sys-corner-medium);
+  padding: 4px 16px;
+  margin-bottom: 16px;
+}
+
+.hint {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.picker,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.file-name {
+  font: var(--mat-sys-body-medium);
+  word-break: break-all;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font: var(--mat-sys-title-medium);
+}
+
+.error {
+  color: var(--mat-sys-error);
+}
+
+.note {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.table {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+.status {
+  padding: 2px 8px;
+  border-radius: var(--mat-sys-corner-small);
+  font: var(--mat-sys-label-medium);
+  white-space: nowrap;
+  background: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status.create,
+.status.update {
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.status.error {
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+/* Auf dem Handy: jede Zeile als Block (Nummer, Name, Status oben, Details darunter). */
+@media (max-width: 599px) {
+  tr.mat-mdc-header-row {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  tr.mat-mdc-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    height: auto;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  td.mat-mdc-cell {
+    border: none;
+    padding: 0;
+  }
+
+  td.line {
+    display: none;
+  }
+
+  td.details {
+    flex-basis: 100%;
+  }
+}

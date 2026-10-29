@@ -76,6 +76,74 @@
         "tags" : [ "member-controller" ]
       }
     },
+    "/api/members/import" : {
+      "post" : {
+        "operationId" : "import",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ImportResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "member-import-controller" ]
+      }
+    },
+    "/api/members/import/preview" : {
+      "post" : {
+        "operationId" : "preview",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ImportResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "member-import-controller" ]
+      }
+    },
     "/api/members/{id}" : {
       "delete" : {
         "operationId" : "delete",
@@ -159,6 +227,72 @@
   },
   "components" : {
     "schemas" : {
+      "ImportResponse" : {
+        "type" : "object",
+        "properties" : {
+          "created" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "failed" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ImportRow"
+            }
+          },
+          "unchanged" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "updated" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "created", "failed", "rows", "unchanged", "updated" ]
+      },
+      "ImportRow" : {
+        "type" : "object",
+        "properties" : {
+          "action" : {
+            "type" : "string",
+            "enum" : [ "create", "update", "unchanged", "error" ]
+          },
+          "changes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "line" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "memberNumber" : {
+            "type" : [ "string", "null" ]
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "action", "changes", "errors", "line", "name", "notes" ]
+      },
       "MeResponse" : {
         "type" : "object",
         "properties" : {
@@ -214,7 +348,7 @@
             "minLength" : 0
           },
           "gender" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "enum" : [ "female", "male", "diverse" ]
           },
           "lastName" : {
@@ -251,7 +385,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "birthDate", "entryDate", "firstName", "gender", "lastName", "membershipType" ]
+        "required" : [ "birthDate", "entryDate", "firstName", "lastName", "membershipType" ]
       },
       "MemberResponse" : {
         "type" : "object",
@@ -278,7 +412,7 @@
             "type" : "string"
           },
           "gender" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "enum" : [ "female", "male", "diverse" ]
           },
           "id" : {
@@ -312,7 +446,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "birthDate", "entryDate", "firstName", "gender", "id", "lastName", "left", "membershipType", "version" ]
+        "required" : [ "birthDate", "entryDate", "firstName", "id", "lastName", "left", "membershipType", "version" ]
       }
     },
     "securitySchemes" : {

@@ -28,6 +28,11 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  # Uploads (CSV-Import der Mitgliederliste) bleiben klein und werden nur im Speicher verarbeitet.
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 2MB
 
 springdoc:
   # Nur die Portal-API beschreiben (kein Actuator), stabil sortiert für den Vertrag api/openapi.json.
