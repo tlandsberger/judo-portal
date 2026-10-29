@@ -18,11 +18,10 @@ CONTAINER_TOOL="${CONTAINER_TOOL:-$(command -v podman >/dev/null && echo podman 
 declare -A EXPECTED=(
     [mitglied]="member"
     [trainer]="member,trainer"
-    [vorstand]="board,member"
-    [kasse]="member,treasurer"
+    [abteilungsleiter]="department_head,member"
     [admin]="admin"
 )
-PORTAL_ROLES='["member","trainer","board","treasurer","admin"]'
+PORTAL_ROLES='["member","trainer","department_head","admin"]'
 
 echo "Warte auf Keycloak (${KEYCLOAK_URL}/realms/${REALM}) …"
 for _ in $(seq 1 90); do

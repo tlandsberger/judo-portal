@@ -21,7 +21,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 /**
- * Mitgliederverwaltung. Lesen: Vorstand, Kasse, Admin. Anlegen/Ändern: Vorstand, Admin.
+ * Mitgliederverwaltung (ADR 0008). Lesen: Abteilungsleiter und Admin. Anlegen/Ändern: Abteilungsleiter.
  * Löschen nur Admin (für Fehleingaben; wer austritt, bekommt ein Austrittsdatum).
  */
 @RestController
@@ -78,8 +78,8 @@ class MemberController(
     private fun today() = LocalDate.now(clock)
 
     private companion object {
-        const val CAN_READ = "hasAnyRole('BOARD', 'TREASURER', 'ADMIN')"
-        const val CAN_WRITE = "hasAnyRole('BOARD', 'ADMIN')"
+        const val CAN_READ = "hasAnyRole('DEPARTMENT_HEAD', 'ADMIN')"
+        const val CAN_WRITE = "hasRole('DEPARTMENT_HEAD')"
         const val CAN_DELETE = "hasRole('ADMIN')"
     }
 }

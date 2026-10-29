@@ -36,8 +36,7 @@ Passwort jeweils `test`.
 |---|---|
 | `mitglied@test.local` | member |
 | `trainer@test.local` | member, trainer |
-| `vorstand@test.local` | member, board |
-| `kasse@test.local` | member, treasurer |
+| `abteilungsleiter@test.local` | member, department_head |
 | `admin@test.local` | admin |
 
 ## Clients im Realm

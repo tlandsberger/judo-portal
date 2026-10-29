@@ -59,7 +59,7 @@ export interface components {
     MeResponse: {
       displayName: string;
       email?: string | null;
-      roles: ('member' | 'trainer' | 'board' | 'treasurer' | 'admin')[];
+      roles: ('member' | 'trainer' | 'department_head' | 'admin')[];
       subject: string;
     };
     MemberRequest: {

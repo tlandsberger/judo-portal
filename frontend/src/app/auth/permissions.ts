@@ -13,8 +13,8 @@ export interface Permissions {
 export function permissionsFor(roles: readonly Role[]): Permissions {
   const hasAny = (...wanted: Role[]) => wanted.some((role) => roles.includes(role));
   return {
-    readMembers: hasAny('board', 'treasurer', 'admin'),
-    writeMembers: hasAny('board', 'admin'),
+    readMembers: hasAny('department_head', 'admin'),
+    writeMembers: hasAny('department_head'),
     deleteMembers: hasAny('admin'),
   };
 }

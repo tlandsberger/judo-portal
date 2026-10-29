@@ -23,7 +23,7 @@ npx playwright test    # E2E gegen echte Infra + Backend (startet den Dev-Server
 python3 scripts/generate-icons.py   # Favicon/PWA-Icons aus public/branding/logo-signet.png
 ```
 
-Testnutzer (Passwort `test`): `mitglied@`, `trainer@`, `vorstand@`, `kasse@`, `admin@test.local`.
+Testnutzer (Passwort `test`): `mitglied@`, `trainer@`, `abteilungsleiter@`, `admin@test.local`.
 
 ## Aufbau
 

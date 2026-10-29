@@ -50,7 +50,7 @@ abstract class IntegrationTestBase {
         }
     }
 
-    /** Access-Token per Password-Grant, z. B. für `vorstand@test.local` (Passwort `test`, Admin im Master-Realm: `admin`). */
+    /** Access-Token per Password-Grant, z. B. für `abteilungsleiter@test.local` (Passwort `test`, Admin im Master-Realm: `admin`). */
     protected fun passwordToken(
         clientId: String,
         username: String,

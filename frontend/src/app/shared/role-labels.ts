@@ -3,9 +3,8 @@ import type { Role } from '../api/api-types';
 const ROLE_LABELS: Record<Role, string> = {
   member: 'Mitglied',
   trainer: 'Übungsleiter',
-  board: 'Vorstand',
-  treasurer: 'Kasse',
-  admin: 'Administration',
+  department_head: 'Abteilungsleiter',
+  admin: 'Administrator',
 };
 
 /** Deutsche Bezeichnung einer Portal-Rolle. */

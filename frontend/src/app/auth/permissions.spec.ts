@@ -1,31 +1,24 @@
 import { permissionsFor } from './permissions';
 
 describe('permissionsFor', () => {
-  it('Vorstand liest und pflegt Mitglieder, löscht aber nicht', () => {
-    expect(permissionsFor(['member', 'board'])).toEqual({
+  it('Abteilungsleiter liest und pflegt Mitglieder, löscht aber nicht', () => {
+    expect(permissionsFor(['member', 'department_head'])).toEqual({
       readMembers: true,
       writeMembers: true,
       deleteMembers: false,
     });
   });
 
-  it('Kasse liest nur', () => {
-    expect(permissionsFor(['member', 'treasurer'])).toEqual({
+  it('Administrator liest und löscht, ändert aber nicht', () => {
+    expect(permissionsFor(['admin'])).toEqual({
       readMembers: true,
       writeMembers: false,
-      deleteMembers: false,
+      deleteMembers: true,
     });
   });
 
   it('Übungsleiter und Mitglieder sehen keine Mitglieder', () => {
     expect(permissionsFor(['member', 'trainer']).readMembers).toBe(false);
-  });
-
-  it('Administration darf alles', () => {
-    expect(permissionsFor(['admin'])).toEqual({
-      readMembers: true,
-      writeMembers: true,
-      deleteMembers: true,
-    });
+    expect(permissionsFor(['member']).readMembers).toBe(false);
   });
 });

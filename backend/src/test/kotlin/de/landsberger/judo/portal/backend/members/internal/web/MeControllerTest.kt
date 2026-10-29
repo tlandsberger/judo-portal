@@ -60,12 +60,12 @@ class MeControllerTest(
     fun `falls back to preferred_username and tolerates missing roles`() {
         mockMvc
             .get("/api/me") {
-                with(jwt().jwt { it.subject("user-7").claim("preferred_username", "kasse@test.local") })
+                with(jwt().jwt { it.subject("user-7").claim("preferred_username", "mitglied@test.local") })
             }.andExpect {
                 status { isOk() }
                 content {
                     json(
-                        """{"subject":"user-7","displayName":"kasse@test.local","email":null,"roles":[]}""",
+                        """{"subject":"user-7","displayName":"mitglied@test.local","email":null,"roles":[]}""",
                         strict = true,
                     )
                 }

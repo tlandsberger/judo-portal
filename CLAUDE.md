@@ -36,7 +36,7 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
 - **Backend-Module** (`members`, `events`, `billing`, `shared`) sind direkte Unterpakete von
   `...portal.backend`. Andere Module nur über deren Package-Root oder Domain-Events ansprechen,
   nie über `internal`-Unterpakete. `ModularityTest` erzwingt das.
-- **Rollen** (`member`, `trainer`, `board`, `treasurer`, `admin`) sind fest, siehe ADR 0003.
+- **Rollen** (`member`, `trainer`, `department_head`, `admin`) sind fest, siehe ADR 0008.
   Fachliche Autorisierung gehört ins Backend.
 - **API-Vertrag** ist `api/openapi.json` (springdoc, ADR 0007). Nach jeder API-Änderung neu schreiben
   (`-Popenapi.update`) und den Diff mit committen, sonst schlägt `OpenApiContractIT` fehl.

@@ -1,6 +1,6 @@
 # 0003 – Keycloak als Identity Provider, feste Rollen
 
-- Status: angenommen
+- Status: angenommen, Rollentabelle ersetzt durch [0008](0008-rollen-nach-vereinsfunktionen.md)
 - Datum: 2026-10-09
 
 ## Kontext

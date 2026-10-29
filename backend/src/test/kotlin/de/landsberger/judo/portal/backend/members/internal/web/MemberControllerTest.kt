@@ -43,8 +43,8 @@ class MemberControllerTest(
     }
 
     @Test
-    fun `board, treasurer and admin may read the member list`() {
-        for (role in listOf("BOARD", "TREASURER", "ADMIN")) {
+    fun `department head and admin may read the member list`() {
+        for (role in listOf("DEPARTMENT_HEAD", "ADMIN")) {
             mockMvc.get("/api/members") { with(user(role)) }.andExpect {
                 status { isOk() }
                 content { json("[]") }
@@ -58,10 +58,10 @@ class MemberControllerTest(
     }
 
     @Test
-    fun `treasurer may not create members`() {
+    fun `admin may not create members`() {
         mockMvc
             .post("/api/members") {
-                with(user("TREASURER"))
+                with(user("ADMIN"))
                 contentType = MediaType.APPLICATION_JSON
                 content = VALID_MEMBER
             }.andExpect { status { isForbidden() } }
@@ -69,7 +69,7 @@ class MemberControllerTest(
 
     @Test
     fun `only admin may delete members`() {
-        mockMvc.delete("/api/members/${UUID.randomUUID()}") { with(user("BOARD")) }.andExpect {
+        mockMvc.delete("/api/members/${UUID.randomUUID()}") { with(user("DEPARTMENT_HEAD")) }.andExpect {
             status { isForbidden() }
         }
     }
@@ -78,7 +78,7 @@ class MemberControllerTest(
     fun `invalid input is answered with field errors`() {
         mockMvc
             .post("/api/members") {
-                with(user("BOARD"))
+                with(user("DEPARTMENT_HEAD"))
                 contentType = MediaType.APPLICATION_JSON
                 content = VALID_MEMBER.replace("\"Erika\"", "\" \"").replace("erika@example.org", "keine-mail")
             }.andExpect {
@@ -93,7 +93,7 @@ class MemberControllerTest(
     fun `update without version is rejected`() {
         mockMvc
             .put("/api/members/${UUID.randomUUID()}") {
-                with(user("BOARD"))
+                with(user("DEPARTMENT_HEAD"))
                 contentType = MediaType.APPLICATION_JSON
                 content = VALID_MEMBER
             }.andExpect {

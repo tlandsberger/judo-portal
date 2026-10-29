@@ -28,16 +28,12 @@
         "description": "Übungsleiter: eigene Gruppen, Anwesenheit, eigene Abrechnungen"
       },
       {
-        "name": "board",
-        "description": "Vorstand: Mitgliedsdaten, vereinsweite Events, fachliche Freigabe von Abrechnungen"
-      },
-      {
-        "name": "treasurer",
-        "description": "Kasse: Bankdaten, Auszahlung/Export freigegebener Abrechnungen"
+        "name": "department_head",
+        "description": "Abteilungsleiter: Mitgliederverwaltung, abteilungsweite Events, Freigabe von Abrechnungen"
       },
       {
         "name": "admin",
-        "description": "Technische Administration: Konten, Rollen, Systemeinstellungen"
+        "description": "Administrator (technisch): Konten, Rollen, Systemeinstellungen, Löschen von Fehleingaben"
       }
     ]
   },
@@ -146,12 +142,12 @@
       ]
     },
     {
-      "username": "vorstand@test.local",
-      "email": "vorstand@test.local",
+      "username": "abteilungsleiter@test.local",
+      "email": "abteilungsleiter@test.local",
       "emailVerified": true,
       "enabled": true,
-      "firstName": "Vera",
-      "lastName": "Vorstand",
+      "firstName": "Alex",
+      "lastName": "Abteilungsleiter",
       "credentials": [
         {
           "type": "password",
@@ -161,26 +157,7 @@
       ],
       "realmRoles": [
         "member",
-        "board"
-      ]
-    },
-    {
-      "username": "kasse@test.local",
-      "email": "kasse@test.local",
-      "emailVerified": true,
-      "enabled": true,
-      "firstName": "Karl",
-      "lastName": "Kasse",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "test",
-          "temporary": false
-        }
-      ],
-      "realmRoles": [
-        "member",
-        "treasurer"
+        "department_head"
       ]
     },
     {
@@ -208,8 +185,7 @@
       "roles": [
         "member",
         "trainer",
-        "board",
-        "treasurer",
+        "department_head",
         "admin"
       ]
     },
@@ -218,8 +194,7 @@
       "roles": [
         "member",
         "trainer",
-        "board",
-        "treasurer",
+        "department_head",
         "admin"
       ]
     }

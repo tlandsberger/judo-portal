@@ -7,7 +7,7 @@
 
 | | |
 |---|---|
-| Zielgruppe | Mitglieder und Funktionäre (Vorstand, Kasse, Übungsleiter) eines Judo-Vereins |
+| Zielgruppe | Mitglieder und Funktionäre (Abteilungsleiter, Übungsleiter) eines Judo-Vereins |
 | Größe | < 300 Mitglieder. Daten kommen per einmaligem Import aus Excel/CSV, eine laufende Schnittstelle zu Fremdsoftware gibt es nicht |
 | Plattformen | Progressive Web App: im Browser und auf Android/iOS als installierbare App. Alles hinter einem Login |
 | Initiale Features | Mitglieder- und Benutzerverwaltung · Events (Trainings & Veranstaltungen) · Übungsleiterabrechnung |
@@ -135,18 +135,19 @@ flowchart LR
 
 ### 6.1 Rollen
 
-Feste Realm-Rollen in Keycloak. Eine Person kann mehrere Rollen haben.
+Feste Realm-Rollen in Keycloak nach den Funktionen der Abteilung
+([ADR 0008](adr/0008-rollen-nach-vereinsfunktionen.md)). Eine Person kann mehrere Rollen haben.
 
 | Rolle | Zweck | Darf u. a. |
 |---|---|---|
-| `member` | Jedes Mitglied | eigene Daten sehen/ändern (soweit erlaubt), Events sehen, sich an-/abmelden |
+| `member` | Mitglied | eigene Daten sehen/ändern (soweit erlaubt), Events sehen, sich an-/abmelden |
 | `trainer` | Übungsleiter | eigene Gruppen und Trainings verwalten, Anwesenheit erfassen, eigene Abrechnungen einreichen |
-| `board` | Vorstand | alle Mitgliedsdaten pflegen, vereinsweite Events anlegen, Abrechnungen **fachlich freigeben** |
-| `treasurer` | Kasse | Bankdaten einsehen, freigegebene Abrechnungen **auszahlen/exportieren** |
-| `admin` | Technische Administration | Benutzerkonten, Rollenvergabe, Systemeinstellungen. **Keine** fachlichen Rechte |
+| `department_head` | Abteilungsleiter | Mitglieder lesen und pflegen, abteilungsweite Events anlegen, Abrechnungen freigeben |
+| `admin` | Administrator (technisch) | Benutzerkonten, Rollenvergabe, Systemeinstellungen; Mitglieder lesen und Fehleingaben löschen |
 
-Bei Abrechnungen gilt das Vier-Augen-Prinzip: Der Übungsleiter reicht ein, der Vorstand gibt
-frei, die Kasse zahlt aus. Wer eine Abrechnung eingereicht hat, kann sie nicht selbst freigeben.
+Weitere Ämter (Kassenwart, Jugendwart, Sportwart) sind derzeit nicht besetzt und kommen bei Bedarf als
+eigene Rolle dazu. Wer eine Abrechnung eingereicht hat, kann sie nicht selbst freigeben; das genaue
+Vier-Augen-Prinzip wird mit dem Abrechnungs-Feature geplant.
 
 ### 6.2 Grundsätze
 
@@ -154,7 +155,7 @@ frei, die Kasse zahlt aus. Wer eine Abrechnung eingereicht hat, kann sie nicht s
   Fachliche Regeln (z. B. „Trainer sieht nur Mitglieder seiner Gruppen“) prüft das Backend
   (Method Security und Domain-Checks).
 - Das Backend akzeptiert nur Tokens mit der Audience `judo-portal-api` und übernimmt nur die
-  fünf Portal-Rollen aus `realm_access.roles`. Fachcode arbeitet mit `CurrentUser` statt mit dem
+  vier Portal-Rollen aus `realm_access.roles`. Fachcode arbeitet mit `CurrentUser` statt mit dem
   Token ([ADR 0006](adr/0006-api-vertrag-und-token-pruefung.md)).
 - Die PWA hält Tokens im `sessionStorage`. XSS-Schutz ist deshalb Pflicht: Angular-Sanitizing und eine
   strikte Content-Security-Policy über Caddy ([ADR 0007](adr/0007-pwa-mit-angular-und-openapi.md)).
@@ -167,7 +168,8 @@ frei, die Kasse zahlt aus. Wer eine Abrechnung eingereicht hat, kann sie nicht s
 ### 6.3 Datenschutz (DSGVO)
 
 - **Datenminimierung:** Erfasst wird nur, was für Mitgliedschaft, Training und Abrechnung nötig ist.
-- **Feldsicht nach Rolle:** Bankdaten nur für `treasurer` (und das Mitglied selbst). Sensible
+- **Feldsicht nach Rolle:** Mitgliedsdaten sieht nur, wer sie für seine Funktion braucht. Bankdaten
+  speichert das Portal bewusst nicht, Graduierungen liegen im DJB-Portal Doku-Me. Sensible
   Angaben (z. B. Gesundheitshinweise für Trainer) nur bei ausdrücklichem Bedarf und mit Einwilligung.
 - **Audit-Log** für Änderungen an Mitglieds- und Abrechnungsdaten (wer, wann, was).
 - **Betroffenenrechte:** Export der eigenen Daten, Löschung bzw. Anonymisierung nach Austritt

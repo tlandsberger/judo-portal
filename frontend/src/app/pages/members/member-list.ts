@@ -44,7 +44,7 @@ export function filterMembers(
     );
 }
 
-/** Mitgliederliste für Vorstand, Kasse und Administration. */
+/** Mitgliederliste für Abteilungsleiter und Administrator. */
 @Component({
   selector: 'judo-member-list',
   imports: [

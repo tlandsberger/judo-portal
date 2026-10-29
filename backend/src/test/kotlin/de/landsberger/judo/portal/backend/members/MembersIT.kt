@@ -22,11 +22,11 @@ class MembersIT(
 ) : IntegrationTestBase() {
     private val http = RestClient.create()
     private val json = JsonMapper.builder().build()
-    private val board by lazy { tokenFor("vorstand@test.local") }
+    private val head by lazy { tokenFor("abteilungsleiter@test.local") }
 
     @Test
-    fun `board creates, reads, updates and admin deletes a member`() {
-        val created = call(HttpMethod.POST, "/api/members", board, memberJson(number = "IT-1"))
+    fun `department head creates, reads and updates, admin deletes a member`() {
+        val created = call(HttpMethod.POST, "/api/members", head, memberJson(number = "IT-1"))
         assertEquals(HttpStatus.CREATED, created.statusCode)
         val member = created.json()
         val id = member["id"].asString()
@@ -39,7 +39,7 @@ class MembersIT(
         assertEquals("female", member["gender"].asString())
         assertEquals(false, member["left"].asBoolean())
 
-        val list = call(HttpMethod.GET, "/api/members", tokenFor("kasse@test.local"))
+        val list = call(HttpMethod.GET, "/api/members", tokenFor("admin@test.local"))
         assertEquals(HttpStatus.OK, list.statusCode)
         assertTrue(list.json().any { it["id"].asString() == id })
 
@@ -48,7 +48,7 @@ class MembersIT(
             call(
                 HttpMethod.PUT,
                 "/api/members/$id",
-                board,
+                head,
                 memberJson(number = "IT-1", version = version, city = "Wedel", exitDate = "2020-12-31"),
             )
         assertEquals(HttpStatus.OK, updated.statusCode)
@@ -57,10 +57,10 @@ class MembersIT(
         assertEquals(version + 1, updated.json()["version"].asLong())
 
         // Zweiter Bearbeiter mit veraltetem Stand.
-        val stale = call(HttpMethod.PUT, "/api/members/$id", board, memberJson(number = "IT-1", version = version))
+        val stale = call(HttpMethod.PUT, "/api/members/$id", head, memberJson(number = "IT-1", version = version))
         assertEquals(HttpStatus.CONFLICT, stale.statusCode)
 
-        assertEquals(HttpStatus.FORBIDDEN, call(HttpMethod.DELETE, "/api/members/$id", board).statusCode)
+        assertEquals(HttpStatus.FORBIDDEN, call(HttpMethod.DELETE, "/api/members/$id", head).statusCode)
         val admin = tokenFor("admin@test.local")
         assertEquals(HttpStatus.NO_CONTENT, call(HttpMethod.DELETE, "/api/members/$id", admin).statusCode)
         assertEquals(HttpStatus.NOT_FOUND, call(HttpMethod.GET, "/api/members/$id", admin).statusCode)
@@ -70,15 +70,15 @@ class MembersIT(
     fun `duplicate member number and exit before entry are rejected with field errors`() {
         assertEquals(
             HttpStatus.CREATED,
-            call(HttpMethod.POST, "/api/members", board, memberJson(number = "IT-2")).statusCode,
+            call(HttpMethod.POST, "/api/members", head, memberJson(number = "IT-2")).statusCode,
         )
 
-        val duplicate = call(HttpMethod.POST, "/api/members", board, memberJson(number = "IT-2"))
+        val duplicate = call(HttpMethod.POST, "/api/members", head, memberJson(number = "IT-2"))
         assertEquals(HttpStatus.CONFLICT, duplicate.statusCode)
         assertEquals("memberNumber", duplicate.json()["errors"][0]["field"].asString())
 
         val exitBeforeEntry =
-            call(HttpMethod.POST, "/api/members", board, memberJson(number = "IT-3", exitDate = "2000-01-01"))
+            call(HttpMethod.POST, "/api/members", head, memberJson(number = "IT-3", exitDate = "2000-01-01"))
         assertEquals(HttpStatus.BAD_REQUEST, exitBeforeEntry.statusCode)
         assertEquals("exitDate", exitBeforeEntry.json()["errors"][0]["field"].asString())
     }

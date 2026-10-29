@@ -172,7 +172,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "member", "trainer", "board", "treasurer", "admin" ]
+              "enum" : [ "member", "trainer", "department_head", "admin" ]
             },
             "uniqueItems" : true
           },
