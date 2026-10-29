@@ -6,6 +6,7 @@ describe('permissionsFor', () => {
       readMembers: true,
       writeMembers: true,
       deleteMembers: false,
+      manageAccess: true,
     });
   });
 
@@ -14,11 +15,13 @@ describe('permissionsFor', () => {
       readMembers: true,
       writeMembers: false,
       deleteMembers: true,
+      manageAccess: true,
     });
   });
 
   it('Übungsleiter und Mitglieder sehen keine Mitglieder', () => {
     expect(permissionsFor(['member', 'trainer']).readMembers).toBe(false);
     expect(permissionsFor(['member']).readMembers).toBe(false);
+    expect(permissionsFor(['member', 'trainer']).manageAccess).toBe(false);
   });
 });

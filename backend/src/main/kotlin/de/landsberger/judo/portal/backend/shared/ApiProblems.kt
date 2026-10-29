@@ -28,3 +28,8 @@ class InvalidInputException(
     field: String,
     message: String,
 ) : ApiProblemException(HttpStatus.BAD_REQUEST, message, field)
+
+/** 502: Ein angebundener Dienst (z. B. Keycloak oder der Mailversand) hat nicht wie erwartet geantwortet. */
+class ExternalServiceException(
+    message: String,
+) : ApiProblemException(HttpStatus.BAD_GATEWAY, message)

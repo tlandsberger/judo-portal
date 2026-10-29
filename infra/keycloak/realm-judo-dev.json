@@ -101,6 +101,21 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "judo-portal-backend",
+      "name": "WTSV Judo Backend",
+      "description": "Vertraulicher Client des Backends: lädt Mitglieder und Eltern ein (Service-Account, ADR 0009).",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-backend-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true
     }
   ],
   "users": [
@@ -177,6 +192,18 @@
       "realmRoles": [
         "admin"
       ]
+    },
+    {
+      "username": "service-account-judo-portal-backend",
+      "enabled": true,
+      "serviceAccountClientId": "judo-portal-backend",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users"
+        ]
+      }
     }
   ],
   "scopeMappings": [
@@ -198,5 +225,14 @@
         "admin"
       ]
     }
-  ]
+  ],
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "noreply@wtsv-judo.local",
+    "fromDisplayName": "WTSV Judo",
+    "auth": "false",
+    "ssl": "false",
+    "starttls": "false"
+  }
 }

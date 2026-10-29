@@ -7,6 +7,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestClient
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.Network
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
@@ -23,11 +24,27 @@ abstract class IntegrationTestBase {
         // Versionen synchron halten mit infra/compose.dev.yaml.
         private const val POSTGRES_IMAGE = "postgres:18.6"
         private const val KEYCLOAK_IMAGE = "keycloak/keycloak:26.8.0"
+        private const val MAILPIT_IMAGE = "axllent/mailpit:v1.27.0"
+
+        /** Keycloak verschickt Einladungen an „mailpit:1025“ (SMTP im Realm), deshalb ein gemeinsames Netz. */
+        private val network: Network = Network.newNetwork()
+
+        val mailpit: GenericContainer<*> =
+            GenericContainer(MAILPIT_IMAGE)
+                .withNetwork(network)
+                .withNetworkAliases("mailpit")
+                .withExposedPorts(8025)
+                .waitingFor(Wait.forHttp("/api/v1/info").forPort(8025))
+                .apply { start() }
+
+        /** REST-API von Mailpit, z. B. `$mailpitUrl/api/v1/search?query=to:…`. */
+        val mailpitUrl: String get() = "http://${mailpit.host}:${mailpit.getMappedPort(8025)}"
 
         val postgres: PostgreSQLContainer = PostgreSQLContainer(POSTGRES_IMAGE).apply { start() }
 
         val keycloak: GenericContainer<*> =
             GenericContainer(KEYCLOAK_IMAGE)
+                .withNetwork(network)
                 .withCommand("start-dev", "--import-realm")
                 .withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
                 .withEnv("KC_BOOTSTRAP_ADMIN_PASSWORD", "admin")
@@ -47,6 +64,7 @@ abstract class IntegrationTestBase {
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
             registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri") { "$keycloakUrl/realms/judo" }
+            registry.add("portal.keycloak.url") { keycloakUrl }
         }
     }
 

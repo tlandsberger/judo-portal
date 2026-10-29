@@ -122,4 +122,12 @@
       }
     </div>
   </form>
+
+  @if (!isNew() && permissions().manageAccess && member.hasValue()) {
+    <judo-member-access
+      [memberId]="member.value().id"
+      [memberName]="title()"
+      [birthDate]="member.value().birthDate"
+    />
+  }
 }

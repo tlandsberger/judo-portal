@@ -9,6 +9,8 @@ export interface Permissions {
   /** Anlegen, Ändern und CSV-Import. */
   writeMembers: boolean;
   deleteMembers: boolean;
+  /** Zugänge einladen und entfernen (Mitglied ↔ Konto, Eltern ↔ Kind). */
+  manageAccess: boolean;
 }
 
 export function permissionsFor(roles: readonly Role[]): Permissions {
@@ -17,5 +19,6 @@ export function permissionsFor(roles: readonly Role[]): Permissions {
     readMembers: hasAny('department_head', 'admin'),
     writeMembers: hasAny('department_head'),
     deleteMembers: hasAny('admin'),
+    manageAccess: hasAny('department_head', 'admin'),
   };
 }

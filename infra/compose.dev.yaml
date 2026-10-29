@@ -1,4 +1,4 @@
-# Lokale Entwicklungsumgebung: PostgreSQL + Keycloak mit Realm "judo" und Testnutzern.
+# Lokale Entwicklungsumgebung: PostgreSQL + Keycloak mit Realm "judo" und Testnutzern, Mailpit für Mails.
 #
 #   podman compose -f infra/compose.dev.yaml up -d     (oder: docker compose …)
 #
@@ -48,6 +48,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       # Das Image enthält weder curl noch grep, daher ein reiner Bash-HTTP-Request auf den Management-Port.
       test:
@@ -61,6 +63,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 60
+
+  # Fängt alle Mails ab (Einladungen, Passwort-Reset); Web-Oberfläche: http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.27.0
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 
 volumes:
   postgres-data:

@@ -32,6 +32,7 @@ import {
   toFormModel,
   toRequest,
 } from './member-form';
+import { MemberAccessSection } from './member-access';
 import { GENDER_LABELS, MEMBERSHIP_LABELS } from './member-labels';
 
 /** Mitglied anlegen (`/members/new`) oder anzeigen und bearbeiten (`/members/:id`). */
@@ -49,6 +50,7 @@ import { GENDER_LABELS, MEMBERSHIP_LABELS } from './member-labels';
     MatOption,
     MatProgressBar,
     MatSelect,
+    MemberAccessSection,
   ],
   templateUrl: './member-edit.html',
   styleUrl: './member-edit.scss',

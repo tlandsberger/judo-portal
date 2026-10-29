@@ -46,3 +46,13 @@ management:
     web:
       exposure:
         include: health
+
+portal:
+  # Adresse der PWA (Ziel nach dem Einladungslink).
+  public-url: ${PORTAL_PUBLIC_URL:http://localhost:4200}
+  # Keycloak-Admin-API für Einladungen (ADR 0009). Secret in Produktion nur per Umgebungsvariable.
+  keycloak:
+    url: ${PORTAL_KEYCLOAK_URL:http://localhost:8081}
+    realm: judo
+    client-id: judo-portal-backend
+    client-secret: ${PORTAL_KEYCLOAK_CLIENT_SECRET:dev-backend-secret}

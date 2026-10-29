@@ -29,6 +29,54 @@
         "tags" : [ "me-controller" ]
       }
     },
+    "/api/me/members" : {
+      "get" : {
+        "operationId" : "list_2",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MyMemberResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "my-members-controller" ]
+      }
+    },
+    "/api/me/members/{memberId}" : {
+      "get" : {
+        "operationId" : "get_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "memberId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MyMemberResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "my-members-controller" ]
+      }
+    },
     "/api/members" : {
       "get" : {
         "operationId" : "list",
@@ -223,6 +271,127 @@
         },
         "tags" : [ "member-controller" ]
       }
+    },
+    "/api/members/{memberId}/access" : {
+      "get" : {
+        "operationId" : "list_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "memberId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MemberAccessResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "member-access-controller" ]
+      },
+      "post" : {
+        "operationId" : "invite",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "memberId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InvitationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InvitationResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "member-access-controller" ]
+      }
+    },
+    "/api/members/{memberId}/access/{accessId}" : {
+      "delete" : {
+        "operationId" : "remove",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "memberId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "accessId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "member-access-controller" ]
+      }
+    },
+    "/api/members/{memberId}/access/{accessId}/resend" : {
+      "post" : {
+        "operationId" : "resend",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "memberId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "accessId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "member-access-controller" ]
+      }
     }
   },
   "components" : {
@@ -293,6 +462,44 @@
         },
         "required" : [ "action", "changes", "errors", "line", "name", "notes" ]
       },
+      "InvitationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 254,
+            "minLength" : 0
+          },
+          "firstName" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "lastName" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "self", "guardian" ]
+          }
+        },
+        "required" : [ "email", "relation" ]
+      },
+      "InvitationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "access" : {
+            "$ref" : "#/components/schemas/MemberAccessResponse"
+          },
+          "invitationSent" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "access", "invitationSent" ]
+      },
       "MeResponse" : {
         "type" : "object",
         "properties" : {
@@ -315,6 +522,34 @@
           }
         },
         "required" : [ "displayName", "roles", "subject" ]
+      },
+      "MemberAccessResponse" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "self", "guardian" ]
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "invited", "active", "expired", "missing" ]
+          }
+        },
+        "required" : [ "createdAt", "email", "id", "name", "relation", "status" ]
       },
       "MemberRequest" : {
         "type" : "object",
@@ -447,6 +682,19 @@
           }
         },
         "required" : [ "birthDate", "entryDate", "firstName", "id", "lastName", "left", "membershipType", "version" ]
+      },
+      "MyMemberResponse" : {
+        "type" : "object",
+        "properties" : {
+          "member" : {
+            "$ref" : "#/components/schemas/MemberResponse"
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "self", "guardian" ]
+          }
+        },
+        "required" : [ "member", "relation" ]
       }
     },
     "securitySchemes" : {

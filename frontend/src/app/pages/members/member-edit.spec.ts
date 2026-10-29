@@ -47,6 +47,10 @@ describe('MemberEditPage', () => {
     });
     if (id) {
       http.expectOne(`/api/members/${id}`).flush(ERIKA);
+      // Abteilungsleiter sehen zusätzlich die Zugänge des Mitglieds (Abschnitt rendern, dann laden).
+      await new Promise((resolve) => setTimeout(resolve));
+      TestBed.tick();
+      http.expectOne(`/api/members/${id}/access`).flush([]);
     }
     await fixture.whenStable();
     return fixture;

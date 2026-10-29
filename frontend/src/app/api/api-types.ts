@@ -12,3 +12,10 @@ export type MembershipType = MemberResponse['membershipType'];
 export type ImportResponse = components['schemas']['ImportResponse'];
 export type ImportRow = components['schemas']['ImportRow'];
 export type ImportAction = ImportRow['action'];
+
+export type MemberAccessResponse = components['schemas']['MemberAccessResponse'];
+export type InvitationRequest = components['schemas']['InvitationRequest'];
+export type InvitationResponse = components['schemas']['InvitationResponse'];
+export type AccessRelation = MemberAccessResponse['relation'];
+export type AccessStatus = MemberAccessResponse['status'];
+export type MyMemberResponse = components['schemas']['MyMemberResponse'];

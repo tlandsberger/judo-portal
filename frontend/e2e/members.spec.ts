@@ -25,7 +25,7 @@ test('Abteilungsleiter legt ein Mitglied an und ändert es, Administrator lösch
   await page.getByLabel('Geburtsdatum').fill('2012-03-04');
   await page.getByRole('combobox', { name: 'Geschlecht' }).click();
   await page.getByRole('option', { name: 'weiblich' }).click();
-  await page.getByLabel('Ort').fill('Hamburg');
+  await page.getByLabel('Ort', { exact: true }).fill('Hamburg');
   await page.getByLabel('E-Mail').fill('erika@example.org');
   await expectNoA11yViolations(page);
   await page.getByRole('button', { name: 'Speichern' }).click();
@@ -38,7 +38,7 @@ test('Abteilungsleiter legt ein Mitglied an und ändert es, Administrator lösch
 
   await row.getByRole('link').click();
   await expect(page.getByRole('heading', { name: `Erika ${lastName}` })).toBeVisible();
-  await page.getByLabel('Ort').fill('Wedel');
+  await page.getByLabel('Ort', { exact: true }).fill('Wedel');
   await page.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByText('Änderungen gespeichert.')).toBeVisible();
   await page.getByLabel('Suchen (Name, Nummer, Ort)').fill(lastName);
@@ -59,7 +59,7 @@ test('Abteilungsleiter legt ein Mitglied an und ändert es, Administrator lösch
     .getByRole('link')
     .click();
   await expect(page.getByText('Du kannst die Daten ansehen, aber nicht ändern.')).toBeVisible();
-  await expect(page.getByLabel('Ort')).toBeDisabled();
+  await expect(page.getByLabel('Ort', { exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Löschen' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Löschen' }).click();
   await expect(page.getByText('Mitglied gelöscht.')).toBeVisible();

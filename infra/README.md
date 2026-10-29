@@ -1,6 +1,6 @@
 # Lokale Entwicklungsumgebung
 
-PostgreSQL und Keycloak (Realm `judo` mit Rollen, Clients und Testnutzern) per Compose.
+PostgreSQL, Keycloak (Realm `judo` mit Rollen, Clients und Testnutzern) und Mailpit per Compose.
 Die Datei funktioniert mit **Podman** und mit Docker.
 
 ## Starten & Stoppen
@@ -23,6 +23,7 @@ podman compose -f infra/compose.dev.yaml down -v    # stoppen und alles zurücks
 | Realm `judo` (Issuer) | http://localhost:8081/realms/judo | – |
 | Account-Seite (Login testen) | http://localhost:8081/realms/judo/account | Testnutzer, siehe unten |
 | PostgreSQL | `localhost:5432` | DB `portal`, Nutzer `portal` / `portal` (Backend) |
+| Mailpit (alle Mails, z. B. Einladungen) | http://localhost:8025 | – (SMTP intern `mailpit:1025`) |
 
 Die Passwörter sind reine Dev-Defaults. Sie lassen sich über Umgebungsvariablen überschreiben:
 `POSTGRES_PASSWORD`, `PORTAL_DB_PASSWORD`, `KEYCLOAK_DB_PASSWORD`, `KEYCLOAK_ADMIN_USER` und
@@ -45,8 +46,9 @@ Passwort jeweils `test`.
 |---|---|
 | `judo-portal-app` | PWA (Dev: `http://localhost:4200`): Authorization Code + PKCE, public |
 | `judo-dev-tools` | **Nur Dev:** Password-Grant für Tokens per `curl` |
+| `judo-portal-backend` | Vertraulich, Service-Account des Backends: lädt Mitglieder und Eltern ein (ADR 0009). Dev-Secret `dev-backend-secret`, in Produktion per `PORTAL_KEYCLOAK_CLIENT_SECRET` |
 
-Beide Clients schreiben die Audience `judo-portal-api` ins Token. Ohne diesen Eintrag lehnt das
+`judo-portal-app` und `judo-dev-tools` schreiben die Audience `judo-portal-api` ins Token. Ohne diesen Eintrag lehnt das
 Backend ein Token ab (ADR 0006).
 
 Ein Token für API-Tests holen:
