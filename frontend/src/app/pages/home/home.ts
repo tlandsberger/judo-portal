@@ -6,11 +6,12 @@ import { MatProgressBar } from '@angular/material/progress-bar';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { CurrentUser } from '../../auth/current-user';
 import { roleLabel } from '../../shared/role-labels';
+import { MyMembersSection } from './my-members';
 
 /** Startseite nach dem Login: zeigt den angemeldeten Benutzer aus GET /api/me. */
 @Component({
   selector: 'judo-home',
-  imports: [MatButton, MatChipSet, MatChip, MatProgressBar],
+  imports: [MatButton, MatChipSet, MatChip, MatProgressBar, MyMembersSection],
   template: `
     @if (me.isLoading()) {
       <mat-progress-bar mode="indeterminate" aria-label="Daten werden geladen" />
@@ -29,14 +30,16 @@ import { roleLabel } from '../../shared/role-labels';
       @if (user.email) {
         <p class="email">{{ user.email }}</p>
       }
-      <h2>Deine Rollen</h2>
-      <mat-chip-set aria-label="Deine Rollen">
-        @for (role of user.roles; track role) {
-          <mat-chip>{{ label(role) }}</mat-chip>
-        } @empty {
-          <p>Dir ist noch keine Rolle zugewiesen.</p>
-        }
-      </mat-chip-set>
+      <judo-my-members />
+      <!-- Eltern ohne eigene Mitgliedschaft haben keine Rolle; dann entfällt der Abschnitt. -->
+      @if (user.roles.length) {
+        <h2>Deine Rollen</h2>
+        <mat-chip-set aria-label="Deine Rollen">
+          @for (role of user.roles; track role) {
+            <mat-chip>{{ label(role) }}</mat-chip>
+          }
+        </mat-chip-set>
+      }
     }
   `,
   styles: `

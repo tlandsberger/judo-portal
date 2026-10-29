@@ -26,7 +26,10 @@ async function invitationLink(
   throw new Error(`Keine Einladung an ${to} angekommen`);
 }
 
-test('Abteilungsleiter lädt eine Mutter für ihr Kind ein', async ({ page, request }) => {
+test('Mutter wird eingeladen, setzt ihr Passwort und sieht ihr Kind schreibgeschützt', async ({
+  page,
+  request,
+}) => {
   const run = Date.now();
   const mother = `mutter-${run}@example.org`;
   const child = `Kind${run}`;
@@ -49,6 +52,8 @@ test('Abteilungsleiter lädt eine Mutter für ihr Kind ein', async ({ page, requ
   await expect(page.getByRole('button', { name: 'Eigenen Zugang einladen' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Erziehungsberechtigte einladen' }).click();
   const dialog = page.getByRole('dialog');
+  // Der Dialog fokussiert nach dem Öffnen das erste Feld; vorher tippen würde dort landen.
+  await expect(dialog.getByLabel('E-Mail')).toBeFocused();
   await dialog.getByLabel('E-Mail').fill(mother);
   await dialog.getByLabel('Vorname').fill('Maria');
   await dialog.getByLabel('Nachname').fill(child);
@@ -60,7 +65,37 @@ test('Abteilungsleiter lädt eine Mutter für ihr Kind ein', async ({ page, requ
   await expect(page.getByText('Eingeladen')).toBeVisible();
   await expectNoA11yViolations(page);
 
-  expect(await invitationLink(request, mother)).toContain(
-    '/realms/judo/login-actions/action-token',
-  );
+  const link = await invitationLink(request, mother);
+  await page.getByRole('button', { name: 'Abmelden' }).click();
+  await expect(page.getByRole('button', { name: 'Anmelden' })).toBeVisible();
+
+  // Die Mutter öffnet den Link aus der Mail und legt ihr Passwort fest (Keycloak-Seite).
+  await page.goto(link);
+  // Keycloak fasst die Aktionen erst zusammen („Klicken Sie hier um fortzufahren“).
+  await page.getByRole('link', { name: /fortzufahren|proceed/i }).click();
+  await page.locator('#password-new').fill('Sicher-123');
+  await page.locator('#password-confirm').fill('Sicher-123');
+  await page.locator('[type=submit]').click();
+  await expect(page.getByText(/Konto wurde aktualisiert|account has been updated/i)).toBeVisible();
+
+  // Anmelden im Portal; ist die Keycloak-Sitzung schon da, geht es ohne Passwort weiter.
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Anmelden' }).click();
+  const username = page.locator('#username');
+  await expect(username.or(page.getByRole('heading', { name: /Hallo/ }))).toBeVisible();
+  if (await username.isVisible()) {
+    await username.fill(mother);
+    await page.locator('#password').fill('Sicher-123');
+    await page.locator('#kc-login').click();
+  }
+  await expect(page.getByRole('heading', { name: `Hallo Maria ${child}` })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mein Kind' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Mitglieder' })).toHaveCount(0);
+  await expectNoA11yViolations(page);
+
+  await page.getByRole('link', { name: 'Daten von Emma ansehen' }).click();
+  await expect(page.getByRole('heading', { name: `Emma ${child}` })).toBeVisible();
+  await expect(page.getByText('01.06.2017')).toBeVisible();
+  await expect(page.locator('input')).toHaveCount(0);
+  await expectNoA11yViolations(page);
 });

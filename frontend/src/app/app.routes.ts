@@ -14,6 +14,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/home/home').then((m) => m.HomePage),
   },
   {
+    path: 'my/members/:id',
+    title: 'Meine Daten – WTSV Judo',
+    canActivate: [authenticatedGuard],
+    loadComponent: () => import('./pages/my/my-member').then((m) => m.MyMemberPage),
+  },
+  {
     path: 'members',
     canActivate: [authenticatedGuard, permissionGuard('readMembers')],
     loadChildren: () => import('./pages/members/members.routes').then((m) => m.MEMBER_ROUTES),

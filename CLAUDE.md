@@ -13,7 +13,7 @@ Architektur: `docs/ARCHITECTURE.md`, Entscheidungen: `docs/adr/`.
 ./gradlew :backend:test -Popenapi.update   # API-Vertrag api/openapi.json nach API-Änderungen neu schreiben
 ```
 
-Lokale Infrastruktur (Postgres :5432, Keycloak :8081, Testnutzer `<rolle>@test.local` / `test`):
+Lokale Infrastruktur (Postgres :5432, Keycloak :8081, Mailpit http://localhost:8025, Testnutzer `<rolle>@test.local` / `test`):
 
 ```bash
 podman compose -f infra/compose.dev.yaml up -d   # bzw. docker compose
@@ -41,6 +41,8 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
 - **API-Vertrag** ist `api/openapi.json` (springdoc, ADR 0007). Nach jeder API-Änderung neu schreiben
   (`-Popenapi.update`) und den Diff mit committen, sonst schlägt `OpenApiContractIT` fehl.
   Nicht-nullbare Kotlin-Felder werden automatisch `required`.
+- **Benutzerkonten** nur über `AccountDirectory` (`backend.shared`, ADR 0009), nie direkt gegen Keycloak.
+  Zugänge zu Mitgliedern stehen in `member_access` (eigener Zugang ab 14, Eltern bis zum 18. Geburtstag des Kindes).
 - **Fehler** als Problem Details: fachliche Fehler über `NotFoundException`, `ConflictException`,
   `InvalidInputException` (`backend.shared`), Feldfehler stehen in `errors: [{field, message}]` mit deutschen Texten
   (`ApiExceptionHandler`). Bean-Validation-Meldungen immer explizit auf Deutsch setzen.

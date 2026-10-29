@@ -145,6 +145,10 @@ Feste Realm-Rollen in Keycloak nach den Funktionen der Abteilung
 | `department_head` | Abteilungsleiter | Mitglieder lesen und pflegen, abteilungsweite Events anlegen, Abrechnungen freigeben |
 | `admin` | Administrator (technisch) | Benutzerkonten, Rollenvergabe, Systemeinstellungen; Mitglieder lesen und Fehleingaben löschen |
 
+Eltern haben keine eigene Rolle: Ihr Konto ist mit ihren minderjährigen Kindern verknüpft und sieht deren Daten
+nur lesend, bis das Kind 18 wird. Mitglieder ab 14 können einen eigenen Zugang (Rolle `member`) bekommen. Zugänge
+entstehen per Einladung aus dem Portal ([ADR 0009](adr/0009-einladungen-ueber-keycloak-admin-api.md)).
+
 Weitere Ämter (Kassenwart, Jugendwart, Sportwart) sind derzeit nicht besetzt und kommen bei Bedarf als
 eigene Rolle dazu. Wer eine Abrechnung eingereicht hat, kann sie nicht selbst freigeben; das genaue
 Vier-Augen-Prinzip wird mit dem Abrechnungs-Feature geplant.
@@ -250,7 +254,7 @@ werden vorher geklärt.
 | 5b ✅ | PWA-Durchstich | Angular-PWA mit Login (PKCE), Anzeige von `/api/me`, Logout, E2E-Test |
 | 6a ✅ | Mitglieder-Stammdaten | Mitglieder anlegen, anzeigen, ändern, löschen; Rechte nach [ADR 0008](adr/0008-rollen-nach-vereinsfunktionen.md); ohne Bankdaten und Graduierungen (Doku-Me) |
 | 6b ✅ | CSV-Import | Übernahme der bisherigen Excel-Liste mit Vorschau und Abgleich über die Mitgliedsnummer ([Anleitung](mitglieder-import.md)) |
-| 6c | Familien & Logins | Erziehungsberechtigte, Familienkonto (Eltern-Login), Verknüpfung Mitglied ↔ Konto |
+| 6c ✅ | Zugänge für Mitglieder & Eltern | Einladung per Mail (eigener Zugang ab 14, Eltern für Minderjährige), Verknüpfung Mitglied ↔ Konto, „Meine Daten“/„Meine Kinder“ nur lesend ([ADR 0009](adr/0009-einladungen-ueber-keycloak-admin-api.md)) |
 | 7 | Feature: Events | eigene Planung |
 | 8 | Feature: Übungsleiterabrechnung | eigene Planung |
 | 9 | Produktiv-Deployment Homecloud | eigene Planung |
