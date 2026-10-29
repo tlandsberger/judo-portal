@@ -1,0 +1,10 @@
+# Build-Kontext des Backend-Images (backend/Dockerfile): nur Gradle-Dateien und Backend-Quellen.
+**/.gradle
+**/build
+**/.kotlin
+**/node_modules
+.git
+.idea
+frontend
+infra
+docs

@@ -18,7 +18,7 @@ Initiale Features:
 | Backend | Spring Boot (Kotlin), modularer Monolith mit Spring Modulith, Java 25 LTS |
 | Datenbank | PostgreSQL + Flyway |
 | Login | Keycloak (OIDC) |
-| Betrieb | Docker Compose (Caddy, Backend, Keycloak, PostgreSQL) |
+| Betrieb | Docker Compose; Images `ghcr.io/tlandsberger/judo-portal-backend` und `…-web` ([`docs/deployment.md`](docs/deployment.md)) |
 
 Details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), Entscheidungen in [`docs/adr/`](docs/adr/).
 
@@ -48,7 +48,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/me
 
 ## Status
 
-Schritt 5b: Der technische Durchstich steht. Die Angular-PWA meldet sich bei Keycloak an und zeigt den
-Nutzer aus `GET /api/me`. Backend, Infrastruktur und OpenAPI-Vertrag sind ebenfalls fertig. Als
-Nächstes folgen die Features, beginnend mit der Mitgliederverwaltung. Fachliche Funktionen gibt es noch
-keine. Die Roadmap steht in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#9-roadmap).
+Mitgliederverwaltung mit CSV-Import und Zugängen für Mitglieder und Eltern ist fertig (Schritte 6a–6c).
+Die CI baut daraus die Container-Images und legt sie in GHCR ab (Schritt 6d, [`docs/deployment.md`](docs/deployment.md)).
+Als Nächstes folgen Events und die Übungsleiterabrechnung. Die Roadmap steht in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#9-roadmap).

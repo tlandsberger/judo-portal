@@ -54,6 +54,11 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
   Testcontainers (Basis `IntegrationTestBase`, z. B. `ApiSecurityIT`, braucht Docker oder Podman-Socket).
 - **Versionen** nur in `gradle/libs.versions.toml`. Container-Images in `infra/compose.dev.yaml`
   und `IntegrationTestBase` synchron halten.
+- **Deployment-Images** (ADR 0010, `docs/deployment.md`): `backend/Dockerfile` (Kontext Repo-Root),
+  `frontend/Dockerfile` + `frontend/Caddyfile` (Kontext `frontend/`). Basis-Images mit fester Version; Java- und
+  Node-Version müssen zu Gradle-Toolchain bzw. `.nvmrc` passen. Neue Routen-Präfixe neben `/api` und `/auth`
+  auch im Caddyfile und in `ngsw-config.json` (`navigationUrls`) eintragen. Keine Inline-Skripte (CSP).
+  Prüfen mit `infra/scripts/image-smoke-test.sh`, die CI pusht nach GHCR.
 - **Datenbank**-Änderungen nur über neue Flyway-Migrationen (`backend/src/main/resources/db/migration`,
   `V<n>__beschreibung.sql`). Bestehende Migrationen nie ändern, Hibernate nur `validate`.
 - **API-Änderung = drei Schritte:** Backend ändern → `-Popenapi.update` → im Frontend `npm run generate:api`.

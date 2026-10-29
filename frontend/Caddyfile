@@ -1,0 +1,59 @@
+# Caddy im Image judo-portal-web (ADR 0010, docs/deployment.md).
+# Nur HTTP auf :8080, TLS macht der vorgelagerte Reverse Proxy der Homecloud.
+# Umgebungsvariablen (alle optional):
+#   BACKEND_URL      Backend-Adresse,  Standard backend:8080
+#   KEYCLOAK_URL     Keycloak-Adresse, Standard keycloak:8080 (Keycloak mit KC_HTTP_RELATIVE_PATH=/auth)
+#   TRUSTED_PROXIES  Netze, deren X-Forwarded-*-Header übernommen werden, Standard private_ranges
+{
+	admin off
+	auto_https off
+	servers {
+		trusted_proxies static {$TRUSTED_PROXIES:private_ranges}
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+:8080 {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy {$BACKEND_URL:backend:8080}
+	}
+
+	handle /auth/* {
+		reverse_proxy {$KEYCLOAK_URL:keycloak:8080}
+	}
+
+	# Die PWA selbst
+	handle {
+		root * /srv
+
+		header {
+			Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+			X-Frame-Options DENY
+			Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		}
+
+		# Dateien mit Hash im Namen ändern sich nie, alles andere (index.html, ngsw.json, Service Worker,
+		# Manifest, Icons) wird bei jedem Aufruf neu geprüft, damit Updates der PWA ankommen.
+		@hashed path_regexp -[A-Za-z0-9_-]{8}\.(js|css|woff2?)$
+		@unhashed not path_regexp -[A-Za-z0-9_-]{8}\.(js|css|woff2?)$
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		header @unhashed Cache-Control "no-cache"
+
+		# Pfade ohne Dateiendung, die es nicht als Datei gibt, sind Routen der PWA (Deep Links).
+		# Fehlende Dateien (z. B. alte Chunks nach einem Update) liefern dagegen 404.
+		@route {
+			not file
+			not path_regexp \.[A-Za-z0-9]+$
+		}
+		rewrite @route /index.html
+		file_server
+	}
+}

@@ -22,15 +22,18 @@ flowchart LR
         W[Browser · Android · iOS<br/>installierbar, Service Worker]
     end
 
+    RP[Reverse Proxy der Homecloud<br/>TLS]
+
     subgraph Host["Container-Host (Homecloud)"]
-        P[Caddy<br/>Reverse Proxy + TLS<br/>liefert die PWA aus]
+        P[web: Caddy<br/>liefert die PWA aus, routet]
         B[Backend<br/>Spring Boot · Kotlin]
         K[Keycloak<br/>Realm „judo“]
         DB[(PostgreSQL<br/>DB portal + DB keycloak)]
         BK[Backup-Job<br/>pg_dump]
     end
 
-    W -->|HTTPS, gleicher Origin| P
+    W -->|HTTPS, gleicher Origin| RP
+    RP -->|HTTP| P
     P -->|/api| B
     P -->|/auth| K
     B -->|JWKS / Token-Prüfung| K
@@ -165,7 +168,8 @@ Vier-Augen-Prinzip wird mit dem Abrechnungs-Feature geplant.
   strikte Content-Security-Policy über Caddy ([ADR 0007](adr/0007-pwa-mit-angular-und-openapi.md)).
 - Clients sind *public clients* mit PKCE und haben kein Client-Secret. Kurzlebige Access-Tokens,
   Refresh-Token-Rotation.
-- Alle Verbindungen laufen über TLS (Caddy). Intern spricht nur Caddy mit der Außenwelt.
+- Alle Verbindungen von außen laufen über TLS (Reverse Proxy der Homecloud). Dahinter spricht nur der
+  `web`-Container (Caddy) mit dem Proxy, Backend, Keycloak und Datenbank sind nicht direkt erreichbar.
 - Secrets (DB-Passwörter, SMTP, Keycloak-Admin) liegen als Umgebungsvariablen bzw.
   Docker-Secrets vor und stehen nie im Repo.
 
@@ -184,12 +188,13 @@ Vier-Augen-Prinzip wird mit dem Abrechnungs-Feature geplant.
 
 ### 7.1 Deployment
 
-Alle Komponenten laufen als OCI-Container per Docker Compose:
+Alle Komponenten laufen als OCI-Container per Docker Compose. Die eigenen Images baut die CI und legt sie
+öffentlich in GHCR ab ([ADR 0010](adr/0010-container-images-und-registry.md), Details in [`deployment.md`](deployment.md)):
 
 | Container | Aufgabe |
 |---|---|
-| `caddy` | Reverse Proxy, automatisches TLS, liefert die PWA (statische Dateien) aus, routet `/api` → Backend und `/auth` → Keycloak, setzt Security-Header (CSP) |
-| `backend` | Spring-Boot-Anwendung |
+| `web` | Image `judo-portal-web`: Caddy liefert die PWA aus, routet `/api` → Backend und `/auth` → Keycloak, setzt Security- und Cache-Header (CSP). Nur HTTP, TLS macht der vorhandene Reverse Proxy der Homecloud |
+| `backend` | Image `judo-portal-backend`: Spring-Boot-Anwendung |
 | `keycloak` | Identity Provider. Realm-Konfiguration als `infra/keycloak/realm-judo.json` versioniert |
 | `postgres` | Getrennte Datenbanken `portal` und `keycloak` |
 | `backup` | Regelmäßiger `pg_dump`, verschlüsselt, mit Rotation |
@@ -208,25 +213,25 @@ Alle Komponenten laufen als OCI-Container per Docker Compose:
 | Umgebung | Zweck |
 |---|---|
 | `dev` | Lokal mit Podman oder Docker: `infra/compose.dev.yaml` (PostgreSQL auf 5432, Keycloak auf 8081 mit Realm `judo` und Testnutzern je Rolle, siehe [`infra/README.md`](../infra/README.md)). Backend aus der IDE bzw. per Gradle, Frontend per `npm start` (:4200) |
-| `prod` | Homecloud |
+| `prod` | Homecloud, Images aus GHCR hinter dem vorhandenen Reverse Proxy ([`deployment.md`](deployment.md)) |
 
 ## 8. Repository-Struktur
 
 ```
 judo-portal/
-├── backend/               Spring-Boot-App (Module: members, events, billing, shared)
-├── frontend/              Angular-PWA (eigene README)
+├── backend/               Spring-Boot-App (Module: members, events, billing, shared), Dockerfile
+├── frontend/              Angular-PWA (eigene README), Dockerfile + Caddyfile des Web-Images
 ├── api/openapi.json       API-Vertrag (aus dem Backend erzeugt, per Test abgesichert)
 ├── gradle/libs.versions.toml
 ├── infra/
 │   ├── compose.dev.yaml   lokale Dev-Umgebung (Postgres + Keycloak)
 │   ├── compose.prod.yaml  Produktion (Schritt 9)
-│   ├── Caddyfile          (Schritt 9)
 │   ├── postgres/init/     Anlage der DBs portal + keycloak
 │   ├── keycloak/          realm-judo-dev.json (Testnutzer), später realm-judo.json (Prod)
-│   └── scripts/           smoke-test.sh
+│   └── scripts/           smoke-test.sh, image-smoke-test.sh
 ├── docs/
 │   ├── ARCHITECTURE.md
+│   ├── deployment.md      Images, Tags, Umgebungsvariablen
 │   └── adr/
 └── CLAUDE.md              Build-/Test-Befehle und Konventionen
 ```
@@ -255,6 +260,7 @@ werden vorher geklärt.
 | 6a ✅ | Mitglieder-Stammdaten | Mitglieder anlegen, anzeigen, ändern, löschen; Rechte nach [ADR 0008](adr/0008-rollen-nach-vereinsfunktionen.md); ohne Bankdaten und Graduierungen (Doku-Me) |
 | 6b ✅ | CSV-Import | Übernahme der bisherigen Excel-Liste mit Vorschau und Abgleich über die Mitgliedsnummer ([Anleitung](mitglieder-import.md)) |
 | 6c ✅ | Zugänge für Mitglieder & Eltern | Einladung per Mail (eigener Zugang ab 14, Eltern für Minderjährige), Verknüpfung Mitglied ↔ Konto, „Meine Daten“/„Meine Kinder“ nur lesend ([ADR 0009](adr/0009-einladungen-ueber-keycloak-admin-api.md)) |
+| 6d ✅ | Container-Images | Images `judo-portal-backend` und `judo-portal-web` (Caddy + PWA), Push nach GHCR aus der CI nach Smoke-Test ([ADR 0010](adr/0010-container-images-und-registry.md), [Deployment](deployment.md)) |
 | 7 | Feature: Events | eigene Planung |
 | 8 | Feature: Übungsleiterabrechnung | eigene Planung |
 | 9 | Produktiv-Deployment Homecloud | eigene Planung |

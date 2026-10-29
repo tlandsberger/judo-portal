@@ -41,6 +41,11 @@ springdoc:
   writer-with-order-by-keys: true
   writer-with-default-pretty-printer: true
 
+server:
+  # Hinter Caddy und dem Reverse Proxy der Homecloud: X-Forwarded-Proto/-Host für erzeugte Links (z. B. Location)
+  # übernehmen. Tomcat vertraut dabei nur Absendern aus privaten Netzen.
+  forward-headers-strategy: native
+
 management:
   endpoints:
     web:

@@ -15,6 +15,9 @@ podman compose -f infra/compose.dev.yaml down       # stoppen, Daten bleiben
 podman compose -f infra/compose.dev.yaml down -v    # stoppen und alles zurücksetzen
 ```
 
+Die eigenen Container-Images (Backend, Web) lassen sich gegen diese Umgebung prüfen:
+`infra/scripts/image-smoke-test.sh`, siehe [`docs/deployment.md`](../docs/deployment.md).
+
 ## Dienste
 
 | Dienst | Adresse | Zugang |

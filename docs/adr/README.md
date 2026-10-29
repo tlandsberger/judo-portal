@@ -10,11 +10,12 @@ geänderte Entscheidung bekommt ein neues ADR, das das alte als „ersetzt“ ma
 | [0002](0002-spring-boot-kotlin-backend.md) | Spring Boot mit Kotlin und Java 25 LTS als Backend | angenommen |
 | [0003](0003-keycloak-identity.md) | Keycloak als Identity Provider, feste Rollen | angenommen, Rollentabelle ersetzt durch 0008 |
 | [0004](0004-modularer-monolith.md) | Modularer Monolith mit Spring Modulith | angenommen |
-| [0005](0005-hosting-container-homecloud.md) | Betrieb per Docker Compose in der Homecloud | angenommen |
+| [0005](0005-hosting-container-homecloud.md) | Betrieb per Docker Compose in der Homecloud | angenommen, Caddy/TLS-Teil ersetzt durch 0010 |
 | [0006](0006-api-vertrag-und-token-pruefung.md) | API-Vertrag (kotlinx.serialization) & Token-Prüfung (Audience) | angenommen, JSON-Teil ersetzt durch 0007 |
 | [0007](0007-pwa-mit-angular-und-openapi.md) | PWA mit Angular, OpenAPI als API-Vertrag | angenommen |
 | [0008](0008-rollen-nach-vereinsfunktionen.md) | Rollen nach Vereinsfunktionen | angenommen |
 | [0009](0009-einladungen-ueber-keycloak-admin-api.md) | Zugänge per Einladung über die Keycloak-Admin-API | angenommen |
+| [0010](0010-container-images-und-registry.md) | Container-Images in der GitHub Container Registry | angenommen |
 
 Vorlage für neue ADRs:
 
