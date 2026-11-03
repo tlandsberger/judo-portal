@@ -2,7 +2,7 @@
 # Smoke-Test der Container-Images (ADR 0010) gegen die laufende Dev-Infrastruktur (infra/compose.dev.yaml):
 #  - startet das Backend-Image (Flyway gegen die Dev-Datenbank) und wartet auf /actuator/health = UP
 #  - startet das Web-Image davor und prüft PWA, Deep Link, 404 für fehlende Dateien, Cache- und Security-Header
-#    sowie die Weiterleitung von /api ans Backend und /auth an Keycloak
+#    sowie die Weiterleitung von /api ans Backend und /auth an Keycloak (ohne Admin-Konsole und Master-Realm)
 #
 # Nutzung: BACKEND_IMAGE=… WEB_IMAGE=… infra/scripts/image-smoke-test.sh   (benötigt curl und podman oder docker)
 set -euo pipefail
@@ -73,6 +73,10 @@ expect "/${main_js}" 200 '^cache-control: public, max-age=31536000, immutable'
 expect /api/me 401
 # Der Dev-Keycloak läuft ohne Pfad /auth: 404 kommt also von Keycloak, ein 502 hieße „nicht erreichbar“.
 expect /auth/ 404
+# Admin-Konsole und Master-Realm sperrt Caddy selbst (leere Antwort), egal was Keycloak dahinter liefern würde.
+expect /auth/admin/ 404 '^content-length: 0'
+expect /auth/admin/master/console/ 404 '^content-length: 0'
+expect /auth/realms/master/protocol/openid-connect/token 404 '^content-length: 0'
 
 if [[ "$failed" != 0 ]]; then
     "$CONTAINER_TOOL" logs smoke-web

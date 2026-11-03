@@ -195,15 +195,17 @@ Alle Komponenten laufen als OCI-Container per Docker Compose. Die eigenen Images
 |---|---|
 | `web` | Image `judo-portal-web`: Caddy liefert die PWA aus, routet `/api` → Backend und `/auth` → Keycloak, setzt Security- und Cache-Header (CSP). Nur HTTP, TLS macht der vorhandene Reverse Proxy der Homecloud |
 | `backend` | Image `judo-portal-backend`: Spring-Boot-Anwendung |
-| `keycloak` | Identity Provider. Realm-Konfiguration als `infra/keycloak/realm-judo.json` versioniert |
-| `postgres` | Getrennte Datenbanken `portal` und `keycloak` |
-| `backup` | Regelmäßiger `pg_dump`, verschlüsselt, mit Rotation |
+| `keycloak` | Identity Provider (offizielles Image). Realm `judo` einmalig per Checkliste in [`deployment.md`](deployment.md) |
+| `db`, `keycloak_db` | PostgreSQL je für Portal und Keycloak |
+| `db_dump` | Täglicher `pg_dump` beider Datenbanken, 14 Tage; das Backup der Homecloud (restic, verschlüsselt, lokal + OneDrive) sichert die Dumps |
 
 ### 7.2 Homecloud
 
-- Das Portal braucht eine **öffentlich per HTTPS erreichbare Domain** (PWA und Service Worker setzen HTTPS voraus). Möglich ist
-  DynDNS mit Portfreigabe (443) oder ein Tunnel (z. B. Cloudflare Tunnel). Die
-  Entscheidung fällt beim Deployment-Schritt.
+- Der Stack liegt im Homecloud-Repo und wird von Portainer per GitOps deployt ([ADR 0011](adr/0011-betrieb-in-der-homecloud.md)).
+- Erreichbar unter **https://judo.tlandsberger.de**: Cloudflare-Tunnel (ohne offene Ports) → Traefik (Let's Encrypt)
+  → `web`. Im LAN über Split-DNS direkt zu Traefik. Die Keycloak-Admin-Konsole läuft unter
+  `judo-admin.tlandsberger.de` hinter Cloudflare Access (E-Mail-OTP).
+- Releases per Git-Tag `vX.Y.Z`, Renovate aktualisiert die Homecloud (Patch/Minor automatisch).
 - Health-Checks über Spring Boot Actuator (`/actuator/health`, nur intern erreichbar).
 - Ein späterer Umzug auf einen EU-VPS oder in eine Managed-Umgebung braucht nur ein anderes
   Compose-File bzw. andere Manifeste, die Images bleiben dieselben.
@@ -213,7 +215,7 @@ Alle Komponenten laufen als OCI-Container per Docker Compose. Die eigenen Images
 | Umgebung | Zweck |
 |---|---|
 | `dev` | Lokal mit Podman oder Docker: `infra/compose.dev.yaml` (PostgreSQL auf 5432, Keycloak auf 8081 mit Realm `judo` und Testnutzern je Rolle, siehe [`infra/README.md`](../infra/README.md)). Backend aus der IDE bzw. per Gradle, Frontend per `npm start` (:4200) |
-| `prod` | Homecloud, Images aus GHCR hinter dem vorhandenen Reverse Proxy ([`deployment.md`](deployment.md)) |
+| `prod` | Homecloud, https://judo.tlandsberger.de ([`deployment.md`](deployment.md)) |
 
 ## 8. Repository-Struktur
 
@@ -225,9 +227,8 @@ judo-portal/
 ├── gradle/libs.versions.toml
 ├── infra/
 │   ├── compose.dev.yaml   lokale Dev-Umgebung (Postgres + Keycloak)
-│   ├── compose.prod.yaml  Produktion (Schritt 9)
 │   ├── postgres/init/     Anlage der DBs portal + keycloak
-│   ├── keycloak/          realm-judo-dev.json (Testnutzer), später realm-judo.json (Prod)
+│   ├── keycloak/          realm-judo-dev.json (Testnutzer; Prod-Realm per Checkliste in docs/deployment.md)
 │   └── scripts/           smoke-test.sh, image-smoke-test.sh
 ├── docs/
 │   ├── ARCHITECTURE.md
@@ -263,11 +264,9 @@ werden vorher geklärt.
 | 6d ✅ | Container-Images | Images `judo-portal-backend` und `judo-portal-web` (Caddy + PWA), Push nach GHCR aus der CI nach Smoke-Test ([ADR 0010](adr/0010-container-images-und-registry.md), [Deployment](deployment.md)) |
 | 7 | Feature: Events | eigene Planung |
 | 8 | Feature: Übungsleiterabrechnung | eigene Planung |
-| 9 | Produktiv-Deployment Homecloud | eigene Planung |
+| 9 ✅ | Produktiv-Deployment Homecloud | Stack im Homecloud-Repo, Keycloak-Admin auf eigener Adresse, tägliche DB-Dumps, Releases per Git-Tag ([ADR 0011](adr/0011-betrieb-in-der-homecloud.md), [Deployment](deployment.md)) |
 
 ## 10. Offene Punkte
 
-- Laufzeitumgebung der Homecloud (Docker Compose, Portainer, k3s, Unraid/Synology …) und
-  Domain bzw. Erreichbarkeit von außen. Wird in Schritt 9 geklärt, die Compose-Basis entsteht in Schritt 3.
 - Fachliches für die Feature-Planung: Abrechnungsregeln (Stundensätze, Freibetrag nach § 3 Nr. 26 EStG).
 - Optional später: PWA per Capacitor in die App-Stores bringen, falls Store-Präsenz gewünscht ist.

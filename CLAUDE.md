@@ -59,6 +59,9 @@ Test-Tokens per Password-Grant über den Client `judo-dev-tools` (siehe `infra/R
   Node-Version müssen zu Gradle-Toolchain bzw. `.nvmrc` passen. Neue Routen-Präfixe neben `/api` und `/auth`
   auch im Caddyfile und in `ngsw-config.json` (`navigationUrls`) eintragen. Keine Inline-Skripte (CSP).
   Prüfen mit `infra/scripts/image-smoke-test.sh`, die CI pusht nach GHCR.
+- **Produktion** (ADR 0011): Stack im Repo `tlandsberger/homecloud` (`application/judo-portal/`), Release per Git-Tag
+  `vX.Y.Z` (Renovate zieht nach). Neue Umgebungsvariablen oder Realm-Einstellungen dort bzw. in der Checkliste in
+  `docs/deployment.md` nachziehen. Interne Hostnamen ohne Unterstrich (Javas HTTP-Client).
 - **Datenbank**-Änderungen nur über neue Flyway-Migrationen (`backend/src/main/resources/db/migration`,
   `V<n>__beschreibung.sql`). Bestehende Migrationen nie ändern, Hibernate nur `validate`.
 - **API-Änderung = drei Schritte:** Backend ändern → `-Popenapi.update` → im Frontend `npm run generate:api`.

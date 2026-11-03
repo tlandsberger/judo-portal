@@ -26,6 +26,15 @@
 		reverse_proxy {$BACKEND_URL:backend:8080}
 	}
 
+	# Admin-Konsole und Master-Realm von Keycloak sind auf der öffentlichen Adresse gesperrt.
+	# Die Konsole läuft über eine eigene, geschützte Admin-Adresse (KC_HOSTNAME_ADMIN, docs/deployment.md).
+	handle /auth/admin* {
+		respond 404
+	}
+	handle /auth/realms/master* {
+		respond 404
+	}
+
 	handle /auth/* {
 		reverse_proxy {$KEYCLOAK_URL:keycloak:8080}
 	}

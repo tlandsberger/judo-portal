@@ -49,6 +49,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/me
 ## Status
 
 Mitgliederverwaltung mit CSV-Import und Zugängen für Mitglieder und Eltern ist fertig (Schritte 6a–6c).
-Die CI baut daraus die Container-Images und legt sie in GHCR ab (Schritt 6d, [`docs/deployment.md`](docs/deployment.md)).
+Die CI baut daraus die Container-Images und legt sie in GHCR ab (Schritt 6d), produktiv läuft das Portal unter
+https://judo.tlandsberger.de in der Homecloud (Schritt 9, [`docs/deployment.md`](docs/deployment.md)).
 Als Nächstes folgen Events und die Übungsleiterabrechnung. Die Roadmap steht in
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#9-roadmap).
