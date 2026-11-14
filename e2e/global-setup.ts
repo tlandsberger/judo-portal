@@ -5,7 +5,7 @@ import { ADMIN, ADMIN_STATE, acceptInvitation, setPassword } from "./helpers";
 export default async function globalSetup(config: FullConfig) {
   const baseURL = config.projects[0].use.baseURL;
   const browser = await chromium.launch();
-  const page = await browser.newPage({ baseURL, locale: "de-DE" });
+  const page = await browser.newPage({ baseURL, locale: "de-DE", ignoreHTTPSErrors: !!process.env.IGNORE_HTTPS_ERRORS });
   await acceptInvitation(page, ADMIN.email);
   await setPassword(page, ADMIN.password);
   await page.context().storageState({ path: ADMIN_STATE });

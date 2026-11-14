@@ -15,6 +15,12 @@ def test_healthz(client) -> None:
     assert response.status_code == 200 and response.content == b"ok"
 
 
+def test_healthz_via_localhost_even_with_public_allowed_hosts(client, settings) -> None:
+    # Der Docker-Healthcheck im Image ruft 127.0.0.1 auf, auch wenn nur die öffentliche Domain konfiguriert ist.
+    assert "127.0.0.1" in settings.ALLOWED_HOSTS
+    assert client.get("/healthz", HTTP_HOST="127.0.0.1:8000").status_code == 200
+
+
 def test_security_headers(client) -> None:
     response = client.get(reverse("account_login"))
     csp = response["Content-Security-Policy"]

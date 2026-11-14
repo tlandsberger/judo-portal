@@ -18,6 +18,8 @@ export default defineConfig({
     baseURL: process.env.BASE_URL ?? "http://localhost:8000",
     locale: "de-DE",
     timezoneId: "Europe/Berlin",
+    // Für Tests gegen einen Stack mit selbst signiertem Zertifikat (z. B. lokaler Traefik)
+    ignoreHTTPSErrors: !!process.env.IGNORE_HTTPS_ERRORS,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

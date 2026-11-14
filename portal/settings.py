@@ -36,7 +36,8 @@ if not SECRET_KEY:
 
 # Öffentliche Adresse, z. B. https://judo.tlandsberger.de – für Links in Mails und CSRF.
 BASE_URL = (env("BASE_URL", "http://localhost:8000") or "").rstrip("/")
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
+# localhost bleibt immer erlaubt: Der Docker-Healthcheck ruft http://127.0.0.1:8000/healthz auf.
+ALLOWED_HOSTS = [*env_list("ALLOWED_HOSTS", ""), "localhost", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = [BASE_URL]
 
 INSTALLED_APPS = [
