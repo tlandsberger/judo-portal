@@ -1,0 +1,41 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "timezone": "Europe/Berlin",
+  "dependencyDashboard": true,
+  "lockFileMaintenance": { "enabled": true, "automerge": true, "schedule": ["before 6am on monday"] },
+  "rangeStrategy": "bump",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Version des Playwright-Containers für die E2E-Tests",
+      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/", "/^e2e/README\\.md$/"],
+      "matchStrings": ["mcr\\.microsoft\\.com/playwright:v(?<currentValue>\\d+\\.\\d+\\.\\d+)-noble"],
+      "depNameTemplate": "@playwright/test",
+      "datasourceTemplate": "npm"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Patch und Minor automatisch mergen, wenn alle Tests grün sind",
+      "matchUpdateTypes": ["patch", "minor", "digest", "pin"],
+      "automerge": true
+    },
+    {
+      "description": "Major-Updates brauchen eine Freigabe",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Playwright-Paket und -Container immer gemeinsam (Screenshots hängen an der Version)",
+      "matchPackageNames": ["@playwright/test", "@axe-core/playwright"],
+      "groupName": "Playwright"
+    },
+    {
+      "description": "Python bleibt auf 3.13, bis die Abhängigkeiten 3.14 sicher unterstützen",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "allowedVersions": "<3.14"
+    }
+  ]
+}
