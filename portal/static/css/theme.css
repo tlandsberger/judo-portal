@@ -150,6 +150,13 @@ h3, .h3 { font-weight: 650; font-size: 1.1rem; }
   --bs-btn-color: var(--wtsv-mattengruen);
   --bs-btn-border-color: var(--wtsv-mattengruen);
 }
+[data-bs-theme="dark"] .btn-outline-secondary {
+  --bs-btn-color: #d0d7d2;
+  --bs-btn-border-color: #8a948e;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #4a524d;
+  --bs-btn-hover-border-color: #8a948e;
+}
 .btn-danger {
   --bs-btn-bg: var(--wtsv-warnrot);
   --bs-btn-border-color: var(--wtsv-warnrot);

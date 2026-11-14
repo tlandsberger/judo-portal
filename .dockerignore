@@ -1,0 +1,14 @@
+.git
+.venv
+node_modules
+data
+staticfiles
+portal/static/vendor
+test-results
+playwright-report
+e2e
+tmpcheck
+**/__pycache__
+**/.mypy_cache
+**/.pytest_cache
+**/.ruff_cache
