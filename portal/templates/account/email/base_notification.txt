@@ -1,0 +1,7 @@
+{% extends "account/email/base_message.txt" %}
+{% block content %}{% autoescape off %}an deinem Zugang zum Vereinsportal wurde gerade Folgendes geändert:
+
+{% block notification_message %}{% endblock notification_message %}
+
+Warst du das nicht? Dann melde dich bitte umgehend bei judo@wedeler-tsv.de.
+Zeitpunkt: {{ timestamp }} · Browser: {{ user_agent }} · IP-Adresse: {{ ip }}{% endautoescape %}{% endblock %}

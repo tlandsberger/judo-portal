@@ -1,0 +1,37 @@
+{% extends "account/base_entrance.html" %}
+{% load allauth django_bootstrap5 %}
+{% block head_title %}Anmelden{% endblock head_title %}
+{% block content %}
+<h1 class="h3 mb-1 text-center">Willkommen</h1>
+<p class="text-body-secondary text-center mb-4">Melde dich im Vereinsportal der Judo-Abteilung an.</p>
+
+<div class="d-grid gap-2">
+  {% if PASSKEY_LOGIN_ENABLED %}
+  <button type="submit" form="mfa_login" id="passkey_login" class="btn btn-primary btn-lg">
+    <i class="bi bi-fingerprint me-1" aria-hidden="true"></i> Mit Passkey anmelden
+  </button>
+  {% endif %}
+  {% if LOGIN_BY_CODE_ENABLED %}
+  <a class="btn btn-outline-primary" href="{{ request_login_code_url }}">
+    <i class="bi bi-envelope me-1" aria-hidden="true"></i> Anmeldecode per E-Mail
+  </a>
+  {% endif %}
+</div>
+
+{% element hr %}{% endelement %}
+
+{% url 'account_login' as login_url %}
+<form method="post" action="{{ login_url }}" class="vstack gap-1">
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  {{ redirect_field }}
+  <button type="submit" class="btn btn-outline-primary">Mit Passwort anmelden</button>
+</form>
+
+<p class="small text-body-secondary text-center mt-4 mb-0">
+  Noch kein Zugang? Zugänge gibt es per Einladung von der Abteilungsleitung.
+</p>
+{% endblock content %}
+{% block extra_body %}
+{% if PASSKEY_LOGIN_ENABLED %}{% include "mfa/webauthn/snippets/login_script.html" with button_id="passkey_login" %}{% endif %}
+{% endblock %}

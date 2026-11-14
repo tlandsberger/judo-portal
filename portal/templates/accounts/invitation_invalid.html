@@ -1,0 +1,8 @@
+{% extends "base_entrance.html" %}
+{% block title %}Einladung ungültig{% endblock %}
+{% block content %}
+<h1 class="h3">Diese Einladung gilt nicht mehr</h1>
+<p class="text-body-secondary">Der Link ist abgelaufen oder wurde schon benutzt. Hast du deinen Zugang bereits eingerichtet,
+  kannst du dich einfach anmelden. Sonst bitte die Abteilungsleitung um eine neue Einladung.</p>
+<a class="btn btn-primary w-100" href="{% url 'account_login' %}">Zur Anmeldung</a>
+{% endblock %}

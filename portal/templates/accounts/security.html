@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Meine Anmeldung{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+  <h1>Meine Anmeldung</h1>
+  <p class="text-body-secondary">Angemeldet als <strong>{{ user.email }}</strong>.</p>
+  {% include "accounts/_login_methods.html" %}
+  <div class="list-group">
+    <a class="list-group-item list-group-item-action d-flex gap-3 align-items-center py-3" href="{% url 'usersessions_list' %}">
+      <i class="bi bi-laptop fs-3 text-primary" aria-hidden="true"></i>
+      <div class="flex-grow-1"><h2 class="h6 mb-1">Angemeldete Geräte</h2><p class="small text-body-secondary mb-0">Wo du gerade angemeldet bist – andere Geräte abmelden.</p></div>
+      <i class="bi bi-chevron-right" aria-hidden="true"></i>
+    </a>
+  </div>
+</div></div>
+{% endblock %}

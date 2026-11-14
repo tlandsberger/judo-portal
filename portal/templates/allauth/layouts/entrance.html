@@ -1,0 +1,11 @@
+{% extends "allauth/layouts/base.html" %}{% load static %}
+{% block before_content %}
+<div class="wtsv-entrance">
+  <img class="logo logo-on-light" src="{% static 'img/logo/logo-schwarz.png' %}" alt="Wedeler TSV Judo" width="640" height="440">
+  <img class="logo logo-on-dark" src="{% static 'img/logo/logo-weiss.png' %}" alt="Wedeler TSV Judo" width="640" height="440">
+  <div class="card"><div class="card-body p-4">
+{% endblock %}
+{% block after_content %}
+  </div></div>
+</div>
+{% endblock %}

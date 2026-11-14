@@ -1,0 +1,8 @@
+{% autoescape off %}Hallo,
+
+{% block content %}{% endblock content %}
+
+Viele Grüße
+Wedeler TSV e.V. – Abteilung Judo
+judo@wedeler-tsv.de · https://www.wedeler-tsv.de/sportangebote-judo/
+{% endautoescape %}

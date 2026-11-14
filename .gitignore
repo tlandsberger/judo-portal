@@ -1,0 +1,24 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Laufzeitdaten und Build
+data/
+staticfiles/
+portal/static/vendor/
+node_modules/
+test-results/
+playwright-report/
+e2e/.mails/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Secrets
+.env

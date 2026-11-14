@@ -1,0 +1,10 @@
+{% if messages %}
+<div class="mb-3" role="status">
+  {% for message in messages %}
+  <div class="{% if message.tags == 'error' %}warnbox{% else %}infobox{% endif %} mb-2">
+    <i class="bi {% if message.tags == 'error' %}bi-exclamation-triangle{% else %}bi-check-circle{% endif %}" aria-hidden="true"></i>
+    <div>{{ message }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

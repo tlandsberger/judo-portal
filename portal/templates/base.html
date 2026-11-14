@@ -1,0 +1,41 @@
+{% load static %}<!doctype html>
+<html lang="de" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Vereinsportal{% endblock %} – WTSV Judo</title>
+  <meta name="description" content="Vereinsportal der Judo-Abteilung im Wedeler TSV e.V.">
+  <meta name="theme-color" content="#0a3d1c">
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
+  <script src="{% static 'js/theme-init.js' %}"></script>
+  <link rel="manifest" href="{% url 'manifest' %}">
+  <link rel="icon" href="{% static 'img/pwa/favicon.ico' %}" sizes="any">
+  <link rel="icon" href="{% static 'img/pwa/favicon.png' %}" type="image/png">
+  <link rel="apple-touch-icon" href="{% static 'img/pwa/apple-touch-icon.png' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body{% if user.is_authenticated %} class="has-bottom-nav"{% endif %}>
+  <a class="visually-hidden-focusable" href="#inhalt">Zum Inhalt springen</a>
+  {% block navigation %}{% include "partials/navbar.html" %}{% endblock %}
+
+  <main id="inhalt" class="wtsv-main">
+    <div class="container{% block container_class %}-lg{% endblock %}">
+      {% block before_content %}{% endblock %}
+      {% include "partials/messages.html" %}
+      {% block content %}{% endblock %}
+      {% block after_content %}{% endblock %}
+    </div>
+  </main>
+
+  {% block footer %}{% include "partials/footer.html" %}{% endblock %}
+  {% if user.is_authenticated %}{% include "partials/bottom_nav.html" %}{% endif %}
+
+  <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

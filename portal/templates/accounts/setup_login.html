@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Anmeldung einrichten{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+  <h1>Wie möchtest du dich anmelden?</h1>
+  <p class="text-body-secondary">Dein Zugang ist bereit. Wähle einen oder mehrere Wege – du kannst das später unter „Meine Anmeldung“ jederzeit ändern.</p>
+  {% include "accounts/_login_methods.html" %}
+  <a class="btn btn-primary" href="{% url 'home' %}">Weiter zum Portal</a>
+</div></div>
+{% endblock %}

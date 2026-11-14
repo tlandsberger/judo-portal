@@ -1,0 +1,13 @@
+{% autoescape off %}Hallo{% if invitation.first_name %} {{ invitation.first_name }}{% endif %},
+
+du wurdest ins Vereinsportal der Judo-Abteilung im Wedeler TSV eingeladen.
+
+Über diesen Link richtest du deinen Zugang ein (gültig für {{ days }} Tage):
+{{ url }}
+
+Danach meldest du dich mit Passkey, Passwort oder einem Code per E-Mail an.
+
+Wir freuen uns auf dich!
+Wedeler TSV e.V. – Abteilung Judo
+judo@wedeler-tsv.de · https://www.wedeler-tsv.de/sportangebote-judo/
+{% endautoescape %}

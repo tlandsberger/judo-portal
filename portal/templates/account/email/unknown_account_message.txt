@@ -1,0 +1,6 @@
+{% extends "account/email/base_message.txt" %}
+{% block content %}{% autoescape off %}jemand hat versucht, sich mit der Adresse {{ email }} im Vereinsportal anzumelden. Zu dieser Adresse gibt es aber keinen Zugang.
+
+Zugänge gibt es nur per Einladung. Wende dich dafür bitte an die Abteilungsleitung (judo@wedeler-tsv.de).
+
+Warst du das nicht, kannst du diese Mail ignorieren.{% endautoescape %}{% endblock content %}

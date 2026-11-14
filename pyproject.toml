@@ -1,0 +1,62 @@
+[project]
+name = "judo-portal"
+version = "0.0.0"
+description = "Vereinsportal der Judo-Abteilung im Wedeler TSV e.V."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "argon2-cffi>=25.1.0",
+    "django>=6.1.3",
+    "django-allauth[mfa]>=65.22.1",
+    "django-bootstrap5>=26.4",
+    "django-htmx>=1.29.0",
+    "gunicorn>=27.0.1",
+    "whitenoise>=6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=6.1.2",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-django>=4.14.0",
+    "ruff>=0.17.5",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "portal.test_settings"
+python_files = ["test_*.py"]
+testpaths = ["portal"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = ["portal/*/migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ", "S", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003", "RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["S101", "S105", "S106"]
+"conftest.py" = ["S101"]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["mypy_django_plugin.main"]
+strict = false
+warn_unused_ignores = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+exclude = ["migrations/", "tests/"]
+
+[[tool.mypy.overrides]]
+module = ["allauth.*", "django_htmx.*", "django_bootstrap5.*"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "portal.settings"

@@ -1,0 +1,6 @@
+{% extends "account/email/base_message.txt" %}
+{% block content %}{% autoescape off %}hier ist dein Anmeldecode für das Vereinsportal. Gib ihn im geöffneten Browserfenster ein:
+
+{{ code }}
+
+Der Code ist nur kurz gültig. Hast du keinen Code angefordert, kannst du diese Mail ignorieren.{% endautoescape %}{% endblock content %}

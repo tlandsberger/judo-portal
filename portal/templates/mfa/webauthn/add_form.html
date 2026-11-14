@@ -1,0 +1,27 @@
+{% extends "mfa/webauthn/base.html" %}
+{% load allauth %}
+{% block head_title %}Passkey hinzufügen{% endblock head_title %}
+{% block content %}
+<h1 class="h3">Passkey hinzufügen</h1>
+<p class="text-body-secondary">Gib dem Passkey einen Namen, z. B. „iPhone“ oder „Laptop“. Danach fragt dein Gerät nach Fingerabdruck, Gesicht oder PIN.</p>
+{% url 'mfa_add_webauthn' as action_url %}
+<form method="post" action="{{ action_url }}" class="vstack gap-3">
+  {% csrf_token %}
+  <div>
+    <label class="form-label" for="{{ form.name.auto_id }}">Name</label>
+    <input class="form-control{% if form.name.errors %} is-invalid{% endif %}" type="text" name="name" id="{{ form.name.auto_id }}" value="{{ form.name.value|default:'' }}" required maxlength="255" autocomplete="off">
+    {% for error in form.name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+  </div>
+  {# Immer als anmeldefähiger Passkey (resident key) anlegen. #}
+  <input type="checkbox" name="passwordless" id="{{ form.passwordless.auto_id }}" checked hidden>
+  {{ form.credential }}
+  {% for error in form.non_field_errors %}<div class="warnbox">{{ error }}</div>{% endfor %}
+  {% for error in form.credential.errors %}<div class="warnbox">{{ error }}</div>{% endfor %}
+  <div><button type="button" id="mfa_webauthn_add" class="btn btn-primary"><i class="bi bi-fingerprint me-1" aria-hidden="true"></i> Passkey anlegen</button></div>
+</form>
+{% include "mfa/webauthn/snippets/scripts.html" %}
+{{ js_data|json_script:"js_data" }}
+<script data-allauth-onload="allauth.webauthn.forms.addForm" type="application/json">{
+  "ids": {"add": "mfa_webauthn_add", "passwordless": "{{ form.passwordless.auto_id }}", "credential": "{{ form.credential.auto_id }}", "data": "js_data"}
+}</script>
+{% endblock %}

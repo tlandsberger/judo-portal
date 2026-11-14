@@ -1,0 +1,70 @@
+import sqlite3
+from datetime import date, timedelta
+
+import pytest
+from django.urls import reverse
+
+from portal.accounts.models import Role, User
+from portal.core import backup
+
+pytestmark = pytest.mark.django_db
+
+
+def test_healthz(client) -> None:
+    response = client.get("/healthz")
+    assert response.status_code == 200 and response.content == b"ok"
+
+
+def test_security_headers(client) -> None:
+    response = client.get(reverse("account_login"))
+    csp = response["Content-Security-Policy"]
+    assert "default-src 'self'" in csp and "frame-ancestors 'none'" in csp
+    assert response["X-Frame-Options"] == "DENY"
+    assert response["X-Content-Type-Options"] == "nosniff"
+
+
+def test_home_requires_login(client) -> None:
+    response = client.get(reverse("home"))
+    assert response.status_code == 302
+
+
+def test_home_shows_greeting_and_role_based_tiles(client) -> None:
+    user = User.objects.create_user("mia@example.org", first_name="Mia")
+    client.force_login(user)
+    page = client.get(reverse("home")).content.decode()
+    assert "Hallo Mia" in page
+    assert reverse("account_list") not in page
+    user.set_roles([Role.DEPARTMENT_HEAD])
+    assert reverse("account_list") in client.get(reverse("home")).content.decode()
+
+
+def test_components_page_only_for_admins(client) -> None:
+    user = User.objects.create_user("mia@example.org")
+    client.force_login(user)
+    assert client.get(reverse("components")).status_code == 403
+    user.set_roles([Role.ADMIN])
+    assert client.get(reverse("components")).status_code == 200
+
+
+def test_pwa_files(client) -> None:
+    manifest = client.get("/manifest.webmanifest")
+    assert manifest["Content-Type"] == "application/manifest+json"
+    assert '"display": "standalone"' in manifest.content.decode()
+    worker = client.get("/sw.js")
+    assert worker["Content-Type"] == "text/javascript"
+    assert worker["Service-Worker-Allowed"] == "/"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_backup_writes_consistent_copy_and_prunes(settings) -> None:
+    User.objects.create_user("mia@example.org")
+    today = date(2026, 11, 14)
+    old = backup.backup_path(today - timedelta(days=settings.BACKUP_KEEP_DAYS + 1))
+    old.parent.mkdir(parents=True, exist_ok=True)
+    old.write_bytes(b"alt")
+    path = backup.create_backup(today)
+    assert path.name == "portal-2026-11-14.sqlite3"
+    assert not old.exists()
+    with sqlite3.connect(path) as copy:
+        count = copy.execute("SELECT COUNT(*) FROM accounts_user").fetchone()[0]
+    assert count >= 1

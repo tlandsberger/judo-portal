@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Konten{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Konten</h1><p class="text-body-secondary mb-0">Zugänge zum Portal und ihre Rollen.</p></div>
+  <a class="btn btn-primary" href="{% url 'invite' %}"><i class="bi bi-person-plus me-1" aria-hidden="true"></i> Person einladen</a>
+</div>
+
+{% if invitations %}
+<section class="card mb-4" aria-labelledby="h-einladungen">
+  <div class="card-body">
+    <h2 class="h5" id="h-einladungen">Offene Einladungen</h2>
+    <ul class="list-group list-group-flush">
+      {% for invitation in invitations %}
+      <li class="list-group-item px-0 d-flex flex-wrap gap-2 align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-semibold">{% if invitation.first_name or invitation.last_name %}{{ invitation.first_name }} {{ invitation.last_name }} · {% endif %}{{ invitation.email }}</div>
+          <div class="small text-body-secondary">
+            {% if invitation.is_valid %}gültig bis {{ invitation.expires_at|date:"d.m.Y" }}{% else %}<span class="text-danger-emphasis">abgelaufen</span>{% endif %}
+            {% for r in invitation.roles %} · {% for value, label in roles.choices %}{% if value == r %}{{ label }}{% endif %}{% endfor %}{% endfor %}
+          </div>
+        </div>
+        <form method="post" action="{% url 'resend_invitation' invitation.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary">Erneut senden</button></form>
+        <form method="post" action="{% url 'delete_invitation' invitation.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger">Zurückziehen</button></form>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+<section class="card" aria-labelledby="h-konten">
+  <div class="card-body">
+    <h2 class="h5" id="h-konten">Konten ({{ users|length }})</h2>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th scope="col">Name</th><th scope="col">Rollen</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Aktionen</span></th></tr></thead>
+        <tbody>
+        {% for account in users %}
+          <tr>
+            <td><div class="fw-semibold">{{ account.display_name }}</div><div class="small text-body-secondary">{{ account.email }}</div></td>
+            <td>{% for label in account.role_labels %}<span class="badge badge-role me-1">{{ label }}</span>{% empty %}<span class="text-body-secondary small">–</span>{% endfor %}</td>
+            <td>{% if account.is_active %}<span class="small">aktiv</span>{% else %}<span class="small text-danger-emphasis">deaktiviert</span>{% endif %}</td>
+            <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'edit_account' account.pk %}" aria-label="Rollen von {{ account.display_name }} bearbeiten"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+              {% if account != user %}
+              <form class="d-inline" method="post" action="{% url 'toggle_active' account.pk %}">{% csrf_token %}
+                <button class="btn btn-sm btn-outline-secondary" aria-label="{{ account.display_name }} {% if account.is_active %}deaktivieren{% else %}aktivieren{% endif %}"><i class="bi {% if account.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}" aria-hidden="true"></i></button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}
