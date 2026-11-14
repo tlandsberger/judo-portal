@@ -45,6 +45,7 @@ ignore = ["RUF001", "RUF002", "RUF003", "RUF012"]
 [tool.ruff.lint.per-file-ignores]
 "**/tests/*" = ["S101", "S105", "S106"]
 "conftest.py" = ["S101"]
+"scripts/*" = ["S603", "S607"]
 
 [tool.mypy]
 python_version = "3.13"
