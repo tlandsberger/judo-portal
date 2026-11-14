@@ -1,7 +1,7 @@
 # Image des Vereinsportals: ein Container mit App, Anmeldung und SQLite (Datenverzeichnis /data als Volume).
 
 # Frontend-Bibliotheken aus npm kopieren (Bootstrap, Icons, htmx, Schrift)
-FROM node:24.22.2-alpine AS assets
+FROM node:24.22.3-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
