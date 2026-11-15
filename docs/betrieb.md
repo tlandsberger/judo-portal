@@ -48,6 +48,39 @@ und kann beliebig oft geöffnet werden. Wer keinen Passkey und kein Passwort wil
 - Der erste Administrator wird beim Neustart erneut eingeladen, solange er seinen Zugang nicht eingerichtet hat und
   die alte Einladung abgelaufen ist.
 
+## Mitglieder importieren
+
+Unter **Mitglieder → CSV-Import** (Abteilungsleitung, Administrator). Zuerst kommt eine Vorschau, gespeichert wird erst
+mit „Übernehmen“. Regeln und Hintergründe stehen in ADR 0009.
+
+| Spalte | Pflicht | Format |
+|---|---|---|
+| Mitgliedsnummer | ja | Abgleich mit bestehenden Mitgliedern |
+| Vorname, Nachname | ja | |
+| Geburtsdatum | ja | `TT.MM.JJJJ` oder `JJJJ-MM-TT` |
+| Geschlecht | | `w`, `m` oder `d` |
+| Eintritt, Austritt | | Datum wie oben; wer ein Austrittsdatum in der Vergangenheit hat, gilt als ausgetreten |
+| E-Mail, Telefon | | |
+| Graduierung | | z. B. `5. Kyu`, `1. Dan` |
+| Gewicht | | kg, z. B. `32,5` |
+
+- Trennzeichen ist Semikolon oder Komma. Unbekannte Spalten werden ignoriert.
+- Kodierung UTF-8 oder Windows/Excel (cp1252). Die Vorlage gibt es auf der Import-Seite.
+- Leere Zellen überschreiben nichts.
+- Mitglieder, die nicht in der Datei stehen, bleiben unverändert. Der Import löscht nie.
+
+### Zugänge für Mitglieder und Eltern
+
+Auf der Seite des Mitglieds → **Zugang geben**:
+- **Für das Mitglied selbst:** ab 14.
+- **Für einen Elternteil:** bis 18. Die Verknüpfung endet automatisch mit dem 18. Geburtstag.
+
+Was dann passiert:
+- **Die Adresse hat schon einen Benutzer:** Er wird direkt verknüpft und bekommt eine kurze Mail.
+- **Die Adresse ist neu:** Es geht eine Einladung raus, verknüpft wird beim Annehmen.
+
+Einen Elternteil mit mehreren Kindern lädst du nacheinander für jedes Kind ein. Das ergibt eine einzige Einladung.
+
 ## Backup und Wiederherstellung
 
 - Täglich um 02:00 schreibt die App `portal-JJJJ-MM-TT.sqlite3` nach `/data/backups/` (14 Tage). Das restic-Backup

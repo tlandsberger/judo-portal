@@ -1,7 +1,7 @@
 """Benutzer, Rollen und Einladungen.
 
 Ein Benutzer ist bewusst getrennt vom Vereinsmitglied: Verknüpfungen (eigenes Profil, Erziehungsberechtigt …)
-kommen mit der Mitgliederverwaltung als eigenes Modell dazu (m:n, ADR 0003).
+liegen in ``portal.members`` (``MemberLink``, m:n, ADR 0003).
 """
 
 from __future__ import annotations

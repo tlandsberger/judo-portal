@@ -9,6 +9,12 @@
   <nav class="flex-1" aria-label="Hauptnavigation">
     <ul class="menu w-full gap-1 px-4 text-base [--menu-active-bg:var(--color-primary)] [--menu-active-fg:var(--color-primary-content)]">
       <li><a href="{% url 'home' %}"{% if url_name == 'home' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-house" aria-hidden="true"></i> Start</a></li>
+      {% if has_own_members %}
+      <li><a href="{% url 'my_data' %}"{% if url_name in 'my_data my_member my_member_edit' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-vcard" aria-hidden="true"></i> Meine Daten</a></li>
+      {% endif %}
+      {% if can_manage_members %}
+      <li><a href="{% url 'member_list' %}"{% if url_name in 'member_list member_detail member_edit member_create member_import' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-lines-fill" aria-hidden="true"></i> Mitglieder</a></li>
+      {% endif %}
       {% if can_manage_users %}
       <li><a href="{% url 'user_list' %}"{% if url_name in 'user_list invite edit_user invitation_link' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-people" aria-hidden="true"></i> Benutzer</a></li>
       {% endif %}

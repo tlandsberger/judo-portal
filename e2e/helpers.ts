@@ -72,3 +72,16 @@ export async function expectNoA11yViolations(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`)).toEqual([]);
 }
+
+/** Importiert die Beispiel-Mitglieder (wiederholbar: beim zweiten Mal ist nichts zu übernehmen). */
+export async function importMembers(page: Page) {
+  await page.goto("/mitglieder/import/");
+  await page.getByLabel("CSV-Datei").setInputFiles("e2e/fixtures/mitglieder.csv");
+  await page.getByRole("button", { name: "Vorschau anzeigen" }).click();
+  await expect(page.getByRole("heading", { name: "Vorschau des Imports" })).toBeVisible();
+  const apply = page.getByRole("button", { name: "Übernehmen" });
+  if (await apply.isVisible()) {
+    await apply.click();
+    await expect(page.getByRole("heading", { level: 1, name: "Mitglieder" })).toBeVisible();
+  }
+}

@@ -6,6 +6,10 @@ const pages = [
   { path: "/verwaltung/benutzer/", heading: "Benutzer" },
   { path: "/zugang/anmeldung/", heading: "Meine Anmeldung" },
   { path: "/bausteine/", heading: "Bausteine" },
+  { path: "/mitglieder/", heading: "Mitglieder" },
+  { path: "/mitglieder/import/", heading: "CSV-Import" },
+  { path: "/mitglieder/neu/", heading: "Mitglied anlegen" },
+  { path: "/meine-daten/", heading: "Meine Daten" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {

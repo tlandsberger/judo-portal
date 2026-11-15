@@ -11,6 +11,22 @@
 </section>
 
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {% if has_own_members %}
+  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'my_data' %}">
+    <div class="card-body flex-row items-center gap-4">
+      <span class="pikto pikto-judo-judogi" aria-hidden="true"></span>
+      <div><h2 class="card-title text-base">Meine Daten</h2><p class="text-sm text-base-content/70">Kontakt, Graduierung und Gewicht</p></div>
+    </div>
+  </a>
+  {% endif %}
+  {% if can_manage_members %}
+  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'member_list' %}">
+    <div class="card-body flex-row items-center gap-4">
+      <span class="pikto pikto-verein-mitglieder" aria-hidden="true"></span>
+      <div><h2 class="card-title text-base">Mitglieder</h2><p class="text-sm text-base-content/70">Mitglieder, Import und Zugänge</p></div>
+    </div>
+  </a>
+  {% endif %}
   {% if can_manage_users %}
   <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'user_list' %}">
     <div class="card-body flex-row items-center gap-4">
@@ -28,7 +44,7 @@
   <div class="card bg-base-100 shadow-sm">
     <div class="card-body flex-row items-center gap-4">
       <span class="pikto pikto-judo-termine" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Mehr folgt <span class="badge badge-accent badge-sm">bald</span></h2><p class="text-sm text-base-content/70">Mitglieder, Termine und mehr folgen Schritt für Schritt.</p></div>
+      <div><h2 class="card-title text-base">Mehr folgt <span class="badge badge-accent badge-sm">bald</span></h2><p class="text-sm text-base-content/70">Termine und mehr folgen Schritt für Schritt.</p></div>
     </div>
   </div>
 </div>

@@ -41,6 +41,8 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
 - **Rechte:** fest definierte Rollen in `portal/accounts/models.py` (`Role`). Prüfen auf dem Server mit
   `role_required` bzw. `user.has_role(...)` (`portal/accounts/permissions.py`). Anzeige in Templates spiegelt das.
 - **Benutzer und Mitglieder sind getrennt;** Verknüpfungen (eigenes Profil, Erziehungsberechtigt …) sind m:n.
+  Sichtbarkeit von Mitgliedern nur über `portal/members/services.py` (`visible_members`, `can_self_edit` …).
+  `portal.accounts` kennt die anderen Apps nicht; sie docken über Signale an (`portal/accounts/signals.py`).
 - **Anmeldung:** django-allauth; Passkey, Passwort und Mail-Code sind gleichwertig (kein erzwungener zweiter Faktor,
   siehe `PortalAccountAdapter`). Keine Selbstregistrierung, Zugänge nur per Einladung.
 - **Oberfläche:** Tailwind CSS mit DaisyUI (ADR 0008). DaisyUI-Komponenten so verwenden, wie sie dokumentiert sind,

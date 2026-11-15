@@ -1,0 +1,14 @@
+{# Daten eines Mitglieds als Liste; all=True zeigt auch Verwaltungsdaten (Mitgliedsnummer, Eintritt, Austritt). #}
+<dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+  <div><dt class="text-sm text-base-content/70">Geburtsdatum</dt><dd>{{ member.birth_date|date:"d.m.Y" }} ({{ member.age }} Jahre)</dd></div>
+  <div><dt class="text-sm text-base-content/70">Graduierung</dt><dd>{{ member.get_grade_display|default:"–" }}</dd></div>
+  <div><dt class="text-sm text-base-content/70">Gewicht</dt><dd>{% if member.weight %}{{ member.weight|floatformat:1 }} kg{% else %}–{% endif %}</dd></div>
+  <div><dt class="text-sm text-base-content/70">E-Mail</dt><dd class="break-all">{% if member.email %}<a class="link" href="mailto:{{ member.email }}">{{ member.email }}</a>{% else %}–{% endif %}</dd></div>
+  <div><dt class="text-sm text-base-content/70">Telefon</dt><dd>{% if member.phone %}<a class="link" href="tel:{{ member.phone }}">{{ member.phone }}</a>{% else %}–{% endif %}</dd></div>
+  {% if all %}
+  <div><dt class="text-sm text-base-content/70">Geschlecht</dt><dd>{{ member.get_gender_display|default:"–" }}</dd></div>
+  <div><dt class="text-sm text-base-content/70">Mitgliedsnummer</dt><dd>{{ member.member_number|default:"–" }}</dd></div>
+  <div><dt class="text-sm text-base-content/70">Eintritt</dt><dd>{{ member.joined_on|date:"d.m.Y"|default:"–" }}</dd></div>
+  <div><dt class="text-sm text-base-content/70">Austritt</dt><dd>{{ member.left_on|date:"d.m.Y"|default:"–" }}</dd></div>
+  {% endif %}
+</dl>

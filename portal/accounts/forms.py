@@ -24,7 +24,10 @@ class InvitationForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["roles"] = RolesField(
             allow_admin=allow_admin,
-            help_text="Eltern und Mitglieder brauchen keine Rolle; die Verknüpfung mit Mitgliedern kommt später.",
+            help_text=(
+                "Eltern und Mitglieder brauchen keine Rolle. Lade sie am besten über ihr Mitglied ein "
+                "(Mitglieder → Zugang geben), dann sind sie gleich verknüpft."
+            ),
         )
 
     def clean_email(self) -> str:
