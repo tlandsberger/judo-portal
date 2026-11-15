@@ -34,6 +34,9 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | *(folgt)* `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Benutzer ↔ Mitglied (m:n) |
 | *(folgt)* `portal.events`, `portal.billing` | Termine, Übungsleiterabrechnung |
 
+Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kommen aus eigenen Übersetzungen in
+`portal/locale/` (`LOCALE_PATHS`); allauth selbst bleibt unverändert.
+
 ## Rollen und Rechte
 
 | Rolle | Zweck |

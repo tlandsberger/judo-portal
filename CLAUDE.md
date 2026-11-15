@@ -28,6 +28,9 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
 - In Oberfläche und E-Mails heißt das Portal immer **„Wedeler TSV Judo“**; die Abkürzung „WTSV“ nur im Code.
 - **„Benutzer“** (Code: `user`) für alle, die sich anmelden können – nicht „Konto“. Wo es um den eigenen Zugang
   geht, passt auch „Zugang“. Mitglieder (Vereinsdaten) sind etwas anderes.
+- Passkeys heißen „Passkey“, nicht „Sicherheitsschlüssel“. Texte von allauth und anderen Paketen passen wir über
+  `portal/locale/de/LC_MESSAGES/django.po` an (Du-Form, Begriffe wie oben); danach
+  `uv run pybabel compile -d portal/locale -D django` und die `.mo` mit committen.
 
 ## Regeln
 
