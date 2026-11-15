@@ -14,7 +14,7 @@ Entscheidungen: `docs/adr/`, Betrieb: `docs/betrieb.md`.
 ## Befehle
 
 ```bash
-uv sync && npm ci && npm run vendor
+uv sync && npm ci && npm run vendor          # vendor baut auch das CSS; beim Arbeiten an Templates: npm run watch
 PORTAL_DEBUG=true uv run python manage.py runserver
 uv run ruff format . && uv run ruff check --fix . && uv run mypy portal && uv run pytest
 uv run python manage.py makemigrations          # nach Modelländerungen, Migration mit committen
@@ -40,8 +40,10 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
 - **Benutzer und Mitglieder sind getrennt;** Verknüpfungen (eigenes Profil, Erziehungsberechtigt …) sind m:n.
 - **Anmeldung:** django-allauth; Passkey, Passwort und Mail-Code sind gleichwertig (kein erzwungener zweiter Faktor,
   siehe `PortalAccountAdapter`). Keine Selbstregistrierung, Zugänge nur per Einladung.
-- **Oberfläche:** Bootstrap-Klassen plus `portal/static/css/theme.css`. Farben nur über die Theme-Variablen
-  (`--wtsv-*`, `--bs-*`), beide Themes (hell/dunkel) prüfen. Vereins-Piktogramme als `.pikto .pikto-<name>`,
+- **Oberfläche:** Tailwind CSS mit DaisyUI (ADR 0008). DaisyUI-Komponenten so verwenden, wie sie dokumentiert sind,
+  nichts umbiegen; Tailwind-Klassen für Layout. Farben nur über die DaisyUI-Farbrollen (`primary`, `neutral`,
+  `base-*` …) der Themes `wtsv-light`/`wtsv-dark` in `portal/assets/app.css`, beide prüfen. Nach neuen Klassen
+  `npm run css` (oder `npm run watch`). Vereins-Piktogramme als `.pikto .pikto-<name>`,
   Bedien-Icons aus Bootstrap Icons. App-Icon und Favicons nur über `scripts/make_icons.py` erzeugen
   (`uv run --with pillow python scripts/make_icons.py`). Keine Inline-Skripte oder -Styles (CSP); JavaScript als Datei unter `static/js/`.
   Keine externen CDNs oder Schriften.
@@ -50,6 +52,6 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
 - **Datenbank:** SQLite; Änderungen nur über Django-Migrationen. Lange Schreibtransaktionen vermeiden.
 - **Konfiguration** nur über `PORTAL_*`-Umgebungsvariablen (`portal/settings.py`, `docs/betrieb.md`).
 - **Abhängigkeiten:** Python in `pyproject.toml`/`uv.lock`, Frontend-Bibliotheken in `package.json`
-  (kopiert von `scripts/vendor.mjs`). Renovate hält alles aktuell.
+  (kopiert bzw. gebaut von `npm run vendor`). Renovate hält alles aktuell.
 - **Produktion:** Stack im Repo `tlandsberger/homecloud` (`application/judo-portal/`). Neue Umgebungsvariablen dort
   nachziehen.

@@ -1,38 +1,34 @@
 {% extends "base.html" %}
 {% block title %}Start{% endblock %}
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1>Hallo {{ user.get_short_name }}</h1>
-    <p class="text-body-secondary mb-0">Schön, dass du da bist. Hier entsteht das Vereinsportal der Judo-Abteilung.</p>
+<section class="hero mb-8 rounded-box bg-primary text-primary-content">
+  <div class="hero-content w-full justify-start px-6 py-10 sm:px-10">
+    <div>
+      <h1 class="text-3xl font-bold">Hallo {{ user.get_short_name }}</h1>
+      <p class="mt-2 max-w-xl">Schön, dass du da bist. Hier entsteht das Vereinsportal der Judo-Abteilung.</p>
+    </div>
   </div>
-</div>
+</section>
 
-<div class="row g-3">
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
   {% if can_manage_users %}
-  <div class="col-sm-6 col-lg-4">
-    <a class="card card-link-tile h-100" href="{% url 'user_list' %}">
-      <div class="card-body d-flex gap-3 align-items-center">
-        <span class="pikto pikto-verein-verwaltung" aria-hidden="true"></span>
-        <div><h2 class="h5 mb-1">Benutzer</h2><p class="small text-body-secondary mb-0">Zugänge einladen und Rollen vergeben</p></div>
-      </div>
-    </a>
-  </div>
+  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'user_list' %}">
+    <div class="card-body flex-row items-center gap-4">
+      <span class="pikto pikto-verein-verwaltung" aria-hidden="true"></span>
+      <div><h2 class="card-title text-base">Benutzer</h2><p class="text-sm text-base-content/70">Zugänge einladen und Rollen vergeben</p></div>
+    </div>
+  </a>
   {% endif %}
-  <div class="col-sm-6 col-lg-4">
-    <a class="card card-link-tile h-100" href="{% url 'security' %}">
-      <div class="card-body d-flex gap-3 align-items-center">
-        <span class="pikto pikto-verein-datenschutz" aria-hidden="true"></span>
-        <div><h2 class="h5 mb-1">Meine Anmeldung</h2><p class="small text-body-secondary mb-0">Passkeys, Passwort und Geräte</p></div>
-      </div>
-    </a>
-  </div>
-  <div class="col-sm-6 col-lg-4">
-    <div class="card h-100">
-      <div class="card-body d-flex gap-3 align-items-center">
-        <span class="pikto pikto-judo-termine" aria-hidden="true"></span>
-        <div><h2 class="h5 mb-1">Bald verfügbar</h2><p class="small text-body-secondary mb-0">Mitglieder, Termine und mehr folgen Schritt für Schritt.</p></div>
-      </div>
+  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'security' %}">
+    <div class="card-body flex-row items-center gap-4">
+      <span class="pikto pikto-verein-datenschutz" aria-hidden="true"></span>
+      <div><h2 class="card-title text-base">Meine Anmeldung</h2><p class="text-sm text-base-content/70">Passkeys, Passwort und Geräte</p></div>
+    </div>
+  </a>
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body flex-row items-center gap-4">
+      <span class="pikto pikto-judo-termine" aria-hidden="true"></span>
+      <div><h2 class="card-title text-base">Mehr folgt <span class="badge badge-accent badge-sm">bald</span></h2><p class="text-sm text-base-content/70">Mitglieder, Termine und mehr folgen Schritt für Schritt.</p></div>
     </div>
   </div>
 </div>

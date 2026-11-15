@@ -1,6 +1,6 @@
 # 0005 – Bootstrap 5.3 mit WTSV-Theme
 
-- Status: angenommen
+- Status: ersetzt durch [0008](0008-tailwind-und-daisyui.md) (App-Icon und Favicons gelten weiter)
 - Datum: 2026-11-14
 
 ## Kontext

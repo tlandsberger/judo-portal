@@ -22,7 +22,7 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 ```
 
 - **Ein Container**, ein Volume. Keine weitere Infrastruktur (kein Datenbank-Container, kein Keycloak).
-- **Seiten werden auf dem Server gerendert** (Django-Templates, Bootstrap). htmx ergänzt Teil-Aktualisierungen, wo
+- **Seiten werden auf dem Server gerendert** (Django-Templates, Tailwind CSS mit DaisyUI). htmx ergänzt Teil-Aktualisierungen, wo
   es der Bedienung hilft.
 
 ## Module
@@ -58,9 +58,10 @@ Verknüpfungen; geprüft wird immer auf dem Server.
 
 ## Erscheinungsbild
 
-Design System „Wedeler TSV Judo“: Farben (`vereinsgruen` als Leitfarbe), Logos, Vereins-Piktogramme. Schrift: Inter als
-freie Alternative zu Aptos (Aptos darf nicht eingebettet werden). Bootstrap 5.3 mit eigenem Theme
-(`portal/static/css/theme.css`); hell als Standard, dunkel nach Geräteeinstellung oder Umschalter.
+Design System „Wedeler TSV Judo“: Farben (`vereinsgruen` als Leitfarbe), Logos, Vereins-Piktogramme. Tailwind CSS mit
+DaisyUI-Komponenten im Standard, nur die Farben als eigene Themes `wtsv-light`/`wtsv-dark` (`portal/assets/app.css`,
+ADR 0008). Seitennavigation am Desktop fest, am Handy ausklappbar. Systemschrift. Hell als Standard, dunkel nach
+Geräteeinstellung oder Umschalter.
 
 ## Sicherheit und Datenschutz
 

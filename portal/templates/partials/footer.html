@@ -1,6 +1,6 @@
-<footer class="wtsv-footer">
-  <div class="container-lg d-flex flex-wrap gap-2 justify-content-between">
+<footer class="px-4 py-6 text-sm lg:px-8 {% if on_dark %}text-neutral-content/80{% else %}text-base-content/70{% endif %}">
+  <div class="mx-auto flex max-w-5xl flex-wrap justify-between gap-2">
     <span>{{ club_name }}</span>
-    <span><a href="mailto:{{ club_email }}">{{ club_email }}</a> · <a href="{{ club_website }}" rel="noopener">Website</a> · <a href="{{ portal_version_url }}" rel="noopener" title="Was ist neu?">Version {{ portal_version }}</a></span>
+    <span><a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a> · <a class="link" href="{{ club_website }}" rel="noopener">Website</a> · <a class="link" href="{{ portal_version_url }}" rel="noopener" title="Was ist neu?">Version {{ portal_version }}</a></span>
   </div>
 </footer>

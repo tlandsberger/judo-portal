@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.15.2, <3.16"
 
 [[package]]
@@ -227,18 +227,6 @@ mfa = [
 ]
 
 [[package]]
-name = "django-bootstrap5"
-version = "26.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9c/bb/bceb757caaf1c5fb5be32fa0cc30a791924ee420adb3856c07a313f9899c/django_bootstrap5-26.4.tar.gz", hash = "sha256:33b6b13096ac22220a84615f389886df19b49508b1e5a6360dd26e8b7b5606fe", size = 83829, upload-time = "2026-10-11T09:51:19.951Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/48/c1/215ffc3efa11d98cc01b6bff378ea4aa54c79d74315728938c327afe5c98/django_bootstrap5-26.4-py3-none-any.whl", hash = "sha256:252aba43c7bc3bde363a77bc7d0cf27c7b337afe30dfd32e90bce8961c505198", size = 28388, upload-time = "2026-10-11T09:51:19.011Z" },
-]
-
-[[package]]
 name = "django-htmx"
 version = "1.29.0"
 source = { registry = "https://pypi.org/simple" }
@@ -337,7 +325,6 @@ dependencies = [
     { name = "argon2-cffi" },
     { name = "django" },
     { name = "django-allauth", extra = ["mfa"] },
-    { name = "django-bootstrap5" },
     { name = "django-htmx" },
     { name = "gunicorn" },
     { name = "whitenoise" },
@@ -358,7 +345,6 @@ requires-dist = [
     { name = "argon2-cffi", specifier = ">=25.1.0" },
     { name = "django", specifier = ">=6.1.3" },
     { name = "django-allauth", extras = ["mfa"], specifier = ">=65.22.1" },
-    { name = "django-bootstrap5", specifier = ">=26.4" },
     { name = "django-htmx", specifier = ">=1.29.0" },
     { name = "gunicorn", specifier = ">=27.0.1" },
     { name = "whitenoise", specifier = ">=6.12.0" },

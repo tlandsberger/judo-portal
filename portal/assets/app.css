@@ -1,0 +1,116 @@
+/*
+ * Oberfläche: Tailwind CSS mit DaisyUI (ADR 0008).
+ * Komponenten so, wie DaisyUI sie liefert; angepasst sind nur die Farben (Themes wtsv-light/wtsv-dark).
+ * Erzeugt wird portal/static/vendor/app.css mit `npm run build` (bzw. `npm run watch`).
+ */
+@import "tailwindcss";
+@source "../templates";
+@source "../static/js";
+
+@plugin "daisyui" {
+  themes: false;
+}
+
+/* Hell: Vereinsgrün als Leitfarbe, Tiefgrün für Seitenleiste und Eingangsseiten, Gold als Akzent. */
+@plugin "daisyui/theme" {
+  name: "wtsv-light";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f2f4f3;
+  --color-base-300: #e3e8e5;
+  --color-base-content: #1a1f1c;
+  --color-primary: #027d31;
+  --color-primary-content: #ffffff;
+  --color-secondary: #5fb878;
+  --color-secondary-content: #0a3d1c;
+  --color-accent: #c8a24b;
+  --color-accent-content: #2b2b2b;
+  --color-neutral: #0a3d1c;
+  --color-neutral-content: #ffffff;
+  --color-info: oklch(74% 0.16 232.661);
+  --color-info-content: oklch(29% 0.066 243.157);
+  --color-success: #027d31;
+  --color-success-content: #ffffff;
+  --color-warning: oklch(82% 0.189 84.429);
+  --color-warning-content: oklch(41% 0.112 45.904);
+  --color-error: #c62828;
+  --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* Dunkel: Flächen fast schwarz mit Grünstich, Vereinsgrün aufgehellt für ausreichenden Kontrast. */
+@plugin "daisyui/theme" {
+  name: "wtsv-dark";
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: #18211c;
+  --color-base-200: #111814;
+  --color-base-300: #0b100d;
+  --color-base-content: #e3ebe6;
+  --color-primary: #4cc27a;
+  --color-primary-content: #03200e;
+  --color-secondary: #2e7d4b;
+  --color-secondary-content: #ffffff;
+  --color-accent: #d9b65e;
+  --color-accent-content: #1c1a12;
+  --color-neutral: #0c2b17;
+  --color-neutral-content: #e3ebe6;
+  --color-info: oklch(74% 0.16 232.661);
+  --color-info-content: oklch(29% 0.066 243.157);
+  --color-success: #4cc27a;
+  --color-success-content: #03200e;
+  --color-warning: oklch(82% 0.189 84.429);
+  --color-warning-content: oklch(41% 0.112 45.904);
+  --color-error: #f0605d;
+  --color-error-content: #1f0606;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* Vereins-Piktogramme (Motive aus dem Design System): weiß im Kreis in der Leitfarbe. */
+@layer components {
+  .pikto {
+    --pikto-size: 3rem;
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: var(--pikto-size);
+    height: var(--pikto-size);
+    border-radius: 9999px;
+    background: var(--color-primary);
+  }
+  .pikto::after {
+    content: "";
+    position: absolute;
+    inset: 20%;
+    background: var(--color-primary-content);
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+  }
+  .pikto-lg { --pikto-size: 4.5rem; }
+  .pikto-sm { --pikto-size: 2.25rem; }
+  .pikto-verein-mitglieder::after { mask-image: url("../img/icons/verein-mitglieder.png"); }
+  .pikto-judo-termine::after { mask-image: url("../img/icons/judo-termine.png"); }
+  .pikto-judo-training::after { mask-image: url("../img/icons/judo-training.png"); }
+  .pikto-verein-verwaltung::after { mask-image: url("../img/icons/verein-verwaltung.png"); }
+  .pikto-verein-datenschutz::after { mask-image: url("../img/icons/verein-datenschutz.png"); }
+  .pikto-judo-kinder-judo::after { mask-image: url("../img/icons/judo-kinder-judo.png"); }
+  .pikto-judo-gemeinschaft::after { mask-image: url("../img/icons/judo-gemeinschaft.png"); }
+  .pikto-verein-finanzen::after { mask-image: url("../img/icons/verein-finanzen.png"); }
+  .pikto-judo-judogi::after { mask-image: url("../img/icons/judo-judogi.png"); }
+}

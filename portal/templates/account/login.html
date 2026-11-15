@@ -1,19 +1,21 @@
 {% extends "account/base_entrance.html" %}
-{% load allauth django_bootstrap5 %}
+{% load allauth %}
 {% block head_title %}Anmelden{% endblock head_title %}
 {% block content %}
-<h1 class="h3 mb-1 text-center">Willkommen</h1>
-<p class="text-body-secondary text-center mb-4">Melde dich im Vereinsportal der Judo-Abteilung an.</p>
+<div class="text-center">
+  <h1 class="text-2xl font-bold">Willkommen</h1>
+  <p class="mt-1 text-base-content/70">Melde dich im Vereinsportal der Judo-Abteilung an.</p>
+</div>
 
-<div class="d-grid gap-2">
+<div class="flex flex-col gap-2">
   {% if PASSKEY_LOGIN_ENABLED %}
   <button type="submit" form="mfa_login" id="passkey_login" class="btn btn-primary btn-lg">
-    <i class="bi bi-fingerprint me-1" aria-hidden="true"></i> Mit Passkey anmelden
+    <i class="bi bi-fingerprint" aria-hidden="true"></i> Mit Passkey anmelden
   </button>
   {% endif %}
   {% if LOGIN_BY_CODE_ENABLED %}
-  <a class="btn btn-outline-primary" href="{{ request_login_code_url }}">
-    <i class="bi bi-envelope me-1" aria-hidden="true"></i> Anmeldecode per E-Mail
+  <a class="btn btn-outline btn-primary" href="{{ request_login_code_url }}">
+    <i class="bi bi-envelope" aria-hidden="true"></i> Anmeldecode per E-Mail
   </a>
   {% endif %}
 </div>
@@ -21,14 +23,14 @@
 {% element hr %}{% endelement %}
 
 {% url 'account_login' as login_url %}
-<form method="post" action="{{ login_url }}" class="vstack gap-1">
+<form method="post" action="{{ login_url }}" class="flex flex-col gap-4">
   {% csrf_token %}
-  {% bootstrap_form form %}
+  {{ form }}
   {{ redirect_field }}
-  <button type="submit" class="btn btn-outline-primary">Mit Passwort anmelden</button>
+  <button type="submit" class="btn btn-outline btn-primary">Mit Passwort anmelden</button>
 </form>
 
-<p class="small text-body-secondary text-center mt-4 mb-0">
+<p class="text-center text-sm text-base-content/70">
   Noch kein Zugang? Zugänge gibt es per Einladung von der Abteilungsleitung.
 </p>
 {% endblock content %}

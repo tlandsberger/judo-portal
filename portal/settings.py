@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.mfa",
     "allauth.usersessions",
-    "django_bootstrap5",
+    "django.forms",
     "django_htmx",
 ]
 
@@ -182,6 +182,9 @@ LANGUAGES = [("de", "Deutsch")]
 TIME_ZONE = "Europe/Berlin"
 USE_I18N = True
 USE_TZ = True
+
+# Formulare und Widgets mit DaisyUI-Klassen aus portal/templates/django/forms/ (ADR 0008)
+FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"

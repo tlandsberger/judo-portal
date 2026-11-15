@@ -6,10 +6,9 @@ const OFFLINE_URL = "{% url 'offline' %}";
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([
     OFFLINE_URL,
-    "{% static 'vendor/bootstrap/bootstrap.min.css' %}",
-    "{% static 'css/theme.css' %}",
+    "{% static 'vendor/app.css' %}",
+    "{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}",
     "{% static 'js/theme-init.js' %}",
-    "{% static 'img/logo/logo-schwarz.png' %}",
     "{% static 'img/logo/logo-weiss.png' %}"
   ])));
   self.skipWaiting();

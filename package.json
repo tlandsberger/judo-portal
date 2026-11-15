@@ -1,16 +1,19 @@
 {
   "name": "judo-portal-assets",
   "private": true,
-  "description": "Frontend-Bibliotheken (werden nach portal/static/vendor kopiert) und E2E-Tests",
+  "description": "Frontend: Tailwind CSS mit DaisyUI (wird nach portal/static/vendor gebaut), Icons, htmx und E2E-Tests",
   "scripts": {
-    "vendor": "node scripts/vendor.mjs",
+    "vendor": "node scripts/vendor.mjs && npm run css",
+    "css": "tailwindcss -i portal/assets/app.css -o portal/static/vendor/app.css --minify",
+    "watch": "tailwindcss -i portal/assets/app.css -o portal/static/vendor/app.css --watch",
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@fontsource-variable/inter": "5.3.0",
-    "bootstrap": "5.3.9",
+    "@tailwindcss/cli": "4.3.5",
     "bootstrap-icons": "1.13.2",
-    "htmx.org": "2.0.11"
+    "daisyui": "5.8.0",
+    "htmx.org": "2.0.11",
+    "tailwindcss": "4.3.5"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

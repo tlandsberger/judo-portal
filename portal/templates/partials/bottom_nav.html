@@ -1,9 +1,0 @@
-{% with url_name=request.resolver_match.url_name %}
-<nav class="wtsv-bottom-nav d-md-none" aria-label="Navigation">
-  <a href="{% url 'home' %}" class="{% if url_name == 'home' %}active{% endif %}" {% if url_name == 'home' %}aria-current="page"{% endif %}><i class="bi bi-house" aria-hidden="true"></i>Start</a>
-  {% if can_manage_users %}
-  <a href="{% url 'user_list' %}" class="{% if url_name in 'user_list invite edit_user' %}active{% endif %}"><i class="bi bi-people" aria-hidden="true"></i>Benutzer</a>
-  {% endif %}
-  <a href="{% url 'security' %}" class="{% if url_name == 'security' %}active{% endif %}"><i class="bi bi-shield-lock" aria-hidden="true"></i>Anmeldung</a>
-</nav>
-{% endwith %}

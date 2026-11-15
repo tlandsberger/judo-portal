@@ -1,11 +1,13 @@
 {% extends "base_entrance.html" %}
 {% block title %}Einladung{% endblock %}
 {% block content %}
-<h1 class="h3 text-center">Willkommen{% if invitation.first_name %}, {{ invitation.first_name }}{% endif %}!</h1>
-<p class="text-body-secondary text-center">Du wurdest ins Vereinsportal der Judo-Abteilung im Wedeler TSV eingeladen.
-  Dein Zugang wird für <strong>{{ invitation.email }}</strong> eingerichtet.</p>
-<form method="post" class="d-grid mt-4">{% csrf_token %}
+<div class="text-center">
+  <h1 class="text-2xl font-bold">Willkommen{% if invitation.first_name %}, {{ invitation.first_name }}{% endif %}!</h1>
+  <p class="mt-2 text-base-content/70">Du wurdest ins Vereinsportal der Judo-Abteilung im Wedeler TSV eingeladen.
+    Dein Zugang wird für <strong>{{ invitation.email }}</strong> eingerichtet.</p>
+</div>
+<form method="post" class="flex flex-col">{% csrf_token %}
   <button type="submit" class="btn btn-primary btn-lg">Einladung annehmen</button>
 </form>
-<p class="small text-body-secondary text-center mt-3 mb-0">Im nächsten Schritt legst du fest, wie du dich künftig anmeldest.</p>
+<p class="text-center text-sm text-base-content/70">Im nächsten Schritt legst du fest, wie du dich künftig anmeldest.</p>
 {% endblock %}

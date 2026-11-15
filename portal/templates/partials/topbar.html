@@ -1,0 +1,13 @@
+{% load static %}
+{# Titelzeile nur am Handy/Tablet: Menü-Button für die Seitenleiste. Dunkles Theme wie die Seitenleiste. #}
+<header class="navbar sticky top-0 z-30 gap-2 bg-neutral text-neutral-content shadow-sm lg:hidden" data-theme="wtsv-dark">
+  {% if user.is_authenticated %}
+  <label for="navigation" class="btn btn-square btn-ghost" role="button" tabindex="0" aria-label="Navigation öffnen" data-drawer-open>
+    <i class="bi bi-list text-2xl" aria-hidden="true"></i>
+  </label>
+  {% endif %}
+  <a class="flex items-center gap-2 px-2 text-lg font-bold" href="{% url 'home' %}">
+    <img class="h-8 w-auto" src="{% static 'img/logo/signet-weiss.png' %}" alt="" width="40" height="33">
+    <span>Wedeler TSV Judo</span>
+  </a>
+</header>

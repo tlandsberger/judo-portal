@@ -5,22 +5,27 @@
   function stored() {
     try { return localStorage.getItem("wtsv-theme"); } catch (e) { return null; }
   }
+  function current() {
+    return document.documentElement.getAttribute("data-theme") === "wtsv-dark" ? "dark" : "light";
+  }
   function apply(theme) {
-    document.documentElement.setAttribute("data-bs-theme", theme);
+    var dark = theme === "dark";
+    document.documentElement.setAttribute("data-theme", dark ? "wtsv-dark" : "wtsv-light");
     document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
-      var dark = theme === "dark";
       button.setAttribute("aria-pressed", String(dark));
       button.setAttribute("aria-label", dark ? "Helles Design einschalten" : "Dunkles Design einschalten");
       button.setAttribute("title", button.getAttribute("aria-label"));
       var icon = button.querySelector(".bi");
-      if (icon) icon.className = "bi " + (dark ? "bi-sun" : "bi-moon-stars");
+      if (icon) icon.className = "bi text-lg " + (dark ? "bi-sun" : "bi-moon-stars");
+      var label = button.querySelector("[data-theme-label]");
+      if (label) label.textContent = dark ? "Helles Design" : "Dunkles Design";
     });
   }
 
   document.addEventListener("click", function (event) {
     var button = event.target.closest("[data-theme-toggle]");
     if (!button) return;
-    var next = document.documentElement.getAttribute("data-bs-theme") === "dark" ? "light" : "dark";
+    var next = current() === "dark" ? "light" : "dark";
     try { localStorage.setItem("wtsv-theme", next); } catch (e) {}
     apply(next);
   });
@@ -28,7 +33,23 @@
     if (!stored()) apply(event.matches ? "dark" : "light");
   });
   document.addEventListener("DOMContentLoaded", function () {
-    apply(document.documentElement.getAttribute("data-bs-theme") || "light");
+    apply(current());
+  });
+
+  // Seitenleiste am Handy: Menü-Button auch per Tastatur bedienbar, Escape schließt sie wieder.
+  document.addEventListener("keydown", function (event) {
+    var drawer = document.getElementById("navigation");
+    if (!drawer) return;
+    if ((event.key === "Enter" || event.key === " ") && event.target.closest("[data-drawer-open]")) {
+      event.preventDefault();
+      drawer.checked = true;
+      var first = document.querySelector(".drawer-side a");
+      if (first) first.focus();
+    } else if (event.key === "Escape" && drawer.checked) {
+      drawer.checked = false;
+      var opener = document.querySelector("[data-drawer-open]");
+      if (opener) opener.focus();
+    }
   });
 
   // Kopieren in die Zwischenablage: <button data-copy-target="#feld">

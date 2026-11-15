@@ -2,17 +2,17 @@
 {% block title %}Einladung{% endblock %}
 {% block content %}
 {% if state == "done" %}
-<h1 class="h3">Dein Zugang ist bereit</h1>
-<p class="text-body-secondary">Diese Einladung wurde schon eingelöst. Melde dich einfach an – mit Passkey, Passwort oder einem Anmeldecode per E-Mail.</p>
-<div class="d-grid gap-2">
+<h1 class="text-2xl font-bold">Dein Zugang ist bereit</h1>
+<p class="text-base-content/70">Diese Einladung wurde schon eingelöst. Melde dich einfach an – mit Passkey, Passwort oder einem Anmeldecode per E-Mail.</p>
+<div class="flex flex-col gap-2">
   <a class="btn btn-primary" href="{% url 'account_login' %}">Zur Anmeldung</a>
-  <a class="btn btn-outline-primary" href="{% url 'account_request_login_code' %}"><i class="bi bi-envelope me-1" aria-hidden="true"></i> Anmeldecode per E-Mail</a>
+  <a class="btn btn-outline btn-primary" href="{% url 'account_request_login_code' %}"><i class="bi bi-envelope" aria-hidden="true"></i> Anmeldecode per E-Mail</a>
 </div>
 {% elif state == "expired" %}
-<h1 class="h3">Diese Einladung ist abgelaufen</h1>
-<p class="text-body-secondary mb-0">Einladungen gelten 7 Tage. Bitte die Abteilungsleitung (<a href="mailto:{{ club_email }}">{{ club_email }}</a>) um eine neue Einladung.</p>
+<h1 class="text-2xl font-bold">Diese Einladung ist abgelaufen</h1>
+<p class="text-base-content/70">Einladungen gelten 7 Tage. Bitte die Abteilungsleitung (<a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a>) um eine neue Einladung.</p>
 {% else %}
-<h1 class="h3">Diese Einladung gibt es nicht (mehr)</h1>
-<p class="text-body-secondary mb-0">Vermutlich wurde inzwischen ein neuer Link verschickt – nimm bitte die neueste Einladungs-Mail. Hast du deinen Zugang schon eingerichtet, kannst du dich direkt <a href="{% url 'account_login' %}">anmelden</a>.</p>
+<h1 class="text-2xl font-bold">Diese Einladung gibt es nicht (mehr)</h1>
+<p class="text-base-content/70">Vermutlich wurde inzwischen ein neuer Link verschickt – nimm bitte die neueste Einladungs-Mail. Hast du deinen Zugang schon eingerichtet, kannst du dich direkt <a class="link" href="{% url 'account_login' %}">anmelden</a>.</p>
 {% endif %}
 {% endblock %}

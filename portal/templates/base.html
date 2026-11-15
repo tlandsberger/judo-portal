@@ -1,45 +1,21 @@
-{% load static %}<!doctype html>
-<html lang="de" data-bs-theme="light">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}Vereinsportal{% endblock %} – Wedeler TSV Judo</title>
-  <meta name="description" content="Vereinsportal der Judo-Abteilung im Wedeler TSV e.V.">
-  <meta name="theme-color" content="#0a3d1c">
-  <meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
-  <script src="{% static 'js/theme-init.js' %}"></script>
-  <link rel="manifest" href="{% url 'manifest' %}">
-  {# Favicon passend zum Modus des Browsers (seine Tab-Leiste folgt nicht dem Portal-Schalter). Ohne Modus-Unterstützung: favicon.ico #}
-  <link rel="icon" href="{% static 'img/pwa/favicon.ico' %}" sizes="48x48">
-  <link rel="icon" href="{% static 'img/pwa/favicon-hell.png' %}" type="image/png" sizes="64x64" media="(prefers-color-scheme: light)">
-  <link rel="icon" href="{% static 'img/pwa/favicon-dunkel.png' %}" type="image/png" sizes="64x64" media="(prefers-color-scheme: dark)">
-  <link rel="apple-touch-icon" href="{% static 'img/pwa/apple-touch-icon.png' %}">
-  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
-  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
-  {% block head %}{% endblock %}
-</head>
-<body{% if user.is_authenticated %} class="has-bottom-nav"{% endif %}>
-  <a class="visually-hidden-focusable" href="#inhalt">Zum Inhalt springen</a>
-  {% block navigation %}{% include "partials/navbar.html" %}{% endblock %}
-
-  <main id="inhalt" class="wtsv-main">
-    <div class="container{% block container_class %}-lg{% endblock %}">
+{% extends "base_document.html" %}
+{# App-Rahmen: Seitenleiste (DaisyUI-Drawer), am Desktop fest, am Handy über das Menü ausklappbar. #}
+{% block body %}
+<div class="drawer lg:drawer-open">
+  <input id="navigation" type="checkbox" class="drawer-toggle" aria-hidden="true" tabindex="-1">
+  <div class="drawer-content flex min-h-screen flex-col">
+    {% include "partials/topbar.html" %}
+    <main id="inhalt" class="mx-auto w-full max-w-5xl flex-1 px-4 py-6 lg:px-8 lg:py-10">
       {% block before_content %}{% endblock %}
       {% include "partials/messages.html" %}
       {% block content %}{% endblock %}
       {% block after_content %}{% endblock %}
-    </div>
-  </main>
-
-  {% block footer %}{% include "partials/footer.html" %}{% endblock %}
-  {% if user.is_authenticated %}{% include "partials/bottom_nav.html" %}{% endif %}
-  {% include "partials/install_prompt.html" %}
-
-  <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
-  <script src="{% static 'js/app.js' %}"></script>
-  <script src="{% static 'js/install.js' %}"></script>
-  {% block scripts %}{% endblock %}
-</body>
-</html>
+    </main>
+    {% include "partials/footer.html" %}
+  </div>
+  <div class="drawer-side z-40">
+    <label for="navigation" class="drawer-overlay"><span class="sr-only">Navigation schließen</span></label>
+    {% include "partials/sidebar.html" %}
+  </div>
+</div>
+{% endblock %}
