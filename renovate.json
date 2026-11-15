@@ -37,10 +37,11 @@
       "groupName": "Python"
     },
     {
-      "description": "Neue Python-Version (z. B. 3.16) braucht eine Freigabe",
+      "description": "Neue Python-Version (z. B. 3.16): PR sofort, automatisch gemergt erst nach 60 Tagen (bis dahin unterstützt Django sie meist offiziell)",
       "matchPackageNames": ["python"],
-      "matchUpdateTypes": ["minor", "major"],
-      "automerge": false
+      "matchUpdateTypes": ["minor"],
+      "minimumReleaseAge": "60 days",
+      "internalChecksFilter": "none"
     }
   ]
 }
