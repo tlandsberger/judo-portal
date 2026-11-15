@@ -6,13 +6,15 @@ Aufruf: uv run --with pillow python scripts/make_icons.py
   passt zu hellem und dunklem Modus.
 - Favicon hell/dunkel: Signet ohne Hintergrund, schwarz bzw. weiß; der Browser wählt passend zum Modus.
 - favicon.ico: neutrale Variante (wie das App-Icon) für Browser, die keine Modus-Varianten kennen.
+- badge-96.png: Symbol für Push-Nachrichten in der Statusleiste (Android). Android nutzt nur die Form (Transparenz)
+  und färbt selbst ein; deshalb nur die Figuren, ohne Akzente, und mit verdickten Linien (24 dp sind sehr klein).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "assets" / "icons"
@@ -76,6 +78,18 @@ def favicon(size: int, figure_color: tuple[int, int, int], accent_color: tuple[i
     return icon
 
 
+def badge(size: int, coverage: float) -> Image.Image:
+    icon = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    width = round(size * coverage)
+    height = round(FIGURES.height * width / FIGURES.width)
+    # Linien vor dem Verkleinern verdicken (Maske ist ca. 4,5-mal so breit wie das Badge)
+    figures = FIGURES.filter(ImageFilter.MaxFilter(9)).resize((width, height), Image.Resampling.LANCZOS)
+    mark = Image.new("RGBA", (width, height), (*WHITE, 0))
+    mark.putalpha(figures)
+    icon.alpha_composite(mark, ((size - width) // 2, (size - height) // 2))
+    return icon
+
+
 def main() -> None:
     # Android/Chrome zeigen „any“-Icons unverändert: eigene abgerundete Form
     app_icon(192, 0.72, radius=0.22).save(TARGET / "icon-192.png", optimize=True)
@@ -89,6 +103,8 @@ def main() -> None:
     favicon(64, WHITE, MATTENGRUEN).save(TARGET / "favicon-dunkel.png", optimize=True)
     # Neutrale Variante für Browser ohne Modus-Unterstützung
     app_icon(64, 0.8, radius=0.22).save(TARGET / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48), (64, 64)])
+    # Statusleiste bei Push-Nachrichten (Android, 24 dp)
+    badge(96, 0.86).save(TARGET / "badge-96.png", optimize=True)
     print("Icons erzeugt in", TARGET.relative_to(ROOT))
 
 

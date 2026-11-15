@@ -5,6 +5,8 @@ const CACHE = "wtsv-offline-{{ portal_version }}";
 const OFFLINE_URL = "{% url 'offline' %}";
 const ACTION_URL = "{% url 'push_action' %}";
 const ICON = "{% static 'img/pwa/icon-192.png' %}";
+// Symbol in der Statusleiste (Android): nur die Form zählt, Android färbt selbst ein
+const BADGE = "{% static 'img/pwa/badge-96.png' %}";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([
@@ -41,6 +43,7 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(data.title || "Wedeler TSV Judo", {
     body: data.body || "",
     icon: ICON,
+    badge: BADGE,
     tag: data.tag,
     data: { url: data.url || "/", actions },
     actions: actions.map((action) => ({ action: action.action, title: action.title })),
@@ -74,6 +77,7 @@ self.addEventListener("notificationclick", (event) => {
         const shown = self.registration.showNotification("Wedeler TSV Judo", {
           body: result.message,
           icon: ICON,
+          badge: BADGE,
           tag: (notification.tag || "aktion") + "-ergebnis",
         });
         return result.ok ? shown : shown.then(() => openPage(result.url || data.url));
