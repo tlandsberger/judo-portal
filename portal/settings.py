@@ -60,6 +60,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "portal.core.middleware.ClientIPMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "allauth.usersessions.middleware.UserSessionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
+    "portal.accounts.middleware.SetupSessionMiddleware",
     "portal.accounts.middleware.SlidingSessionMiddleware",
 ]
 
@@ -147,6 +149,8 @@ CSRF_COOKIE_NAME = "wtsv_csrftoken"
 
 # Hinter Traefik/Cloudflare: HTTPS und Host aus den Proxy-Headern übernehmen.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Proxys, deren X-Forwarded-For für die echte Client-IP übernommen wird.
+TRUSTED_PROXIES = env_list("TRUSTED_PROXIES", "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8,::1/128,fc00::/7")
 USE_X_FORWARDED_HOST = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_HSTS_SECONDS = 365 * 24 * 60 * 60 if SECURE_COOKIES else 0
