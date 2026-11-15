@@ -49,6 +49,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField("E-Mail", unique=True)
     first_name = models.CharField("Vorname", max_length=100, blank=True)
     last_name = models.CharField("Nachname", max_length=100, blank=True)
+    phone = models.CharField(
+        "Telefon", max_length=40, blank=True, help_text="Für Notfälle bei Terminen; sehen nur begleitende Übungsleiter."
+    )
     roles = models.JSONField("Rollen", default=list, blank=True)
     is_active = models.BooleanField("Aktiv", default=True)
     is_staff = models.BooleanField("Zugang zur technischen Verwaltung", default=False)

@@ -4,7 +4,7 @@ from typing import Any
 
 from django import forms
 
-from .models import LinkKind, Member
+from .models import Interest, LinkKind, Member
 
 
 class DateInput(forms.DateInput):
@@ -38,9 +38,11 @@ class MemberForm(forms.ModelForm):
             "phone",
             "grade",
             "weight",
+            "interests",
         )
         localized_fields = ("weight",)
         widgets = {
+            "interests": forms.CheckboxSelectMultiple(),
             "birth_date": DateInput(),
             "joined_on": DateInput(),
             "left_on": DateInput(),
@@ -57,9 +59,14 @@ class SelfServiceForm(forms.ModelForm):
 
     class Meta:
         model = Member
-        fields = ("email", "phone", "grade", "weight")
+        fields = ("email", "phone", "grade", "weight", "interests")
         localized_fields = ("weight",)
-        widgets = {"weight": WeightInput(), "phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "tel"})}
+        widgets = {
+            "weight": WeightInput(),
+            "phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "tel"}),
+            "interests": forms.CheckboxSelectMultiple(),
+        }
+        help_texts = {"interests": "Danach zeigt dir das Portal passende Veranstaltungen."}
 
 
 class AccessForm(forms.Form):
@@ -86,3 +93,9 @@ class ImportForm(forms.Form):
     file = forms.FileField(
         label="CSV-Datei", help_text="Spalten wie in der Vorlage, getrennt mit Semikolon oder Komma."
     )
+
+
+class InterestForm(forms.ModelForm):
+    class Meta:
+        model = Interest
+        fields = ("name", "position")

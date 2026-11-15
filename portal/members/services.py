@@ -41,6 +41,18 @@ def own_members(user: Any) -> list[Member]:
     return [link.member for link in effective_links(user)]
 
 
+def member_users(member: Member) -> list[User]:
+    """Aktive Benutzer, für die das Mitglied heute ein eigenes ist (es selbst, Eltern bis 18)."""
+    links = member.links.select_related("user").filter(user__is_active=True)
+    return [link.user for link in links if link.is_effective()]
+
+
+def guardians(member: Member) -> list[User]:
+    """Eltern mit gültiger Verknüpfung (nur bis 18), z. B. als Notfallkontakt."""
+    links = member.links.select_related("user").filter(user__is_active=True, kind=LinkKind.GUARDIAN)
+    return [link.user for link in links if link.is_effective()]
+
+
 def visible_members(user: Any) -> QuerySet[Member]:
     """Alle Mitglieder, die der Benutzer sehen darf: Abteilungsleitung alle, sonst die eigenen."""
     if can_manage_members(user):

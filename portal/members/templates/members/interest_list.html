@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Interessen{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <a href="{% url 'member_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Mitglieder</a>
+  <h1 class="text-3xl font-bold">Interessen</h1>
+  <p class="mt-1 mb-6 text-base-content/70">Mitglieder und Eltern wählen ihre Interessen selbst unter „Meine Daten“. Zielgruppen können sich darauf beziehen.</p>
+  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-interessen"><div class="card-body">
+    <h2 class="card-title" id="h-interessen">{{ interests|length }} Interesse{{ interests|length|pluralize:"n" }}</h2>
+    {% if interests %}
+    <ul class="list">
+      {% for item in interests %}
+      <li class="list-row items-center px-0">
+        <div class="list-col-grow"><div class="font-semibold">{{ item.name }}</div><div class="text-sm text-base-content/70">{{ item.members.count }} Mitglied{{ item.members.count|pluralize:"er" }}</div></div>
+        <a class="btn btn-ghost btn-sm" href="{% url 'interest_edit' item.pk %}" aria-label="{{ item.name }} bearbeiten"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+        <form method="post" action="{% url 'interest_delete' item.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm" aria-label="{{ item.name }} löschen"><i class="bi bi-trash" aria-hidden="true"></i></button></form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="text-base-content/70">Noch keine Interessen, zum Beispiel Wettkampf, Breitensport oder Kata.</p>{% endif %}
+  </div></section>
+  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-form"><div class="card-body gap-4">
+    <h2 class="card-title" id="h-form">{% if interest %}„{{ interest.name }}“ bearbeiten{% else %}Interesse hinzufügen{% endif %}</h2>
+    <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+      {{ form }}
+      <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Speichern</button>{% if interest %}<a class="btn" href="{% url 'interest_list' %}">Abbrechen</a>{% endif %}</div>
+    </form>
+  </div></section>
+</div>
+{% endblock %}

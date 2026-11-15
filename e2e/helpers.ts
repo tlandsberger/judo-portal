@@ -85,3 +85,21 @@ export async function importMembers(page: Page) {
     await expect(page.getByRole("heading", { level: 1, name: "Mitglieder" })).toBeVisible();
   }
 }
+
+/** Zielgruppe „Kinder und Jugend“ (bis 18) anlegen, falls es sie noch nicht gibt. */
+export async function ensureYouthGroup(page: Page) {
+  await page.goto("/zielgruppen/");
+  if (await page.getByRole("link", { name: "Kinder und Jugend" }).count()) return;
+  await page.getByRole("link", { name: "Zielgruppe anlegen" }).click();
+  await page.getByLabel("Name").fill("Kinder und Jugend");
+  await page.getByLabel("Alter bis").fill("18");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Kinder und Jugend" })).toBeVisible();
+}
+
+/** Datum in n Tagen für Felder vom Typ datetime-local, z. B. „2026-11-25T10:00“. */
+export function localDateTime(days: number, time: string): string {
+  const day = new Date(Date.now() + days * 86_400_000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T${time}`;
+}

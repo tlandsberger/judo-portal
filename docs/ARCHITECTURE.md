@@ -32,7 +32,8 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | `portal.core` | App-Rahmen, Startseite, Bausteine, PWA (Manifest, Service Worker), Healthcheck, Backup, Zeitplaner |
 | `portal.accounts` | Benutzer, Rollen, Einladungen, Benutzerverwaltung, Anpassungen an allauth |
 | `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Benutzer ↔ Mitglied (m:n), „Meine Daten“ (ADR 0009) |
-| *(folgt)* `portal.events`, `portal.billing` | Termine, Übungsleiterabrechnung |
+| `portal.events` | Veranstaltungen, Zeitpläne, Termine, Zielgruppen, Anmeldung mit Warteliste, Begleitung durch Übungsleiter (ADR 0010) |
+| *(folgt)* `portal.billing` | Übungsleiterabrechnung (auf Basis der bestätigten Begleitungen) |
 
 Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kommen aus eigenen Übersetzungen in
 `portal/locale/` (`LOCALE_PATHS`); allauth selbst bleibt unverändert.
@@ -42,13 +43,14 @@ Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kom
 | Rolle | Zweck |
 |---|---|
 | Mitglied (`member`) | Grundrolle für Vereinsmitglieder mit eigenem Zugang |
-| Übungsleiter (`trainer`) | Trainer; Zugriff auf Mitglieder kommt mit den Trainingsgruppen, weitere Rechte mit Termine/Abrechnung |
-| Abteilungsleiter (`department_head`) | Verwaltet Benutzer (einladen, Rollen außer Administrator), Mitglieder und Zugänge |
+| Übungsleiter (`trainer`) | Begleitet Termine als Trainer oder Kotrainer, plant Teams; sieht Teilnehmer nur bei eigenen Terminen (ADR 0010) |
+| Abteilungsleiter (`department_head`) | Verwaltet Benutzer (einladen, Rollen außer Administrator), Mitglieder, Zugänge, Veranstaltungen und Zielgruppen |
 | Administrator (`admin`) | Technische Rolle: alles, inkl. technischer Verwaltung (Django-Admin unter `/technik/`) |
 
 Eltern sind keine Rolle: Ihr Benutzer wird mit den Kindern verknüpft (bis zu deren 18. Geburtstag). Was ein Benutzer
 sieht, ergibt sich aus Rollen und Verknüpfungen; geprüft wird immer auf dem Server (`portal/members/services.py`).
-Unter „Meine Daten“ pflegen Mitglieder und Eltern Kontakt- und Judo-Daten selbst.
+Unter „Meine Daten“ pflegen Mitglieder und Eltern Kontakt- und Judo-Daten sowie Interessen selbst. Unter „Termine“
+sehen sie je Mitglied die passenden Termine (Zielgruppen) und melden an oder ab.
 
 ## Anmeldung
 
@@ -92,6 +94,6 @@ Geräteeinstellung oder Umschalter.
 |---|---|---|
 | 1 | Fundament: Anmeldung, Rollen, Einladungen, Design, CI/CD, Betrieb | ✅ |
 | 2 | Mitgliederverwaltung inkl. CSV-Import und Zugängen für Mitglieder/Eltern | ✅ |
-| 3 | Termine (Trainings, Veranstaltungen) | offen |
+| 3 | Veranstaltungen und Termine mit Zielgruppen, Anmeldung und Begleitung | ✅ |
 | 4 | Übungsleiterabrechnung | offen |
 | 5 | Datenschutz-Funktionen (Änderungsprotokoll, Export, Löschung) | offen |

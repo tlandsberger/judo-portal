@@ -5,6 +5,7 @@ Regeln:
 - Leere Zellen überschreiben nichts (z. B. selbst gepflegtes Gewicht bleibt bei einem Export ohne Gewicht erhalten).
 - Mitglieder, die nicht in der Datei stehen, bleiben unverändert; der Import löscht nie.
 - Unbekannte Spalten werden ignoriert.
+- Interessen kommagetrennt mit den Namen aus der Liste im Portal; sie ersetzen die bisherigen Interessen.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
 
-from .models import Gender, Grade, Member
+from .models import Gender, Grade, Interest, Member
 
 MAX_BYTES = 1_000_000
 
@@ -39,10 +40,11 @@ COLUMNS: dict[str, tuple[str, ...]] = {
     "phone": ("Telefon", "Mobil", "Handy"),
     "grade": ("Graduierung", "Gürtel"),
     "weight": ("Gewicht",),
+    "interests": ("Interessen",),
 }
 REQUIRED = ("member_number", "first_name", "last_name", "birth_date")
 TEMPLATE_HEADER = [names[0] for names in COLUMNS.values()]
-TEMPLATE_EXAMPLE = ["1001", "Mia", "Muster", "14.03.2015", "w", "01.09.2021", "", "", "", "6. Kyu", "32,5"]
+TEMPLATE_EXAMPLE = ["1001", "Mia", "Muster", "14.03.2015", "w", "01.09.2021", "", "", "", "6. Kyu", "32,5", ""]
 
 LABELS = {
     "member_number": "Mitgliedsnummer",
@@ -56,6 +58,7 @@ LABELS = {
     "phone": "Telefon",
     "grade": "Graduierung",
     "weight": "Gewicht",
+    "interests": "Interessen",
 }
 
 
@@ -141,10 +144,14 @@ def apply(text: str) -> Preview:
         if row.status not in ("new", "changed"):
             continue
         member = row.member or Member()
+        interests = row.values.get("interests")
         for key, value in row.values.items():
-            setattr(member, key, value)
+            if key != "interests":
+                setattr(member, key, value)
         member.full_clean()
         member.save()
+        if interests is not None:
+            member.interests.set(interests)
     return result
 
 
@@ -242,6 +249,15 @@ def _email(raw: str) -> str:
     return raw.lower()
 
 
+def _interests(raw: str) -> list[Interest]:
+    names = [name.strip() for name in re.split(r"[,|]", raw) if name.strip()]
+    known = {interest.name.casefold(): interest for interest in Interest.objects.all()}
+    unknown = [name for name in names if name.casefold() not in known]
+    if unknown:
+        raise ValueError(f"unbekannt: {', '.join(unknown)} (Liste unter Mitglieder → Interessen).")
+    return sorted({known[name.casefold()] for name in names}, key=lambda interest: interest.pk)
+
+
 PARSERS = {
     "birth_date": _date,
     "joined_on": _date,
@@ -250,8 +266,16 @@ PARSERS = {
     "grade": _grade,
     "weight": _weight,
     "email": _email,
+    "interests": _interests,
 }
 
 
 def _changes(member: Member, values: dict[str, Any]) -> list[str]:
-    return [LABELS[key] for key, value in values.items() if getattr(member, key) != value]
+    changes = []
+    for key, value in values.items():
+        if key == "interests":
+            if set(member.interests.all()) != set(value):
+                changes.append(LABELS[key])
+        elif getattr(member, key) != value:
+            changes.append(LABELS[key])
+    return changes

@@ -10,7 +10,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from . import services
-from .forms import InvitationForm, RolesForm
+from .forms import InvitationForm, PhoneForm, RolesForm
 from .models import Invitation, Role, User
 from .permissions import MANAGE_USERS, role_required
 
@@ -64,8 +64,15 @@ def setup_login(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def security(request: HttpRequest) -> HttpResponse:
-    """„Meine Anmeldung“: Passkeys, Passwort, angemeldete Geräte."""
-    return render(request, "accounts/security.html", _login_methods(request.user))  # type: ignore[arg-type]
+    """„Meine Anmeldung“: Passkeys, Passwort, angemeldete Geräte und Telefon für Notfälle."""
+    form = PhoneForm(request.POST or None, instance=request.user)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Telefon gespeichert.")
+        return redirect("security")
+    context = _login_methods(request.user)  # type: ignore[arg-type]
+    context["phone_form"] = form
+    return render(request, "accounts/security.html", context)
 
 
 def _login_methods(user: User) -> dict[str, object]:

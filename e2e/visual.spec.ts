@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_STATE, importMembers } from "./helpers";
+import { ADMIN_STATE, ensureYouthGroup, importMembers } from "./helpers";
 
 // Visuelle Regressionstests: fangen ungewollte Änderungen am Erscheinungsbild ab (z. B. durch Updates).
 // Neue Referenzbilder: siehe e2e/README.md (--update-snapshots im Playwright-Container).
@@ -42,6 +42,17 @@ for (const scheme of ["light", "dark"] as const) {
         await page.goto("/mitglieder/");
         await page.evaluate(() => document.fonts.ready);
         await expect(page).toHaveScreenshot(`mitglieder-${name}.png`, { fullPage: true });
+        await context.close();
+      });
+
+      test("Zielgruppen", async ({ browser }) => {
+        const context = await browser.newContext({ storageState: ADMIN_STATE, colorScheme: scheme, viewport });
+        const page = await context.newPage();
+        await importMembers(page);
+        await ensureYouthGroup(page);
+        await page.goto("/zielgruppen/");
+        await page.evaluate(() => document.fonts.ready);
+        await expect(page).toHaveScreenshot(`zielgruppen-${name}.png`, { fullPage: true });
         await context.close();
       });
     });
