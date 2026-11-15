@@ -32,10 +32,12 @@
 
   {% block footer %}{% include "partials/footer.html" %}{% endblock %}
   {% if user.is_authenticated %}{% include "partials/bottom_nav.html" %}{% endif %}
+  {% include "partials/install_prompt.html" %}
 
   <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
   <script src="{% static 'js/app.js' %}"></script>
+  <script src="{% static 'js/install.js' %}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

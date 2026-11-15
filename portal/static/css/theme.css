@@ -285,3 +285,17 @@ h3, .h3 { font-weight: 650; font-size: 1.1rem; }
 .page-header h1 { margin: 0; }
 
 .visually-hidden-focusable:focus { position: fixed; top: 0.5rem; left: 0.5rem; z-index: 2000; background: var(--wtsv-surface); padding: 0.5rem 1rem; border-radius: 0.5rem; }
+
+/* Hinweis „Als App installieren“ (Offcanvas von unten) */
+.wtsv-install.offcanvas-bottom {
+  height: auto;
+  max-height: 85vh;
+  border-radius: 1.25rem 1.25rem 0 0;
+  background: var(--wtsv-surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.install-step {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 1.75rem; height: 1.75rem; border-radius: 50%;
+  background: var(--wtsv-vereinsgruen); color: #fff; font-weight: 700; font-size: 0.9rem;
+}
