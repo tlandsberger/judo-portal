@@ -25,7 +25,6 @@
       {% if can_manage_users %}
       <li><a href="{% url 'user_list' %}"{% if url_name in 'user_list invite edit_user invitation_link' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-people" aria-hidden="true"></i> Benutzer</a></li>
       {% endif %}
-      <li><a href="{% url 'security' %}"{% if url_name == 'security' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-shield-lock" aria-hidden="true"></i> Meine Anmeldung</a></li>
       {% if user.is_staff %}
       <li class="menu-title mt-4 text-neutral-content/70">Technik</li>
       <li><a href="{% url 'components' %}"{% if url_name == 'components' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-grid-1x2" aria-hidden="true"></i> Bausteine</a></li>
@@ -34,11 +33,12 @@
     </ul>
   </nav>
   <div class="border-t border-neutral-content/15 p-4">
-    <div class="px-3 pb-2">
-      <div class="font-semibold">{{ user.display_name }}</div>
-      <div class="truncate text-sm text-neutral-content/70">{{ user.email }}</div>
-    </div>
-    <ul class="menu w-full text-base">
+    <ul class="menu w-full text-base [--menu-active-bg:var(--color-primary)] [--menu-active-fg:var(--color-primary-content)]">
+      {# Der angemeldete Benutzer führt zu „Meine Anmeldung“ (Anmeldewege, Geräte, Benachrichtigungen) #}
+      <li><a href="{% url 'security' %}" class="gap-3{% if url_name == 'security' %} menu-active{% endif %}"{% if url_name == 'security' %} aria-current="page"{% endif %}>
+        <i class="bi bi-person-circle text-2xl" aria-hidden="true"></i>
+        <span class="min-w-0"><span class="sr-only">Meine Anmeldung: </span><span class="block font-semibold">{{ user.display_name }}</span><span class="block truncate text-sm opacity-80">{{ user.email }}</span></span>
+      </a></li>
       <li>{% include "partials/theme_toggle.html" with with_label=True %}</li>
       <li><button type="submit" form="abmelden"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Abmelden</button></li>
     </ul>
