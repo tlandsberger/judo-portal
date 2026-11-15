@@ -3,13 +3,13 @@
   <div class="container-lg">
     <a class="navbar-brand" href="{% url 'home' %}">
       <img src="{% static 'img/logo/signet-weiss.png' %}" alt="" width="40" height="33">
-      <span>WTSV Judo</span>
+      <span>Wedeler TSV Judo</span>
     </a>
     {% if user.is_authenticated %}
     <ul class="navbar-nav me-auto d-none d-md-flex">
       <li class="nav-item"><a class="nav-link{% if url_name == 'home' %} active{% endif %}" {% if url_name == 'home' %}aria-current="page"{% endif %} href="{% url 'home' %}">Start</a></li>
-      {% if can_manage_accounts %}
-      <li class="nav-item"><a class="nav-link{% if url_name in 'account_list invite edit_account' %} active{% endif %}" href="{% url 'account_list' %}">Konten</a></li>
+      {% if can_manage_users %}
+      <li class="nav-item"><a class="nav-link{% if url_name in 'user_list invite edit_user' %} active{% endif %}" href="{% url 'user_list' %}">Benutzer</a></li>
       {% endif %}
     </ul>
     {% endif %}

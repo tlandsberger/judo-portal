@@ -31,7 +31,7 @@ class InvitationForm(forms.Form):
         email: str = self.cleaned_data["email"].strip().lower()
         user = User.objects.filter(email=email).first()
         if user and user.is_active:
-            raise forms.ValidationError("Zu dieser Adresse gibt es bereits ein aktives Konto.")
+            raise forms.ValidationError("Zu dieser Adresse gibt es bereits einen aktiven Benutzer.")
         return email
 
 

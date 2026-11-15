@@ -1,4 +1,4 @@
-# WTSV Judo – Vereinsportal
+# Wedeler TSV Judo – Vereinsportal
 
 Vereinsportal der Judo-Abteilung im Wedeler TSV e.V.: Mitglieder, Eltern, Übungsleiter und Abteilungsleitung
 melden sich an und finden alles Vereinsrelevante an einem Ort. Läuft im Browser und lässt sich auf dem Handy als App
@@ -7,7 +7,7 @@ installieren. Produktiv unter **https://judo.tlandsberger.de**.
 ## Stand
 
 - **Fundament:** Anmeldung mit Passkey, Passwort oder Code per E-Mail, Zugänge nur per Einladung, Rollen,
-  Kontoverwaltung, Erscheinungsbild nach dem Design System „WTSV Judo“ (hell und dunkel).
+  Benutzerverwaltung, Erscheinungsbild nach dem Design System „Wedeler TSV Judo“ (hell und dunkel).
 - **Als Nächstes:** Mitgliederverwaltung mit CSV-Import und Zugängen für Mitglieder und Eltern, danach Termine und
   Übungsleiterabrechnung. Jedes Feature wird vorher fachlich geplant.
 

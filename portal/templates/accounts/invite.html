@@ -2,7 +2,7 @@
 {% block title %}Person einladen{% endblock %}
 {% block content %}
 <div class="row justify-content-center"><div class="col-lg-7">
-  <p class="mb-2"><a href="{% url 'account_list' %}" class="text-decoration-none"><i class="bi bi-arrow-left" aria-hidden="true"></i> Konten</a></p>
+  <p class="mb-2"><a href="{% url 'user_list' %}" class="text-decoration-none"><i class="bi bi-arrow-left" aria-hidden="true"></i> Benutzer</a></p>
   <div class="card"><div class="card-body p-4">
     <h1 class="h3">Person einladen</h1>
     <p class="text-body-secondary">Die Person bekommt eine E-Mail mit einem Link, der 7 Tage gültig ist. Alternativ erstellst du nur den Link und gibst ihn selbst weiter, z. B. per Messenger.</p>
@@ -11,7 +11,7 @@
       <div class="d-flex flex-wrap gap-2 mt-2">
         <button type="submit" name="action" value="send" class="btn btn-primary"><i class="bi bi-envelope me-1" aria-hidden="true"></i> Einladung senden</button>
         <button type="submit" name="action" value="link" class="btn btn-outline-primary"><i class="bi bi-link-45deg me-1" aria-hidden="true"></i> Nur Link erstellen</button>
-        <a class="btn btn-outline-secondary" href="{% url 'account_list' %}">Abbrechen</a>
+        <a class="btn btn-outline-secondary" href="{% url 'user_list' %}">Abbrechen</a>
       </div>
     </form>
   </div></div>

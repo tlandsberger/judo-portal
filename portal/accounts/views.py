@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from . import services
 from .forms import InvitationForm, RolesForm
 from .models import Invitation, Role, User
-from .permissions import MANAGE_ACCOUNTS, role_required
+from .permissions import MANAGE_USERS, role_required
 
 
 @never_cache
@@ -73,18 +73,18 @@ def _login_methods(user: User) -> dict[str, object]:
     return {"passkeys": passkeys, "has_password": user.has_usable_password()}
 
 
-@role_required(*MANAGE_ACCOUNTS)
-def account_list(request: HttpRequest) -> HttpResponse:
-    users = [(account, services.is_set_up(account)) for account in User.objects.all()]
+@role_required(*MANAGE_USERS)
+def user_list(request: HttpRequest) -> HttpResponse:
+    users = [(target_user, services.is_set_up(target_user)) for target_user in User.objects.all()]
     invitations = Invitation.objects.filter(accepted_at__isnull=True)
     return render(
         request,
-        "accounts/account_list.html",
+        "accounts/user_list.html",
         {"users": users, "invitations": invitations, "roles": Role},
     )
 
 
-@role_required(*MANAGE_ACCOUNTS)
+@role_required(*MANAGE_USERS)
 def invite(request: HttpRequest) -> HttpResponse:
     allow_admin = request.user.has_role(Role.ADMIN)  # type: ignore[union-attr]
     form = InvitationForm(request.POST or None, allow_admin=allow_admin)
@@ -101,21 +101,21 @@ def invite(request: HttpRequest) -> HttpResponse:
         if link_only:
             return _show_link(request, invitation)
         messages.success(request, f"Einladung an {invitation.email} verschickt.")
-        return redirect("account_list")
+        return redirect("user_list")
     return render(request, "accounts/invite.html", {"form": form})
 
 
 @require_POST
-@role_required(*MANAGE_ACCOUNTS)
+@role_required(*MANAGE_USERS)
 def resend_invitation(request: HttpRequest, pk: int) -> HttpResponse:
     invitation = get_object_or_404(Invitation, pk=pk, accepted_at__isnull=True)
     services.resend(invitation)
     messages.success(request, f"Einladung an {invitation.email} erneut verschickt.")
-    return redirect("account_list")
+    return redirect("user_list")
 
 
 @require_POST
-@role_required(*MANAGE_ACCOUNTS)
+@role_required(*MANAGE_USERS)
 def invitation_link(request: HttpRequest, pk: int) -> HttpResponse:
     """Neuen Einladungslink erzeugen und anzeigen (zum Kopieren), ohne Mail."""
     invitation = get_object_or_404(Invitation, pk=pk, accepted_at__isnull=True)
@@ -134,66 +134,66 @@ def _show_link(request: HttpRequest, invitation: Invitation) -> HttpResponse:
 
 
 @require_POST
-@role_required(*MANAGE_ACCOUNTS)
-def reinvite_account(request: HttpRequest, pk: int) -> HttpResponse:
-    """Neue Einladung für ein Konto, das seinen Zugang noch nicht eingerichtet hat (per Mail oder nur Link)."""
-    account = get_object_or_404(User, pk=pk, is_active=True)
-    if services.has_login_method(account):
-        messages.info(request, f"{account.display_name} hat den Zugang bereits eingerichtet.")
-        return redirect("account_list")
+@role_required(*MANAGE_USERS)
+def reinvite_user(request: HttpRequest, pk: int) -> HttpResponse:
+    """Neue Einladung für einen Benutzer, der seinen Zugang noch nicht eingerichtet hat (per Mail oder nur Link)."""
+    target_user = get_object_or_404(User, pk=pk, is_active=True)
+    if services.has_login_method(target_user):
+        messages.info(request, f"{target_user.display_name} hat den Zugang bereits eingerichtet.")
+        return redirect("user_list")
     link_only = request.POST.get("action") == "link"
-    invitation = services.reinvite(account, invited_by=request.user, send=not link_only)  # type: ignore[arg-type]
+    invitation = services.reinvite(target_user, invited_by=request.user, send=not link_only)  # type: ignore[arg-type]
     if link_only:
         return _show_link(request, invitation)
-    messages.success(request, f"Einladung an {account.email} erneut verschickt.")
-    return redirect("account_list")
+    messages.success(request, f"Einladung an {target_user.email} erneut verschickt.")
+    return redirect("user_list")
 
 
 @require_POST
-@role_required(*MANAGE_ACCOUNTS)
+@role_required(*MANAGE_USERS)
 def delete_invitation(request: HttpRequest, pk: int) -> HttpResponse:
     invitation = get_object_or_404(Invitation, pk=pk, accepted_at__isnull=True)
     invitation.delete()
     messages.success(request, f"Einladung an {invitation.email} zurückgezogen.")
-    return redirect("account_list")
+    return redirect("user_list")
 
 
-@role_required(*MANAGE_ACCOUNTS)
-def edit_account(request: HttpRequest, pk: int) -> HttpResponse:
-    account = get_object_or_404(User, pk=pk)
+@role_required(*MANAGE_USERS)
+def edit_user(request: HttpRequest, pk: int) -> HttpResponse:
+    target_user = get_object_or_404(User, pk=pk)
     actor: User = request.user  # type: ignore[assignment]
     allow_admin = actor.has_role(Role.ADMIN)
-    # Administratoren-Konten darf nur ein Administrator ändern.
-    if account.has_role(Role.ADMIN) and not allow_admin:
+    # Administratoren darf nur ein Administrator ändern.
+    if target_user.has_role(Role.ADMIN) and not allow_admin:
         messages.error(request, "Administratoren kann nur ein Administrator ändern.")
-        return redirect("account_list")
-    form = RolesForm(request.POST or None, allow_admin=allow_admin, initial={"roles": account.roles})
+        return redirect("user_list")
+    form = RolesForm(request.POST or None, allow_admin=allow_admin, initial={"roles": target_user.roles})
     if request.method == "POST" and form.is_valid():
         roles = list(form.cleaned_data["roles"])
-        if not allow_admin and Role.ADMIN in account.roles:
+        if not allow_admin and Role.ADMIN in target_user.roles:
             roles.append(Role.ADMIN)
-        if account == actor and Role.ADMIN in account.roles and Role.ADMIN not in roles:
+        if target_user == actor and Role.ADMIN in target_user.roles and Role.ADMIN not in roles:
             messages.error(request, "Du kannst dir die Administrator-Rolle nicht selbst entziehen.")
-            return redirect("edit_account", pk=account.pk)
-        account.set_roles(roles)
-        messages.success(request, f"Rollen von {account.display_name} gespeichert.")
-        return redirect("account_list")
-    return render(request, "accounts/edit_account.html", {"account": account, "form": form})
+            return redirect("edit_user", pk=target_user.pk)
+        target_user.set_roles(roles)
+        messages.success(request, f"Rollen von {target_user.display_name} gespeichert.")
+        return redirect("user_list")
+    return render(request, "accounts/edit_user.html", {"target_user": target_user, "form": form})
 
 
 @require_POST
-@role_required(*MANAGE_ACCOUNTS)
+@role_required(*MANAGE_USERS)
 def toggle_active(request: HttpRequest, pk: int) -> HttpResponse:
-    account = get_object_or_404(User, pk=pk)
+    target_user = get_object_or_404(User, pk=pk)
     actor: User = request.user  # type: ignore[assignment]
-    if account == actor:
-        messages.error(request, "Du kannst dein eigenes Konto nicht deaktivieren.")
-    elif account.has_role(Role.ADMIN) and not actor.has_role(Role.ADMIN):
+    if target_user == actor:
+        messages.error(request, "Du kannst dich nicht selbst deaktivieren.")
+    elif target_user.has_role(Role.ADMIN) and not actor.has_role(Role.ADMIN):
         messages.error(request, "Administratoren kann nur ein Administrator ändern.")
     else:
-        account.is_active = not account.is_active
-        # Deaktivierte Konten gelten sofort als abgemeldet: Django lässt inaktive Nutzer nicht mehr durch.
-        account.save(update_fields=["is_active"])
-        state = "aktiviert" if account.is_active else "deaktiviert"
-        messages.success(request, f"Konto von {account.display_name} {state}.")
-    return redirect("account_list")
+        target_user.is_active = not target_user.is_active
+        # Deaktivierte Benutzer gelten sofort als abgemeldet: Django lässt inaktive Nutzer nicht mehr durch.
+        target_user.save(update_fields=["is_active"])
+        state = "aktiviert" if target_user.is_active else "deaktiviert"
+        messages.success(request, f"{target_user.display_name} {state}.")
+    return redirect("user_list")

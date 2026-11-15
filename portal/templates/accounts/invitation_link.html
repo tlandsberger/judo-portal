@@ -2,7 +2,7 @@
 {% block title %}Einladungslink{% endblock %}
 {% block content %}
 <div class="row justify-content-center"><div class="col-lg-7">
-  <p class="mb-2"><a href="{% url 'account_list' %}" class="text-decoration-none"><i class="bi bi-arrow-left" aria-hidden="true"></i> Konten</a></p>
+  <p class="mb-2"><a href="{% url 'user_list' %}" class="text-decoration-none"><i class="bi bi-arrow-left" aria-hidden="true"></i> Benutzer</a></p>
   <div class="card"><div class="card-body p-4">
     <h1 class="h3">Einladungslink</h1>
     <p class="text-body-secondary">Für <strong>{{ invitation.email }}</strong>{% if invitation.first_name %} ({{ invitation.first_name }} {{ invitation.last_name }}){% endif %}.
@@ -13,7 +13,7 @@
       <button class="btn btn-primary" type="button" data-copy-target="#einladungslink" data-copied-label="Kopiert"><i class="bi bi-clipboard me-1" aria-hidden="true"></i> Kopieren</button>
     </div>
     <p class="small text-body-secondary mb-0" role="status" data-copy-status></p>
-    <a class="btn btn-outline-secondary mt-3" href="{% url 'account_list' %}">Fertig</a>
+    <a class="btn btn-outline-secondary mt-3" href="{% url 'user_list' %}">Fertig</a>
   </div></div>
 </div></div>
 {% endblock %}

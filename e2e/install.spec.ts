@@ -18,7 +18,7 @@ test("Android: Hinweis bietet die Installation an und startet den Systemdialog",
     event.userChoice = Promise.resolve({ outcome: "accepted" });
     window.dispatchEvent(event);
   });
-  const dialog = page.getByRole("dialog", { name: "WTSV Judo als App" });
+  const dialog = page.getByRole("dialog", { name: "Wedeler TSV Judo als App" });
   await expect(dialog).toBeVisible();
   await expectNoA11yViolations(page);
   await dialog.getByRole("button", { name: "Als App installieren" }).click();
@@ -31,7 +31,7 @@ test("iPhone: Hinweis zeigt die Anleitung, „Später“ hält ihn fern", async 
   const context = await browser.newContext({ ...mobile, userAgent: IPHONE_UA });
   const page = await context.newPage();
   await page.goto("/anmeldung/login/");
-  const dialog = page.getByRole("dialog", { name: "WTSV Judo als App" });
+  const dialog = page.getByRole("dialog", { name: "Wedeler TSV Judo als App" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText("Zum Home-Bildschirm")).toBeVisible();
   await expectNoA11yViolations(page);
@@ -46,5 +46,5 @@ test("iPhone: Hinweis zeigt die Anleitung, „Später“ hält ihn fern", async 
 test("Desktop: kein Hinweis", async ({ page }) => {
   await page.goto("/anmeldung/login/");
   await page.waitForTimeout(2500);
-  await expect(page.getByRole("dialog", { name: "WTSV Judo als App" })).toBeHidden();
+  await expect(page.getByRole("dialog", { name: "Wedeler TSV Judo als App" })).toBeHidden();
 });

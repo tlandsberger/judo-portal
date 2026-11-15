@@ -1,4 +1,4 @@
-# Architektur – WTSV Judo
+# Architektur – Wedeler TSV Judo
 
 ## Ziele
 
@@ -30,8 +30,8 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | App | Inhalt |
 |---|---|
 | `portal.core` | App-Rahmen, Startseite, Bausteine, PWA (Manifest, Service Worker), Healthcheck, Backup, Zeitplaner |
-| `portal.accounts` | Benutzerkonten, Rollen, Einladungen, Kontoverwaltung, Anpassungen an allauth |
-| *(folgt)* `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Konto ↔ Mitglied (m:n) |
+| `portal.accounts` | Benutzer, Rollen, Einladungen, Benutzerverwaltung, Anpassungen an allauth |
+| *(folgt)* `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Benutzer ↔ Mitglied (m:n) |
 | *(folgt)* `portal.events`, `portal.billing` | Termine, Übungsleiterabrechnung |
 
 ## Rollen und Rechte
@@ -40,10 +40,10 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 |---|---|
 | Mitglied (`member`) | Grundrolle für Vereinsmitglieder mit eigenem Zugang |
 | Übungsleiter (`trainer`) | Trainer; Rechte kommen mit den Features Termine/Abrechnung |
-| Abteilungsleiter (`department_head`) | Verwaltet Konten (einladen, Rollen außer Administrator), später Mitglieder |
+| Abteilungsleiter (`department_head`) | Verwaltet Benutzer (einladen, Rollen außer Administrator), später Mitglieder |
 | Administrator (`admin`) | Technische Rolle: alles, inkl. technischer Verwaltung (Django-Admin unter `/technik/`) |
 
-Eltern sind keine Rolle: Ihr Konto wird mit den Kindern verknüpft. Was ein Konto sieht, ergibt sich aus Rollen und
+Eltern sind keine Rolle: Ihr Benutzer wird mit den Kindern verknüpft. Was ein Benutzer sieht, ergibt sich aus Rollen und
 Verknüpfungen; geprüft wird immer auf dem Server.
 
 ## Anmeldung
@@ -58,7 +58,7 @@ Verknüpfungen; geprüft wird immer auf dem Server.
 
 ## Erscheinungsbild
 
-Design System „WTSV Judo“: Farben (`vereinsgruen` als Leitfarbe), Logos, Vereins-Piktogramme. Schrift: Inter als
+Design System „Wedeler TSV Judo“: Farben (`vereinsgruen` als Leitfarbe), Logos, Vereins-Piktogramme. Schrift: Inter als
 freie Alternative zu Aptos (Aptos darf nicht eingebettet werden). Bootstrap 5.3 mit eigenem Theme
 (`portal/static/css/theme.css`); hell als Standard, dunkel nach Geräteeinstellung oder Umschalter.
 

@@ -1,6 +1,6 @@
 # CLAUDE.md – judo-portal
 
-Vereinsportal „WTSV Judo“ (Django, eine App pro Fachbereich). Architektur: `docs/ARCHITECTURE.md`,
+Vereinsportal „Wedeler TSV Judo“ (Django, eine App pro Fachbereich). Architektur: `docs/ARCHITECTURE.md`,
 Entscheidungen: `docs/adr/`, Betrieb: `docs/betrieb.md`.
 
 ## Arbeitsweise
@@ -23,6 +23,12 @@ uv run python manage.py makemigrations          # nach Modelländerungen, Migrat
 E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen die Screenshots mit
 `--update-snapshots` im Playwright-Container neu erzeugen und committen.
 
+## Begriffe
+
+- In Oberfläche und E-Mails heißt das Portal immer **„Wedeler TSV Judo“**; die Abkürzung „WTSV“ nur im Code.
+- **„Benutzer“** (Code: `user`) für alle, die sich anmelden können – nicht „Konto“. Wo es um den eigenen Zugang
+  geht, passt auch „Zugang“. Mitglieder (Vereinsdaten) sind etwas anderes.
+
 ## Regeln
 
 - **Commits:** Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `ci:`, `chore:` …). `feat` = Minor,
@@ -31,7 +37,7 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
   Fachlogik in `services.py`, Views schlank. Querverweise zwischen Apps nur über deren Services/Modelle, nicht über Views.
 - **Rechte:** fest definierte Rollen in `portal/accounts/models.py` (`Role`). Prüfen auf dem Server mit
   `role_required` bzw. `user.has_role(...)` (`portal/accounts/permissions.py`). Anzeige in Templates spiegelt das.
-- **Konten und Mitglieder sind getrennt;** Verknüpfungen (eigenes Profil, Erziehungsberechtigt …) sind m:n.
+- **Benutzer und Mitglieder sind getrennt;** Verknüpfungen (eigenes Profil, Erziehungsberechtigt …) sind m:n.
 - **Anmeldung:** django-allauth; Passkey, Passwort und Mail-Code sind gleichwertig (kein erzwungener zweiter Faktor,
   siehe `PortalAccountAdapter`). Keine Selbstregistrierung, Zugänge nur per Einladung.
 - **Oberfläche:** Bootstrap-Klassen plus `portal/static/css/theme.css`. Farben nur über die Theme-Variablen

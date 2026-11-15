@@ -4,15 +4,15 @@ from . import views
 
 urlpatterns = [
     path("einladung/<str:token>/", views.accept_invitation, name="accept_invitation"),
-    path("konto/einrichten/", views.setup_login, name="setup_login"),
-    path("konto/einrichten/per-code/", views.setup_login_by_code, name="setup_login_by_code"),
-    path("konto/anmeldung/", views.security, name="security"),
-    path("verwaltung/konten/", views.account_list, name="account_list"),
-    path("verwaltung/konten/einladen/", views.invite, name="invite"),
-    path("verwaltung/konten/<int:pk>/", views.edit_account, name="edit_account"),
-    path("verwaltung/konten/<int:pk>/aktiv/", views.toggle_active, name="toggle_active"),
+    path("zugang/einrichten/", views.setup_login, name="setup_login"),
+    path("zugang/einrichten/per-code/", views.setup_login_by_code, name="setup_login_by_code"),
+    path("zugang/anmeldung/", views.security, name="security"),
+    path("verwaltung/benutzer/", views.user_list, name="user_list"),
+    path("verwaltung/benutzer/einladen/", views.invite, name="invite"),
+    path("verwaltung/benutzer/<int:pk>/", views.edit_user, name="edit_user"),
+    path("verwaltung/benutzer/<int:pk>/aktiv/", views.toggle_active, name="toggle_active"),
     path("verwaltung/einladungen/<int:pk>/erneut/", views.resend_invitation, name="resend_invitation"),
     path("verwaltung/einladungen/<int:pk>/zurueckziehen/", views.delete_invitation, name="delete_invitation"),
     path("verwaltung/einladungen/<int:pk>/link/", views.invitation_link, name="invitation_link"),
-    path("verwaltung/konten/<int:pk>/einladen/", views.reinvite_account, name="reinvite_account"),
+    path("verwaltung/benutzer/<int:pk>/einladen/", views.reinvite_user, name="reinvite_user"),
 ]

@@ -1,6 +1,6 @@
 {% load static %}{
-  "name": "WTSV Judo",
-  "short_name": "WTSV Judo",
+  "name": "Wedeler TSV Judo",
+  "short_name": "Wedeler TSV Judo",
   "description": "Vereinsportal der Judo-Abteilung im Wedeler TSV e.V.",
   "lang": "de",
   "start_url": "/",

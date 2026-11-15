@@ -38,7 +38,7 @@ class TestSetupSession:
     def test_setup_session_only_reaches_setup_pages(self, client) -> None:
         invitation = services.invite("chef@example.org", roles=["admin"])
         accept(client, invitation)
-        for name in ["home", "account_list", "invite", "security", "components"]:
+        for name in ["home", "user_list", "invite", "security", "components"]:
             response = client.get(reverse(name))
             assert response.status_code == 302 and response.url == reverse("setup_login"), name
         assert client.get("/technik/").url == reverse("setup_login")
@@ -64,14 +64,14 @@ class TestSetupSession:
         accept(scanner, invitation)  # Doppelklick des Scanners
         assert accept(person, invitation).url == reverse("setup_login")
         set_password(person)
-        assert person.get(reverse("account_list")).status_code == 200  # volle Sitzung
+        assert person.get(reverse("user_list")).status_code == 200  # volle Sitzung
         invitation.refresh_from_db()
         assert invitation.accepted_at is not None
         assert User.objects.filter(email="chef@example.org").count() == 1
         # Die Scanner-Sitzung wird abgemeldet, statt freigeschaltet zu werden.
         response = scanner.get(reverse("home"))
         assert response.status_code == 302 and response.url.startswith(reverse("account_login"))
-        assert scanner.get(reverse("account_list")).url.startswith(reverse("account_login"))
+        assert scanner.get(reverse("user_list")).url.startswith(reverse("account_login"))
 
     def test_passkey_completes_setup(self, client) -> None:
         invitation = services.invite("mia@example.org")
@@ -161,17 +161,17 @@ class TestLinkWithoutMail:
         invitation = services.invite("mia@example.org", send=False)
         assert client.post(reverse("invitation_link", args=[invitation.pk])).status_code == 403
 
-    def test_reinvite_account_not_set_up(self, client, django_capture_on_commit_callbacks) -> None:
+    def test_reinvite_user_not_set_up(self, client, django_capture_on_commit_callbacks) -> None:
         client.force_login(make_staff())
         accept(Client(), services.invite("mia@example.org"))
         account = User.objects.get(email="mia@example.org")
         assert not services.is_set_up(account)
-        page = client.get(reverse("account_list")).content.decode()
+        page = client.get(reverse("user_list")).content.decode()
         assert "noch nicht eingerichtet" in page
         with django_capture_on_commit_callbacks(execute=True):
-            client.post(reverse("reinvite_account", args=[account.pk]), {"action": "send"})
+            client.post(reverse("reinvite_user", args=[account.pk]), {"action": "send"})
         assert len(mail.outbox) == 1
-        response = client.post(reverse("reinvite_account", args=[account.pk]), {"action": "link"})
+        response = client.post(reverse("reinvite_user", args=[account.pk]), {"action": "link"})
         assert "/einladung/" in response.content.decode()
 
 
@@ -189,7 +189,7 @@ class TestRecovery:
         with django_capture_on_commit_callbacks(execute=True):
             invitation = services.ensure_initial_admin()
         assert invitation is not None
-        accept(Client(), invitation)  # Scanner: Konto entsteht, aber nicht eingerichtet
+        accept(Client(), invitation)  # Scanner: Benutzer entsteht, aber nicht eingerichtet
         Invitation.objects.filter(pk=invitation.pk).update(expires_at=timezone.now() - timedelta(minutes=1))
         with django_capture_on_commit_callbacks(execute=True):
             again = services.ensure_initial_admin()

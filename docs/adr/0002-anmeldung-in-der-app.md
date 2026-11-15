@@ -23,7 +23,7 @@ Mitglieder und Eltern sollen sich ohne Hürden anmelden, auch auf mehreren Gerä
 - **Erster Administrator** über `PORTAL_INITIAL_ADMIN_EMAIL`, solange kein aktiver Administrator existiert.
 - **Sitzungen** in der Datenbank, Cookie nur mit Sitzungs-ID (HttpOnly, Secure, SameSite=Lax), „Angemeldet bleiben“
   30 Tage gleitend. Übersicht und Abmelden anderer Geräte über `allauth.usersessions`.
-- Rollen als feste Liste am Konto; die Administrator-Rolle schaltet die technische Verwaltung (Django-Admin) frei.
+- Rollen als feste Liste am Benutzer; die Administrator-Rolle schaltet die technische Verwaltung (Django-Admin) frei.
 
 ## Konsequenzen
 
@@ -35,5 +35,5 @@ Mitglieder und Eltern sollen sich ohne Hürden anmelden, auch auf mehreren Gerä
 ## Verworfene Alternativen
 
 - **Keycloak:** mächtig, aber eigener Betrieb, Realm-Pflege, zweite Oberfläche.
-- **Authentik der Homecloud:** würde Vereinskonten mit privaten Konten mischen.
+- **Authentik der Homecloud:** würde Vereinszugänge mit privaten Zugängen mischen.
 - **Nur Passwort:** schlechtere Bedienung (vergessene Passwörter) und weniger sicher als Passkeys.

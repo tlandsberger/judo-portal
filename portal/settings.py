@@ -198,9 +198,9 @@ STORAGES = {
 }
 
 # Mail: SMTP (IONOS) in Produktion; ohne Host auf die Konsole bzw. in Dateien (Tests, E2E).
-DEFAULT_FROM_EMAIL = env("EMAIL_FROM", "WTSV Judo <portal@localhost>")
+DEFAULT_FROM_EMAIL = env("EMAIL_FROM", "Wedeler TSV Judo <portal@localhost>")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_SUBJECT_PREFIX = "[WTSV Judo] "
+EMAIL_SUBJECT_PREFIX = "[Wedeler TSV Judo] "
 if env("EMAIL_HOST"):
     _mailer = {
         "BACKEND": "django.core.mail.backends.smtp.EmailBackend",

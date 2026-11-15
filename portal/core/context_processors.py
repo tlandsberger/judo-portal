@@ -6,7 +6,7 @@ from typing import Any
 from django.conf import settings
 from django.http import HttpRequest
 
-from portal.accounts.permissions import can_manage_accounts
+from portal.accounts.permissions import can_manage_users
 
 
 def version_url(version: str) -> str:
@@ -25,5 +25,5 @@ def portal(request: HttpRequest) -> dict[str, Any]:
         "club_website": "https://www.wedeler-tsv.de/sportangebote-judo/",
         "portal_version": settings.VERSION,
         "portal_version_url": version_url(settings.VERSION),
-        "can_manage_accounts": bool(user and can_manage_accounts(user)),
+        "can_manage_users": bool(user and can_manage_users(user)),
     }

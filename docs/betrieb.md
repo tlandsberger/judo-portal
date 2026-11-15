@@ -15,7 +15,7 @@ Produktiv in der Homecloud (Repo `tlandsberger/homecloud`, Stack `application/ju
 | `PORTAL_EMAIL_PORT` | – | `587` | |
 | `PORTAL_EMAIL_USER` / `PORTAL_EMAIL_PASSWORD` | ja | Postfach-Zugang | |
 | `PORTAL_EMAIL_USE_TLS` | – | `true` | STARTTLS |
-| `PORTAL_EMAIL_FROM` | ja | `WTSV Judo <portal@tlandsberger.de>` | Absender |
+| `PORTAL_EMAIL_FROM` | ja | `Wedeler TSV Judo <portal@tlandsberger.de>` | Absender |
 | `PORTAL_DATA_DIR` | – | `/data` | Datenbank und Backups |
 | `PORTAL_BACKUP_HOUR` / `PORTAL_BACKUP_KEEP_DAYS` | – | `2` / `14` | nächtliches Backup |
 | `PORTAL_SECURE_COOKIES` | – | `true` | nur für lokale Tests ohne HTTPS auf `false` |
@@ -31,7 +31,7 @@ Ohne `PORTAL_EMAIL_HOST` gehen Mails auf die Konsole (Container-Log), mit `PORTA
 2. Der Container migriert die Datenbank und lädt `PORTAL_INITIAL_ADMIN_EMAIL` als Administrator ein. Der Link steht
    zusätzlich im Container-Log, falls die Mail nicht ankommt.
 3. Link öffnen → „Einladung annehmen“ → Passkey und/oder Passwort einrichten.
-4. Unter **Konten** weitere Personen einladen (z. B. die Abteilungsleitung).
+4. Unter **Benutzer** weitere Personen einladen (z. B. die Abteilungsleitung).
 
 ### Einladungen und Mail-Scanner
 
@@ -40,7 +40,7 @@ Mailfilter (z. B. Microsoft Safe Links) öffnen Links in einer Sandbox und klick
 Passwort gibt es Zugang, und nur für die Sitzung, die ihn eingerichtet hat. Bis dahin bleibt der Link 7 Tage gültig
 und kann beliebig oft geöffnet werden. Wer keinen Passkey und kein Passwort will, wählt „Lieber per Code anmelden“.
 
-- **Link ohne Mail:** unter Konten → „Nur Link erstellen“ bzw. „Link kopieren“ (erzeugt jeweils einen neuen Link).
+- **Link ohne Mail:** unter Benutzer → „Nur Link erstellen“ bzw. „Link kopieren“ (erzeugt jeweils einen neuen Link).
 - **Rettungsweg** ohne Oberfläche (z. B. wenn keine Mail ankommt):
   ```bash
   docker exec judo_portal python manage.py invite du@example.org --admin --no-mail   # Link wird ausgegeben

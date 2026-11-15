@@ -3,8 +3,8 @@ import { ADMIN_STATE, expectNoA11yViolations } from "./helpers";
 
 const pages = [
   { path: "/", heading: /^Hallo/ },
-  { path: "/verwaltung/konten/", heading: "Konten" },
-  { path: "/konto/anmeldung/", heading: "Meine Anmeldung" },
+  { path: "/verwaltung/benutzer/", heading: "Benutzer" },
+  { path: "/zugang/anmeldung/", heading: "Meine Anmeldung" },
   { path: "/bausteine/", heading: "Bausteine" },
 ];
 
@@ -41,7 +41,7 @@ test("Umschalter zwischen hellem und dunklem Design merkt sich die Wahl", async 
 
 test("Portal ist als App installierbar (Manifest und Service Worker)", async ({ page, request }) => {
   const manifest = await (await request.get("/manifest.webmanifest")).json();
-  expect(manifest.name).toBe("WTSV Judo");
+  expect(manifest.name).toBe("Wedeler TSV Judo");
   expect(manifest.display).toBe("standalone");
   await page.goto("/anmeldung/login/");
   const registered = await page.evaluate(async () => {
