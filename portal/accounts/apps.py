@@ -22,5 +22,7 @@ class AccountsConfig(AppConfig):
         def complete_on_login(sender: object, request: object, user: object, **kwargs: object) -> None:
             # Reguläre Anmeldung (Passkey, Passwort, Code) belegt den Zugang: offene Einladungen sind eingelöst.
             services.complete_invitations(user)  # type: ignore[arg-type]
+            # Unbekannter Browser: Warnung per Mail (nicht bei der ersten Anmeldung überhaupt).
+            services.check_new_device(request, user)  # type: ignore[arg-type]
 
         user_logged_in.connect(complete_on_login, dispatch_uid="portal_complete_invitations", weak=False)

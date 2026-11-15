@@ -11,21 +11,17 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import IntEnum
-from functools import partial
 from typing import Any
 
-from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.db.models import Q, QuerySet
-from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils import timezone
 
 from portal.accounts.models import Role, User
 from portal.members import services as members
 from portal.members.models import Member, MemberLink, grade_rank
 
+from . import notices
 from .models import (
     Event,
     EventStaff,
@@ -247,12 +243,18 @@ def delete_schedule(schedule: Schedule) -> int:
 
 
 @transaction.atomic
-def update_occurrence(occurrence: Occurrence, fields: Iterable[str]) -> None:
-    """Abweichung an einem einzelnen Termin (Uhrzeit, Ort, Hinweis) – der Termin bleibt dann bei Neuerzeugung."""
+def update_occurrence(occurrence: Occurrence, fields: Iterable[str], by: User | None = None) -> None:
+    """Abweichung an einem einzelnen Termin (Uhrzeit, Ort, Hinweis) – der Termin bleibt dann bei Neuerzeugung.
+
+    Ändern sich Uhrzeit oder Ort, bekommen Angemeldete und Team eine Benachrichtigung.
+    """
     changed = set(fields)
-    if changed & {"starts_at", "ends_at", "location"}:
+    moved = bool(changed & {"starts_at", "ends_at", "location"})
+    if moved:
         occurrence.is_modified = True
     occurrence.save()
+    if moved:
+        notices.changed(occurrence, by)
 
 
 # Absage
@@ -264,14 +266,8 @@ def cancel(occurrence: Occurrence, by: User | None = None) -> None:
         return
     occurrence.cancelled_at = timezone.now()
     occurrence.save(update_fields=["cancelled_at"])
-    recipients = _participant_users(occurrence) | {
-        staffing.user for staffing in occurrence.staffings.select_related("user")
-    }
-    recipients.discard(by)
     log.info("Termin %s abgesagt", occurrence.pk)
-    transaction.on_commit(
-        lambda: _send(recipients, f"Abgesagt: {occurrence.event.title}", "cancelled", {"occurrence": occurrence})
-    )
+    notices.cancelled(occurrence, by)
 
 
 def cancel_range(event: Event, first: date, last: date, by: User | None = None) -> int:
@@ -387,7 +383,7 @@ def unregister(registration: Registration, by: User, *, force: bool = False) -> 
 
 
 def promote(occurrence: Occurrence) -> list[Registration]:
-    """Rückt von der Warteliste nach, solange Plätze frei sind, und benachrichtigt per Mail."""
+    """Rückt von der Warteliste nach, solange Plätze frei sind, und benachrichtigt (Push, sonst Mail)."""
     capacity = occurrence.event.capacity
     promoted: list[Registration] = []
     if capacity is None:
@@ -398,10 +394,7 @@ def promote(occurrence: Occurrence) -> list[Registration]:
         registration.status = RegistrationStatus.REGISTERED
         registration.save(update_fields=["status", "updated_at"])
         promoted.append(registration)
-        users = set(members.member_users(registration.member))
-        context = {"occurrence": occurrence, "member": registration.member}
-        subject = f"Nachgerückt: {occurrence.event.title}"
-        transaction.on_commit(partial(_send, users, subject, "promoted", context))
+        notices.promoted(registration)
     return promoted
 
 
@@ -586,31 +579,12 @@ def own_staffings(user: User) -> tuple[list[Staffing], list[Staffing]]:
     return coming, past
 
 
-# Mails
+# Empfänger
 
 
-def _participant_users(occurrence: Occurrence) -> set[User]:
+def participant_users(occurrence: Occurrence) -> set[User]:
+    """Benutzer der angemeldeten Mitglieder (das Mitglied selbst, Eltern bis 18)."""
     users: set[User] = set()
     for registration in occurrence.registrations.filter(status__in=ACTIVE).select_related("member"):
         users.update(members.member_users(registration.member))
     return users
-
-
-def _send(users: Iterable[User], subject: str, template: str, context: dict[str, Any]) -> None:
-    occurrence = context["occurrence"]
-    context = {
-        **context,
-        "url": settings.BASE_URL + reverse("occurrence_detail", args=[occurrence.pk]),
-        "base_url": settings.BASE_URL,
-        "starts": timezone.localtime(occurrence.starts_at),
-    }
-    for user in users:
-        message = EmailMultiAlternatives(
-            subject=settings.EMAIL_SUBJECT_PREFIX + subject,
-            body=render_to_string(f"events/email/{template}.txt", {**context, "user": user}),
-            to=[user.email],
-        )
-        message.attach_alternative(
-            render_to_string(f"events/email/{template}.html", {**context, "user": user}), "text/html"
-        )
-        message.send()

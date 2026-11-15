@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "portal.accounts",
     "portal.members",
     "portal.events",
+    "portal.notifications",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -124,6 +125,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 BACKUP_DIR = DATA_DIR / "backups"
 BACKUP_KEEP_DAYS = int(env("BACKUP_KEEP_DAYS", "14") or 14)
 BACKUP_HOUR = int(env("BACKUP_HOUR", "2") or 2)
+
+# Web Push (ADR 0011). Ohne Schlüssel ist Push aus, alle Benachrichtigungen gehen per Mail.
+# Erzeugen: python manage.py generate_vapid_keys
+VAPID_PUBLIC_KEY = env("VAPID_PUBLIC_KEY", "") or ""
+VAPID_PRIVATE_KEY = env("VAPID_PRIVATE_KEY", "") or ""
+VAPID_SUBJECT = "mailto:judo@wedeler-tsv.de"
 
 AUTH_USER_MODEL = "accounts.User"
 AUTHENTICATION_BACKENDS = [
@@ -241,6 +248,8 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*"]
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Adressen sind durch die Einladung bestätigt
+# Sicherheitsrelevante Änderungen (Passwort, Passkey) immer per Mail melden (ADR 0011).
+ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_LOGIN_BY_CODE_ENABLED = True
 ACCOUNT_LOGIN_BY_CODE_TIMEOUT = 15 * 60
 ACCOUNT_LOGIN_BY_CODE_MAX_ATTEMPTS = 5

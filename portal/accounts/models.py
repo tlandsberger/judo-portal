@@ -142,3 +142,21 @@ class Invitation(models.Model):
         self.created_at = timezone.now()
         self.expires_at = _default_expiry()
         self.save(update_fields=["token", "created_at", "expires_at"])
+
+
+class KnownDevice(models.Model):
+    """Browser, mit dem sich ein Benutzer schon angemeldet hat. Gespeichert wird nur ein Fingerabdruck (ADR 0011)."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="known_devices")
+    fingerprint = models.CharField(max_length=64)
+    description = models.CharField("Gerät", max_length=100, blank=True)
+    first_seen = models.DateTimeField(default=timezone.now)
+    last_seen = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = "Bekanntes Gerät"
+        verbose_name_plural = "Bekannte Geräte"
+        constraints = [models.UniqueConstraint(fields=["user", "fingerprint"], name="known_device_unique")]
+
+    def __str__(self) -> str:
+        return f"{self.user} – {self.description}"

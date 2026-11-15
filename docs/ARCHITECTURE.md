@@ -16,9 +16,10 @@ Browser / installierte App (PWA)
         ▼
 Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
                                       ├─ Gunicorn + Django (Seiten, Anmeldung, statische Dateien)
-                                      ├─ Zeitplaner (Backup 02:00, Aufräumen)
+                                      ├─ Zeitplaner (Backup 02:00, Aufräumen, alle 10 Min. Erinnerungen)
                                       └─ /data: portal.sqlite3, backups/
-                                      ──▶ IONOS-SMTP (Einladungen, Anmeldecodes)
+                                      ──▶ IONOS-SMTP (Einladungen, Anmeldecodes, Sicherheitshinweise, Ersatz für Push)
+                                      ──▶ Web-Push-Dienste (Google, Apple, Mozilla)
 ```
 
 - **Ein Container**, ein Volume. Keine weitere Infrastruktur (kein Datenbank-Container, kein Keycloak).
@@ -33,6 +34,7 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | `portal.accounts` | Benutzer, Rollen, Einladungen, Benutzerverwaltung, Anpassungen an allauth |
 | `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Benutzer ↔ Mitglied (m:n), „Meine Daten“ (ADR 0009) |
 | `portal.events` | Veranstaltungen, Zeitpläne, Termine, Zielgruppen, Anmeldung mit Warteliste, Begleitung durch Übungsleiter (ADR 0010) |
+| `portal.notifications` | Push-Benachrichtigungen je Gerät mit Mail als Ersatz, Aktionsknöpfe (ADR 0011) |
 | *(folgt)* `portal.billing` | Übungsleiterabrechnung (auf Basis der bestätigten Begleitungen) |
 
 Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kommen aus eigenen Übersetzungen in
@@ -75,6 +77,8 @@ Geräteeinstellung oder Umschalter.
 - HSTS, `X-Frame-Options: DENY`, sichere Cookies, CSRF-Schutz.
 - Datensparsamkeit: keine Adressen, keine Bank- oder Passdaten, Graduierung nur aktuell ohne Historie; Eltern sind
   verknüpfte Benutzer statt Kontaktdaten am Kind (ADR 0009).
+- Push-Nachrichten sind Ende-zu-Ende-verschlüsselt und knapp gehalten. Sicherheitsrelevantes (Passwort, Passkey, neues
+  Gerät) meldet das Portal immer per Mail (ADR 0011).
 - Später: Änderungsprotokoll, Export der eigenen Daten, Löschung nach Austritt.
 
 ## Qualität und Wartung

@@ -45,6 +45,9 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
   `portal.accounts` kennt die anderen Apps nicht; sie docken über Signale an (`portal/accounts/signals.py`).
 - **Veranstaltungen:** Zielgruppen-Matching, Anmeldung und Rechte (`can_lead`, `can_see_participants`) nur über
   `portal/events/services.py`. Übungsleiter sehen Mitgliederdaten nur in der Teilnehmerliste eigener Termine.
+- **Benachrichtigungen:** Tägliches nur über `portal.notifications.services.notify` (Push, sonst Mail; Schlüssel je
+  Anlass, damit nichts doppelt rausgeht). Einladung, Anmeldecode, Sicherheit des Zugangs und neue Verknüpfungen
+  immer direkt per Mail (ADR 0011). Wiederkehrende Jobs über `portal.core.scheduler.register_periodic`.
 - **Anmeldung:** django-allauth; Passkey, Passwort und Mail-Code sind gleichwertig (kein erzwungener zweiter Faktor,
   siehe `PortalAccountAdapter`). Keine Selbstregistrierung, Zugänge nur per Einladung.
 - **Oberfläche:** Tailwind CSS mit DaisyUI (ADR 0008). DaisyUI-Komponenten so verwenden, wie sie dokumentiert sind,

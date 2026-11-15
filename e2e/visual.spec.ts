@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_STATE, ensureYouthGroup, importMembers } from "./helpers";
+import { ADMIN_STATE, ensureYouthGroup, freshNotificationPermission, importMembers } from "./helpers";
 
 // Visuelle Regressionstests: fangen ungewollte Änderungen am Erscheinungsbild ab (z. B. durch Updates).
 // Neue Referenzbilder: siehe e2e/README.md (--update-snapshots im Playwright-Container).
@@ -19,8 +19,11 @@ for (const scheme of ["light", "dark"] as const) {
 
       test("Startseite", async ({ browser }) => {
         const context = await browser.newContext({ storageState: ADMIN_STATE, colorScheme: scheme, viewport });
+        await freshNotificationPermission(context);
         const page = await context.newPage();
         await page.goto("/");
+        // Der Hinweis auf Push-Nachrichten erscheint per JavaScript, sobald der Service Worker bereit ist
+        await expect(page.getByRole("heading", { name: "Benachrichtigungen aufs Handy?" })).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
         await expect(page).toHaveScreenshot(`start-${name}.png`, { fullPage: true });
         await context.close();

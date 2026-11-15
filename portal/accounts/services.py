@@ -15,7 +15,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Invitation, Role, User
+from . import devices
+from .models import Invitation, KnownDevice, Role, User
 from .signals import invitation_accepted
 
 log = logging.getLogger(__name__)
@@ -176,6 +177,26 @@ def invitation_state(invitation: Invitation | None) -> str:
     if invitation.expires_at <= timezone.now():
         return "expired"
     return "open"
+
+
+def check_new_device(request: HttpRequest, user: User) -> None:
+    """Bei der Anmeldung: Ist der Browser neu, bekommt der Benutzer eine Warnung per Mail (ADR 0011).
+
+    Die erste Anmeldung überhaupt (z. B. nach der Einladung) zählt nicht; da lernt das Portal das Gerät nur kennen.
+    """
+    from allauth.account.adapter import get_adapter
+
+    user_agent = request.headers.get("User-Agent", "")
+    had_devices = KnownDevice.objects.filter(user=user).exists()
+    device, created = KnownDevice.objects.get_or_create(
+        user=user, fingerprint=devices.fingerprint(user_agent), defaults={"description": devices.describe(user_agent)}
+    )
+    if not created:
+        KnownDevice.objects.filter(pk=device.pk).update(last_seen=timezone.now())
+        return
+    if had_devices:
+        log.info("Anmeldung von %s auf neuem Gerät (%s)", user.email, device.description)
+        get_adapter(request).send_notification_mail("account/email/new_device", user, {"device": device.description})
 
 
 def complete_invitations(user: User) -> None:

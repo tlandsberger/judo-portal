@@ -179,7 +179,7 @@ def occurrence_edit(request: HttpRequest, pk: int) -> HttpResponse:
     occurrence = _lead_occurrence(request, pk)
     form = OccurrenceForm(request.POST or None, instance=occurrence)
     if request.method == "POST" and form.is_valid():
-        services.update_occurrence(form.save(commit=False), form.changed_data)
+        services.update_occurrence(form.save(commit=False), form.changed_data, _user(request))
         messages.success(request, "Termin gespeichert.")
         return redirect("occurrence_detail", pk=occurrence.pk)
     return render(request, "events/occurrence_edit.html", {"occurrence": occurrence, "form": form})

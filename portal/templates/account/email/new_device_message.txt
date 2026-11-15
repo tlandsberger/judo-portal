@@ -1,0 +1,5 @@
+{% extends "account/email/base_message.txt" %}
+{% block content %}{% autoescape off %}gerade hat sich jemand mit deinem Zugang auf einem Gerät angemeldet, das wir noch nicht kennen: {{ device }}.
+
+Warst du das? Dann ist alles in Ordnung. Sonst melde dich bitte umgehend bei judo@wedeler-tsv.de.
+Zeitpunkt: {{ timestamp }} · IP-Adresse: {{ ip }}{% endautoescape %}{% endblock %}

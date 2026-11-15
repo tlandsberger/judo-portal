@@ -1,9 +1,0 @@
-{% autoescape off %}Hallo {{ user.get_short_name }},
-
-ein Platz ist frei geworden: {{ member.first_name }} ist jetzt für „{{ occurrence.event.title }}“ am {{ starts|date:"l, d.m.Y" }} um {{ starts|date:"H:i" }} Uhr angemeldet. Falls {{ member.first_name }} doch nicht kann, melde bitte wieder ab.
-
-{{ url }}
-
-Wedeler TSV e.V. – Abteilung Judo
-judo@wedeler-tsv.de · https://www.wedeler-tsv.de/sportangebote-judo/
-{% endautoescape %}
