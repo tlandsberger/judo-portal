@@ -32,10 +32,15 @@
       "groupName": "Playwright"
     },
     {
-      "description": "Python bleibt auf 3.13, bis die Abhängigkeiten 3.14 sicher unterstützen",
-      "matchDatasources": ["docker"],
+      "description": "Python-Image und requires-python immer gemeinsam, sonst passt das Lockfile nicht zum Image",
       "matchPackageNames": ["python"],
-      "allowedVersions": "<3.14"
+      "groupName": "Python"
+    },
+    {
+      "description": "Neue Python-Version (z. B. 3.16) braucht eine Freigabe",
+      "matchPackageNames": ["python"],
+      "matchUpdateTypes": ["minor", "major"],
+      "automerge": false
     }
   ]
 }

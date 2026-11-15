@@ -8,7 +8,7 @@ RUN npm ci --omit=dev --no-audit --no-fund
 COPY scripts/vendor.mjs scripts/
 RUN node scripts/vendor.mjs
 
-FROM python:3.13.18-slim AS app
+FROM python:3.15.2-slim AS app
 COPY --from=ghcr.io/astral-sh/uv:0.13.8 /uv /usr/local/bin/uv
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
