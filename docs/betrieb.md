@@ -138,10 +138,11 @@ Anmeldecodes, Sicherheitshinweise und neue Verknüpfungen gehen immer per Mail. 
 
 - Jeden Sonntag 23:00 entsteht automatisch ein Release, wenn es neue Commits gibt (Version, Changelog, Image).
   Manuell: GitHub → Actions → „Release“ → „Run workflow“.
-- Renovate aktualisiert danach das Image in der Homecloud; Patch und Minor werden automatisch gemergt, Portainer
-  deployt. Datenbank-Migrationen laufen beim Start des Containers.
-- Zurückrollen: Image-Tag in der Homecloud auf die Vorversion setzen. Bei neuen Migrationen vorher aus dem Backup
-  wiederherstellen.
+- Die Homecloud nutzt das Tag `latest`. Portainer holt ein neues Release beim nächsten Abgleich (einige Minuten),
+  ohne Renovate-PR. Dafür sind am Stack „Re-pull image“ und „Force redeployment“ eingeschaltet (README der Homecloud).
+  Datenbank-Migrationen laufen beim Start des Containers. Die laufende Version steht in der Fußzeile.
+- Zurückrollen: in der Homecloud statt `latest` vorübergehend die Vorversion eintragen (z. B. `:0.3.0`). Bei neuen
+  Migrationen vorher aus dem Backup wiederherstellen.
 
 ## Client-IP hinter dem Reverse-Proxy
 

@@ -88,8 +88,8 @@ Geräteeinstellung oder Umschalter.
 - **Renovate** aktualisiert Python-, npm-, Docker- und Action-Versionen; Patch/Minor werden automatisch gemergt,
   wenn alle Tests grün sind.
 - **Release** jeden Sonntag 23 Uhr, wenn es neue Commits gibt: Version aus den Commits, Tag, GitHub-Release mit
-  Changelog, Image `ghcr.io/tlandsberger/judo-portal`. Renovate in der Homecloud zieht die neue Version nach, Portainer
-  deployt.
+  Changelog, Image `ghcr.io/tlandsberger/judo-portal` (auch als `latest`). Die Homecloud läuft auf `latest`;
+  Portainer holt die neue Version innerhalb weniger Minuten.
 - **Live-Check** täglich gegen die Produktivseite.
 
 ## Roadmap
