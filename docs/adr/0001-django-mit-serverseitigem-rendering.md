@@ -12,7 +12,7 @@ API-Vertrag und mehrere Container.
 
 ## Entscheidung
 
-- **Django** (aktuelle Version, Renovate führt Minor-Updates automatisch nach) mit Python 3.13.
+- **Django** (aktuelle Version, Renovate führt Minor-Updates automatisch nach) mit Python (aktuelle Version, Image und `requires-python` gemeinsam).
 - **Seiten vom Server** (Django-Templates), **htmx** für Teil-Aktualisierungen, kein eigener Frontend-Build.
 - **Eine App pro Fachbereich** (`portal/<bereich>/`), Fachlogik in Services, Rechte zentral.
 - **PWA:** Manifest und schlanker Service Worker (installierbar, Offline-Hinweis). Offline-Arbeit nur, wenn ein

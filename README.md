@@ -15,7 +15,7 @@ installieren. Produktiv unter **https://judo.tlandsberger.de**.
 
 | Bereich | Technik |
 |---|---|
-| Anwendung | Django 6 (Python 3.13), eine App pro Fachbereich |
+| Anwendung | Django 6 (Python 3.15), eine App pro Fachbereich |
 | Oberfläche | Bootstrap 5.3 mit WTSV-Theme, htmx, PWA |
 | Anmeldung | django-allauth: Passkeys, Passwort, Anmeldecode per Mail |
 | Daten | SQLite im Volume, nächtliche Backups |

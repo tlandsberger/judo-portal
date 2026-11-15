@@ -32,10 +32,16 @@
       "groupName": "Playwright"
     },
     {
-      "description": "Python bleibt auf 3.13, bis die Abhängigkeiten 3.14 sicher unterstützen",
-      "matchDatasources": ["docker"],
+      "description": "Python-Image und requires-python immer gemeinsam, sonst passt das Lockfile nicht zum Image",
       "matchPackageNames": ["python"],
-      "allowedVersions": "<3.14"
+      "groupName": "Python"
+    },
+    {
+      "description": "Neue Python-Version (z. B. 3.16): PR sofort, automatisch gemergt erst nach 60 Tagen (bis dahin unterstützt Django sie meist offiziell)",
+      "matchPackageNames": ["python"],
+      "matchUpdateTypes": ["minor"],
+      "minimumReleaseAge": "60 days",
+      "internalChecksFilter": "none"
     }
   ]
 }
