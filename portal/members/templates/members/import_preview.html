@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Vorschau des Imports{% endblock %}
+{% block content %}
+<a href="{% url 'member_import' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Andere Datei wählen</a>
+<h1 class="mb-2 text-3xl font-bold">Vorschau des Imports</h1>
+<p class="mb-6 text-base-content/70">Noch ist nichts gespeichert. Prüfe die Zeilen und übernimm sie dann.</p>
+
+<div class="mb-6 flex flex-wrap gap-2">
+  <span class="badge badge-success">{{ preview.counts.new }} neu</span>
+  <span class="badge badge-info">{{ preview.counts.changed }} geändert</span>
+  <span class="badge badge-ghost">{{ preview.counts.unchanged }} unverändert</span>
+  <span class="badge badge-error">{{ preview.counts.error }} mit Fehlern</span>
+</div>
+
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zeilen">
+  <div class="card-body">
+    <h2 class="card-title" id="h-zeilen">Zeilen</h2>
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead class="text-base-content/70"><tr><th scope="col">Zeile</th><th scope="col">Name</th><th scope="col">Ergebnis</th><th scope="col">Details</th></tr></thead>
+        <tbody>
+        {% for row in preview.rows %}
+          <tr>
+            <td>{{ row.line }}</td>
+            <td>{{ row.name|default:"–" }}</td>
+            <td>{% if row.status == "new" %}<span class="badge badge-success badge-sm">neu</span>{% elif row.status == "changed" %}<span class="badge badge-info badge-sm">geändert</span>{% elif row.status == "error" %}<span class="badge badge-error badge-sm">Fehler</span>{% else %}<span class="badge badge-ghost badge-sm">unverändert</span>{% endif %}</td>
+            <td class="text-sm">{% if row.errors %}{{ row.errors|join:" " }}{% elif row.changes %}{{ row.changes|join:", " }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<form method="post" class="flex flex-wrap gap-2">{% csrf_token %}
+  {% if preview.has_changes %}<button type="submit" name="action" value="apply" class="btn btn-primary"><i class="bi bi-check-lg" aria-hidden="true"></i> Übernehmen</button>{% endif %}
+  <a class="btn" href="{% url 'member_list' %}">Abbrechen</a>
+</form>
+{% endblock %}

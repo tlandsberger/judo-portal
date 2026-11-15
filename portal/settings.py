@@ -46,6 +46,7 @@ CSRF_TRUSTED_ORIGINS = [BASE_URL]
 INSTALLED_APPS = [
     "portal.core",
     "portal.accounts",
+    "portal.members",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -96,6 +97,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "portal.core.context_processors.portal",
+                "portal.members.context_processors.members",
             ],
         },
     }

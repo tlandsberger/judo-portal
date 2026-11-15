@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import Invitation, Role, User
+from .signals import invitation_accepted
 
 log = logging.getLogger(__name__)
 
@@ -138,6 +139,7 @@ def accept(invitation: Invitation, request: HttpRequest) -> User | None:
     EmailAddress.objects.update_or_create(user=user, email=user.email, defaults={"verified": True, "primary": True})
     invitation.user = user
     invitation.save(update_fields=["user"])
+    invitation_accepted.send(sender=Invitation, invitation=invitation, user=user)
 
     if has_login_method(user):
         complete_invitations(user)

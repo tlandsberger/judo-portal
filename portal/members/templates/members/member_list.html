@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Mitglieder{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div><h1 class="text-3xl font-bold">Mitglieder</h1><p class="mt-1 text-base-content/70">Alle Mitglieder der Abteilung.</p></div>
+  <div class="flex flex-wrap gap-2">
+    <a class="btn btn-primary" href="{% url 'member_create' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Mitglied anlegen</a>
+    <a class="btn btn-outline btn-primary" href="{% url 'member_import' %}"><i class="bi bi-upload" aria-hidden="true"></i> CSV-Import</a>
+  </div>
+</div>
+
+<form method="get" class="mb-6 flex flex-wrap items-end gap-3" role="search">
+  <div class="fieldset min-w-56 flex-1">
+    <label class="fieldset-legend text-sm" for="suche">Suche</label>
+    <input class="input w-full" type="search" id="suche" name="q" value="{{ query }}" placeholder="Name oder Mitgliedsnummer">
+  </div>
+  <label class="label gap-2 pb-3 text-base text-base-content"><input type="checkbox" class="checkbox checkbox-primary" name="ehemalige" value="1"{% if show_former %} checked{% endif %}> Ehemalige zeigen</label>
+  <button class="btn btn-primary" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Anzeigen</button>
+</form>
+
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-mitglieder">
+  <div class="card-body">
+    <h2 class="card-title" id="h-mitglieder">{{ members|length }} Mitglied{{ members|length|pluralize:"er" }}</h2>
+    {% if members %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead class="text-base-content/70"><tr><th scope="col">Name</th><th scope="col">Jahrgang</th><th scope="col">Graduierung</th></tr></thead>
+        <tbody>
+        {% for member in members %}
+          <tr>
+            <td><a class="link link-hover font-semibold" href="{% url 'member_detail' member.pk %}">{{ member.last_name }}, {{ member.first_name }}</a>{% if not member.is_active %} <span class="badge badge-ghost badge-sm">ausgetreten</span>{% endif %}</td>
+            <td>{{ member.birth_date|date:"Y" }}</td>
+            <td>{{ member.grade_short|default:"–" }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-base-content/70">{% if query %}Keine Mitglieder gefunden.{% else %}Noch keine Mitglieder. Lege sie an oder importiere eine CSV-Datei.{% endif %}</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

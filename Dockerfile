@@ -6,9 +6,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY scripts/vendor.mjs scripts/
-COPY portal/assets portal/assets
-COPY portal/templates portal/templates
-COPY portal/static/js portal/static/js
+# Ganz portal/, damit Tailwind die Templates aller Apps findet (@source in portal/assets/app.css)
+COPY portal portal
 RUN npm run vendor
 
 FROM python:3.15.2-slim AS app

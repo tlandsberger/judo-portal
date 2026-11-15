@@ -15,7 +15,7 @@ des anderen Elternteils. Mitglieder bekommen ab 14 einen eigenen Zugang.
   ein Benutzer ↔ mehrere Mitglieder, ein Mitglied ↔ mehrere Benutzer.
 - Was ein Benutzer sieht, ergibt sich aus seinen Verknüpfungen und Rollen. Die Elternverknüpfung endet automatisch
   mit dem 18. Geburtstag des Kindes (wird bei jedem Zugriff geprüft).
-- Umgesetzt mit dem Feature Mitgliederverwaltung (`portal.members`).
+- Umgesetzt mit dem Feature Mitgliederverwaltung (`portal.members`, Details in ADR 0009).
 
 ## Konsequenzen
 
