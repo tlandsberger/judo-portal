@@ -5,6 +5,15 @@
   <h1>Wie möchtest du dich anmelden?</h1>
   <p class="text-body-secondary">Dein Zugang ist bereit. Wähle einen oder mehrere Wege – du kannst das später unter „Meine Anmeldung“ jederzeit ändern.</p>
   {% include "accounts/_login_methods.html" %}
+  {% if setup_pending %}
+  <div class="infobox mb-3"><i class="bi bi-shield-lock" aria-hidden="true"></i>
+    <div>Zum Schutz deines Zugangs geht es erst weiter, wenn du einen Passkey oder ein Passwort eingerichtet hast.
+      Möchtest du dich lieber immer mit einem Code per E-Mail anmelden, wähle „Lieber per Code anmelden“.</div></div>
+  <form method="post" action="{% url 'setup_login_by_code' %}">{% csrf_token %}
+    <button type="submit" class="btn btn-outline-primary"><i class="bi bi-envelope me-1" aria-hidden="true"></i> Lieber per Code anmelden</button>
+  </form>
+  {% else %}
   <a class="btn btn-primary" href="{% url 'home' %}">Weiter zum Portal</a>
+  {% endif %}
 </div></div>
 {% endblock %}

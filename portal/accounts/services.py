@@ -51,8 +51,13 @@ def invite(
     last_name: str = "",
     roles: list[str] | None = None,
     invited_by: User | None = None,
+    send: bool = True,
 ) -> Invitation:
-    """Lädt eine Person ein. Offene Einladungen an dieselbe Adresse werden ersetzt."""
+    """Lädt eine Person ein. Offene Einladungen an dieselbe Adresse werden ersetzt.
+
+    Mit ``send=False`` wird keine Mail verschickt; der Link (``invitation_url``) wird dann z. B. per Messenger
+    weitergegeben.
+    """
     email = email.strip().lower()
     Invitation.objects.filter(email=email, accepted_at__isnull=True).delete()
     invitation = Invitation.objects.create(
@@ -63,7 +68,9 @@ def invite(
         invited_by=invited_by,
         user=User.objects.filter(email=email).first(),
     )
-    transaction.on_commit(lambda: send_invitation(invitation))
+    if send:
+        transaction.on_commit(lambda: send_invitation(invitation))
+    log.info("Einladung für %s erstellt (%s)", email, "per Mail" if send else "nur Link")
     return invitation
 
 
@@ -72,9 +79,51 @@ def resend(invitation: Invitation) -> None:
     send_invitation(invitation)
 
 
+def new_link(invitation: Invitation) -> str:
+    """Erzeugt einen neuen Link (der alte wird ungültig), ohne Mail-Versand."""
+    invitation.renew()
+    log.info("Neuer Einladungslink für %s erzeugt (ohne Mail)", invitation.email)
+    return invitation_url(invitation)
+
+
+def reinvite(user: User, *, invited_by: User | None = None, send: bool = True) -> Invitation:
+    """Neue Einladung für ein Konto, das seinen Zugang noch nicht eingerichtet hat."""
+    return invite(user.email, first_name=user.first_name, last_name=user.last_name, invited_by=invited_by, send=send)
+
+
+# Sitzungsschlüssel der Einrichtungs-Sitzung nach einem Klick auf den Einladungslink
+SETUP_SESSION_KEY = "portal_invitation_setup"
+SETUP_MINUTES = 30
+
+
+def has_login_method(user: User) -> bool:
+    """Hat das Konto einen eigenen Anmeldeweg (Passwort oder Passkey)? Der Mail-Code zählt nicht – er ist immer da."""
+    from allauth.mfa.models import Authenticator
+
+    return (
+        user.has_usable_password() or Authenticator.objects.filter(user=user, type=Authenticator.Type.WEBAUTHN).exists()
+    )
+
+
+def is_set_up(user: User) -> bool:
+    """Zugang eingerichtet: eigener Anmeldeweg oder schon regulär (z. B. per Code) angemeldet."""
+    if has_login_method(user):
+        return True
+    return user.last_login is not None and not user.invitations.filter(accepted_at__isnull=True).exists()
+
+
 @transaction.atomic
-def accept(invitation: Invitation, request: HttpRequest) -> User:
-    """Nimmt die Einladung an: Konto anlegen bzw. ergänzen, Rollen setzen, anmelden."""
+def accept(invitation: Invitation, request: HttpRequest) -> User | None:
+    """Klick auf „Einladung annehmen“.
+
+    Der Klick allein gibt nie vollen Zugang – auch Mail-Scanner klicken Links und Buttons an. Er legt das Konto an
+    und öffnet eine kurze Einrichtungs-Sitzung, in der nur Passkey oder Passwort eingerichtet werden können
+    (``SetupSessionMiddleware``). Eingelöst ist die Einladung erst, wenn ein Anmeldeweg existiert.
+
+    Hat das Konto schon einen Anmeldeweg (z. B. erneute Einladung eines deaktivierten Kontos), wird es nur
+    reaktiviert und nicht angemeldet; Rückgabe ``None``.
+    """
+    invitation = Invitation.objects.select_for_update().get(pk=invitation.pk)
     user = invitation.user or User.objects.filter(email=invitation.email).first()
     if user is None:
         user = User.objects.create_user(
@@ -88,13 +137,50 @@ def accept(invitation: Invitation, request: HttpRequest) -> User:
     user.set_roles(sorted(set(user.roles) | set(invitation.roles)))
     EmailAddress.objects.update_or_create(user=user, email=user.email, defaults={"verified": True, "primary": True})
     invitation.user = user
-    invitation.accepted_at = timezone.now()
-    invitation.save(update_fields=["user", "accepted_at"])
+    invitation.save(update_fields=["user"])
+
+    if has_login_method(user):
+        complete_invitations(user)
+        log.info("Einladung für %s angenommen, Konto hatte bereits einen Anmeldeweg", user.email)
+        return None
+
     login(request, user, backend=AUTH_BACKEND)
-    # Der Einladungslink belegt den Besitz der Mail-Adresse wie ein Anmeldecode. So kann die Person direkt
-    # danach einen Passkey hinzufügen, ohne sich erneut bestätigen zu müssen.
+    # Ohne „Angemeldet bleiben“: Die Einrichtungs-Sitzung endet mit dem Browser und nach SETUP_MINUTES.
+    request.session.set_expiry(0)
+    request.session[SETUP_SESSION_KEY] = {"invitation": invitation.pk, "started": timezone.now().timestamp()}
+    # Der Link belegt den Besitz der Mail-Adresse; so kann direkt ein Passkey angelegt werden.
     record_authentication(request, user, method="code", email=user.email, reauthenticated=True)
+    log.info(
+        "Einladung für %s geöffnet (Einrichtung offen), Browser: %s",
+        user.email,
+        request.headers.get("User-Agent", "-")[:200],
+    )
     return user
+
+
+def mark_setup_completed(request: HttpRequest | None) -> None:
+    """Merkt in der laufenden Einrichtungs-Sitzung, dass hier ein Anmeldeweg angelegt wurde."""
+    session = getattr(request, "session", None)
+    if session is not None and session.get(SETUP_SESSION_KEY):
+        session[SETUP_SESSION_KEY] = {**session[SETUP_SESSION_KEY], "completed": True}
+
+
+def invitation_state(invitation: Invitation | None) -> str:
+    """Zustand für die Einladungsseite: open, done, expired oder unknown."""
+    if invitation is None:
+        return "unknown"
+    if invitation.accepted_at is not None:
+        return "done"
+    if invitation.expires_at <= timezone.now():
+        return "expired"
+    return "open"
+
+
+def complete_invitations(user: User) -> None:
+    """Offene Einladungen eines Kontos gelten als eingelöst (Anmeldeweg eingerichtet oder regulär angemeldet)."""
+    count = Invitation.objects.filter(user=user, accepted_at__isnull=True).update(accepted_at=timezone.now())
+    if count:
+        log.info("Einladung für %s eingelöst", user.email)
 
 
 def ensure_initial_admin() -> Invitation | None:
@@ -102,7 +188,9 @@ def ensure_initial_admin() -> Invitation | None:
     email = (settings.INITIAL_ADMIN_EMAIL or "").strip().lower()
     if not email:
         return None
-    if any(u.has_role(Role.ADMIN) for u in User.objects.filter(is_active=True)):
+    admins = [u for u in User.objects.filter(is_active=True) if u.has_role(Role.ADMIN)]
+    # Ein Administrator zählt erst, wenn er seinen Zugang eingerichtet hat (nicht nur ein Scanner-Klick).
+    if any(has_login_method(u) or not u.invitations.filter(accepted_at__isnull=True).exists() for u in admins):
         return None
     open_invitation = Invitation.objects.filter(email=email, accepted_at__isnull=True).first()
     if open_invitation and open_invitation.is_valid:

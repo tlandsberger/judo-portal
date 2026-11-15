@@ -19,7 +19,9 @@ Produktiv in der Homecloud (Repo `tlandsberger/homecloud`, Stack `application/ju
 | `PORTAL_DATA_DIR` | – | `/data` | Datenbank und Backups |
 | `PORTAL_BACKUP_HOUR` / `PORTAL_BACKUP_KEEP_DAYS` | – | `2` / `14` | nächtliches Backup |
 | `PORTAL_SECURE_COOKIES` | – | `true` | nur für lokale Tests ohne HTTPS auf `false` |
+| `PORTAL_TRUSTED_PROXIES` | – | private Netze | Proxys (Traefik), deren `X-Forwarded-For` als echte Client-IP gilt |
 | `PORTAL_DEBUG` | – | `false` | nur Entwicklung |
+| `PORTAL_VERSION` | – | aus dem Image | setzt der Release-Workflow beim Bauen; steht in der Fußzeile (Link auf die Release-Notes) |
 
 Ohne `PORTAL_EMAIL_HOST` gehen Mails auf die Konsole (Container-Log), mit `PORTAL_EMAIL_FILE_PATH` in Dateien.
 
@@ -30,6 +32,21 @@ Ohne `PORTAL_EMAIL_HOST` gehen Mails auf die Konsole (Container-Log), mit `PORTA
    zusätzlich im Container-Log, falls die Mail nicht ankommt.
 3. Link öffnen → „Einladung annehmen“ → Passkey und/oder Passwort einrichten.
 4. Unter **Konten** weitere Personen einladen (z. B. die Abteilungsleitung).
+
+### Einladungen und Mail-Scanner
+
+Mailfilter (z. B. Microsoft Safe Links) öffnen Links in einer Sandbox und klicken dort sogar Buttons. Deshalb gibt
+„Einladung annehmen“ nur eine **Einrichtungs-Sitzung** (30 Minuten): Erst mit einem eingerichteten Passkey oder
+Passwort gibt es Zugang, und nur für die Sitzung, die ihn eingerichtet hat. Bis dahin bleibt der Link 7 Tage gültig
+und kann beliebig oft geöffnet werden. Wer keinen Passkey und kein Passwort will, wählt „Lieber per Code anmelden“.
+
+- **Link ohne Mail:** unter Konten → „Nur Link erstellen“ bzw. „Link kopieren“ (erzeugt jeweils einen neuen Link).
+- **Rettungsweg** ohne Oberfläche (z. B. wenn keine Mail ankommt):
+  ```bash
+  docker exec judo_portal python manage.py invite du@example.org --admin --no-mail   # Link wird ausgegeben
+  ```
+- Der erste Administrator wird beim Neustart erneut eingeladen, solange er seinen Zugang nicht eingerichtet hat und
+  die alte Einladung abgelaufen ist.
 
 ## Backup und Wiederherstellung
 
@@ -51,6 +68,17 @@ Ohne `PORTAL_EMAIL_HOST` gehen Mails auf die Konsole (Container-Log), mit `PORTA
   deployt. Datenbank-Migrationen laufen beim Start des Containers.
 - Zurückrollen: Image-Tag in der Homecloud auf die Vorversion setzen. Bei neuen Migrationen vorher aus dem Backup
   wiederherstellen.
+
+## Client-IP hinter dem Reverse-Proxy
+
+Das Portal ersetzt die Verbindungsadresse (Traefik) durch die echte Quell-IP aus `X-Forwarded-For`: von rechts der
+erste Eintrag, der kein vertrauenswürdiger Proxy ist (`PORTAL_TRUSTED_PROXIES`). Andere Header, etwa
+`CF-Connecting-IP`, wertet es nicht aus. Die IP erscheint unter „Meine Anmeldung → Angemeldete Geräte“ und zählt für
+die Sperre gegen Durchprobieren.
+
+Der Proxy muss den Header vertrauenswürdig setzen. In der Homecloud übernimmt Traefik das `X-Forwarded-For` von
+Cloudflare nur aus dem Netz `cloudflare` (`forwardedHeaders.trustedIPs` am Eingang `cloudflare`) und setzt es am
+LAN-Eingang selbst, siehe README im Repo `homecloud`.
 
 ## Überwachung
 

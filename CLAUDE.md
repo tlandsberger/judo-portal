@@ -36,7 +36,8 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
   siehe `PortalAccountAdapter`). Keine Selbstregistrierung, Zugänge nur per Einladung.
 - **Oberfläche:** Bootstrap-Klassen plus `portal/static/css/theme.css`. Farben nur über die Theme-Variablen
   (`--wtsv-*`, `--bs-*`), beide Themes (hell/dunkel) prüfen. Vereins-Piktogramme als `.pikto .pikto-<name>`,
-  Bedien-Icons aus Bootstrap Icons. Keine Inline-Skripte oder -Styles (CSP); JavaScript als Datei unter `static/js/`.
+  Bedien-Icons aus Bootstrap Icons. App-Icon und Favicons nur über `scripts/make_icons.py` erzeugen
+  (`uv run --with pillow python scripts/make_icons.py`). Keine Inline-Skripte oder -Styles (CSP); JavaScript als Datei unter `static/js/`.
   Keine externen CDNs oder Schriften.
 - **Barrierefreiheit:** WCAG AA; neue Seiten in `e2e/pages.spec.ts` mit axe prüfen.
 - **Tests:** pytest für Fachlogik und Rechte (`portal/<app>/tests/`), E2E für wichtige Abläufe.

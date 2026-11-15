@@ -46,6 +46,13 @@ test.describe("Einladung", () => {
     await expect(adminPage.getByText(`Einladung an ${email} verschickt.`)).toBeVisible();
     await admin.close();
 
+    // Ein Mail-Scanner öffnet den Link zuerst und klickt „Einladung annehmen“ – das darf nichts kaputt machen.
+    const scanner = await browser.newContext();
+    const scannerPage = await scanner.newPage();
+    await acceptInvitation(scannerPage, email);
+    await scannerPage.goto("/verwaltung/konten/");
+    await expect(scannerPage).toHaveURL(/\/konto\/einrichten\/$/);
+
     const context = await browser.newContext();
     const page = await context.newPage();
     await addVirtualAuthenticator(context, page);
@@ -64,5 +71,33 @@ test.describe("Einladung", () => {
     await expect(page.getByRole("link", { name: "Konten" })).toHaveCount(0);
     expect((await page.goto("/verwaltung/konten/"))?.status()).toBe(403);
     await context.close();
+
+    // Die Sitzung des Scanners kommt nie über die Einrichtung hinaus.
+    await scannerPage.goto("/");
+    await expect(scannerPage).toHaveURL(/\/anmeldung\/login\//);
+    await expect(scannerPage.getByRole("heading", { name: /^Hallo/ })).toHaveCount(0);
+    await scanner.close();
   });
+});
+
+test("Einladungslink ohne Mail erstellen und weitergeben", async ({ browser }) => {
+  const email = `link-${Date.now()}@test.local`;
+  const admin = await browser.newContext({ storageState: ADMIN_STATE });
+  const adminPage = await admin.newPage();
+  await adminPage.goto("/verwaltung/konten/einladen/");
+  await adminPage.getByLabel("E-Mail").fill(email);
+  await adminPage.getByRole("button", { name: "Nur Link erstellen" }).click();
+  await expect(adminPage.getByRole("heading", { name: "Einladungslink" })).toBeVisible();
+  await expectNoA11yViolations(adminPage);
+  const link = await adminPage.getByLabel("Link").inputValue();
+  expect(link).toContain("/einladung/");
+  await admin.close();
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(new URL(link).pathname);
+  await page.getByRole("button", { name: "Einladung annehmen" }).click();
+  await expect(page.getByRole("heading", { name: "Wie möchtest du dich anmelden?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Lieber per Code anmelden" })).toBeVisible();
+  await context.close();
 });

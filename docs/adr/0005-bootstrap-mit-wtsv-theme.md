@@ -23,3 +23,13 @@ Schatten sind frei. Hell und dunkel sind gefordert, Barrierefreiheit (WCAG AA) e
 - **Eigene Baustein-Bibliothek:** dauerhafter Pflegeaufwand.
 - **Tailwind + daisyUI:** modern, aber Build-Schritt und mehr Bewegung bei Versionen.
 - **Web Awesome (ehem. Shoelace):** jünger, Teile kostenpflichtig.
+
+## Nachtrag: App-Icon und Favicons
+
+- **App-Icon** (Home-Bildschirm, Apple, Install-Hinweis): weißes Signet mit mattgrünen Akzenten auf Tiefgrün. Das
+  Icon wird bei der Installation fest übernommen; das Web-App-Manifest kennt keine Variante für den dunklen Modus.
+  Deshalb ein Design, das in beiden Modi trägt.
+- **Favicon:** schwarzes bzw. weißes Signet ohne Hintergrund, per `media="(prefers-color-scheme: …)"`. Es folgt dem
+  Modus des Browsers, nicht dem Portal-Schalter, weil die Tab-Leiste ebenfalls dem Browser folgt. `favicon.ico` im
+  App-Icon-Design ist die Rückfallebene (z. B. Safari).
+- Alle Dateien erzeugt `scripts/make_icons.py` aus den Masken in `assets/icons/`.

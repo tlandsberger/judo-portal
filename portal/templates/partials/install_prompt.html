@@ -1,0 +1,28 @@
+{% load static %}
+{# Hinweis „Als App installieren“ – wird von static/js/install.js nur auf Handy/Tablet ohne installierte App gezeigt. #}
+<div class="offcanvas offcanvas-bottom wtsv-install" tabindex="-1" id="install-prompt" aria-labelledby="install-prompt-title" data-bs-backdrop="true">
+  <div class="offcanvas-header pb-0">
+    <div class="d-flex align-items-center gap-3">
+      <img src="{% static 'img/pwa/icon-192.png' %}" alt="" width="48" height="48" class="rounded-3">
+      <h2 class="offcanvas-title h5 mb-0" id="install-prompt-title">WTSV Judo als App</h2>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Schließen"></button>
+  </div>
+  <div class="offcanvas-body pt-3">
+    <p class="mb-3">Installiere das Vereinsportal auf deinem Startbildschirm – dann ist es wie eine App mit einem Tipp erreichbar.</p>
+    <div data-install-variant="prompt" hidden>
+      <div class="d-grid gap-2">
+        <button type="button" class="btn btn-primary" data-install-accept><i class="bi bi-download me-1" aria-hidden="true"></i> Als App installieren</button>
+        <button type="button" class="btn btn-outline-secondary" data-install-later>Später</button>
+      </div>
+    </div>
+    <div data-install-variant="ios" hidden>
+      <ol class="list-unstyled vstack gap-2 mb-3">
+        <li class="d-flex align-items-center gap-2"><span class="install-step">1</span> Tippe unten auf <i class="bi bi-box-arrow-up fs-5" aria-hidden="true"></i><span class="visually-hidden">das Teilen-Symbol</span> „Teilen“.</li>
+        <li class="d-flex align-items-center gap-2"><span class="install-step">2</span> Wähle <i class="bi bi-plus-square fs-5" aria-hidden="true"></i> „Zum Home-Bildschirm“.</li>
+        <li class="d-flex align-items-center gap-2"><span class="install-step">3</span> Tippe auf „Hinzufügen“.</li>
+      </ol>
+      <div class="d-grid"><button type="button" class="btn btn-outline-secondary" data-install-later>Später</button></div>
+    </div>
+  </div>
+</div>
