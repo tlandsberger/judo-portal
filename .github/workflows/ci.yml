@@ -1,8 +1,9 @@
 name: CI
 
+# Feature-Branches prüft der PR-Lauf; ein zusätzlicher Push-Lauf wäre doppelt. main nach jedem Merge.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
   workflow_call:
   workflow_dispatch:
