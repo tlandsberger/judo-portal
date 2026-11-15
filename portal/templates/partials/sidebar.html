@@ -1,0 +1,36 @@
+{% load static %}{% with url_name=request.resolver_match.url_name %}
+{# Seitenleiste in Dunkelgrün (neutral), aktive Seite in Vereinsgrün (primary); base-content = helle Schrift für DaisyUIs Hover/Fokus. #}
+<aside class="flex min-h-full w-72 flex-col bg-neutral text-neutral-content [--color-base-content:var(--color-neutral-content)]">
+  <a class="flex items-center gap-3 px-6 py-6 text-lg font-bold" href="{% url 'home' %}">
+    <img class="h-10 w-auto" src="{% static 'img/logo/signet-weiss.png' %}" alt="" width="40" height="33">
+    <span>Wedeler TSV Judo</span>
+  </a>
+  {% if user.is_authenticated %}
+  <nav class="flex-1" aria-label="Hauptnavigation">
+    <ul class="menu w-full gap-1 px-4 text-base [--menu-active-bg:var(--color-primary)] [--menu-active-fg:var(--color-primary-content)]">
+      <li><a href="{% url 'home' %}"{% if url_name == 'home' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-house" aria-hidden="true"></i> Start</a></li>
+      {% if can_manage_users %}
+      <li><a href="{% url 'user_list' %}"{% if url_name in 'user_list invite edit_user invitation_link' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-people" aria-hidden="true"></i> Benutzer</a></li>
+      {% endif %}
+      <li><a href="{% url 'security' %}"{% if url_name == 'security' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-shield-lock" aria-hidden="true"></i> Meine Anmeldung</a></li>
+      {% if user.is_staff %}
+      <li class="menu-title mt-4 text-neutral-content/70">Technik</li>
+      <li><a href="{% url 'components' %}"{% if url_name == 'components' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-grid-1x2" aria-hidden="true"></i> Bausteine</a></li>
+      <li><a href="{% url 'admin:index' %}"><i class="bi bi-wrench-adjustable" aria-hidden="true"></i> Technische Verwaltung</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+  <div class="border-t border-neutral-content/15 p-4">
+    <div class="px-3 pb-2">
+      <div class="font-semibold">{{ user.display_name }}</div>
+      <div class="truncate text-sm text-neutral-content/70">{{ user.email }}</div>
+    </div>
+    <ul class="menu w-full text-base">
+      <li>{% include "partials/theme_toggle.html" with with_label=True %}</li>
+      <li><button type="submit" form="abmelden"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Abmelden</button></li>
+    </ul>
+    <form id="abmelden" method="post" action="{% url 'account_logout' %}" hidden>{% csrf_token %}</form>
+  </div>
+  {% endif %}
+</aside>
+{% endwith %}

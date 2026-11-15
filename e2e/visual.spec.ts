@@ -17,6 +17,15 @@ for (const scheme of ["light", "dark"] as const) {
         await expect(page).toHaveScreenshot(`anmeldung-${name}.png`, { fullPage: true });
       });
 
+      test("Startseite", async ({ browser }) => {
+        const context = await browser.newContext({ storageState: ADMIN_STATE, colorScheme: scheme, viewport });
+        const page = await context.newPage();
+        await page.goto("/");
+        await page.evaluate(() => document.fonts.ready);
+        await expect(page).toHaveScreenshot(`start-${name}.png`, { fullPage: true });
+        await context.close();
+      });
+
       test("Bausteine", async ({ browser }) => {
         const context = await browser.newContext({ storageState: ADMIN_STATE, colorScheme: scheme, viewport });
         const page = await context.newPage();

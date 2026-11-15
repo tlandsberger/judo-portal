@@ -8,7 +8,7 @@ from django.http import HttpRequest
 
 class PortalAccountAdapter(DefaultAccountAdapter):
     def is_open_for_signup(self, request: HttpRequest) -> bool:
-        # Konten entstehen nur über Einladungen aus dem Portal.
+        # Benutzer entstehen nur über Einladungen aus dem Portal.
         return False
 
     def get_login_stages(self) -> list[str]:

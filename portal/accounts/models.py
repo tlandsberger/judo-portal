@@ -1,6 +1,6 @@
-"""Benutzerkonten, Rollen und Einladungen.
+"""Benutzer, Rollen und Einladungen.
 
-Ein Benutzerkonto ist bewusst getrennt vom Vereinsmitglied: Verknüpfungen (eigenes Profil, Erziehungsberechtigt …)
+Ein Benutzer ist bewusst getrennt vom Vereinsmitglied: Verknüpfungen (eigenes Profil, Erziehungsberechtigt …)
 kommen mit der Mitgliederverwaltung als eigenes Modell dazu (m:n, ADR 0003).
 """
 
@@ -17,7 +17,7 @@ from django.utils import timezone
 
 
 class Role(models.TextChoices):
-    """Feste Rollen nach Vereinsfunktionen. Eltern sind keine Rolle, sondern verknüpfte Konten."""
+    """Feste Rollen nach Vereinsfunktionen. Eltern sind keine Rolle, sondern verknüpfte Benutzer."""
 
     MEMBER = "member", "Mitglied"
     TRAINER = "trainer", "Übungsleiter"
@@ -61,8 +61,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS: ClassVar[list[str]] = []
 
     class Meta:
-        verbose_name = "Benutzerkonto"
-        verbose_name_plural = "Benutzerkonten"
+        verbose_name = "Benutzer"
+        verbose_name_plural = "Benutzer"
         ordering = ("last_name", "first_name", "email")
 
     def __str__(self) -> str:

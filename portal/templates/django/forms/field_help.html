@@ -1,0 +1,2 @@
+{% if field.help_text %}<p class="label whitespace-normal text-base-content/70 [&_a]:underline"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</p>{% endif %}
+{% for error in field.errors %}<p class="label whitespace-normal text-error"{% if forloop.first and field.auto_id %} id="{{ field.auto_id }}_error"{% endif %}>{{ error }}</p>{% endfor %}

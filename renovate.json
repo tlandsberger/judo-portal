@@ -32,6 +32,11 @@
       "groupName": "Playwright"
     },
     {
+      "description": "Tailwind CSS und DaisyUI immer gemeinsam (CSS-Build, Screenshots)",
+      "matchPackageNames": ["tailwindcss", "@tailwindcss/cli", "daisyui"],
+      "groupName": "Tailwind und DaisyUI"
+    },
+    {
       "description": "Python-Image und requires-python immer gemeinsam, sonst passt das Lockfile nicht zum Image",
       "matchPackageNames": ["python"],
       "groupName": "Python"

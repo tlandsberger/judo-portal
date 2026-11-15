@@ -39,9 +39,9 @@ def test_home_shows_greeting_and_role_based_tiles(client) -> None:
     client.force_login(user)
     page = client.get(reverse("home")).content.decode()
     assert "Hallo Mia" in page
-    assert reverse("account_list") not in page
+    assert reverse("user_list") not in page
     user.set_roles([Role.DEPARTMENT_HEAD])
-    assert reverse("account_list") in client.get(reverse("home")).content.decode()
+    assert reverse("user_list") in client.get(reverse("home")).content.decode()
 
 
 def test_components_page_only_for_admins(client) -> None:

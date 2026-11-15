@@ -1,0 +1,270 @@
+# Eigene Übersetzungen für das Portal (vor allem allauth): Du-Form, „Zugang“/„Benutzer“ statt „Konto“,
+# „Passkey“ statt „Sicherheitsschlüssel“. Gilt vor den Übersetzungen der Pakete (LOCALE_PATHS).
+# Nach Änderungen: uv run pybabel compile -d portal/locale -D django (die .mo mit committen).
+msgid ""
+msgstr ""
+"Project-Id-Version: judo-portal\n"
+"Language: de\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "This account is currently inactive."
+msgstr "Dieser Zugang ist derzeit deaktiviert."
+
+msgid "This email address is already associated with this account."
+msgstr "Diese E-Mail-Adresse gehört bereits zu deinem Zugang."
+
+msgid "The email address is not assigned to any user account."
+msgstr "Zu dieser E-Mail-Adresse gibt es keinen Benutzer."
+
+msgid "Use your password"
+msgstr "Passwort verwenden"
+
+msgid "Use authenticator app or code"
+msgstr "Authenticator-App oder Code verwenden"
+
+msgid "Use a security key"
+msgstr "Passkey verwenden"
+
+msgid "Accounts"
+msgstr "Anmeldung"
+
+msgid "Enter a phone number including country code (e.g. +1 for the US)."
+msgstr "Gib eine Telefonnummer mit Ländervorwahl ein (z. B. +49 für Deutschland)."
+
+msgid "Account Inactive"
+msgstr "Zugang deaktiviert"
+
+msgid "This account is inactive."
+msgstr "Dieser Zugang ist deaktiviert."
+
+#, python-format
+msgid "We've sent a code to %(recipient)s. The code expires shortly, so please enter it soon."
+msgstr "Wir haben einen Code an %(recipient)s geschickt. Er ist nur kurz gültig, gib ihn also bitte bald ein."
+
+msgid "Please reauthenticate to safeguard your account."
+msgstr "Bitte bestätige zum Schutz deines Zugangs noch einmal, dass du es bist."
+
+msgid "Enter Email Verification Code"
+msgstr "E-Mail-Bestätigungscode eingeben"
+
+msgid "Enter Phone Verification Code"
+msgstr "Telefon-Bestätigungscode eingeben"
+
+msgid "The following email addresses are associated with your account:"
+msgstr "Diese E-Mail-Adressen gehören zu deinem Zugang:"
+
+#, python-format
+msgid "Unable to confirm %(email)s because it is already confirmed by a different account."
+msgstr "%(email)s kann nicht bestätigt werden, weil die Adresse schon zu einem anderen Benutzer gehört."
+
+#, python-format
+msgid "If you have not created an account yet, then please %(link)ssign up%(end_link)s first."
+msgstr "Du hast noch keinen Zugang? Dann %(link)sregistriere dich%(end_link)s bitte zuerst."
+
+#, python-format
+msgid "Already have an account? Then please %(link)ssign in%(end_link)s."
+msgstr "Du hast schon einen Zugang? Dann %(link)smelde dich an%(end_link)s."
+
+#, python-format
+msgid "You have verified phone number %(phone)s."
+msgstr "Du hast die Telefonnummer %(phone)s bestätigt."
+
+msgid "Enter your password:"
+msgstr "Gib dein Passwort ein:"
+
+msgid "You will receive a special code for a password-free sign-in."
+msgstr "Du bekommst einen Code, mit dem du dich ohne Passwort anmeldest."
+
+msgid "Account Connections"
+msgstr "Verknüpfte Dienste"
+
+msgid "Account Already Exists"
+msgstr "Zugang existiert bereits"
+
+#, python-format
+msgid ""
+"You are receiving this email because you or someone else tried to signup for an\n"
+"account using email address:\n"
+"\n"
+"%(email)s\n"
+"\n"
+"However, an account using that email address already exists.  In case you have\n"
+"forgotten about this, please use the password forgotten procedure to recover\n"
+"your account:\n"
+"\n"
+"%(password_reset_url)s"
+msgstr ""
+"Du erhältst diese E-Mail, weil du oder jemand anderes versucht hat, sich mit dieser E-Mail-Adresse zu registrieren:\n"
+"\n"
+"%(email)s\n"
+"\n"
+"Zu dieser Adresse gibt es aber schon einen Zugang. Falls du das vergessen hast, setze dein Passwort über „Passwort "
+"vergessen“ zurück:\n"
+"\n"
+"%(password_reset_url)s"
+
+msgid "You are receiving this mail because the following change was made to your account:"
+msgstr "Du erhältst diese E-Mail, weil an deinem Zugang Folgendes geändert wurde:"
+
+#, python-format
+msgid ""
+"If you do not recognize this change then please take proper security precautions immediately. The change to your "
+"account originates from:\n"
+"\n"
+"- IP address: %(ip)s\n"
+"- Browser: %(user_agent)s\n"
+"- Date: %(timestamp)s"
+msgstr ""
+"Warst du das nicht, kümmere dich bitte sofort darum. Die Änderung an deinem Zugang kam von:\n"
+"\n"
+"- IP-Adresse: %(ip)s\n"
+"- Browser: %(user_agent)s\n"
+"- Zeitpunkt: %(timestamp)s"
+
+#, python-format
+msgid "Your email has been changed from %(from_email)s to %(to_email)s."
+msgstr "Deine E-Mail-Adresse wurde von %(from_email)s in %(to_email)s geändert."
+
+msgid "Your email has been confirmed."
+msgstr "Deine E-Mail-Adresse wurde bestätigt."
+
+#, python-format
+msgid ""
+"You're receiving this email because user %(user_display)s has given your email address to register an account on "
+"%(site_domain)s."
+msgstr ""
+"Du erhältst diese E-Mail, weil %(user_display)s deine E-Mail-Adresse für einen Zugang bei %(site_domain)s angegeben "
+"hat."
+
+msgid "Your email verification code is listed below. Please enter it in your open browser window."
+msgstr "Dein E-Mail-Bestätigungscode steht unten. Gib ihn bitte im geöffneten Browserfenster ein."
+
+#, python-format
+msgid "To confirm this is correct, go to %(activate_url)s"
+msgstr "Zum Bestätigen öffne %(activate_url)s"
+
+#, python-format
+msgid "Email address %(deleted_email)s has been removed from your account."
+msgstr "Die E-Mail-Adresse %(deleted_email)s wurde aus deinem Zugang entfernt."
+
+msgid "Your sign-in code is listed below. Please enter it in your open browser window."
+msgstr "Dein Anmeldecode steht unten. Gib ihn bitte im geöffneten Browserfenster ein."
+
+msgid "This mail can be safely ignored if you did not initiate this action."
+msgstr "Hast du das nicht selbst ausgelöst, kannst du diese E-Mail ignorieren."
+
+msgid "Your password reset code is listed below. Please enter it in your open browser window."
+msgstr "Dein Code zum Zurücksetzen des Passworts steht unten. Gib ihn bitte im geöffneten Browserfenster ein."
+
+msgid ""
+"You're receiving this email because you or someone else has requested a password reset for your user account.\n"
+"It can be safely ignored if you did not request a password reset. Click the link below to reset your password."
+msgstr ""
+"Du erhältst diese E-Mail, weil du oder jemand anderes das Zurücksetzen des Passworts für deinen Zugang angefordert "
+"hat.\n"
+"Hast du das nicht angefordert, kannst du diese E-Mail ignorieren. Über den folgenden Link setzt du dein Passwort "
+"zurück."
+
+msgid "Your password has been reset."
+msgstr "Dein Passwort wurde zurückgesetzt."
+
+msgid "Your password has been set."
+msgstr "Dein Passwort wurde festgelegt."
+
+#, python-format
+msgid ""
+"You are receiving this email because you, or someone else, tried to access an account with email %(email)s. However, "
+"we do not have any record of such an account in our database."
+msgstr ""
+"Du erhältst diese E-Mail, weil du oder jemand anderes versucht hat, sich mit der E-Mail-Adresse %(email)s anzumelden."
+" Zu dieser Adresse gibt es aber keinen Zugang."
+
+msgid "If it was you, you can sign up for an account using the link below."
+msgstr "Warst du das, kannst du dich über den folgenden Link registrieren."
+
+msgid "Unknown Account"
+msgstr "Unbekannter Zugang"
+
+msgid "You cannot add an email address to an account protected by two-factor authentication."
+msgstr "Zu einem Zugang mit Zwei-Faktor-Authentifizierung kannst du keine E-Mail-Adresse hinzufügen."
+
+msgid "You cannot deactivate two-factor authentication."
+msgstr "Du kannst die Zwei-Faktor-Authentifizierung nicht abschalten."
+
+msgid "You cannot generate recovery codes without having two-factor authentication enabled."
+msgstr "Wiederherstellungscodes gibt es erst, wenn die Zwei-Faktor-Authentifizierung eingeschaltet ist."
+
+msgid "You cannot activate two-factor authentication until you have verified your email address."
+msgstr "Die Zwei-Faktor-Authentifizierung kannst du erst einschalten, wenn deine E-Mail-Adresse bestätigt ist."
+
+msgid ""
+"Enabling passwordless operation allows you to sign in using just this key, but imposes additional requirements such "
+"as biometrics or PIN protection."
+msgstr ""
+"Ohne Passwort kannst du dich allein mit diesem Passkey anmelden; dafür braucht er zusätzlich Schutz wie "
+"Fingerabdruck, Gesicht oder PIN."
+
+msgid "Your account is protected by two-factor authentication. Please enter an authenticator code:"
+msgstr "Dein Zugang ist mit Zwei-Faktor-Authentifizierung geschützt. Gib bitte einen Code aus deiner Authenticator-App ein:"
+
+msgid "Enter an authenticator code:"
+msgstr "Gib einen Code aus deiner Authenticator-App ein:"
+
+msgid "If you choose to trust this browser, you will not be asked for a verification code the next time you sign in."
+msgstr "Vertraust du diesem Browser, brauchst du bei der nächsten Anmeldung keinen Bestätigungscode."
+
+msgid ""
+"You are about to create a passkey for your account. As you can add additional keys later on, you can use a "
+"descriptive name to tell the keys apart."
+msgstr ""
+"Du legst gleich einen Passkey für deinen Zugang an. Da du später weitere hinzufügen kannst, gib ihm einen Namen, an "
+"dem du ihn wiedererkennst."
+
+msgid "A new security key has been added."
+msgstr "Ein neuer Passkey wurde hinzugefügt."
+
+msgid "Security Key Added"
+msgstr "Passkey hinzugefügt"
+
+msgid "A security key has been removed."
+msgstr "Ein Passkey wurde entfernt."
+
+msgid "Security Key Removed"
+msgstr "Passkey entfernt"
+
+msgid "Security Keys"
+msgstr "Passkeys"
+
+#, python-format
+msgid "You have added %(count)s security key."
+msgid_plural "You have added %(count)s security keys."
+msgstr[0] "Du hast %(count)s Passkey hinzugefügt."
+msgstr[1] "Du hast %(count)s Passkeys hinzugefügt."
+
+msgid "No security keys have been added."
+msgstr "Noch kein Passkey eingerichtet."
+
+msgid "Security key added."
+msgstr "Passkey hinzugefügt."
+
+msgid "Security key removed."
+msgstr "Passkey entfernt."
+
+msgid "Add Security Key"
+msgstr "Passkey hinzufügen"
+
+msgid "Remove Security Key"
+msgstr "Passkey entfernen"
+
+msgid "Are you sure you want to remove this security key?"
+msgstr "Möchtest du diesen Passkey wirklich entfernen?"
+
+msgid "Security key"
+msgstr "Passkey"
+
+msgid "Edit Security Key"
+msgstr "Passkey bearbeiten"
+

@@ -1,12 +1,15 @@
 # Image des Vereinsportals: ein Container mit App, Anmeldung und SQLite (Datenverzeichnis /data als Volume).
 
-# Frontend-Bibliotheken aus npm kopieren (Bootstrap, Icons, htmx, Schrift)
+# Frontend: Icons und htmx aus npm kopieren, CSS mit Tailwind und DaisyUI bauen (liest die Templates nach Klassen)
 FROM node:26.13.1-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY scripts/vendor.mjs scripts/
-RUN node scripts/vendor.mjs
+COPY portal/assets portal/assets
+COPY portal/templates portal/templates
+COPY portal/static/js portal/static/js
+RUN npm run vendor
 
 FROM python:3.15.2-slim AS app
 COPY --from=ghcr.io/astral-sh/uv:0.13.8 /uv /usr/local/bin/uv

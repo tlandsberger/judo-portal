@@ -1,28 +1,27 @@
 {% load static %}
 {# Hinweis „Als App installieren“ – wird von static/js/install.js nur auf Handy/Tablet ohne installierte App gezeigt. #}
-<div class="offcanvas offcanvas-bottom wtsv-install" tabindex="-1" id="install-prompt" aria-labelledby="install-prompt-title" data-bs-backdrop="true">
-  <div class="offcanvas-header pb-0">
-    <div class="d-flex align-items-center gap-3">
-      <img src="{% static 'img/pwa/icon-192.png' %}" alt="" width="48" height="48" class="rounded-3">
-      <h2 class="offcanvas-title h5 mb-0" id="install-prompt-title">WTSV Judo als App</h2>
+<dialog id="install-prompt" class="modal modal-bottom sm:modal-middle" aria-labelledby="install-prompt-title">
+  <div class="modal-box">
+    <form method="dialog"><button class="btn btn-circle btn-ghost btn-sm absolute top-3 right-3" aria-label="Schließen"><i class="bi bi-x-lg" aria-hidden="true"></i></button></form>
+    <div class="flex items-center gap-3 pe-8">
+      <img class="rounded-box" src="{% static 'img/pwa/icon-192.png' %}" alt="" width="48" height="48">
+      <h2 class="text-lg font-bold" id="install-prompt-title">Wedeler TSV Judo als App</h2>
     </div>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Schließen"></button>
-  </div>
-  <div class="offcanvas-body pt-3">
-    <p class="mb-3">Installiere das Vereinsportal auf deinem Startbildschirm – dann ist es wie eine App mit einem Tipp erreichbar.</p>
+    <p class="py-4">Installiere das Vereinsportal auf deinem Startbildschirm – dann ist es wie eine App mit einem Tipp erreichbar.</p>
     <div data-install-variant="prompt" hidden>
-      <div class="d-grid gap-2">
-        <button type="button" class="btn btn-primary" data-install-accept><i class="bi bi-download me-1" aria-hidden="true"></i> Als App installieren</button>
-        <button type="button" class="btn btn-outline-secondary" data-install-later>Später</button>
+      <div class="flex flex-col gap-2">
+        <button type="button" class="btn btn-primary" data-install-accept><i class="bi bi-download" aria-hidden="true"></i> Als App installieren</button>
+        <button type="button" class="btn" data-install-later>Später</button>
       </div>
     </div>
     <div data-install-variant="ios" hidden>
-      <ol class="list-unstyled vstack gap-2 mb-3">
-        <li class="d-flex align-items-center gap-2"><span class="install-step">1</span> Tippe unten auf <i class="bi bi-box-arrow-up fs-5" aria-hidden="true"></i><span class="visually-hidden">das Teilen-Symbol</span> „Teilen“.</li>
-        <li class="d-flex align-items-center gap-2"><span class="install-step">2</span> Wähle <i class="bi bi-plus-square fs-5" aria-hidden="true"></i> „Zum Home-Bildschirm“.</li>
-        <li class="d-flex align-items-center gap-2"><span class="install-step">3</span> Tippe auf „Hinzufügen“.</li>
+      <ol class="mb-4 flex flex-col gap-3">
+        <li class="flex items-center gap-2"><span class="badge badge-primary">1</span> Tippe unten auf <i class="bi bi-box-arrow-up text-lg" aria-hidden="true"></i><span class="sr-only">das Teilen-Symbol</span> „Teilen“.</li>
+        <li class="flex items-center gap-2"><span class="badge badge-primary">2</span> Wähle <i class="bi bi-plus-square text-lg" aria-hidden="true"></i> „Zum Home-Bildschirm“.</li>
+        <li class="flex items-center gap-2"><span class="badge badge-primary">3</span> Tippe auf „Hinzufügen“.</li>
       </ol>
-      <div class="d-grid"><button type="button" class="btn btn-outline-secondary" data-install-later>Später</button></div>
+      <button type="button" class="btn w-full" data-install-later>Später</button>
     </div>
   </div>
-</div>
+  <form method="dialog" class="modal-backdrop"><button tabindex="-1">Schließen</button></form>
+</dialog>

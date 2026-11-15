@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Benutzer{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div><h1 class="text-3xl font-bold">Benutzer</h1><p class="mt-1 text-base-content/70">Zugänge zum Portal und ihre Rollen.</p></div>
+  <a class="btn btn-primary" href="{% url 'invite' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Person einladen</a>
+</div>
+
+{% if invitations %}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-einladungen">
+  <div class="card-body">
+    <h2 class="card-title" id="h-einladungen">Offene Einladungen</h2>
+    <ul class="list">
+      {% for invitation in invitations %}
+      <li class="list-row items-center px-0">
+        <div class="list-col-grow">
+          <div class="font-semibold">{% if invitation.first_name or invitation.last_name %}{{ invitation.first_name }} {{ invitation.last_name }} · {% endif %}{{ invitation.email }}</div>
+          <div class="text-sm text-base-content/70">
+            {% if invitation.is_valid %}gültig bis {{ invitation.expires_at|date:"d.m.Y" }}{% else %}<span class="text-error">abgelaufen</span>{% endif %}
+            {% for r in invitation.roles %} · {% for value, label in roles.choices %}{% if value == r %}{{ label }}{% endif %}{% endfor %}{% endfor %}
+          </div>
+        </div>
+        <div class="list-col-wrap flex flex-wrap gap-2">
+          <form method="post" action="{% url 'resend_invitation' invitation.pk %}">{% csrf_token %}<button class="btn btn-outline btn-primary btn-sm">Erneut senden</button></form>
+          <form method="post" action="{% url 'invitation_link' invitation.pk %}">{% csrf_token %}<button class="btn btn-outline btn-primary btn-sm">Link kopieren</button></form>
+          <form method="post" action="{% url 'delete_invitation' invitation.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm">Zurückziehen</button></form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-benutzer">
+  <div class="card-body">
+    <h2 class="card-title" id="h-benutzer">Benutzer ({{ users|length }})</h2>
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead class="text-base-content/70"><tr><th scope="col">Name</th><th scope="col">Rollen</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Aktionen</span></th></tr></thead>
+        <tbody>
+        {% for target_user, set_up in users %}
+          <tr>
+            <td><div class="font-semibold">{{ target_user.display_name }}</div><div class="text-sm text-base-content/70">{{ target_user.email }}</div></td>
+            <td><div class="flex flex-wrap gap-1">{% for label in target_user.role_labels %}<span class="badge badge-soft badge-primary">{{ label }}</span>{% empty %}<span class="text-sm text-base-content/70">–</span>{% endfor %}</div></td>
+            <td>{% if not target_user.is_active %}<span class="text-sm text-error">deaktiviert</span>{% elif not set_up %}<span class="badge badge-warning">noch nicht eingerichtet</span>{% else %}<span class="text-sm">aktiv</span>{% endif %}</td>
+            <td class="text-right whitespace-nowrap">
+              {% if target_user.is_active and not set_up %}
+              <form class="inline" method="post" action="{% url 'reinvite_user' target_user.pk %}">{% csrf_token %}
+                <button class="btn btn-square btn-ghost btn-sm" name="action" value="send" aria-label="Einladung an {{ target_user.display_name }} erneut senden" title="Einladung erneut senden"><i class="bi bi-envelope" aria-hidden="true"></i></button>
+                <button class="btn btn-square btn-ghost btn-sm" name="action" value="link" aria-label="Einladungslink für {{ target_user.display_name }} erstellen" title="Einladungslink erstellen"><i class="bi bi-link-45deg" aria-hidden="true"></i></button>
+              </form>
+              {% endif %}
+              <a class="btn btn-square btn-ghost btn-sm" href="{% url 'edit_user' target_user.pk %}" aria-label="Rollen von {{ target_user.display_name }} bearbeiten" title="Rollen bearbeiten"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+              {% if target_user != user %}
+              <form class="inline" method="post" action="{% url 'toggle_active' target_user.pk %}">{% csrf_token %}
+                <button class="btn btn-square btn-ghost btn-sm" aria-label="{{ target_user.display_name }} {% if target_user.is_active %}deaktivieren{% else %}aktivieren{% endif %}" title="{% if target_user.is_active %}Deaktivieren{% else %}Aktivieren{% endif %}"><i class="bi {% if target_user.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}" aria-hidden="true"></i></button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

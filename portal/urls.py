@@ -4,8 +4,8 @@ from django.views.generic import RedirectView
 
 from portal.core import views as core
 
-admin.site.site_header = "WTSV Judo – technische Verwaltung"
-admin.site.site_title = "WTSV Judo"
+admin.site.site_header = "Wedeler TSV Judo – technische Verwaltung"
+admin.site.site_title = "Wedeler TSV Judo"
 
 urlpatterns = [
     path("", core.home, name="home"),

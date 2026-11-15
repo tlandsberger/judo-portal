@@ -1,0 +1,31 @@
+{% load static %}<!doctype html>
+<html lang="de" data-theme="wtsv-light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Vereinsportal{% endblock %} – Wedeler TSV Judo</title>
+  <meta name="description" content="Vereinsportal der Judo-Abteilung im Wedeler TSV e.V.">
+  <meta name="theme-color" content="#0a3d1c">
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
+  <script src="{% static 'js/theme-init.js' %}"></script>
+  <link rel="manifest" href="{% url 'manifest' %}">
+  {# Favicon passend zum Modus des Browsers (seine Tab-Leiste folgt nicht dem Portal-Schalter). Ohne Modus-Unterstützung: favicon.ico #}
+  <link rel="icon" href="{% static 'img/pwa/favicon.ico' %}" sizes="48x48">
+  <link rel="icon" href="{% static 'img/pwa/favicon-hell.png' %}" type="image/png" sizes="64x64" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="{% static 'img/pwa/favicon-dunkel.png' %}" type="image/png" sizes="64x64" media="(prefers-color-scheme: dark)">
+  <link rel="apple-touch-icon" href="{% static 'img/pwa/apple-touch-icon.png' %}">
+  <link rel="stylesheet" href="{% static 'vendor/app.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-base-200 text-base-content">
+  <a class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 btn btn-primary" href="#inhalt">Zum Inhalt springen</a>
+  {% block body %}{% endblock %}
+  {% include "partials/install_prompt.html" %}
+
+  <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+  <script src="{% static 'js/app.js' %}"></script>
+  <script src="{% static 'js/install.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

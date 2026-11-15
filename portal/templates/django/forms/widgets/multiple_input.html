@@ -1,0 +1,5 @@
+{% with id=widget.attrs.id %}<div{% if id %} id="{{ id }}"{% endif %} class="flex flex-col gap-2 py-1{% if widget.attrs.class %} {{ widget.attrs.class }}{% endif %}">{% for group, options, index in widget.optgroups %}{% if group %}
+  <div><span class="fieldset-legend text-sm">{{ group }}</span>{% endif %}{% for option in options %}<div>
+    {% include option.template_name with widget=option %}</div>{% endfor %}{% if group %}
+  </div>{% endif %}{% endfor %}
+</div>{% endwith %}

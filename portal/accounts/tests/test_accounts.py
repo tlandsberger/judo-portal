@@ -102,11 +102,11 @@ class TestInitialAdmin:
 class TestAccountManagement:
     def test_members_and_trainers_may_not_manage_accounts(self, client) -> None:
         client.force_login(make_user("tom@example.org", Role.MEMBER, Role.TRAINER))
-        assert client.get(reverse("account_list")).status_code == 403
+        assert client.get(reverse("user_list")).status_code == 403
         assert client.get(reverse("invite")).status_code == 403
 
     def test_anonymous_users_are_sent_to_login(self, client) -> None:
-        response = client.get(reverse("account_list"))
+        response = client.get(reverse("user_list"))
         assert response.status_code == 302 and reverse("account_login") in response.url
 
     def test_department_head_invites_without_admin_role(self, client, django_capture_on_commit_callbacks) -> None:
@@ -125,12 +125,12 @@ class TestAccountManagement:
         client.force_login(make_user("alex@example.org", Role.DEPARTMENT_HEAD))
         make_user("mia@example.org")
         response = client.post(reverse("invite"), {"email": "mia@example.org"})
-        assert "bereits ein aktives Konto" in response.content.decode()
+        assert "bereits einen aktiven Benutzer" in response.content.decode()
 
     def test_department_head_cannot_change_admins(self, client) -> None:
         client.force_login(make_user("alex@example.org", Role.DEPARTMENT_HEAD))
         admin = make_user("ada@example.org", Role.ADMIN)
-        client.post(reverse("edit_account", args=[admin.pk]), {"roles": []})
+        client.post(reverse("edit_user", args=[admin.pk]), {"roles": []})
         client.post(reverse("toggle_active", args=[admin.pk]))
         admin.refresh_from_db()
         assert admin.roles == ["admin"] and admin.is_active
@@ -138,7 +138,7 @@ class TestAccountManagement:
     def test_admin_cannot_remove_own_admin_role_or_deactivate_self(self, client) -> None:
         admin = make_user("ada@example.org", Role.ADMIN)
         client.force_login(admin)
-        client.post(reverse("edit_account", args=[admin.pk]), {"roles": ["member"]})
+        client.post(reverse("edit_user", args=[admin.pk]), {"roles": ["member"]})
         client.post(reverse("toggle_active", args=[admin.pk]))
         admin.refresh_from_db()
         assert admin.has_role(Role.ADMIN) and admin.is_active

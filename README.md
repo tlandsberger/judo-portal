@@ -1,4 +1,4 @@
-# WTSV Judo – Vereinsportal
+# Wedeler TSV Judo – Vereinsportal
 
 Vereinsportal der Judo-Abteilung im Wedeler TSV e.V.: Mitglieder, Eltern, Übungsleiter und Abteilungsleitung
 melden sich an und finden alles Vereinsrelevante an einem Ort. Läuft im Browser und lässt sich auf dem Handy als App
@@ -7,7 +7,7 @@ installieren. Produktiv unter **https://judo.tlandsberger.de**.
 ## Stand
 
 - **Fundament:** Anmeldung mit Passkey, Passwort oder Code per E-Mail, Zugänge nur per Einladung, Rollen,
-  Kontoverwaltung, Erscheinungsbild nach dem Design System „WTSV Judo“ (hell und dunkel).
+  Benutzerverwaltung, Erscheinungsbild nach dem Design System „Wedeler TSV Judo“ (hell und dunkel).
 - **Als Nächstes:** Mitgliederverwaltung mit CSV-Import und Zugängen für Mitglieder und Eltern, danach Termine und
   Übungsleiterabrechnung. Jedes Feature wird vorher fachlich geplant.
 
@@ -16,7 +16,7 @@ installieren. Produktiv unter **https://judo.tlandsberger.de**.
 | Bereich | Technik |
 |---|---|
 | Anwendung | Django 6 (Python 3.15), eine App pro Fachbereich |
-| Oberfläche | Bootstrap 5.3 mit WTSV-Theme, htmx, PWA |
+| Oberfläche | Tailwind CSS mit DaisyUI, Seitennavigation, htmx, PWA |
 | Anmeldung | django-allauth: Passkeys, Passwort, Anmeldecode per Mail |
 | Daten | SQLite im Volume, nächtliche Backups |
 | Betrieb | ein Docker-Container, Homecloud (Portainer, Traefik, Cloudflare-Tunnel) |
@@ -31,7 +31,7 @@ Voraussetzungen: [uv](https://docs.astral.sh/uv/) und Node.js 24.
 
 ```bash
 uv sync                      # Python-Abhängigkeiten
-npm ci && npm run vendor     # Bootstrap, Icons, htmx, Schrift nach portal/static/vendor kopieren
+npm ci && npm run vendor     # Icons und htmx kopieren, CSS bauen (portal/static/vendor)
 export PORTAL_DEBUG=true PORTAL_INITIAL_ADMIN_EMAIL=du@example.org
 uv run python manage.py migrate
 uv run python manage.py bootstrap_admin   # Einladungslink erscheint auf der Konsole

@@ -1,4 +1,4 @@
-"""Fachliche Abläufe rund um Konten: einladen, Einladung annehmen, ersten Administrator anlegen."""
+"""Fachliche Abläufe rund um Benutzer: einladen, Einladung annehmen, ersten Administrator anlegen."""
 
 from __future__ import annotations
 
@@ -87,7 +87,7 @@ def new_link(invitation: Invitation) -> str:
 
 
 def reinvite(user: User, *, invited_by: User | None = None, send: bool = True) -> Invitation:
-    """Neue Einladung für ein Konto, das seinen Zugang noch nicht eingerichtet hat."""
+    """Neue Einladung für einen Benutzer, der seinen Zugang noch nicht eingerichtet hat."""
     return invite(user.email, first_name=user.first_name, last_name=user.last_name, invited_by=invited_by, send=send)
 
 
@@ -97,7 +97,7 @@ SETUP_MINUTES = 30
 
 
 def has_login_method(user: User) -> bool:
-    """Hat das Konto einen eigenen Anmeldeweg (Passwort oder Passkey)? Der Mail-Code zählt nicht – er ist immer da."""
+    """Hat der Benutzer einen eigenen Anmeldeweg (Passwort oder Passkey)? Der Mail-Code zählt nicht."""
     from allauth.mfa.models import Authenticator
 
     return (
@@ -116,11 +116,11 @@ def is_set_up(user: User) -> bool:
 def accept(invitation: Invitation, request: HttpRequest) -> User | None:
     """Klick auf „Einladung annehmen“.
 
-    Der Klick allein gibt nie vollen Zugang – auch Mail-Scanner klicken Links und Buttons an. Er legt das Konto an
+    Der Klick allein gibt nie vollen Zugang – auch Mail-Scanner klicken Links und Buttons an. Er legt den Benutzer an
     und öffnet eine kurze Einrichtungs-Sitzung, in der nur Passkey oder Passwort eingerichtet werden können
     (``SetupSessionMiddleware``). Eingelöst ist die Einladung erst, wenn ein Anmeldeweg existiert.
 
-    Hat das Konto schon einen Anmeldeweg (z. B. erneute Einladung eines deaktivierten Kontos), wird es nur
+    Hat der Benutzer schon einen Anmeldeweg (z. B. erneute Einladung eines deaktivierten Benutzers), wird er nur
     reaktiviert und nicht angemeldet; Rückgabe ``None``.
     """
     invitation = Invitation.objects.select_for_update().get(pk=invitation.pk)
@@ -141,7 +141,7 @@ def accept(invitation: Invitation, request: HttpRequest) -> User | None:
 
     if has_login_method(user):
         complete_invitations(user)
-        log.info("Einladung für %s angenommen, Konto hatte bereits einen Anmeldeweg", user.email)
+        log.info("Einladung für %s angenommen, Benutzer hatte bereits einen Anmeldeweg", user.email)
         return None
 
     login(request, user, backend=AUTH_BACKEND)
@@ -177,7 +177,7 @@ def invitation_state(invitation: Invitation | None) -> str:
 
 
 def complete_invitations(user: User) -> None:
-    """Offene Einladungen eines Kontos gelten als eingelöst (Anmeldeweg eingerichtet oder regulär angemeldet)."""
+    """Offene Einladungen eines Benutzers gelten als eingelöst (Anmeldeweg eingerichtet oder regulär angemeldet)."""
     count = Invitation.objects.filter(user=user, accepted_at__isnull=True).update(accepted_at=timezone.now())
     if count:
         log.info("Einladung für %s eingelöst", user.email)

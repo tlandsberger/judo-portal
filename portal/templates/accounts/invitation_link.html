@@ -1,19 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Einladungslink{% endblock %}
 {% block content %}
-<div class="row justify-content-center"><div class="col-lg-7">
-  <p class="mb-2"><a href="{% url 'account_list' %}" class="text-decoration-none"><i class="bi bi-arrow-left" aria-hidden="true"></i> Konten</a></p>
-  <div class="card"><div class="card-body p-4">
-    <h1 class="h3">Einladungslink</h1>
-    <p class="text-body-secondary">Für <strong>{{ invitation.email }}</strong>{% if invitation.first_name %} ({{ invitation.first_name }} {{ invitation.last_name }}){% endif %}.
+<div class="mx-auto max-w-2xl">
+  <a href="{% url 'user_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Benutzer</a>
+  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+    <h1 class="text-2xl font-bold">Einladungslink</h1>
+    <p class="text-base-content/70">Für <strong>{{ invitation.email }}</strong>{% if invitation.first_name %} ({{ invitation.first_name }} {{ invitation.last_name }}){% endif %}.
       Gib den Link nur an diese Person weiter. Er ist bis {{ invitation.expires_at|date:"d.m.Y" }} gültig; ein früher erzeugter Link gilt nicht mehr.</p>
-    <label class="form-label" for="einladungslink">Link</label>
-    <div class="input-group mb-2">
-      <input class="form-control" id="einladungslink" type="text" value="{{ url }}" readonly>
-      <button class="btn btn-primary" type="button" data-copy-target="#einladungslink" data-copied-label="Kopiert"><i class="bi bi-clipboard me-1" aria-hidden="true"></i> Kopieren</button>
+    <div class="fieldset">
+      <label class="fieldset-legend text-sm" for="einladungslink">Link</label>
+      <div class="join w-full">
+        <input class="input join-item w-full" id="einladungslink" type="text" value="{{ url }}" readonly>
+        <button class="btn btn-primary join-item" type="button" data-copy-target="#einladungslink"><i class="bi bi-clipboard" aria-hidden="true"></i> Kopieren</button>
+      </div>
+      <p class="label text-base-content/70" role="status" data-copy-status></p>
     </div>
-    <p class="small text-body-secondary mb-0" role="status" data-copy-status></p>
-    <a class="btn btn-outline-secondary mt-3" href="{% url 'account_list' %}">Fertig</a>
+    <div><a class="btn" href="{% url 'user_list' %}">Fertig</a></div>
   </div></div>
-</div></div>
+</div>
 {% endblock %}

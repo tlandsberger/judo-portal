@@ -1,0 +1,1 @@
+{% if errors %}<div role="alert" class="alert alert-error alert-soft mb-2"{% if errors.field_id %} id="{{ errors.field_id }}_error"{% endif %}><i class="bi bi-exclamation-triangle text-lg" aria-hidden="true"></i><div>{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div></div>{% endif %}

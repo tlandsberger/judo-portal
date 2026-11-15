@@ -1,0 +1,19 @@
+{# Ein Formularfeld im DaisyUI-Stil (fieldset). Klassen der Eingabefelder setzen die Widget-Templates. #}
+{% if field.widget_type == "checkbox" %}
+<div class="fieldset">
+  <label class="label gap-3 text-base text-base-content">{{ field }} {{ field.label }}</label>
+  {% include "django/forms/field_help.html" %}
+</div>
+{% elif field.use_fieldset %}
+<fieldset class="fieldset"{% if field.aria_describedby %} aria-describedby="{{ field.aria_describedby }}"{% endif %}>
+  {% if field.label %}<legend class="fieldset-legend text-sm">{{ field.label }}</legend>{% endif %}
+  {{ field }}
+  {% include "django/forms/field_help.html" %}
+</fieldset>
+{% else %}
+<div class="fieldset">
+  {% if field.label %}<label class="fieldset-legend text-sm" for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+  {{ field }}
+  {% include "django/forms/field_help.html" %}
+</div>
+{% endif %}

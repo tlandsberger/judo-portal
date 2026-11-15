@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.mfa",
     "allauth.usersessions",
-    "django_bootstrap5",
+    "django.forms",
     "django_htmx",
 ]
 
@@ -181,7 +181,12 @@ LANGUAGE_CODE = "de"
 LANGUAGES = [("de", "Deutsch")]
 TIME_ZONE = "Europe/Berlin"
 USE_I18N = True
+# Eigene Übersetzungen (vor allem für allauth: Du-Form, „Zugang“ statt „Konto“); gelten vor denen der Pakete.
+LOCALE_PATHS = [BASE_DIR / "portal" / "locale"]
 USE_TZ = True
+
+# Formulare und Widgets mit DaisyUI-Klassen aus portal/templates/django/forms/ (ADR 0008)
+FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -198,9 +203,9 @@ STORAGES = {
 }
 
 # Mail: SMTP (IONOS) in Produktion; ohne Host auf die Konsole bzw. in Dateien (Tests, E2E).
-DEFAULT_FROM_EMAIL = env("EMAIL_FROM", "WTSV Judo <portal@localhost>")
+DEFAULT_FROM_EMAIL = env("EMAIL_FROM", "Wedeler TSV Judo <portal@localhost>")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_SUBJECT_PREFIX = "[WTSV Judo] "
+EMAIL_SUBJECT_PREFIX = "[Wedeler TSV Judo] "
 if env("EMAIL_HOST"):
     _mailer = {
         "BACKEND": "django.core.mail.backends.smtp.EmailBackend",

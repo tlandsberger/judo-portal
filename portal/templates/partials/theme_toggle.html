@@ -1,0 +1,4 @@
+{# Umschalter Hell/Dunkel; Beschriftung und Symbol setzt static/js/app.js passend zum aktuellen Design. #}
+<button type="button" class="{{ button_class }}" data-theme-toggle aria-pressed="false" aria-label="Dunkles Design einschalten" title="Dunkles Design einschalten">
+  <i class="bi bi-moon-stars text-lg" aria-hidden="true"></i>{% if with_label %}<span data-theme-label>Dunkles Design</span>{% endif %}
+</button>

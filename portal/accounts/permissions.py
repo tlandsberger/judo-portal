@@ -12,8 +12,8 @@ from django.http import HttpRequest, HttpResponse
 
 from .models import Role
 
-# Wer Konten verwalten (einladen, Rollen ändern) darf.
-MANAGE_ACCOUNTS = (Role.DEPARTMENT_HEAD, Role.ADMIN)
+# Wer Benutzer verwalten (einladen, Rollen ändern) darf.
+MANAGE_USERS = (Role.DEPARTMENT_HEAD, Role.ADMIN)
 
 
 def role_required(*roles: Role) -> Callable[[Callable[..., HttpResponse]], Callable[..., HttpResponse]]:
@@ -30,5 +30,5 @@ def role_required(*roles: Role) -> Callable[[Callable[..., HttpResponse]], Calla
     return decorator
 
 
-def can_manage_accounts(user: Any) -> bool:
-    return bool(user.is_authenticated and user.has_role(*MANAGE_ACCOUNTS))
+def can_manage_users(user: Any) -> bool:
+    return bool(user.is_authenticated and user.has_role(*MANAGE_USERS))

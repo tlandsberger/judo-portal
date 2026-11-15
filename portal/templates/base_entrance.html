@@ -1,1 +1,19 @@
-{% extends "allauth/layouts/entrance.html" %}
+{% extends "base_document.html" %}{% load static %}
+{# Eingangsseiten (Anmeldung, Einladung, Offline): Karte mittig auf Dunkelgrün, ohne Seitenleiste. #}
+{% block body %}
+<div class="flex min-h-screen flex-col bg-neutral text-neutral-content">
+  <div class="flex justify-end p-3">
+    {% include "partials/theme_toggle.html" with button_class="btn btn-ghost btn-circle text-neutral-content" %}
+  </div>
+  <main id="inhalt" class="flex flex-1 flex-col items-center px-4 pb-10">
+    <img class="mb-6 h-auto w-44" src="{% static 'img/logo/logo-weiss.png' %}" alt="Wedeler TSV Judo" width="640" height="440">
+    <div class="card w-full max-w-md bg-base-100 text-base-content shadow-xl">
+      <div class="card-body gap-4">
+        {% include "partials/messages.html" %}
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </main>
+  {% include "partials/footer.html" with on_dark=True %}
+</div>
+{% endblock %}

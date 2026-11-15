@@ -5,7 +5,7 @@
   var KEY = "wtsv-install-later";
   var PAUSE_MS = 30 * 24 * 60 * 60 * 1000;
   var element = document.getElementById("install-prompt");
-  if (!element || typeof bootstrap === "undefined") return;
+  if (!element || typeof element.showModal !== "function") return;
 
   var ua = navigator.userAgent;
   var standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
@@ -13,7 +13,6 @@
   var mobile = ios || /Android|Mobi/i.test(ua);
   if (standalone || !mobile || pausedRecently()) return;
 
-  var offcanvas = bootstrap.Offcanvas.getOrCreateInstance(element);
   var deferred = null;
   var installed = false;
 
@@ -30,14 +29,14 @@
     element.querySelectorAll("[data-install-variant]").forEach(function (part) {
       part.hidden = part.getAttribute("data-install-variant") !== variant;
     });
-    offcanvas.show();
+    if (!element.open) element.showModal();
   }
 
-  element.addEventListener("hidden.bs.offcanvas", function () {
+  element.addEventListener("close", function () {
     if (!installed) pause();
   });
   element.querySelectorAll("[data-install-later]").forEach(function (button) {
-    button.addEventListener("click", function () { offcanvas.hide(); });
+    button.addEventListener("click", function () { element.close(); });
   });
   element.querySelector("[data-install-accept]").addEventListener("click", function () {
     if (!deferred) return;
@@ -45,7 +44,7 @@
     deferred.userChoice.then(function (choice) {
       if (choice && choice.outcome === "accepted") installed = true;
       deferred = null;
-      offcanvas.hide();
+      element.close();
     });
   });
 
@@ -56,7 +55,7 @@
   });
   window.addEventListener("appinstalled", function () {
     installed = true;
-    offcanvas.hide();
+    element.close();
   });
 
   // Safari auf iPhone/iPad (andere iOS-Browser können nicht installieren): Anleitung nach kurzer Wartezeit.

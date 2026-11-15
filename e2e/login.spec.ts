@@ -36,7 +36,7 @@ test.describe("Einladung", () => {
     const email = `trainer-${Date.now()}@test.local`;
     const admin = await browser.newContext({ storageState: ADMIN_STATE });
     const adminPage = await admin.newPage();
-    await adminPage.goto("/verwaltung/konten/einladen/");
+    await adminPage.goto("/verwaltung/benutzer/einladen/");
     await expectNoA11yViolations(adminPage);
     await adminPage.getByLabel("E-Mail").fill(email);
     await adminPage.getByLabel("Vorname").fill("Tom");
@@ -50,8 +50,8 @@ test.describe("Einladung", () => {
     const scanner = await browser.newContext();
     const scannerPage = await scanner.newPage();
     await acceptInvitation(scannerPage, email);
-    await scannerPage.goto("/verwaltung/konten/");
-    await expect(scannerPage).toHaveURL(/\/konto\/einrichten\/$/);
+    await scannerPage.goto("/verwaltung/benutzer/");
+    await expect(scannerPage).toHaveURL(/\/zugang\/einrichten\/$/);
 
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -67,9 +67,9 @@ test.describe("Einladung", () => {
     await logout(page);
     await page.getByRole("button", { name: "Mit Passkey anmelden" }).click();
     await expect(page.getByRole("heading", { name: "Hallo Tom" })).toBeVisible();
-    // Übungsleiter verwalten keine Konten
-    await expect(page.getByRole("link", { name: "Konten" })).toHaveCount(0);
-    expect((await page.goto("/verwaltung/konten/"))?.status()).toBe(403);
+    // Übungsleiter verwalten keine Benutzer
+    await expect(page.getByRole("link", { name: "Benutzer" })).toHaveCount(0);
+    expect((await page.goto("/verwaltung/benutzer/"))?.status()).toBe(403);
     await context.close();
 
     // Die Sitzung des Scanners kommt nie über die Einrichtung hinaus.
@@ -84,7 +84,7 @@ test("Einladungslink ohne Mail erstellen und weitergeben", async ({ browser }) =
   const email = `link-${Date.now()}@test.local`;
   const admin = await browser.newContext({ storageState: ADMIN_STATE });
   const adminPage = await admin.newPage();
-  await adminPage.goto("/verwaltung/konten/einladen/");
+  await adminPage.goto("/verwaltung/benutzer/einladen/");
   await adminPage.getByLabel("E-Mail").fill(email);
   await adminPage.getByRole("button", { name: "Nur Link erstellen" }).click();
   await expect(adminPage.getByRole("heading", { name: "Einladungslink" })).toBeVisible();

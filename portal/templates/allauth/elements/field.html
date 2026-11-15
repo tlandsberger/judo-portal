@@ -1,16 +1,27 @@
 {% load allauth %}
-<div class="{% if attrs.type == 'checkbox' or attrs.type == 'radio' %}form-check{% endif %}">
-  {% if attrs.type != "checkbox" and attrs.type != "radio" %}<label class="form-label" for="{{ attrs.id }}">{% slot label %}{% endslot %}</label>{% endif %}
+{% if attrs.type == "checkbox" or attrs.type == "radio" %}
+<div class="fieldset">
+  <label class="label gap-3 text-base text-base-content" for="{{ attrs.id }}">
+    <input class="{% if attrs.type == 'checkbox' %}checkbox checkbox-primary{% else %}radio radio-primary{% endif %}" type="{{ attrs.type }}"
+      {% if attrs.required %}required{% endif %} {% if attrs.disabled %}disabled{% endif %} {% if attrs.checked %}checked{% endif %}
+      {% if attrs.name %}name="{{ attrs.name }}"{% endif %} {% if attrs.id %}id="{{ attrs.id }}"{% endif %} {% if attrs.value is not None %}value="{{ attrs.value }}"{% endif %}>
+    {% slot label %}{% endslot %}
+  </label>
+  {% if slots.help_text %}<p class="label whitespace-normal text-base-content/70">{% slot help_text %}{% endslot %}</p>{% endif %}
+</div>
+{% else %}
+<div class="fieldset">
+  <label class="fieldset-legend text-sm" for="{{ attrs.id }}">{% slot label %}{% endslot %}</label>
   {% if attrs.type == "textarea" %}
-  <textarea class="form-control" {% if attrs.required %}required{% endif %} {% if attrs.rows %}rows="{{ attrs.rows }}"{% endif %} {% if attrs.name %}name="{{ attrs.name }}"{% endif %} {% if attrs.id %}id="{{ attrs.id }}"{% endif %} {% if attrs.readonly %}readonly{% endif %} {% if attrs.disabled %}disabled{% endif %}>{% slot value %}{% endslot %}</textarea>
+  <textarea class="textarea w-full" {% if attrs.required %}required{% endif %} {% if attrs.rows %}rows="{{ attrs.rows }}"{% endif %} {% if attrs.name %}name="{{ attrs.name }}"{% endif %} {% if attrs.id %}id="{{ attrs.id }}"{% endif %} {% if attrs.readonly %}readonly{% endif %} {% if attrs.disabled %}disabled{% endif %}>{% slot value %}{% endslot %}</textarea>
   {% else %}
-  <input class="{% if attrs.type == 'checkbox' or attrs.type == 'radio' %}form-check-input{% else %}form-control{% if attrs.errors %} is-invalid{% endif %}{% endif %}"
-    {% if attrs.required %}required{% endif %} {% if attrs.disabled %}disabled{% endif %} {% if attrs.readonly %}readonly{% endif %} {% if attrs.checked %}checked{% endif %}
+  <input class="input w-full{% if attrs.errors %} input-error{% endif %}" type="{{ attrs.type }}"
+    {% if attrs.required %}required{% endif %} {% if attrs.disabled %}disabled{% endif %} {% if attrs.readonly %}readonly{% endif %}
     {% if attrs.name %}name="{{ attrs.name }}"{% endif %} {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
     {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %} {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
-    {% if attrs.value is not None %}value="{{ attrs.value }}"{% endif %} type="{{ attrs.type }}">
+    {% if attrs.value is not None %}value="{{ attrs.value }}"{% endif %}{% if attrs.errors %} aria-invalid="true"{% endif %}>
   {% endif %}
-  {% if attrs.type == "checkbox" or attrs.type == "radio" %}<label class="form-check-label" for="{{ attrs.id }}">{% slot label %}{% endslot %}</label>{% endif %}
-  {% if attrs.errors %}<div class="invalid-feedback d-block">{% for e in attrs.errors %}{{ e }} {% endfor %}</div>{% endif %}
-  {% if slots.help_text %}<div class="form-text">{% slot help_text %}{% endslot %}</div>{% endif %}
+  {% for e in attrs.errors %}<p class="label whitespace-normal text-error">{{ e }}</p>{% endfor %}
+  {% if slots.help_text %}<p class="label whitespace-normal text-base-content/70">{% slot help_text %}{% endslot %}</p>{% endif %}
 </div>
+{% endif %}
