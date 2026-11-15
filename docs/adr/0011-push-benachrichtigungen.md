@@ -45,6 +45,8 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
     Anmeldezeitraum, Zielgruppe, Höchstzahl.
   - Die Aktionen sind idempotent.
   - Safari (iPhone/iPad) und Firefox zeigen keine Knöpfe; dort öffnet der Tipp die passende Seite.
+- **Aussehen:** In der Nachricht steht das App-Icon. In der Statusleiste (Android) zeigt ein eigenes Badge die beiden
+  Figuren des Signets (`badge-96.png` aus `scripts/make_icons.py`); Android nutzt davon nur die Form.
 - **Zeitplaner:** `portal.core.scheduler` führt neben dem nächtlichen Job alle 10 Minuten kurze Jobs aus.
   - Fach-Apps melden sie über `register_periodic` und `register_daily` an.
   - Die Jobs der Veranstaltungen: Anmeldung offen, Erinnerung 24 h vor Anmeldeschluss, Begleitung bestätigen (am Abend
