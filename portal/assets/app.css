@@ -11,7 +11,10 @@
   themes: false;
 }
 
-/* Hell: Vereinsgrün als Leitfarbe, Tiefgrün für Seitenleiste und Eingangsseiten, Gold als Akzent. */
+/*
+ * Zwei Grüntöne: Vereinsgrün (primary) und Dunkelgrün (neutral, auch secondary), dazu Gold als Akzent.
+ * Hell: Vereinsgrün für Buttons, Links und aktive Einträge; Dunkelgrün für Seitenleiste und Eingangsseiten.
+ */
 @plugin "daisyui/theme" {
   name: "wtsv-light";
   default: true;
@@ -22,8 +25,8 @@
   --color-base-content: #1a1f1c;
   --color-primary: #027d31;
   --color-primary-content: #ffffff;
-  --color-secondary: #5fb878;
-  --color-secondary-content: #0a3d1c;
+  --color-secondary: #0a3d1c;
+  --color-secondary-content: #ffffff;
   --color-accent: #c8a24b;
   --color-accent-content: #2b2b2b;
   --color-neutral: #0a3d1c;
@@ -46,7 +49,7 @@
   --noise: 0;
 }
 
-/* Dunkel: Flächen fast schwarz mit Grünstich, Vereinsgrün aufgehellt für ausreichenden Kontrast. */
+/* Dunkel: Flächen fast schwarz mit Grünstich, Vereinsgrün aufgehellt für ausreichenden Kontrast, Dunkelgrün wie im hellen Theme. */
 @plugin "daisyui/theme" {
   name: "wtsv-dark";
   prefersdark: true;
@@ -57,11 +60,11 @@
   --color-base-content: #e3ebe6;
   --color-primary: #4cc27a;
   --color-primary-content: #03200e;
-  --color-secondary: #2e7d4b;
-  --color-secondary-content: #ffffff;
+  --color-secondary: #0a3d1c;
+  --color-secondary-content: #e3ebe6;
   --color-accent: #d9b65e;
   --color-accent-content: #1c1a12;
-  --color-neutral: #0c2b17;
+  --color-neutral: #0a3d1c;
   --color-neutral-content: #e3ebe6;
   --color-info: oklch(74% 0.16 232.661);
   --color-info-content: oklch(29% 0.066 243.157);

@@ -15,10 +15,13 @@ Kopf- und Fußleiste, kräftigere Farben und ein moderner Stack. Eigene Komponen
   `fieldset`/`input`, `alert`, `table`, `list`, `badge`, `modal`, `hero`). Sie werden so verwendet, wie DaisyUI sie
   dokumentiert: Formen, Rundungen und Größen bleiben auf dem Standard.
 - **Angepasst sind nur die Farben**, als zwei DaisyUI-Themes in `portal/assets/app.css`:
-  - `wtsv-light`: Vereinsgrün (`primary`), Tiefgrün (`neutral`), Mattengrün (`secondary`), Gold (`accent`),
-    neutrale Flächen.
-  - `wtsv-dark`: dunkle Flächen mit leichtem Grünstich, aufgehelltes Vereinsgrün.
-  - Alle `*-content`-Farben erfüllen WCAG AA. Seitenleiste und Handy-Titelzeile verwenden immer `wtsv-dark`.
+  - Nur zwei Grüntöne (plus Abstufungen): Vereinsgrün (`primary`) und Dunkelgrün (`neutral`, ebenso `secondary`),
+    dazu Gold (`accent`) und neutrale Flächen.
+  - `wtsv-light`: helle, neutrale Flächen.
+  - `wtsv-dark`: dunkle Flächen mit leichtem Grünstich, aufgehelltes Vereinsgrün, dasselbe Dunkelgrün. Das
+    Vereinsgrün selbst hätte auf dunklem Grund als Text nur Kontrast 3,1–3,4 (AA verlangt 4,5).
+  - Alle `*-content`-Farben erfüllen WCAG AA. Seitenleiste und Handy-Titelzeile stehen auf Dunkelgrün; dort gilt
+    `neutral-content` als `base-content`, damit DaisyUIs Hover- und Fokusfarben passen.
 - **Seitennavigation:** DaisyUI-`drawer`, am Desktop fest links (`lg:drawer-open`), am Handy über das Menü. Das
   funktioniert ohne JavaScript; `static/js/app.js` ergänzt nur Tastatur (Enter/Leertaste, Escape).
 - **Schrift:** die Systemschrift (Tailwind `font-sans`), keine Schriftdateien mehr.

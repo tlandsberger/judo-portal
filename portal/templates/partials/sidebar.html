@@ -1,6 +1,6 @@
 {% load static %}{% with url_name=request.resolver_match.url_name %}
-{# Seitenleiste immer im dunklen Theme: Tiefgrün mit heller Schrift, aktive Seite in der Leitfarbe. #}
-<aside class="flex min-h-full w-72 flex-col bg-neutral text-neutral-content" data-theme="wtsv-dark">
+{# Seitenleiste in Dunkelgrün (neutral), aktive Seite in Vereinsgrün (primary); base-content = helle Schrift für DaisyUIs Hover/Fokus. #}
+<aside class="flex min-h-full w-72 flex-col bg-neutral text-neutral-content [--color-base-content:var(--color-neutral-content)]">
   <a class="flex items-center gap-3 px-6 py-6 text-lg font-bold" href="{% url 'home' %}">
     <img class="h-10 w-auto" src="{% static 'img/logo/signet-weiss.png' %}" alt="" width="40" height="33">
     <span>Wedeler TSV Judo</span>
