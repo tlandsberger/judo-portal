@@ -6,7 +6,7 @@
       <p style="margin:0 0 16px;font-size:16px;">Hallo{% if invitation.first_name %} {{ invitation.first_name }}{% endif %},</p>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">du wurdest ins Vereinsportal der Judo-Abteilung im Wedeler TSV eingeladen.</p>
       <p style="margin:24px 0;"><a href="{{ url }}" style="background:#027d31;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;display:inline-block;">Zugang einrichten</a></p>
-      <p style="margin:0 0 16px;font-size:14px;color:#5c5c5c;line-height:1.5;">Der Link ist {{ days }} Tage gültig. Danach meldest du dich mit Passkey, Passwort oder einem Code per E-Mail an.</p>
+      <p style="margin:0 0 16px;font-size:14px;color:#5c5c5c;line-height:1.5;">Der Link ist {{ days }} Tage gültig. Danach meldest du dich mit Passkey, Passwort oder einem Code per E-Mail an. Funktioniert der Link nicht, melde dich auf <a href="{{ base_url }}" style="color:#027d31;">{{ base_url }}</a> mit einem Anmeldecode per E-Mail an.</p>
       <p style="margin:0;font-size:16px;">Wir freuen uns auf dich!</p>
     </td></tr>
     <tr><td style="padding:16px 28px;border-top:1px solid #d9d9d9;font-size:13px;color:#5c5c5c;">Wedeler TSV e.V. – Abteilung Judo · judo@wedeler-tsv.de</td></tr>

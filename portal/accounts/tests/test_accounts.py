@@ -56,7 +56,7 @@ class TestInvitation:
         invitation.refresh_from_db()
         assert invitation.accepted_at is None
 
-    def test_accept_creates_account_and_logs_in(self, client) -> None:
+    def test_accept_creates_account_with_setup_session(self, client) -> None:
         invitation = services.invite("mia@example.org", first_name="Mia", last_name="Muster", roles=["trainer"])
         response = client.post(reverse("accept_invitation", args=[invitation.token]))
         assert response.status_code == 302 and response.url == reverse("setup_login")
@@ -65,8 +65,8 @@ class TestInvitation:
         assert user.roles == ["trainer"]
         assert not user.has_usable_password()
         assert client.get(reverse("setup_login")).status_code == 200
-        # Gleicher Link ein zweites Mal: ungültig
-        assert client.post(reverse("accept_invitation", args=[invitation.token])).status_code == 410
+        invitation.refresh_from_db()
+        assert invitation.accepted_at is None  # erst mit Anmeldeweg eingelöst
 
     def test_expired_invitation_is_rejected(self, client) -> None:
         invitation = services.invite("mia@example.org")
