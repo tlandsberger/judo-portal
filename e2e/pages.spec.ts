@@ -59,6 +59,16 @@ test("Push-Benachrichtigungen lassen sich einschalten; die Startseite bietet sie
   await context.close();
 });
 
+test("Klick auf den eigenen Benutzer in der Seitenleiste öffnet „Meine Anmeldung“", async ({ browser }) => {
+  const context = await browser.newContext({ storageState: ADMIN_STATE });
+  const page = await context.newPage();
+  await page.goto("/");
+  await page.getByRole("link", { name: /^Meine Anmeldung: .*admin@test\.local/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Meine Anmeldung" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Meine Anmeldung:/ })).toHaveAttribute("aria-current", "page");
+  await context.close();
+});
+
 test("Umschalter zwischen hellem und dunklem Design merkt sich die Wahl", async ({ page }) => {
   await page.goto("/anmeldung/login/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "wtsv-light");
