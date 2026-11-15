@@ -9,7 +9,7 @@ COPY scripts/vendor.mjs scripts/
 RUN node scripts/vendor.mjs
 
 FROM python:3.13.18-slim AS app
-COPY --from=ghcr.io/astral-sh/uv:0.11.32 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.8 /uv /usr/local/bin/uv
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
