@@ -1,6 +1,6 @@
 {% load static %}// Schlanker Service Worker: macht das Portal installierbar und zeigt ohne Netz eine Offline-Seite.
 // Inhalte werden bewusst nicht zwischengespeichert (personenbezogene Daten, immer aktueller Stand).
-const CACHE = "wtsv-offline-v1";
+const CACHE = "wtsv-offline-{{ portal_version }}";
 const OFFLINE_URL = "{% url 'offline' %}";
 
 self.addEventListener("install", (event) => {

@@ -74,3 +74,17 @@ def test_backup_writes_consistent_copy_and_prunes(settings) -> None:
     with sqlite3.connect(path) as copy:
         count = copy.execute("SELECT COUNT(*) FROM accounts_user").fetchone()[0]
     assert count >= 1
+
+
+def test_footer_shows_version_with_link_to_release_notes(client, settings) -> None:
+    settings.VERSION = "0.2.0"
+    page = client.get(reverse("account_login")).content.decode()
+    assert "Version 0.2.0" in page
+    assert "https://github.com/tlandsberger/judo-portal/releases/tag/v0.2.0" in page
+
+
+def test_development_version_links_to_release_overview(client, settings) -> None:
+    settings.VERSION = "dev"
+    page = client.get(reverse("account_login")).content.decode()
+    assert "Version dev" in page
+    assert 'href="https://github.com/tlandsberger/judo-portal/releases"' in page

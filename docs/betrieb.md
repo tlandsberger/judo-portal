@@ -21,6 +21,7 @@ Produktiv in der Homecloud (Repo `tlandsberger/homecloud`, Stack `application/ju
 | `PORTAL_SECURE_COOKIES` | – | `true` | nur für lokale Tests ohne HTTPS auf `false` |
 | `PORTAL_TRUSTED_PROXIES` | – | private Netze | Proxys (Traefik), deren `X-Forwarded-For` als echte Client-IP gilt |
 | `PORTAL_DEBUG` | – | `false` | nur Entwicklung |
+| `PORTAL_VERSION` | – | aus dem Image | setzt der Release-Workflow beim Bauen; steht in der Fußzeile (Link auf die Release-Notes) |
 
 Ohne `PORTAL_EMAIL_HOST` gehen Mails auf die Konsole (Container-Log), mit `PORTAL_EMAIL_FILE_PATH` in Dateien.
 
