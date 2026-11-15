@@ -63,6 +63,7 @@ mit „Übernehmen“. Regeln und Hintergründe stehen in ADR 0009.
 | E-Mail, Telefon | | |
 | Graduierung | | z. B. `5. Kyu`, `1. Dan` |
 | Gewicht | | kg, z. B. `32,5` |
+| Interessen | | Namen aus **Mitglieder → Interessen**, kommagetrennt, z. B. `Wettkampf, Kata`; ersetzt die bisherigen |
 
 - Trennzeichen ist Semikolon oder Komma. Unbekannte Spalten werden ignoriert.
 - Kodierung UTF-8 oder Windows/Excel (cp1252). Die Vorlage gibt es auf der Import-Seite.
@@ -80,6 +81,27 @@ Was dann passiert:
 - **Die Adresse ist neu:** Es geht eine Einladung raus, verknüpft wird beim Annehmen.
 
 Einen Elternteil mit mehreren Kindern lädst du nacheinander für jedes Kind ein. Das ergibt eine einzige Einladung.
+
+## Veranstaltungen und Termine
+
+Unter **Veranstaltungen** (Abteilungsleitung; Übungsleiter sehen die Liste und planen Teams). Hintergründe in ADR 0010.
+
+1. **Zielgruppen** anlegen (Veranstaltungen → Zielgruppen), zum Beispiel „U12“ mit „Alter bis 11“. Das Alter zählt nach
+   Jahrgang. Die Seite zeigt sofort, wer heute passt.
+2. **Veranstaltung** anlegen: Art, Ort, Zielgruppen, optional Höchstzahl, Anmeldezeitraum und „Gewicht bei Anmeldung
+   erforderlich“.
+3. **Termine:**
+   - Wiederkehrend über einen oder mehrere **Zeitpläne** (Wochentag, Uhrzeit, gültig von–bis). Das Portal legt die
+     Termine bis zu einem Jahr im Voraus an.
+   - Einmalig über **Termin**.
+   - Neue Trainingszeiten: alten Zeitplan mit „Gültig bis“ beenden, neuen anlegen.
+4. **Standard-Team:** Übungsleiter als Trainer oder Kotrainer; kommende Termine übernehmen es.
+5. **Ferien und Ausfälle:** auf der Veranstaltung „Termine absagen“ mit Zeitraum. Angemeldete und Team bekommen eine
+   Mail.
+
+Für Notfälle sehen begleitende Übungsleiter das Telefon des Mitglieds und der Eltern. Eltern tragen ihr Telefon unter
+**Meine Anmeldung** ein. Die Mails bei Absage und Nachrücken laufen über die normale Mail-Konfiguration; neue
+Umgebungsvariablen gibt es nicht.
 
 ## Backup und Wiederherstellung
 

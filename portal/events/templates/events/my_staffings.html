@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Meine Einsätze{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <h1 class="text-3xl font-bold">Meine Einsätze</h1>
+  <p class="mt-1 mb-6 text-base-content/70">Termine, die du als Trainer oder Kotrainer begleitest. Nach dem Termin bestätigst du deine Begleitung.</p>
+  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-kommend"><div class="card-body">
+    <h2 class="card-title" id="h-kommend">Kommende</h2>
+    {% if coming %}
+    <ul class="list">{% for staffing in coming %}{% include "events/_staffing.html" %}{% endfor %}</ul>
+    {% else %}<p class="text-base-content/70">Gerade keine Einsätze geplant.</p>{% endif %}
+  </div></section>
+  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-vergangen"><div class="card-body">
+    <h2 class="card-title" id="h-vergangen">Letzte 90 Tage</h2>
+    {% if past %}
+    <ul class="list">{% for staffing in past %}{% include "events/_staffing.html" %}{% endfor %}</ul>
+    {% else %}<p class="text-base-content/70">Keine Einsätze.</p>{% endif %}
+  </div></section>
+</div>
+{% endblock %}

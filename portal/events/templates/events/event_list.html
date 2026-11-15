@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Veranstaltungen{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div><h1 class="text-3xl font-bold">Veranstaltungen</h1><p class="mt-1 text-base-content/70">Trainings, Wettkämpfe, Lehrgänge und Prüfungen mit ihren Terminen und Teams.</p></div>
+  {% if can_manage %}
+  <div class="flex flex-wrap gap-2">
+    <a class="btn btn-primary" href="{% url 'event_create' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Veranstaltung anlegen</a>
+    <a class="btn btn-outline btn-primary" href="{% url 'target_group_list' %}"><i class="bi bi-bullseye" aria-hidden="true"></i> Zielgruppen</a>
+  </div>
+  {% endif %}
+</div>
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-veranstaltungen"><div class="card-body">
+  <h2 class="card-title" id="h-veranstaltungen">{{ rows|length }} Veranstaltung{{ rows|length|pluralize:"en" }}</h2>
+  {% if rows %}
+  <div class="overflow-x-auto">
+    <table class="table">
+      <thead class="text-base-content/70"><tr><th scope="col">Titel</th><th scope="col">Art</th><th scope="col">Zielgruppen</th><th scope="col">Nächster Termin</th></tr></thead>
+      <tbody>
+      {% for event, upcoming in rows %}
+        <tr>
+          <td><a class="link link-hover font-semibold" href="{% url 'event_detail' event.pk %}">{{ event.title }}</a></td>
+          <td>{{ event.get_kind_display }}</td>
+          <td>{% for group in event.target_groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}alle{% endfor %}</td>
+          <td>{% if upcoming %}{{ upcoming.starts_at|date:"D d.m. H:i" }}{% else %}–{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="text-base-content/70">Noch keine Veranstaltungen.</p>{% endif %}
+</div></section>
+{% endblock %}

@@ -12,8 +12,8 @@ from portal.accounts import services as accounts
 from portal.accounts.permissions import role_required
 
 from . import csv_import, services
-from .forms import AccessForm, ImportForm, MemberForm, SelfServiceForm
-from .models import Member, MemberLink
+from .forms import AccessForm, ImportForm, InterestForm, MemberForm, SelfServiceForm
+from .models import Interest, Member, MemberLink
 from .services import MANAGE_MEMBERS
 
 IMPORT_SESSION_KEY = "members_import_csv"
@@ -112,6 +112,33 @@ def member_unlink(request: HttpRequest, pk: int, link_pk: int) -> HttpResponse:
     services.unlink(member_link)
     messages.success(request, f"Verknüpfung mit {member_link.user.display_name} gelöst.")
     return redirect("member_detail", pk=pk)
+
+
+# Interessen (Liste für Mitglieder und Zielgruppen)
+
+
+@role_required(*MANAGE_MEMBERS)
+def interest_list(request: HttpRequest, pk: int | None = None) -> HttpResponse:
+    interest = get_object_or_404(Interest, pk=pk) if pk else None
+    form = InterestForm(request.POST or None, instance=interest)
+    if request.method == "POST" and form.is_valid():
+        saved = form.save()
+        messages.success(request, f"Interesse „{saved.name}“ gespeichert.")
+        return redirect("interest_list")
+    return render(
+        request,
+        "members/interest_list.html",
+        {"interests": Interest.objects.all(), "form": form, "interest": interest},
+    )
+
+
+@require_POST
+@role_required(*MANAGE_MEMBERS)
+def interest_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    interest = get_object_or_404(Interest, pk=pk)
+    interest.delete()
+    messages.success(request, f"Interesse „{interest.name}“ gelöscht.")
+    return redirect("interest_list")
 
 
 # CSV-Import

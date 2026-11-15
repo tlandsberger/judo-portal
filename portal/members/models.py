@@ -50,6 +50,26 @@ class Grade(models.TextChoices):
         return str(self.label).split(" (")[0]
 
 
+def grade_rank(grade: str) -> int:
+    """Rang einer Graduierung zum Vergleichen: 0 = 9. Kyu, ohne Graduierung -1 (Anfänger)."""
+    return Grade.values.index(grade) if grade in Grade.values else -1
+
+
+class Interest(models.Model):
+    """Was ein Mitglied im Judo interessiert (Wettkampf, Kata …). Die Liste pflegt die Abteilungsleitung."""
+
+    name = models.CharField("Name", max_length=50, unique=True)
+    position = models.PositiveSmallIntegerField("Reihenfolge", default=0)
+
+    class Meta:
+        verbose_name = "Interesse"
+        verbose_name_plural = "Interessen"
+        ordering = ("position", "name")
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Member(models.Model):
     """Ein Vereinsmitglied. Bewusst sparsam: keine Adresse, keine Passnummer, Graduierung ohne Historie."""
 
@@ -78,6 +98,7 @@ class Member(models.Model):
         blank=True,
         validators=[MinValueValidator(Decimal("10")), MaxValueValidator(Decimal("250"))],
     )
+    interests = models.ManyToManyField(Interest, verbose_name="Interessen", blank=True, related_name="members")
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 

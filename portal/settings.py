@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "portal.core",
     "portal.accounts",
     "portal.members",
+    "portal.events",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -98,6 +99,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "portal.core.context_processors.portal",
                 "portal.members.context_processors.members",
+                "portal.events.context_processors.events",
             ],
         },
     }

@@ -14,5 +14,12 @@
       </a>
     </li>
   </ul>
+  <section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-telefon"><div class="card-body gap-4">
+    <h2 class="card-title" id="h-telefon">Telefon für Notfälle</h2>
+    <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+      {{ phone_form }}
+      <div><button type="submit" class="btn btn-primary">Speichern</button></div>
+    </form>
+  </div></section>
 </div>
 {% endblock %}

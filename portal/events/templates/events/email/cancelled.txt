@@ -1,0 +1,9 @@
+{% autoescape off %}Hallo {{ user.get_short_name }},
+
+der Termin „{{ occurrence.event.title }}“ am {{ starts|date:"l, d.m.Y" }} um {{ starts|date:"H:i" }} Uhr ist abgesagt.{% if occurrence.note %} Hinweis: {{ occurrence.note }}{% endif %}
+
+{{ url }}
+
+Wedeler TSV e.V. – Abteilung Judo
+judo@wedeler-tsv.de · https://www.wedeler-tsv.de/sportangebote-judo/
+{% endautoescape %}

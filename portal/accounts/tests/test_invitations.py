@@ -194,3 +194,20 @@ class TestRecovery:
         with django_capture_on_commit_callbacks(execute=True):
             again = services.ensure_initial_admin()
         assert again is not None and again.pk != invitation.pk
+
+
+class TestPasswordRedirect:
+    def test_after_setting_password_in_setup_back_to_overview(self, client) -> None:
+        accept(client, services.invite("mia@example.org"))
+        response = client.post(
+            reverse("account_set_password"), {"password1": "Sicher-12345!", "password2": "Sicher-12345!"}
+        )
+        assert response.url == reverse("setup_login")
+
+    def test_after_changing_password_back_to_security(self, client) -> None:
+        client.force_login(make_staff())
+        response = client.post(
+            reverse("account_change_password"),
+            {"oldpassword": "Sicher-12345!", "password1": "Neu-Sicher-678!", "password2": "Neu-Sicher-678!"},
+        )
+        assert response.url == reverse("security")

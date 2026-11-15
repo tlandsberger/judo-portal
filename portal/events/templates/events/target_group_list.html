@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Zielgruppen{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{% url 'event_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Veranstaltungen</a>
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div><h1 class="text-3xl font-bold">Zielgruppen</h1><p class="mt-1 text-base-content/70">An wen sich Veranstaltungen richten. Mitglieder sehen passende Termine oben und können sich nur dafür anmelden.</p></div>
+    <a class="btn btn-primary" href="{% url 'target_group_create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Zielgruppe anlegen</a>
+  </div>
+  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-zielgruppen"><div class="card-body">
+    <h2 class="card-title" id="h-zielgruppen">{{ groups|length }} Zielgruppe{{ groups|length|pluralize:"n" }}</h2>
+    {% if groups %}
+    <ul class="list">
+      {% for group, count in groups %}
+      <li class="list-row items-center px-0">
+        <div class="list-col-grow">
+          <a class="link link-hover font-semibold" href="{% url 'target_group_members' group.pk %}">{{ group.name }}</a>
+          <div class="text-sm text-base-content/70">{{ group.summary }} · {{ count }} Mitglied{{ count|pluralize:"er" }}</div>
+        </div>
+        <a class="btn btn-ghost btn-sm" href="{% url 'target_group_edit' group.pk %}" aria-label="{{ group.name }} bearbeiten"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="text-base-content/70">Noch keine Zielgruppen, zum Beispiel „U12“ oder „Wettkampf U15“.</p>{% endif %}
+  </div></section>
+</div>
+{% endblock %}

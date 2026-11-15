@@ -7,7 +7,7 @@ import pytest
 from django.urls import reverse
 
 from portal.members import csv_import
-from portal.members.models import Member
+from portal.members.models import Interest, Member
 
 pytestmark = pytest.mark.django_db
 
@@ -114,3 +114,15 @@ def _file(text: str):
     from django.core.files.uploadedfile import SimpleUploadedFile
 
     return SimpleUploadedFile("mitglieder.csv", text.encode("utf-8"), content_type="text/csv")
+
+
+def test_interests_column() -> None:
+    kata, fight = Interest.objects.create(name="Kata"), Interest.objects.create(name="Wettkampf")
+    text = "Mitgliedsnummer;Vorname;Nachname;Geburtsdatum;Interessen\n1001;Mia;Muster;14.03.2015;kata, Wettkampf\n"
+    csv_import.apply(text)
+    mia = Member.objects.get()
+    assert set(mia.interests.all()) == {kata, fight}
+    assert csv_import.preview(text).counts["unchanged"] == 1
+    assert csv_import.preview(text.replace("kata, ", "")).rows[0].changes == ["Interessen"]
+    bad = csv_import.preview(text.replace("Wettkampf", "Schwimmen"))
+    assert "unbekannt: Schwimmen" in bad.rows[0].errors[0]

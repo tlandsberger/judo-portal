@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load events %}
 {% block title %}Start{% endblock %}
 {% block content %}
 <section class="hero mb-8 rounded-box bg-primary text-primary-content">
@@ -10,7 +11,32 @@
   </div>
 </section>
 
+{% next_dates user as next_items %}
+{% if next_items %}
+<section class="card mb-8 bg-base-100 shadow-sm" aria-labelledby="h-naechste"><div class="card-body">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 class="card-title" id="h-naechste">Nächste Termine</h2>
+    <a class="link link-hover text-sm" href="{% url 'agenda' %}">Alle Termine</a>
+  </div>
+  <ul class="list">{% for member, item in next_items %}{% include "events/_item.html" %}{% endfor %}</ul>
+</div></section>
+{% endif %}
+
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'agenda' %}">
+    <div class="card-body flex-row items-center gap-4">
+      <span class="pikto pikto-judo-termine" aria-hidden="true"></span>
+      <div><h2 class="card-title text-base">Termine</h2><p class="text-sm text-base-content/70">Trainings und Veranstaltungen, An- und Abmelden</p></div>
+    </div>
+  </a>
+  {% if is_trainer %}
+  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'my_staffings' %}">
+    <div class="card-body flex-row items-center gap-4">
+      <span class="pikto pikto-judo-training" aria-hidden="true"></span>
+      <div><h2 class="card-title text-base">Meine Einsätze</h2><p class="text-sm text-base-content/70">Begleitete Termine und Bestätigungen</p></div>
+    </div>
+  </a>
+  {% endif %}
   {% if has_own_members %}
   <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'my_data' %}">
     <div class="card-body flex-row items-center gap-4">
@@ -24,6 +50,14 @@
     <div class="card-body flex-row items-center gap-4">
       <span class="pikto pikto-verein-mitglieder" aria-hidden="true"></span>
       <div><h2 class="card-title text-base">Mitglieder</h2><p class="text-sm text-base-content/70">Mitglieder, Import und Zugänge</p></div>
+    </div>
+  </a>
+  {% endif %}
+  {% if can_plan_events %}
+  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'event_list' %}">
+    <div class="card-body flex-row items-center gap-4">
+      <span class="pikto pikto-judo-gemeinschaft" aria-hidden="true"></span>
+      <div><h2 class="card-title text-base">Veranstaltungen</h2><p class="text-sm text-base-content/70">Zeitpläne, Zielgruppen und Teams</p></div>
     </div>
   </a>
   {% endif %}
@@ -41,11 +75,5 @@
       <div><h2 class="card-title text-base">Meine Anmeldung</h2><p class="text-sm text-base-content/70">Passkeys, Passwort und Geräte</p></div>
     </div>
   </a>
-  <div class="card bg-base-100 shadow-sm">
-    <div class="card-body flex-row items-center gap-4">
-      <span class="pikto pikto-judo-termine" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Mehr folgt <span class="badge badge-accent badge-sm">bald</span></h2><p class="text-sm text-base-content/70">Termine und mehr folgen Schritt für Schritt.</p></div>
-    </div>
-  </div>
 </div>
 {% endblock %}

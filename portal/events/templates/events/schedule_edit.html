@@ -1,0 +1,7 @@
+{% extends "events/_form_page.html" %}
+{% block heading %}{% if schedule %}Zeitplan ändern{% else %}Zeitplan hinzufügen{% endif %}{% endblock %}
+{% block heading2 %}{% if schedule %}Zeitplan ändern{% else %}Zeitplan hinzufügen{% endif %}{% endblock %}
+{% block back_url %}{% url 'event_detail' event.pk %}{% endblock %}
+{% block cancel_url %}{% url 'event_detail' event.pk %}{% endblock %}
+{% block back_label %}{{ event.title }}{% endblock %}
+{% block intro %}<p class="text-sm text-base-content/70">Das Portal legt die Termine bis „Gültig bis“ an, höchstens ein Jahr im Voraus. Ändern sich die Trainingszeiten, setz hier „Gültig bis“ und leg einen neuen Zeitplan an.</p>{% endblock %}

@@ -42,3 +42,10 @@ class RolesForm(forms.Form):
     def __init__(self, *args: Any, allow_admin: bool, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.fields["roles"] = RolesField(allow_admin=allow_admin)
+
+
+class PhoneForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("phone",)
+        widgets = {"phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "tel"})}

@@ -10,6 +10,12 @@ const pages = [
   { path: "/mitglieder/import/", heading: "CSV-Import" },
   { path: "/mitglieder/neu/", heading: "Mitglied anlegen" },
   { path: "/meine-daten/", heading: "Meine Daten" },
+  { path: "/mitglieder/interessen/", heading: "Interessen" },
+  { path: "/termine/", heading: "Termine" },
+  { path: "/veranstaltungen/", heading: "Veranstaltungen" },
+  { path: "/veranstaltungen/neu/", heading: "Veranstaltung anlegen" },
+  { path: "/zielgruppen/", heading: "Zielgruppen" },
+  { path: "/zielgruppen/neu/", heading: "Zielgruppe anlegen" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {

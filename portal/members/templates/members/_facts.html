@@ -5,6 +5,7 @@
   <div><dt class="text-sm text-base-content/70">Gewicht</dt><dd>{% if member.weight %}{{ member.weight|floatformat:1 }} kg{% else %}–{% endif %}</dd></div>
   <div><dt class="text-sm text-base-content/70">E-Mail</dt><dd class="break-all">{% if member.email %}<a class="link" href="mailto:{{ member.email }}">{{ member.email }}</a>{% else %}–{% endif %}</dd></div>
   <div><dt class="text-sm text-base-content/70">Telefon</dt><dd>{% if member.phone %}<a class="link" href="tel:{{ member.phone }}">{{ member.phone }}</a>{% else %}–{% endif %}</dd></div>
+  <div><dt class="text-sm text-base-content/70">Interessen</dt><dd>{% for interest in member.interests.all %}{{ interest.name }}{% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</dd></div>
   {% if all %}
   <div><dt class="text-sm text-base-content/70">Geschlecht</dt><dd>{{ member.get_gender_display|default:"–" }}</dd></div>
   <div><dt class="text-sm text-base-content/70">Mitgliedsnummer</dt><dd>{{ member.member_number|default:"–" }}</dd></div>
