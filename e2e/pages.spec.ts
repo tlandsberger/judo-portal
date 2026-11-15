@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_STATE, expectNoA11yViolations } from "./helpers";
+import { ADMIN_STATE, expectNoA11yViolations, freshNotificationPermission } from "./helpers";
 
 const pages = [
   { path: "/", heading: /^Hallo/ },
@@ -39,6 +39,25 @@ for (const scheme of ["light", "dark"] as const) {
     }
   });
 }
+
+test("Push-Benachrichtigungen lassen sich einschalten; die Startseite bietet sie an", async ({ browser }) => {
+  const context = await browser.newContext({ storageState: ADMIN_STATE });
+  await freshNotificationPermission(context);
+  const page = await context.newPage();
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Benachrichtigungen aufs Handy?" })).toBeVisible();
+  await page.goto("/zugang/anmeldung/");
+  const section = page.getByRole("region", { name: "Benachrichtigungen" });
+  await expect(section.getByRole("button", { name: "Push auf diesem Gerät einschalten" })).toBeVisible();
+  await expectNoA11yViolations(page);
+  // „Nein danke“ auf der Startseite blendet den Hinweis auf diesem Gerät dauerhaft aus
+  await page.goto("/");
+  await page.getByRole("button", { name: "Nein danke" }).click();
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1, name: /^Hallo/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Benachrichtigungen aufs Handy?" })).toBeHidden();
+  await context.close();
+});
 
 test("Umschalter zwischen hellem und dunklem Design merkt sich die Wahl", async ({ page }) => {
   await page.goto("/anmeldung/login/");

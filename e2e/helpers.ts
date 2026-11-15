@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type BrowserContext, type Page } from "@playwright/test";
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 
 export const MAIL_DIR = process.env.MAIL_DIR ?? "data/mails";
 export const ADMIN = { email: "admin@test.local", password: "Sicher-Admin-123" };
@@ -8,7 +8,9 @@ export const ADMIN_STATE = "test-results/.auth/admin.json";
 
 /** Neueste Mail (Dateien des filebased-Backends) an eine Adresse. */
 export function lastMailTo(email: string): string {
-  const files = readdirSync(MAIL_DIR).sort().reverse();
+  // Neueste zuerst nach Änderungszeit: Dateinamen enthalten nur Sekunden, zwei Mails derselben Sekunde stünden sonst zufällig
+  const modified = (file: string) => statSync(`${MAIL_DIR}/${file}`, { bigint: true }).mtimeNs;
+  const files = readdirSync(MAIL_DIR).sort((a, b) => (modified(a) < modified(b) ? 1 : modified(a) > modified(b) ? -1 : 0));
   for (const file of files) {
     const content = readFileSync(`${MAIL_DIR}/${file}`, "utf8");
     const messages = content.split(/^-{70,}$/m).reverse();
@@ -102,4 +104,11 @@ export function localDateTime(days: number, time: string): string {
   const day = new Date(Date.now() + days * 86_400_000);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T${time}`;
+}
+
+/** Headless-Chromium meldet Benachrichtigungen immer als „denied“. Für Tests wie ein frischer Browser: „default“. */
+export async function freshNotificationPermission(context: BrowserContext) {
+  await context.addInitScript(() => {
+    Object.defineProperty(Notification, "permission", { get: () => "default" });
+  });
 }

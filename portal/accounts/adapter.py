@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from allauth.account.adapter import DefaultAccountAdapter
 from django.http import HttpRequest
 from django.urls import reverse
@@ -10,6 +12,15 @@ from . import services
 
 
 class PortalAccountAdapter(DefaultAccountAdapter):
+    def send_notification_mail(self, template_prefix: str, user: Any, context: Any = None, email: Any = None) -> None:
+        # Sicherheitsmails (Passwort, Passkey …) gehen immer per Mail – nur nicht während der Einrichtung nach der
+        # Einladung: Da legt die Person ihre Anmeldewege gerade selbst an.
+        request = getattr(self, "request", None)
+        session = getattr(request, "session", None)
+        if session is not None and session.get(services.SETUP_SESSION_KEY):
+            return
+        super().send_notification_mail(template_prefix, user, context, email)
+
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         # Benutzer entstehen nur über Einladungen aus dem Portal.
         return False

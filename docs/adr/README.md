@@ -15,5 +15,6 @@ Mit dem Neuaufbau im November 2026 beginnt die Nummerierung neu; die ADRs der Vo
 | [0008](0008-tailwind-und-daisyui.md) | Tailwind CSS und DaisyUI statt Bootstrap | angenommen |
 | [0009](0009-mitgliederdaten-und-csv-import.md) | Mitgliederdaten, Zugänge und CSV-Import | angenommen |
 | [0010](0010-veranstaltungen-termine-und-zielgruppen.md) | Veranstaltungen, Termine und Zielgruppen | angenommen |
+| [0011](0011-push-benachrichtigungen.md) | Push-Benachrichtigungen mit Mail als Ersatz | angenommen |
 
 Vorlage: Kontext · Entscheidung · Konsequenzen · Verworfene Alternativen.

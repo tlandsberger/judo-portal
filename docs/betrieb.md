@@ -16,6 +16,7 @@ Produktiv in der Homecloud (Repo `tlandsberger/homecloud`, Stack `application/ju
 | `PORTAL_EMAIL_USER` / `PORTAL_EMAIL_PASSWORD` | ja | Postfach-Zugang | |
 | `PORTAL_EMAIL_USE_TLS` | – | `true` | STARTTLS |
 | `PORTAL_EMAIL_FROM` | ja | `Wedeler TSV Judo <portal@tlandsberger.de>` | Absender |
+| `PORTAL_VAPID_PUBLIC_KEY` / `PORTAL_VAPID_PRIVATE_KEY` | – | `manage.py generate_vapid_keys` | Schlüssel für Push-Benachrichtigungen; ohne sie geht alles per Mail (siehe unten) |
 | `PORTAL_DATA_DIR` | – | `/data` | Datenbank und Backups |
 | `PORTAL_BACKUP_HOUR` / `PORTAL_BACKUP_KEEP_DAYS` | – | `2` / `14` | nächtliches Backup |
 | `PORTAL_SECURE_COOKIES` | – | `true` | nur für lokale Tests ohne HTTPS auf `false` |
@@ -102,6 +103,24 @@ Unter **Veranstaltungen** (Abteilungsleitung; Übungsleiter sehen die Liste und 
 Für Notfälle sehen begleitende Übungsleiter das Telefon des Mitglieds und der Eltern. Eltern tragen ihr Telefon unter
 **Meine Anmeldung** ein. Die Mails bei Absage und Nachrücken laufen über die normale Mail-Konfiguration; neue
 Umgebungsvariablen gibt es nicht.
+
+## Push-Benachrichtigungen
+
+Tägliches (Absagen, Änderungen, Nachrücken, „Anmeldung offen“, Erinnerungen) kommt per Push aufs Handy, wenn der
+Benutzer es unter **Meine Anmeldung → Benachrichtigungen** eingeschaltet hat, sonst per Mail. Einladungen,
+Anmeldecodes, Sicherheitshinweise und neue Verknüpfungen gehen immer per Mail. Hintergründe stehen in ADR 0011.
+
+**Einrichten (einmalig):**
+1. Schlüssel erzeugen: `docker exec -it judo-portal python manage.py generate_vapid_keys`.
+2. Beide Werte in Portainer als `PORTAL_VAPID_PUBLIC_KEY` und `PORTAL_VAPID_PRIVATE_KEY` eintragen und den Stack neu
+   starten. Den privaten Schlüssel geheim halten; ein neues Paar beendet alle bestehenden Abos.
+
+**Was du wissen solltest:**
+- Der Container muss die Push-Dienste von Google, Apple und Mozilla per HTTPS erreichen (normaler ausgehender
+  Verkehr).
+- iPhone und iPad können Push nur, wenn das Portal zum Home-Bildschirm hinzugefügt ist (iOS ab 16.4).
+- Die Erinnerungen prüft der Zeitplaner im Container alle 10 Minuten. Was rausging, steht in der technischen
+  Verwaltung unter „Versandte Benachrichtigungen“ (90 Tage).
 
 ## Backup und Wiederherstellung
 

@@ -1,0 +1,19 @@
+{% load notifications %}{% push_settings user as push %}
+{% if push.enabled and not push.devices %}
+{# Nur sichtbar, wenn der Browser Push kann und es noch nicht abgelehnt wurde (static/js/push.js). #}
+<section class="card mb-8 bg-base-100 shadow-sm" aria-labelledby="h-push-teaser" data-push data-push-teaser data-push-key="{{ push.public_key }}" data-push-url="{% url 'push_subscribe' %}" data-csrf="{{ csrf_token }}" hidden>
+  <div class="card-body flex-row flex-wrap items-center gap-4">
+    <i class="bi bi-bell text-3xl text-primary" aria-hidden="true"></i>
+    <div class="min-w-56 flex-1">
+      <h2 class="card-title text-base" id="h-push-teaser">Benachrichtigungen aufs Handy?</h2>
+      <p class="text-sm text-base-content/70">Absagen und Erinnerungen kommen dann als Push-Nachricht statt per E-Mail.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn btn-primary btn-sm" data-push-enable>Einschalten</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-push-dismiss>Nein danke</button>
+    </div>
+    <p data-push-state="denied" class="w-full text-sm" hidden>Benachrichtigungen sind in diesem Browser blockiert. Du kannst sie später unter „Meine Anmeldung“ einschalten.</p>
+    <p data-push-state="error" class="w-full text-sm text-error" hidden>Das Einschalten hat nicht geklappt. Versuch es bitte unter „Meine Anmeldung“ noch einmal.</p>
+  </div>
+</section>
+{% endif %}
