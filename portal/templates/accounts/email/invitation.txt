@@ -5,8 +5,8 @@ du wurdest ins Vereinsportal der Judo-Abteilung im Wedeler TSV eingeladen.
 Über diesen Link richtest du deinen Zugang ein (gültig für {{ days }} Tage):
 {{ url }}
 
-Danach meldest du dich mit Passkey, Passwort oder einem Code per E-Mail an.
-Funktioniert der Link nicht, melde dich auf {{ base_url }} mit einem Anmeldecode per E-Mail an.
+Nach der Einrichtung meldest du dich auf {{ base_url }} mit Passkey, Passwort oder einem Code per E-Mail an.
+Ist der Link abgelaufen oder funktioniert nicht, schreib an judo@wedeler-tsv.de, dann bekommst du einen neuen.
 
 Wir freuen uns auf dich!
 Wedeler TSV e.V. – Abteilung Judo
