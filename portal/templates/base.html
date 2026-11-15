@@ -9,8 +9,10 @@
   <meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
   <script src="{% static 'js/theme-init.js' %}"></script>
   <link rel="manifest" href="{% url 'manifest' %}">
-  <link rel="icon" href="{% static 'img/pwa/favicon.ico' %}" sizes="any">
-  <link rel="icon" href="{% static 'img/pwa/favicon.png' %}" type="image/png">
+  {# Favicon passend zum Modus des Browsers (seine Tab-Leiste folgt nicht dem Portal-Schalter). Ohne Modus-Unterstützung: favicon.ico #}
+  <link rel="icon" href="{% static 'img/pwa/favicon.ico' %}" sizes="48x48">
+  <link rel="icon" href="{% static 'img/pwa/favicon-hell.png' %}" type="image/png" sizes="64x64" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="{% static 'img/pwa/favicon-dunkel.png' %}" type="image/png" sizes="64x64" media="(prefers-color-scheme: dark)">
   <link rel="apple-touch-icon" href="{% static 'img/pwa/apple-touch-icon.png' %}">
   <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">

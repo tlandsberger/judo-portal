@@ -52,6 +52,12 @@ def test_components_page_only_for_admins(client) -> None:
     assert client.get(reverse("components")).status_code == 200
 
 
+def test_favicon_follows_browser_color_scheme(client) -> None:
+    page = client.get(reverse("account_login")).content.decode()
+    assert 'favicon-hell.png" type="image/png" sizes="64x64" media="(prefers-color-scheme: light)"' in page
+    assert 'favicon-dunkel.png" type="image/png" sizes="64x64" media="(prefers-color-scheme: dark)"' in page
+
+
 def test_pwa_files(client) -> None:
     manifest = client.get("/manifest.webmanifest")
     assert manifest["Content-Type"] == "application/manifest+json"
