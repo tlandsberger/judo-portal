@@ -18,7 +18,7 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
 | Einladung, Anmeldecode | immer Mail |
 | Sicherheit des Zugangs: Passwort gesetzt/geändert, Passkey hinzugefügt/entfernt, Anmeldung auf neuem Gerät | immer Mail |
 | Neue Verknüpfung mit einem Mitglied | immer Mail |
-| Tägliches: Termin abgesagt oder geändert, Nachgerückt, Anmeldung offen, Erinnerung Anmeldeschluss, Begleitung bestätigen | Push, sonst Mail |
+| Tägliches: Termin abgesagt oder geändert, Nachgerückt, Anmeldung offen, Erinnerung Anmeldeschluss, Stunden bestätigen | Push, sonst Mail |
 
 - Hat ein Benutzer mindestens ein Gerät mit Push, kommt Tägliches nur per Push.
 - Nimmt keines seiner Geräte die Nachricht an, geht sie per Mail raus. Abgelaufene Abos (HTTP 404/410) werden dabei
@@ -49,7 +49,7 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
   Figuren des Signets (`badge-96.png` aus `scripts/make_icons.py`); Android nutzt davon nur die Form.
 - **Zeitplaner:** `portal.core.scheduler` führt neben dem nächtlichen Job alle 10 Minuten kurze Jobs aus.
   - Fach-Apps melden sie über `register_periodic` und `register_daily` an.
-  - Die Jobs der Veranstaltungen: Anmeldung offen, Erinnerung 24 h vor Anmeldeschluss, Begleitung bestätigen (am Abend
+  - Die Jobs der Veranstaltungen: Anmeldung offen, Erinnerung 24 h vor Anmeldeschluss, Stunden bestätigen (am Abend
     des Termins, bei späten Terminen am nächsten Morgen).
 - **Neues Gerät:**
   - Bei jeder Anmeldung wird ein Fingerabdruck des Browsers gespeichert (`KnownDevice`): ein Hash des User-Agents ohne

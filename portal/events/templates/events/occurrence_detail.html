@@ -6,7 +6,7 @@
   <div class="card mb-6 bg-base-100 shadow-sm"><div class="card-body gap-4">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <p class="text-sm text-base-content/70">{{ event.get_kind_display }}</p>
+        <p class="text-sm text-base-content/70">{{ event.event_type }}</p>
         <h1 class="text-2xl font-bold">{{ event.title }}</h1>
         {% if occurrence.is_cancelled %}<span class="badge badge-warning mt-1">abgesagt</span>{% endif %}
       </div>
@@ -27,7 +27,7 @@
       <div><dt class="text-sm text-base-content/70">Anmeldung</dt><dd>{% if window == "before" %}ab {{ occurrence.registration_opens|date:"d.m.Y H:i" }} Uhr{% elif window == "open" %}offen bis {{ occurrence.registration_closes|date:"d.m.Y H:i" }} Uhr{% else %}geschlossen{% endif %}</dd></div>
       <div><dt class="text-sm text-base-content/70">Plätze</dt><dd>{{ registered }}{% if event.capacity %} von {{ event.capacity }}{% endif %} angemeldet</dd></div>
       {% if event.target_groups.all %}<div><dt class="text-sm text-base-content/70">Für</dt><dd>{% for group in event.target_groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd></div>{% endif %}
-      <div><dt class="text-sm text-base-content/70">Team</dt><dd>{% for staffing in staffings %}{{ staffing.user.display_name }} ({{ staffing.get_function_display }}){% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</dd></div>
+      <div><dt class="text-sm text-base-content/70">Team</dt><dd>{% for p in team %}{{ p.member.display_name }} ({{ p.role.name }}){% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</dd></div>
     </dl>
     {% if event.description %}<p class="whitespace-pre-line">{{ event.description }}</p>{% endif %}
     {% if occurrence.note %}<div role="note" class="alert"><i class="bi bi-info-circle" aria-hidden="true"></i><span>{{ occurrence.note }}</span></div>{% endif %}
@@ -41,7 +41,7 @@
       <li class="list-row items-center px-0">
         <div class="list-col-grow">
           <div class="font-semibold">{{ member_link.member.display_name }}</div>
-          <div class="text-sm text-base-content/70">{% if item.status == "registered" %}angemeldet{% if item.registration.weight %} · {{ item.registration.weight|floatformat:1 }} kg{% endif %}{% elif item.status == "waitlist" %}auf der Warteliste{% elif item.status == "cancelled" %}abgemeldet{% elif item.match == 0 %}passt nicht zur Zielgruppe{% else %}nicht angemeldet{% endif %}</div>
+          <div class="text-sm text-base-content/70">{% if item.team_role %}im Team als {{ item.team_role.name }}{% elif item.status == "registered" %}angemeldet{% if item.participation.weight %} · {{ item.participation.weight|floatformat:1 }} kg{% endif %}{% elif item.status == "waitlist" %}auf der Warteliste{% elif item.status == "cancelled" %}abgemeldet{% elif item.match == 0 %}passt nicht zur Zielgruppe{% else %}nicht angemeldet{% endif %}</div>
         </div>
         {% if item.can_register %}<a class="btn btn-primary btn-sm" href="{% url 'register' occurrence.pk member_link.member.pk %}" aria-label="{{ member_link.member.first_name }} anmelden">Anmelden</a>
         {% elif item.can_unregister %}<form method="post" action="{% url 'unregister' occurrence.pk member_link.member.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ member_link.member.first_name }} abmelden">Abmelden</button></form>{% endif %}
@@ -51,35 +51,35 @@
   </div></section>
   {% endif %}
 
-  {% if lead or is_trainer %}
+  {% if lead or can_join_team %}
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-team"><div class="card-body gap-4">
     <h2 class="card-title" id="h-team">Team</h2>
-    {% if staffings %}
+    {% if team %}
     <ul class="list">
-      {% for staffing in staffings %}
+      {% for p in team %}
       <li class="list-row items-center px-0">
-        <div class="list-col-grow"><div class="font-semibold">{{ staffing.user.display_name }}</div><div class="text-sm text-base-content/70">{{ staffing.get_function_display }}{% if staffing.is_confirmed %} · bestätigt, {{ staffing.minutes }} Minuten{% endif %}</div></div>
-        {% if not staffing.is_confirmed %}{% if lead or staffing.user_id == user.pk %}
-        <form method="post" action="{% url 'occurrence_staff_remove' occurrence.pk staffing.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ staffing.user.display_name }} austragen">Austragen</button></form>
+        <div class="list-col-grow"><div class="font-semibold">{{ p.member.display_name }}</div><div class="text-sm text-base-content/70">{{ p.role.name }}{% if p.is_confirmed %} · bestätigt, {{ p.minutes }} Minuten{% endif %}</div></div>
+        {% if not p.is_confirmed %}{% if lead or p == own_team %}
+        <form method="post" action="{% url 'occurrence_team_remove' occurrence.pk p.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ p.member.display_name }} austragen">Austragen</button></form>
         {% endif %}{% endif %}
       </li>
       {% endfor %}
     </ul>
-    {% endif %}
-    {% if staff_form %}
-    <form method="post" action="{% url 'occurrence_staff' occurrence.pk %}" class="flex flex-col gap-4">{% csrf_token %}
-      <div class="grid gap-x-4 sm:grid-cols-2">{{ staff_form }}</div>
-      <div><button class="btn btn-primary btn-sm" type="submit">Eintragen oder Funktion ändern</button></div>
+    {% else %}<p class="text-base-content/70">Noch niemand im Team.</p>{% endif %}
+    {% if team_form %}
+    <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-col gap-4">{% csrf_token %}
+      <div class="grid gap-x-4 sm:grid-cols-2">{{ team_form }}</div>
+      <div><button class="btn btn-primary btn-sm" type="submit">Eintragen oder Rolle ändern</button></div>
     </form>
-    {% elif self_staff_functions %}
-    <form method="post" action="{% url 'occurrence_staff' occurrence.pk %}" class="flex flex-wrap gap-2">{% csrf_token %}
-      {% for value, label in self_staff_functions %}<button class="btn btn-outline btn-primary btn-sm" name="function" value="{{ value }}">Mich als {{ label }} eintragen</button>{% endfor %}
+    {% elif self_roles %}
+    <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-wrap gap-2">{% csrf_token %}
+      {% for role in self_roles %}<button class="btn btn-outline btn-primary btn-sm" name="role" value="{{ role.pk }}">Mich als {{ role.name }} eintragen</button>{% endfor %}
     </form>
     {% endif %}
     {% if confirm_form and started and not occurrence.is_cancelled %}
-    <form method="post" action="{% url 'staffing_confirm' occurrence.pk %}" class="flex flex-wrap items-end gap-3">{% csrf_token %}
+    <form method="post" action="{% url 'hours_confirm' occurrence.pk %}" class="flex flex-wrap items-end gap-3">{% csrf_token %}
       <div class="w-40">{{ confirm_form }}</div>
-      <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Begleitung bestätigen</button>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Stunden bestätigen</button>
     </form>
     {% endif %}
     {% if note_form %}
@@ -102,15 +102,15 @@
       {% for row in participants %}
       <li class="list-row items-start px-0">
         <div class="list-col-grow">
-          <div class="font-semibold">{{ row.member.display_name }}{% if row.registration.status == "waitlist" %} <span class="badge badge-neutral badge-sm">Warteliste</span>{% endif %}{% if row.registration.exception_by %} <span class="badge badge-ghost badge-sm">Ausnahme</span>{% endif %}</div>
+          <div class="font-semibold">{{ row.member.display_name }}{% if row.participation.status == "waitlist" %} <span class="badge badge-neutral badge-sm">Warteliste</span>{% endif %}{% if row.participation.exception_by %} <span class="badge badge-ghost badge-sm">Ausnahme</span>{% endif %}</div>
           <div class="text-sm text-base-content/70">Jahrgang {{ row.member.birth_date|date:"Y" }} ({{ row.age }}) · {{ row.member.grade_short|default:"keine Graduierung" }} · {% if row.weight %}{{ row.weight|floatformat:1 }} kg{% else %}<span class="text-error">Gewicht fehlt</span>{% endif %}</div>
-          {% if row.registration.note %}<div class="text-sm">„{{ row.registration.note }}“</div>{% endif %}
+          {% if row.participation.note %}<div class="text-sm">„{{ row.participation.note }}“</div>{% endif %}
           <div class="mt-1 text-sm"><span class="text-base-content/70">Notfall:</span>
             {% if row.member.phone %}<a class="link" href="tel:{{ row.member.phone }}">{{ row.member.phone }}</a>{% endif %}
             {% for guardian in row.guardians %}{% if forloop.first and row.member.phone %} · {% endif %}{{ guardian.display_name }}{% if guardian.phone %} <a class="link" href="tel:{{ guardian.phone }}">{{ guardian.phone }}</a>{% else %} <a class="link break-all" href="mailto:{{ guardian.email }}">{{ guardian.email }}</a>{% endif %}{% if not forloop.last %} · {% endif %}{% empty %}{% if not row.member.phone %}–{% endif %}{% endfor %}
           </div>
         </div>
-        {% if lead %}<form method="post" action="{% url 'participant_remove' occurrence.pk row.registration.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ row.member.display_name }} abmelden">Abmelden</button></form>{% endif %}
+        {% if lead %}<form method="post" action="{% url 'participant_remove' occurrence.pk row.participation.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ row.member.display_name }} abmelden">Abmelden</button></form>{% endif %}
       </li>
       {% endfor %}
     </ul>

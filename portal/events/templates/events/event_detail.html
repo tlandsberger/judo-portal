@@ -5,7 +5,7 @@
   <a href="{% url 'event_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Veranstaltungen</a>
   <div class="card mb-6 bg-base-100 shadow-sm"><div class="card-body gap-4">
     <div class="flex flex-wrap items-start justify-between gap-3">
-      <div><p class="text-sm text-base-content/70">{{ event.get_kind_display }}</p><h1 class="text-2xl font-bold">{{ event.title }}</h1></div>
+      <div><p class="text-sm text-base-content/70">{{ event.event_type }}</p><h1 class="text-2xl font-bold">{{ event.title }}</h1></div>
       {% if can_manage %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'event_edit' event.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>{% endif %}
     </div>
     <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -13,49 +13,43 @@
       <div><dt class="text-sm text-base-content/70">Zielgruppen</dt><dd>{% for group in event.target_groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}alle{% endfor %}</dd></div>
       <div><dt class="text-sm text-base-content/70">Höchstzahl</dt><dd>{{ event.capacity|default:"unbegrenzt" }}</dd></div>
       <div><dt class="text-sm text-base-content/70">Gewicht bei Anmeldung</dt><dd>{{ event.weight_required|yesno:"erforderlich,nicht nötig" }}</dd></div>
-      <div><dt class="text-sm text-base-content/70">Anmeldung</dt><dd>
-        {% if event.registration_opens_at %}ab {{ event.registration_opens_at|date:"d.m.Y H:i" }}{% elif event.opens_days_before is not None %}{{ event.opens_days_before }} Tage vorher{% else %}sofort{% endif %}
-        bis {% if event.registration_closes_at %}{{ event.registration_closes_at|date:"d.m.Y H:i" }}{% elif event.closes_hours_before is not None %}{{ event.closes_hours_before }} Stunden vorher{% else %}Beginn{% endif %}</dd></div>
     </dl>
     {% if event.description %}<p class="whitespace-pre-line">{{ event.description }}</p>{% endif %}
   </div></div>
 
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zeitplaene"><div class="card-body gap-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 class="card-title" id="h-zeitplaene">Zeitpläne</h2>
+      <div><h2 class="card-title" id="h-zeitplaene">Zeitpläne</h2><p class="text-sm text-base-content/70">Jeder Zeitplan hat sein Standard-Team; kommende Termine übernehmen es.</p></div>
       {% if can_manage %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'schedule_create' event.pk %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Zeitplan</a>{% endif %}
     </div>
-    {% if schedules %}
-    <ul class="list">
-      {% for schedule in schedules %}
-      <li class="list-row items-center px-0">
-        <div class="list-col-grow"><div class="font-semibold">{{ schedule }}</div><div class="text-sm text-base-content/70">ab {{ schedule.valid_from|date:"d.m.Y" }}{% if schedule.valid_until %} bis {{ schedule.valid_until|date:"d.m.Y" }}{% else %}, bis auf Weiteres{% endif %}</div></div>
+    {% for schedule in schedules %}
+    <div class="rounded-box border border-base-300 p-4">
+      <div class="flex flex-wrap items-start gap-2">
+        <div class="grow">
+          <h3 class="font-semibold">{{ schedule }}</h3>
+          <p class="text-sm text-base-content/70">ab {{ schedule.valid_from|date:"d.m.Y" }}{% if schedule.valid_until %} bis {{ schedule.valid_until|date:"d.m.Y" }}{% else %}, bis auf Weiteres{% endif %} · Anmeldung {% if schedule.opens_hours_before is not None %}ab {{ schedule.opens_hours_before }} Std. vorher{% else %}sofort{% endif %} bis {% if schedule.closes_hours_before is not None %}{{ schedule.closes_hours_before }} Std. vorher{% else %}Beginn{% endif %}</p>
+        </div>
         {% if can_manage %}
         <a class="btn btn-ghost btn-sm" href="{% url 'schedule_edit' event.pk schedule.pk %}" aria-label="Zeitplan {{ schedule }} ändern"><i class="bi bi-pencil" aria-hidden="true"></i></a>
         <form method="post" action="{% url 'schedule_delete' event.pk schedule.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm" aria-label="Zeitplan {{ schedule }} löschen"><i class="bi bi-trash" aria-hidden="true"></i></button></form>
         {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}<p class="text-base-content/70">Kein Zeitplan – die Veranstaltung hat nur einzelne Termine.</p>{% endif %}
-  </div></section>
-
-  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-standardteam"><div class="card-body gap-4">
-    <div><h2 class="card-title" id="h-standardteam">Standard-Team</h2><p class="text-sm text-base-content/70">Kommende Termine übernehmen es; einzelne Termine lassen sich dort ändern.</p></div>
-    {% if event.staff.all %}
-    <ul class="list">
-      {% for staff in event.staff.all %}
-      <li class="list-row items-center px-0">
-        <div class="list-col-grow"><div class="font-semibold">{{ staff.user.display_name }}</div><div class="text-sm text-base-content/70">{{ staff.get_function_display }}</div></div>
-        <form method="post" action="{% url 'event_staff_remove' event.pk staff.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ staff.user.display_name }} aus dem Standard-Team nehmen">Entfernen</button></form>
-      </li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <form method="post" action="{% url 'event_staff' event.pk %}" class="flex flex-col gap-4">{% csrf_token %}
-      <div class="grid gap-x-4 sm:grid-cols-2">{{ staff_form }}</div>
-      <div><button class="btn btn-primary btn-sm" type="submit">Ins Standard-Team</button></div>
-    </form>
+      </div>
+      {% if schedule.team.all %}
+      <ul class="list mt-2">
+        {% for entry in schedule.team.all %}
+        <li class="list-row items-center px-0">
+          <div class="list-col-grow"><div class="font-semibold">{{ entry.member.display_name }}</div><div class="text-sm text-base-content/70">{{ entry.role.name }}</div></div>
+          <form method="post" action="{% url 'schedule_team_remove' event.pk schedule.pk entry.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ entry.member.display_name }} aus dem Standard-Team von {{ schedule }} nehmen">Entfernen</button></form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="mt-2 text-sm text-base-content/70">Noch kein Standard-Team.</p>{% endif %}
+      <form method="post" action="{% url 'schedule_team' event.pk schedule.pk %}" class="mt-2 flex flex-col gap-2">{% csrf_token %}
+        <div class="grid gap-x-4 sm:grid-cols-2">{{ schedule.team_form }}</div>
+        <div><button class="btn btn-primary btn-sm" type="submit">Ins Standard-Team</button></div>
+      </form>
+    </div>
+    {% empty %}<p class="text-base-content/70">Kein Zeitplan – die Veranstaltung hat nur einzelne Termine. Deren Team trägst du am Termin ein.</p>{% endfor %}
   </div></section>
 
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-termine"><div class="card-body gap-4">
@@ -70,7 +64,7 @@
         <div class="w-16 text-center"><div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"D" }}</div><div class="text-lg font-bold">{{ occurrence.starts_at|date:"d.m." }}</div></div>
         <div class="list-col-grow">
           <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr</a>
-          <div class="text-sm text-base-content/70">{% for staffing in occurrence.staffings.all %}{{ staffing.user.display_name }} ({{ staffing.get_function_display }}){% if not forloop.last %}, {% endif %}{% empty %}kein Team{% endfor %}</div>
+          <div class="text-sm text-base-content/70">{% for p in occurrence.participations.all %}{% if p.role.is_team and p.is_active %}<span>{{ p.member.display_name }} ({{ p.role.name }})</span> {% endif %}{% endfor %}</div>
           {% if occurrence.is_cancelled %}<span class="badge badge-warning badge-sm mt-1">abgesagt</span>{% elif occurrence.is_modified %}<span class="badge badge-ghost badge-sm mt-1">geändert</span>{% endif %}
         </div>
       </li>

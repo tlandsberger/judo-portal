@@ -7,17 +7,18 @@
   </div>
   <div class="list-col-grow">
     <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ event.title }}</a>
-    <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %} · {{ event.get_kind_display }}</div>
+    <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %} · {{ event.event_type }}</div>
     <div class="mt-1 flex flex-wrap gap-1">
       {% if occurrence.is_cancelled %}<span class="badge badge-warning badge-sm">abgesagt</span>
+      {% elif item.team_role %}<span class="badge badge-soft badge-primary badge-sm">{{ item.team_role.name }}</span>
       {% elif item.status == "registered" %}<span class="badge badge-soft badge-primary badge-sm">angemeldet</span>
       {% elif item.status == "waitlist" %}<span class="badge badge-neutral badge-sm">Warteliste</span>
       {% elif item.status == "cancelled" %}<span class="badge badge-ghost badge-sm">abgemeldet</span>{% endif %}
-      {% if not occurrence.is_cancelled and not item.registration.is_active %}
+      {% if not occurrence.is_cancelled and not item.participation.is_active %}
         {% if item.window == "before" %}<span class="badge badge-ghost badge-sm">Anmeldung ab {{ occurrence.registration_opens|date:"d.m. H:i" }}</span>
         {% elif item.window == "closed" %}<span class="badge badge-ghost badge-sm">Anmeldung geschlossen</span>{% endif %}
       {% endif %}
-      {% if item.match == 1 and not item.registration.is_active %}<span class="badge badge-ghost badge-sm">Gewicht fehlt</span>{% endif %}
+      {% if item.match == 1 and not item.participation.is_active %}<span class="badge badge-ghost badge-sm">Gewicht fehlt</span>{% endif %}
     </div>
     {% if occurrence.note %}<p class="mt-1 text-sm">{{ occurrence.note }}</p>{% endif %}
   </div>

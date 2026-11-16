@@ -11,5 +11,6 @@
       <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% block cancel_url %}{% endblock %}">Abbrechen</a></div>
     </form>
   </div></div>
+  {% block after %}{% endblock %}
 </div>
 {% endblock %}

@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import views
 
@@ -10,20 +11,21 @@ urlpatterns = [
     path("termine/<int:pk>/bearbeiten/", views.occurrence_edit, name="occurrence_edit"),
     path("termine/<int:pk>/hinweis/", views.occurrence_note, name="occurrence_note"),
     path("termine/<int:pk>/absagen/", views.occurrence_cancel, name="occurrence_cancel"),
-    path("termine/<int:pk>/team/", views.occurrence_staff, name="occurrence_staff"),
+    path("termine/<int:pk>/team/", views.occurrence_team, name="occurrence_team"),
     path(
-        "termine/<int:pk>/team/<int:staffing_pk>/entfernen/",
-        views.occurrence_staff_remove,
-        name="occurrence_staff_remove",
+        "termine/<int:pk>/team/<int:participation_pk>/entfernen/",
+        views.occurrence_team_remove,
+        name="occurrence_team_remove",
     ),
-    path("termine/<int:pk>/bestaetigen/", views.staffing_confirm, name="staffing_confirm"),
+    path("termine/<int:pk>/bestaetigen/", views.hours_confirm, name="hours_confirm"),
     path("termine/<int:pk>/teilnehmer/", views.participant_add, name="participant_add"),
     path(
-        "termine/<int:pk>/teilnehmer/<int:registration_pk>/entfernen/",
+        "termine/<int:pk>/teilnehmer/<int:participation_pk>/entfernen/",
         views.participant_remove,
         name="participant_remove",
     ),
-    path("einsaetze/", views.my_staffings, name="my_staffings"),
+    path("stunden/", views.my_hours, name="my_hours"),
+    path("einsaetze/", RedirectView.as_view(pattern_name="my_hours", permanent=True)),
     path("veranstaltungen/", views.event_list, name="event_list"),
     path("veranstaltungen/neu/", views.event_edit, name="event_create"),
     path("veranstaltungen/<int:pk>/", views.event_detail, name="event_detail"),
@@ -36,10 +38,20 @@ urlpatterns = [
     ),
     path("veranstaltungen/<int:pk>/termine/neu/", views.occurrence_create, name="occurrence_create"),
     path("veranstaltungen/<int:pk>/absagen/", views.event_cancel_range, name="event_cancel_range"),
-    path("veranstaltungen/<int:pk>/team/", views.event_staff, name="event_staff"),
+    path("veranstaltungen/<int:pk>/zeitplaene/<int:schedule_pk>/team/", views.schedule_team, name="schedule_team"),
     path(
-        "veranstaltungen/<int:pk>/team/<int:staff_pk>/entfernen/", views.event_staff_remove, name="event_staff_remove"
+        "veranstaltungen/<int:pk>/zeitplaene/<int:schedule_pk>/team/<int:entry_pk>/entfernen/",
+        views.schedule_team_remove,
+        name="schedule_team_remove",
     ),
+    path("veranstaltungsarten/", views.event_type_list, name="event_type_list"),
+    path("veranstaltungsarten/neu/", views.event_type_edit, name="event_type_create"),
+    path("veranstaltungsarten/<int:pk>/", views.event_type_edit, name="event_type_edit"),
+    path("veranstaltungsarten/<int:pk>/loeschen/", views.event_type_delete, name="event_type_delete"),
+    path("rollen/", views.role_list, name="role_list"),
+    path("rollen/neu/", views.role_edit, name="role_create"),
+    path("rollen/<int:pk>/", views.role_edit, name="role_edit"),
+    path("rollen/<int:pk>/loeschen/", views.role_delete, name="role_delete"),
     path("zielgruppen/", views.target_group_list, name="target_group_list"),
     path("zielgruppen/neu/", views.target_group_edit, name="target_group_create"),
     path("zielgruppen/<int:pk>/", views.target_group_members, name="target_group_members"),

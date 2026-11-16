@@ -10,8 +10,8 @@
     <ul class="menu w-full gap-1 px-4 text-base [--menu-active-bg:var(--color-primary)] [--menu-active-fg:var(--color-primary-content)]">
       <li><a href="{% url 'home' %}"{% if url_name == 'home' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-house" aria-hidden="true"></i> Start</a></li>
       <li><a href="{% url 'agenda' %}"{% if url_name in 'agenda occurrence_detail register occurrence_edit participant_add' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-calendar-week" aria-hidden="true"></i> Termine</a></li>
-      {% if is_trainer %}
-      <li><a href="{% url 'my_staffings' %}"{% if url_name == 'my_staffings' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-clipboard-check" aria-hidden="true"></i> Meine Einsätze</a></li>
+      {% if can_join_team %}
+      <li><a href="{% url 'my_hours' %}"{% if url_name == 'my_hours' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-clipboard-check" aria-hidden="true"></i> Meine Stunden</a></li>
       {% endif %}
       {% if has_own_members %}
       <li><a href="{% url 'my_data' %}"{% if url_name in 'my_data my_member my_member_edit' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-vcard" aria-hidden="true"></i> Meine Daten</a></li>
@@ -20,7 +20,7 @@
       <li><a href="{% url 'member_list' %}"{% if url_name in 'member_list member_detail member_edit member_create member_import interest_list interest_edit' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-lines-fill" aria-hidden="true"></i> Mitglieder</a></li>
       {% endif %}
       {% if can_plan_events %}
-      <li><a href="{% url 'event_list' %}"{% if url_name in 'event_list event_detail event_edit event_create schedule_edit schedule_create occurrence_create target_group_list target_group_edit target_group_create target_group_members' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a></li>
+      <li><a href="{% url 'event_list' %}"{% if url_name in 'event_list event_detail event_edit event_create schedule_edit schedule_create occurrence_create target_group_list target_group_edit target_group_create target_group_members role_list role_edit role_create event_type_list event_type_edit event_type_create' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a></li>
       {% endif %}
       {% if can_manage_users %}
       <li><a href="{% url 'user_list' %}"{% if url_name in 'user_list invite edit_user invitation_link' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-people" aria-hidden="true"></i> Benutzer</a></li>

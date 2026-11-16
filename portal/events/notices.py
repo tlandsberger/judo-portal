@@ -1,7 +1,7 @@
 """Benachrichtigungen rund um Termine: Push, sonst Mail (über ``portal.notifications``, ADR 0011).
 
 Sofort: Absage, Änderung, Nachrücken. Über den Zeitplaner (alle 10 Minuten): Anmeldung offen, Erinnerung an den
-Anmeldeschluss, Begleitung bestätigen. Jede Nachricht geht je Benutzer und Anlass nur einmal raus.
+Anmeldeschluss, Stunden bestätigen. Jede Nachricht geht je Benutzer und Anlass nur einmal raus.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from portal.notifications.models import SentNotification
 from portal.notifications.services import Action, ActionResult
 
 from . import services
-from .models import EventKind, Occurrence, Registration, RegistrationStatus, Staffing
+from .models import Occurrence, Participation, ParticipationStatus
 
 log = logging.getLogger(__name__)
 
@@ -56,7 +56,6 @@ def _stamp(moment: datetime | None = None) -> int:
 
 def _team_and_participants(occurrence: Occurrence, by: User | None) -> set[User]:
     users = services.participant_users(occurrence)
-    users |= {staffing.user for staffing in occurrence.staffings.select_related("user")}
     users.discard(by)
     return users
 
@@ -99,19 +98,19 @@ def changed(occurrence: Occurrence, by: User | None = None) -> None:
         )
 
 
-def promoted(registration: Registration) -> None:
-    occurrence, member = registration.occurrence, registration.member
+def promoted(participation: Participation) -> None:
+    occurrence, member = participation.occurrence, participation.member
     title = occurrence.event.title
     for user in members.member_users(member):
         notifications.notify(
             user,
-            key=f"promoted:{registration.pk}:{user.pk}:{_stamp()}",
+            key=f"promoted:{participation.pk}:{user.pk}:{_stamp()}",
             kind="promoted",
             title=f"Nachgerückt: {title}",
             body=f"Ein Platz ist frei geworden: {member.first_name} ist jetzt für {title} am {_when(occurrence)} "
             "angemeldet.",
             url=_url(occurrence),
-            actions=[Action("unregister", "Doch absagen", {"r": registration.pk})],
+            actions=[Action("unregister", "Doch absagen", {"p": participation.pk})],
         )
 
 
@@ -121,7 +120,7 @@ def promoted(registration: Registration) -> None:
 def _audience(occurrence: Occurrence, links: list[MemberLink]) -> dict[User, list[tuple[Member, services.Match]]]:
     """Wer zu einem Termin passt und noch nicht angemeldet ist, gruppiert nach Benutzer (Eltern, Mitglied selbst)."""
     on = timezone.localdate(occurrence.starts_at)
-    taken = set(occurrence.registrations.filter(status__in=services.ACTIVE).values_list("member_id", flat=True))
+    taken = set(occurrence.participations.filter(status__in=services.ACTIVE).values_list("member_id", flat=True))
     audience: dict[User, list[tuple[Member, services.Match]]] = defaultdict(list)
     for link in links:
         member = link.member
@@ -143,9 +142,9 @@ def _effective_links() -> list[MemberLink]:
 
 
 def _one_off_candidates(now: datetime) -> list[Occurrence]:
+    """Termine ohne Zeitplan (Wettkampf, Lehrgang …); wiederkehrende Trainings bekommen keine Anmelde-Nachrichten."""
     return list(
-        Occurrence.objects.filter(cancelled_at__isnull=True, starts_at__gt=now)
-        .exclude(event__kind=EventKind.TRAINING)
+        Occurrence.objects.filter(cancelled_at__isnull=True, starts_at__gt=now, schedule__isnull=True)
         .select_related("event")
         .prefetch_related("event__target_groups__interests")
     )
@@ -183,7 +182,7 @@ def _registration_notice(
 
 
 def notify_registration_open(now: datetime | None = None) -> None:
-    """Wettkampf, Lehrgang, Prüfung …: passende, noch nicht angemeldete Mitglieder, sobald die Anmeldung öffnet."""
+    """Einzeltermine: passende, noch nicht angemeldete Mitglieder, sobald die Anmeldung öffnet."""
     now = now or timezone.now()
     links = _effective_links()
     for occurrence in _one_off_candidates(now):
@@ -224,27 +223,31 @@ def confirm_due(ends_at: datetime) -> datetime:
     return (end + timedelta(days=1)).replace(hour=CONFIRM_MORNING_HOUR, minute=0, second=0, microsecond=0)
 
 
-def notify_confirm_staffing(now: datetime | None = None) -> None:
+def notify_confirm_hours(now: datetime | None = None) -> None:
+    """Abrechnungsrelevante Rollen: am Abend des Termins an das Bestätigen der Stunden erinnern."""
     now = now or timezone.now()
-    open_staffings = Staffing.objects.filter(
+    open_rows = Participation.objects.filter(
+        role__is_billable=True,
+        status=ParticipationStatus.REGISTERED,
         confirmed_at__isnull=True,
         occurrence__cancelled_at__isnull=True,
         occurrence__ends_at__lte=now,
         occurrence__ends_at__gte=now - CONFIRM_LOOKBACK,
-    ).select_related("occurrence__event", "user")
-    for staffing in open_staffings:
-        occurrence = staffing.occurrence
-        if now < confirm_due(occurrence.ends_at):
+    ).select_related("occurrence__event", "member", "role")
+    for participation in open_rows:
+        occurrence = participation.occurrence
+        user = services.member_user(participation.member)
+        if user is None or now < confirm_due(occurrence.ends_at):
             continue
         notifications.notify(
-            staffing.user,
-            key=f"confirm:{staffing.pk}",
+            user,
+            key=f"confirm:{participation.pk}",
             kind="confirm",
-            title="Begleitung bestätigen",
-            body=f"Warst du bei {occurrence.event.title} am {_when(occurrence)} als "
-            f"{staffing.get_function_display()} dabei? Bitte bestätige deine Begleitung.",
-            url=reverse("my_staffings"),
-            actions=[Action("confirm", "Bestätigen", {"s": staffing.pk})],
+            title="Stunden bestätigen",
+            body=f"Warst du bei {occurrence.event.title} am {_when(occurrence)} als {participation.role.name} dabei? "
+            "Bitte bestätige deine Stunden.",
+            url=reverse("my_hours"),
+            actions=[Action("confirm", "Bestätigen", {"p": participation.pk})],
         )
 
 
@@ -252,7 +255,7 @@ def run_jobs() -> None:
     now = timezone.now()
     notify_registration_open(now)
     notify_deadlines(now)
-    notify_confirm_staffing(now)
+    notify_confirm_hours(now)
 
 
 # Knöpfe an Push-Nachrichten
@@ -272,41 +275,45 @@ def action_register(user: User, data: dict[str, Any]) -> ActionResult:
             "Für die Anmeldung brauchen wir noch das Gewicht.", reverse("register", args=[occurrence.pk, member.pk])
         )
     try:
-        registration = services.register(occurrence, member, user)
+        participation = services.register(occurrence, member, user)
     except services.RegistrationError as error:
         return _failed(str(error), _url(occurrence))
-    if registration.status == RegistrationStatus.WAITLIST:
+    if participation.status == ParticipationStatus.WAITLIST:
         return ActionResult(True, f"{member.first_name} steht auf der Warteliste für {occurrence.event.title}.")
     return ActionResult(True, f"{member.first_name} ist für {occurrence.event.title} angemeldet.")
 
 
 def action_unregister(user: User, data: dict[str, Any]) -> ActionResult:
-    registrations = Registration.objects.select_related("occurrence__event", "member")
-    registration = registrations.filter(pk=data.get("r", 0)).first()
-    if registration is None or not members.can_self_edit(user, registration.member):
+    rows = Participation.objects.select_related("occurrence__event", "member", "role")
+    participation = rows.filter(pk=data.get("p", 0), role__is_team=False).first()
+    if participation is None or not members.can_self_edit(user, participation.member):
         return _failed("Das hat nicht geklappt. Öffne bitte das Portal.", reverse("agenda"))
-    if not registration.is_active:
-        return ActionResult(True, f"{registration.member.first_name} ist schon abgemeldet.")
+    if not participation.is_active:
+        return ActionResult(True, f"{participation.member.first_name} ist schon abgemeldet.")
     try:
-        services.unregister(registration, user)
+        services.unregister(participation, user)
     except services.RegistrationError as error:
-        return _failed(str(error), _url(registration.occurrence))
+        return _failed(str(error), _url(participation.occurrence))
     return ActionResult(
-        True, f"{registration.member.first_name} ist von {registration.occurrence.event.title} abgemeldet."
+        True, f"{participation.member.first_name} ist von {participation.occurrence.event.title} abgemeldet."
     )
 
 
 def action_confirm(user: User, data: dict[str, Any]) -> ActionResult:
-    staffing = Staffing.objects.select_related("occurrence__event").filter(pk=data.get("s", 0), user=user).first()
-    if staffing is None:
-        return _failed("Das hat nicht geklappt. Öffne bitte das Portal.", reverse("my_staffings"))
-    if staffing.is_confirmed:
-        return ActionResult(True, "Deine Begleitung ist schon bestätigt.")
+    member = services.own_member(user)
+    rows = Participation.objects.select_related("occurrence__event", "role")
+    participation = rows.filter(pk=data.get("p", 0), member=member).first() if member else None
+    if participation is None:
+        return _failed("Das hat nicht geklappt. Öffne bitte das Portal.", reverse("my_hours"))
+    if participation.is_confirmed:
+        return ActionResult(True, "Deine Stunden sind schon bestätigt.")
     try:
-        services.confirm(staffing)
-    except ValueError as error:
-        return _failed(str(error), reverse("my_staffings"))
-    return ActionResult(True, f"Danke, {staffing.occurrence.event.title} ist bestätigt ({staffing.minutes} Minuten).")
+        services.confirm(participation)
+    except services.RegistrationError as error:
+        return _failed(str(error), reverse("my_hours"))
+    return ActionResult(
+        True, f"Danke, {participation.occurrence.event.title} ist bestätigt ({participation.minutes} Minuten)."
+    )
 
 
 def register_all() -> None:

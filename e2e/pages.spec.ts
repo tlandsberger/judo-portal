@@ -16,6 +16,10 @@ const pages = [
   { path: "/veranstaltungen/neu/", heading: "Veranstaltung anlegen" },
   { path: "/zielgruppen/", heading: "Zielgruppen" },
   { path: "/zielgruppen/neu/", heading: "Zielgruppe anlegen" },
+  { path: "/rollen/", heading: "Rollen" },
+  { path: "/rollen/neu/", heading: "Rolle anlegen" },
+  { path: "/veranstaltungsarten/", heading: "Veranstaltungsarten" },
+  { path: "/veranstaltungsarten/neu/", heading: "Veranstaltungsart anlegen" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {

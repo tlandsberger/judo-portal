@@ -1,4 +1,4 @@
-"""Fachlogik der Veranstaltungen: Zielgruppen, Termine aus Zeitplänen, Anmeldung mit Warteliste, Begleitung, Rechte.
+"""Fachlogik der Veranstaltungen: Zielgruppen, Termine aus Zeitplänen, Teilnahme mit Rollen und Warteliste, Rechte.
 
 Auf Mitglieder greift das Modul nur über ``portal.members.services`` zu (eigene Mitglieder, Eltern).
 """
@@ -19,34 +19,104 @@ from django.utils import timezone
 
 from portal.accounts.models import Role, User
 from portal.members import services as members
-from portal.members.models import Member, MemberLink, grade_rank
+from portal.members.models import LinkKind, Member, MemberLink, grade_rank
 
 from . import notices
 from .models import (
     Event,
-    EventStaff,
     Occurrence,
-    Registration,
-    RegistrationStatus,
+    ParticipantRole,
+    Participation,
+    ParticipationStatus,
     Schedule,
-    StaffFunction,
-    Staffing,
+    ScheduleTeam,
     TargetGroup,
 )
 
 log = logging.getLogger(__name__)
 
-# Veranstaltungen, Zeitpläne und Zielgruppen pflegt die Abteilungsleitung (ADR 0010).
+# Veranstaltungen, Zeitpläne, Zielgruppen, Arten und Rollen pflegt die Abteilungsleitung (ADR 0010, 0012).
 MANAGE_EVENTS = (Role.DEPARTMENT_HEAD, Role.ADMIN)
 HORIZON_DAYS = 365
-# So lange nach dem Termin sehen begleitende Übungsleiter noch die Teilnehmerliste.
+# So lange nach dem Termin sieht das Team noch die Teilnehmerliste.
 PARTICIPANTS_DAYS_AFTER = 14
 AGENDA_DAYS = 42
-ACTIVE = (RegistrationStatus.REGISTERED, RegistrationStatus.WAITLIST)
+ACTIVE = (ParticipationStatus.REGISTERED, ParticipationStatus.WAITLIST)
 
 
 class RegistrationError(Exception):
-    """Anmeldung oder Abmeldung ist gerade nicht möglich; die Nachricht ist für die Oberfläche."""
+    """Anmeldung, Abmeldung oder Rollenwechsel ist gerade nicht möglich; die Nachricht ist für die Oberfläche."""
+
+
+# Rollen
+
+
+def default_role() -> ParticipantRole:
+    """Die „Rolle bei Anmeldung“ (anfangs „Teilnehmer“)."""
+    role = ParticipantRole.objects.filter(is_default=True).first()
+    if role is None:
+        role, _ = ParticipantRole.objects.get_or_create(name="Teilnehmer", defaults={"is_default": True})
+    return role
+
+
+def own_member(user: Any) -> Member | None:
+    """Das eigene Mitgliedsprofil des Benutzers (Verknüpfung „eigenes Profil“)."""
+    if not user.is_authenticated:
+        return None
+    link = MemberLink.objects.filter(user=user, kind=LinkKind.SELF).select_related("member").first()
+    return link.member if link else None
+
+
+def member_user(member: Member) -> User | None:
+    """Der eigene Benutzer eines Mitglieds, falls es einen hat."""
+    link = MemberLink.objects.filter(member=member, kind=LinkKind.SELF, user__is_active=True).select_related("user")
+    first = link.first()
+    return first.user if first else None
+
+
+def role_offered(role: ParticipantRole, event: Event) -> bool:
+    """Wird die Rolle bei dieser Veranstaltungsart angeboten?"""
+    if not role.is_active:
+        return False
+    types = [event_type.pk for event_type in role.event_types.all()]
+    return not types or event.event_type_id in types
+
+
+def user_may_take(user: User | None, role: ParticipantRole) -> bool:
+    """Darf ein Benutzer mit seinen Benutzerrollen diese Rolle übernehmen? Ohne Einschränkung: jedes Mitglied."""
+    if not role.user_roles:
+        return True
+    return user is not None and user.has_role(*role.user_roles)
+
+
+def can_take_role(member: Member, role: ParticipantRole, event: Event) -> bool:
+    return role_offered(role, event) and user_may_take(member_user(member) if role.user_roles else None, role)
+
+
+def team_roles(event: Event | None = None) -> list[ParticipantRole]:
+    roles = ParticipantRole.objects.filter(is_team=True, is_active=True).prefetch_related("event_types")
+    return [role for role in roles if event is None or role_offered(role, event)]
+
+
+def team_candidates(event: Event | None = None) -> list[Member]:
+    """Mitglieder, die mindestens eine Team-Rolle (dieser Veranstaltung) übernehmen dürfen."""
+    roles = team_roles(event)
+    links = MemberLink.objects.filter(kind=LinkKind.SELF, user__is_active=True).select_related("member", "user")
+    members_ = [
+        link.member for link in links if link.member.is_active and any(user_may_take(link.user, role) for role in roles)
+    ]
+    return sorted(members_, key=lambda member: (member.first_name, member.last_name))
+
+
+def users_without_member(role_values: Iterable[str]) -> list[User]:
+    """Benutzer mit einer dieser Benutzerrollen, aber ohne eigenes Mitgliedsprofil (können kein Team sein)."""
+    with_member = set(MemberLink.objects.filter(kind=LinkKind.SELF).values_list("user_id", flat=True))
+    values = list(role_values)
+    return [
+        user
+        for user in User.objects.filter(is_active=True).order_by("first_name", "email")
+        if user.pk not in with_member and values and user.has_role(*values)
+    ]
 
 
 # Rechte
@@ -56,34 +126,40 @@ def can_manage_events(user: Any) -> bool:
     return bool(user.is_authenticated and user.has_role(*MANAGE_EVENTS))
 
 
-def is_trainer(user: Any) -> bool:
-    return bool(user.is_authenticated and user.has_role(Role.TRAINER))
+def can_join_team(user: Any) -> bool:
+    """Hat der Benutzer ein eigenes Mitgliedsprofil und darf irgendeine Team-Rolle übernehmen?"""
+    if not user.is_authenticated or own_member(user) is None:
+        return False
+    return any(user_may_take(user, role) for role in team_roles())
 
 
 def can_plan_staff(user: Any) -> bool:
-    """Standard-Team und Begleitung planen: Abteilungsleitung und Übungsleiter."""
-    return can_manage_events(user) or is_trainer(user)
+    """Veranstaltungen ansehen und Teams planen: Abteilungsleitung und alle, die Team sein können."""
+    return can_manage_events(user) or can_join_team(user)
 
 
-def accompanies(user: Any, occurrence: Occurrence) -> bool:
-    return bool(user.is_authenticated and occurrence.staffings.filter(user=user).exists())
+def team_participation(user: Any, occurrence: Occurrence) -> Participation | None:
+    member = own_member(user)
+    if member is None:
+        return None
+    return (
+        occurrence.participations.filter(member=member, role__is_team=True, status__in=ACTIVE)
+        .select_related("role")
+        .first()
+    )
 
 
 def can_lead(user: Any, occurrence: Occurrence) -> bool:
-    """Termin absagen, Hinweis und Team ändern, Ausnahmen eintragen: Abteilungsleitung und Begleiter."""
-    return can_manage_events(user) or (is_trainer(user) and accompanies(user, occurrence))
+    """Termin absagen, Hinweis und Team ändern, Ausnahmen eintragen: Abteilungsleitung und Team des Termins."""
+    return can_manage_events(user) or team_participation(user, occurrence) is not None
 
 
 def can_see_participants(user: Any, occurrence: Occurrence, now: datetime | None = None) -> bool:
-    """Teilnehmerliste mit Notfallkontakt: Abteilungsleitung; Begleiter bis 14 Tage nach dem Termin."""
+    """Teilnehmerliste mit Notfallkontakt: Abteilungsleitung; das Team bis 14 Tage nach dem Termin."""
     if can_manage_events(user):
         return True
     now = now or timezone.now()
     return can_lead(user, occurrence) and now <= occurrence.ends_at + timedelta(days=PARTICIPANTS_DAYS_AFTER)
-
-
-def trainers() -> list[User]:
-    return [user for user in User.objects.filter(is_active=True) if user.has_role(Role.TRAINER)]
 
 
 # Zielgruppen
@@ -156,9 +232,16 @@ def _aware(day: date, at: time) -> datetime:
     return timezone.make_aware(datetime.combine(day, at))
 
 
-def add_default_staff(occurrence: Occurrence) -> None:
-    for staff in occurrence.event.staff.all():
-        Staffing.objects.get_or_create(occurrence=occurrence, user=staff.user, defaults={"function": staff.function})
+def apply_schedule_team(occurrence: Occurrence) -> None:
+    """Das Standard-Team des Zeitplans in einen Termin übernehmen (bestehende Teilnahmen bleiben)."""
+    if occurrence.schedule_id is None:
+        return
+    for entry in ScheduleTeam.objects.filter(schedule_id=occurrence.schedule_id).select_related("role"):
+        Participation.objects.get_or_create(
+            occurrence=occurrence,
+            member_id=entry.member_id,
+            defaults={"role": entry.role, "status": ParticipationStatus.REGISTERED},
+        )
 
 
 @transaction.atomic
@@ -174,13 +257,15 @@ def generate(schedule: Schedule, today: date | None = None) -> int:
     day = start + timedelta(days=(schedule.weekday - start.weekday()) % 7)
     while day <= end:
         if day not in existing:
-            occurrence = Occurrence.objects.create(
+            occurrence = Occurrence(
                 event=schedule.event,
                 schedule=schedule,
                 starts_at=_aware(day, schedule.start_time),
                 ends_at=_aware(day, schedule.end_time),
             )
-            add_default_staff(occurrence)
+            occurrence.apply_rule(schedule)
+            occurrence.save()
+            apply_schedule_team(occurrence)
             created += 1
         day += timedelta(days=7)
     schedule.generated_until = end
@@ -204,8 +289,8 @@ def _replaceable(occurrences: QuerySet[Occurrence]) -> QuerySet[Occurrence]:
     """Zukünftige Termine ohne Anmeldungen, Abweichungen oder Absage – die darf das Portal neu erzeugen."""
     return (
         occurrences.filter(starts_at__gte=timezone.now(), is_modified=False, cancelled_at__isnull=True)
-        .exclude(registrations__status__in=ACTIVE)
-        .exclude(staffings__confirmed_at__isnull=False)
+        .exclude(participations__status__in=ACTIVE, participations__role__is_team=False)
+        .exclude(participations__confirmed_at__isnull=False)
     )
 
 
@@ -218,6 +303,9 @@ def regenerate(schedule: Schedule) -> list[Occurrence]:
     """
     _replaceable(schedule.occurrences.all()).delete()
     generate(schedule)
+    for occurrence in schedule.occurrences.filter(starts_at__gte=timezone.now(), is_modified=False):
+        occurrence.apply_rule(schedule)
+        occurrence.save(update_fields=["registration_opens_at", "registration_closes_at"])
     return [
         occurrence
         for occurrence in schedule.occurrences.filter(starts_at__gte=timezone.now())
@@ -244,13 +332,13 @@ def delete_schedule(schedule: Schedule) -> int:
 
 @transaction.atomic
 def update_occurrence(occurrence: Occurrence, fields: Iterable[str], by: User | None = None) -> None:
-    """Abweichung an einem einzelnen Termin (Uhrzeit, Ort, Hinweis) – der Termin bleibt dann bei Neuerzeugung.
+    """Abweichung an einem einzelnen Termin (Uhrzeit, Ort, Anmeldezeitraum) – der Termin bleibt dann bei Neuerzeugung.
 
     Ändern sich Uhrzeit oder Ort, bekommen Angemeldete und Team eine Benachrichtigung.
     """
     changed = set(fields)
     moved = bool(changed & {"starts_at", "ends_at", "location"})
-    if moved:
+    if moved or changed & {"registration_opens_at", "registration_closes_at"}:
         occurrence.is_modified = True
     occurrence.save()
     if moved:
@@ -304,13 +392,15 @@ def window(occurrence: Occurrence, now: datetime | None = None) -> str:
 
 
 def registered_count(occurrence: Occurrence) -> int:
-    return occurrence.registrations.filter(status=RegistrationStatus.REGISTERED).count()
+    """Belegte Plätze: angemeldete Teilnahmen ohne Team-Rollen."""
+    return occurrence.participations.filter(status=ParticipationStatus.REGISTERED, role__is_team=False).count()
 
 
 def check_register(occurrence: Occurrence, member: Member, match: Match | None = None) -> None:
     """Prüft, ob sich das Mitglied selbst (bzw. über die Eltern) anmelden kann."""
     if occurrence.is_cancelled:
         raise RegistrationError("Der Termin ist abgesagt.")
+    _check_not_team(occurrence, member)
     state = window(occurrence)
     if state == "before":
         opens = timezone.localtime(occurrence.registration_opens)
@@ -323,6 +413,12 @@ def check_register(occurrence: Occurrence, member: Member, match: Match | None =
         raise RegistrationError(f"{occurrence.event.title} passt nicht zu {member.first_name}.")
 
 
+def _check_not_team(occurrence: Occurrence, member: Member) -> None:
+    team = occurrence.participations.filter(member=member, role__is_team=True, status__in=ACTIVE).first()
+    if team:
+        raise RegistrationError(f"{member.first_name} ist als {team.role.name} eingetragen.")
+
+
 @transaction.atomic
 def register(
     occurrence: Occurrence,
@@ -332,15 +428,16 @@ def register(
     weight: Decimal | None = None,
     note: str = "",
     exception: bool = False,
-) -> Registration:
-    """Meldet ein Mitglied an. Ausnahmen (Abteilungsleitung, Begleiter) gelten unabhängig von Zielgruppe,
-    Anmeldezeitraum und Höchstzahl. Ist der Termin voll, kommt das Mitglied auf die Warteliste."""
+) -> Participation:
+    """Meldet ein Mitglied mit der „Rolle bei Anmeldung“ an. Ausnahmen (Abteilungsleitung, Team) gelten unabhängig
+    von Zielgruppe, Anmeldezeitraum und Höchstzahl. Ist der Termin voll, kommt das Mitglied auf die Warteliste."""
     if exception:
         if occurrence.is_cancelled:
             raise RegistrationError("Der Termin ist abgesagt.")
+        _check_not_team(occurrence, member)
     else:
         check_register(occurrence, member)
-    existing = Registration.objects.filter(occurrence=occurrence, member=member).first()
+    existing = Participation.objects.filter(occurrence=occurrence, member=member).first()
     if existing and existing.is_active and not exception:
         return existing
     if weight is not None and weight != member.weight:
@@ -350,11 +447,12 @@ def register(
         weight = member.weight
     capacity = occurrence.event.capacity
     full = capacity is not None and registered_count(occurrence) >= capacity
-    status = RegistrationStatus.WAITLIST if full and not exception else RegistrationStatus.REGISTERED
-    registration, _ = Registration.objects.update_or_create(
+    status = ParticipationStatus.WAITLIST if full and not exception else ParticipationStatus.REGISTERED
+    participation, _ = Participation.objects.update_or_create(
         occurrence=occurrence,
         member=member,
         defaults={
+            "role": default_role(),
             "status": status,
             "registered_by": by,
             "exception_by": by if exception else None,
@@ -364,87 +462,118 @@ def register(
         },
     )
     log.info("Mitglied %s für Termin %s: %s", member.pk, occurrence.pk, status)
-    return registration
+    return participation
 
 
 @transaction.atomic
-def unregister(registration: Registration, by: User, *, force: bool = False) -> None:
-    """Abmelden bis zum Anmeldeschluss; danach nur Abteilungsleitung und Begleiter (``force``)."""
-    if not force and window(registration.occurrence) == "closed":
+def unregister(participation: Participation, by: User, *, force: bool = False) -> None:
+    """Abmelden bis zum Anmeldeschluss; danach nur Abteilungsleitung und Team (``force``)."""
+    if not force and window(participation.occurrence) == "closed":
         raise RegistrationError(
-            "Nach dem Anmeldeschluss kannst du dich nicht mehr abmelden. Sag bitte dem Übungsleiter Bescheid."
+            "Nach dem Anmeldeschluss kannst du dich nicht mehr abmelden. Sag bitte dem Trainer Bescheid."
         )
-    was_registered = registration.status == RegistrationStatus.REGISTERED
-    registration.status = RegistrationStatus.CANCELLED
-    registration.registered_by = by
-    registration.save(update_fields=["status", "registered_by", "updated_at"])
+    was_registered = participation.status == ParticipationStatus.REGISTERED
+    participation.status = ParticipationStatus.CANCELLED
+    participation.registered_by = by
+    participation.save(update_fields=["status", "registered_by", "updated_at"])
     if was_registered:
-        promote(registration.occurrence)
+        promote(participation.occurrence)
 
 
-def promote(occurrence: Occurrence) -> list[Registration]:
+def promote(occurrence: Occurrence) -> list[Participation]:
     """Rückt von der Warteliste nach, solange Plätze frei sind, und benachrichtigt (Push, sonst Mail)."""
     capacity = occurrence.event.capacity
-    promoted: list[Registration] = []
+    promoted: list[Participation] = []
     if capacity is None:
         return promoted
     free = capacity - registered_count(occurrence)
-    waiting = occurrence.registrations.filter(status=RegistrationStatus.WAITLIST).select_related("member")
-    for registration in waiting[: max(free, 0)]:
-        registration.status = RegistrationStatus.REGISTERED
-        registration.save(update_fields=["status", "updated_at"])
-        promoted.append(registration)
-        notices.promoted(registration)
+    waiting = occurrence.participations.filter(status=ParticipationStatus.WAITLIST).select_related("member")
+    for participation in waiting[: max(free, 0)]:
+        participation.status = ParticipationStatus.REGISTERED
+        participation.save(update_fields=["status", "updated_at"])
+        promoted.append(participation)
+        notices.promoted(participation)
     return promoted
 
 
-# Begleitung
+# Team
 
 
 @transaction.atomic
-def set_staffing(occurrence: Occurrence, user: User, function: StaffFunction | str) -> Staffing:
-    if not user.has_role(Role.TRAINER):
-        raise ValueError(f"{user.display_name} ist kein Übungsleiter.")
-    staffing, _ = Staffing.objects.update_or_create(
-        occurrence=occurrence, user=user, defaults={"function": StaffFunction(function)}
+def set_team(occurrence: Occurrence, member: Member, role: ParticipantRole, by: User | None = None) -> Participation:
+    """Mitglied mit einer Team-Rolle eintragen oder die Rolle wechseln. War es als Teilnehmer angemeldet, wird die
+    Teilnahme umgestellt; ein frei gewordener Platz geht an die Warteliste."""
+    if not role.is_team:
+        raise RegistrationError(f"{role.name} ist keine Team-Rolle.")
+    if not can_take_role(member, role, occurrence.event):
+        raise RegistrationError(f"{member.first_name} kann bei {occurrence.event.title} nicht {role.name} sein.")
+    existing = Participation.objects.filter(occurrence=occurrence, member=member).select_related("role").first()
+    if existing and existing.is_confirmed:
+        raise RegistrationError("Bestätigte Stunden bleiben für die Abrechnung, wie sie sind.")
+    freed = existing is not None and not existing.role.is_team and existing.status == ParticipationStatus.REGISTERED
+    participation, _ = Participation.objects.update_or_create(
+        occurrence=occurrence,
+        member=member,
+        defaults={
+            "role": role,
+            "status": ParticipationStatus.REGISTERED,
+            "registered_by": by,
+            "exception_by": None,
+            "weight": None,
+        },
     )
-    return staffing
+    if freed:
+        promote(occurrence)
+    return participation
 
 
-def remove_staffing(staffing: Staffing) -> None:
-    if staffing.is_confirmed:
-        raise ValueError("Eine bestätigte Begleitung bleibt für die Abrechnung erhalten.")
-    staffing.delete()
+def remove_team(participation: Participation) -> None:
+    if participation.is_confirmed:
+        raise RegistrationError("Bestätigte Stunden bleiben für die Abrechnung erhalten.")
+    participation.delete()
 
 
-def confirm(staffing: Staffing, minutes: int | None = None) -> None:
-    """Nach dem Termin: „durchgeführt, ich war als Trainer/Kotrainer da“."""
-    if staffing.occurrence.starts_at > timezone.now():
-        raise ValueError("Bestätigen kannst du erst, wenn der Termin begonnen hat.")
-    if staffing.occurrence.is_cancelled:
-        raise ValueError("Der Termin ist abgesagt.")
-    staffing.confirmed_at = timezone.now()
-    staffing.minutes = minutes or staffing.occurrence.minutes
-    staffing.save(update_fields=["confirmed_at", "minutes"])
+def confirm(participation: Participation, minutes: int | None = None) -> None:
+    """Nach dem Termin: „durchgeführt, ich war als Trainer/Co-Trainer da“ – die Stunden für die Abrechnung."""
+    if not participation.role.is_billable:
+        raise RegistrationError(f"Für {participation.role.name} werden keine Stunden bestätigt.")
+    if participation.occurrence.starts_at > timezone.now():
+        raise RegistrationError("Bestätigen kannst du erst, wenn der Termin begonnen hat.")
+    if participation.occurrence.is_cancelled:
+        raise RegistrationError("Der Termin ist abgesagt.")
+    participation.confirmed_at = timezone.now()
+    participation.minutes = minutes or participation.occurrence.minutes
+    participation.save(update_fields=["confirmed_at", "minutes", "updated_at"])
+
+
+def _future(schedule: Schedule) -> QuerySet[Occurrence]:
+    return schedule.occurrences.filter(starts_at__gte=timezone.now(), cancelled_at__isnull=True)
 
 
 @transaction.atomic
-def set_default_staff(event: Event, user: User, function: StaffFunction | str) -> None:
-    """Standard-Team ändern; zukünftige Termine übernehmen den Übungsleiter (bestehende Einteilungen bleiben)."""
-    if not user.has_role(Role.TRAINER):
-        raise ValueError(f"{user.display_name} ist kein Übungsleiter.")
-    EventStaff.objects.update_or_create(event=event, user=user, defaults={"function": StaffFunction(function)})
-    for occurrence in event.occurrences.filter(starts_at__gte=timezone.now(), cancelled_at__isnull=True):
-        Staffing.objects.get_or_create(occurrence=occurrence, user=user, defaults={"function": function})
+def set_schedule_team(schedule: Schedule, member: Member, role: ParticipantRole) -> None:
+    """Standard-Team eines Zeitplans ändern; zukünftige Termine ziehen nach (bestätigte Stunden bleiben)."""
+    if not role.is_team or not can_take_role(member, role, schedule.event):
+        raise RegistrationError(f"{member.first_name} kann bei {schedule.event.title} nicht {role.name} sein.")
+    ScheduleTeam.objects.update_or_create(schedule=schedule, member=member, defaults={"role": role})
+    for occurrence in _future(schedule):
+        existing = Participation.objects.filter(occurrence=occurrence, member=member).select_related("role").first()
+        if existing is None:
+            Participation.objects.create(
+                occurrence=occurrence, member=member, role=role, status=ParticipationStatus.REGISTERED
+            )
+        elif existing.role.is_team and not existing.is_confirmed and existing.role_id != role.pk:
+            existing.role = role
+            existing.save(update_fields=["role", "updated_at"])
 
 
 @transaction.atomic
-def remove_default_staff(staff: EventStaff) -> None:
-    """Aus dem Standard-Team nehmen; zukünftige, unbestätigte Einteilungen fallen weg."""
-    Staffing.objects.filter(
-        occurrence__event=staff.event, occurrence__starts_at__gte=timezone.now(), user=staff.user, confirmed_at=None
+def remove_schedule_team(entry: ScheduleTeam) -> None:
+    """Aus dem Standard-Team nehmen; zukünftige, unbestätigte Team-Teilnahmen fallen weg."""
+    Participation.objects.filter(
+        occurrence__in=_future(entry.schedule), member=entry.member, role__is_team=True, confirmed_at=None
     ).delete()
-    staff.delete()
+    entry.delete()
 
 
 # Ansichten
@@ -454,23 +583,31 @@ def remove_default_staff(staff: EventStaff) -> None:
 class AgendaItem:
     occurrence: Occurrence
     match: Match
-    registration: Registration | None = None
+    participation: Participation | None = None
     window: str = "open"
 
     @property
+    def team_role(self) -> ParticipantRole | None:
+        """Team-Rolle des Mitglieds an diesem Termin (Trainer …), sonst None."""
+        p = self.participation
+        return p.role if p and p.is_active and p.role.is_team else None
+
+    @property
     def status(self) -> str:
-        if self.registration and self.registration.is_active:
-            return self.registration.status
-        return "cancelled" if self.registration else ""
+        if self.team_role:
+            return "team"
+        if self.participation and self.participation.is_active:
+            return self.participation.status
+        return "cancelled" if self.participation else ""
 
     @property
     def can_register(self) -> bool:
-        active = self.registration is not None and self.registration.is_active
+        active = self.participation is not None and self.participation.is_active
         return not active and not self.occurrence.is_cancelled and self.window == "open" and self.match != Match.NO
 
     @property
     def can_unregister(self) -> bool:
-        active = self.registration is not None and self.registration.is_active
+        active = self.participation is not None and self.participation.is_active and not self.team_role
         return active and self.window != "closed" and not self.occurrence.is_cancelled
 
     @property
@@ -495,7 +632,7 @@ def upcoming(days: int = AGENDA_DAYS) -> QuerySet[Occurrence]:
     return (
         Occurrence.objects.filter(ends_at__gte=now, starts_at__lte=now + timedelta(days=days))
         .select_related("event")
-        .prefetch_related("event__target_groups__interests", "staffings__user")
+        .prefetch_related("event__target_groups__interests", "participations__role", "participations__member")
     )
 
 
@@ -507,9 +644,11 @@ def agenda(user: Any, days: int = AGENDA_DAYS) -> list[AgendaSection]:
     ensure_generated()
     occurrences = list(upcoming(days))
     member_ids = [link.member.pk for link in links]
-    registrations = {
-        (r.occurrence_id, r.member_id): r
-        for r in Registration.objects.filter(member_id__in=member_ids, occurrence__in=occurrences)
+    participations = {
+        (p.occurrence_id, p.member_id): p
+        for p in Participation.objects.filter(member_id__in=member_ids, occurrence__in=occurrences).select_related(
+            "role"
+        )
     }
     sections = []
     for link in links:
@@ -518,9 +657,9 @@ def agenda(user: Any, days: int = AGENDA_DAYS) -> list[AgendaSection]:
         section = AgendaSection(link=link)
         for occurrence in occurrences:
             match = match_event(occurrence.event, member, timezone.localdate(occurrence.starts_at), interest_ids)
-            registration = registrations.get((occurrence.pk, member.pk))
-            item = AgendaItem(occurrence, match, registration, window(occurrence))
-            if match != Match.NO or (registration and registration.is_active):
+            participation = participations.get((occurrence.pk, member.pk))
+            item = AgendaItem(occurrence, match, participation, window(occurrence))
+            if match != Match.NO or (participation and participation.is_active):
                 section.items.append(item)
             else:
                 section.others.append(item)
@@ -541,38 +680,53 @@ def next_items(user: Any, count: int = 3) -> list[tuple[Member, AgendaItem]]:
 
 @dataclass
 class Participant:
-    registration: Registration
+    participation: Participation
     age: int
     weight: Decimal | None
     guardians: list[User]
 
     @property
     def member(self) -> Member:
-        return self.registration.member
+        return self.participation.member
 
 
 def participants(occurrence: Occurrence) -> list[Participant]:
-    """Teilnehmerliste mit Judo-Daten und Notfallkontakt (Telefon des Mitglieds, Eltern)."""
+    """Teilnehmerliste (ohne Team) mit Judo-Daten und Notfallkontakt (Telefon des Mitglieds, Eltern)."""
     on = timezone.localdate(occurrence.starts_at)
-    rows = occurrence.registrations.filter(status__in=ACTIVE).select_related("member", "exception_by")
+    rows = occurrence.participations.filter(status__in=ACTIVE, role__is_team=False).select_related(
+        "member", "exception_by", "role"
+    )
     return [
         Participant(
-            registration=registration,
-            age=age_in_year(registration.member, on),
-            weight=registration.weight or registration.member.weight,
-            guardians=members.guardians(registration.member),
+            participation=participation,
+            age=age_in_year(participation.member, on),
+            weight=participation.weight or participation.member.weight,
+            guardians=members.guardians(participation.member),
         )
-        for registration in rows
+        for participation in rows
     ]
 
 
-def own_staffings(user: User) -> tuple[list[Staffing], list[Staffing]]:
-    """„Meine Einsätze“: kommende und die letzten 90 Tage."""
+def team(occurrence: Occurrence) -> list[Participation]:
+    return list(
+        occurrence.participations.filter(status__in=ACTIVE, role__is_team=True)
+        .select_related("member", "role")
+        .order_by("role__order", "member__first_name")
+    )
+
+
+def own_team(user: User) -> tuple[list[Participation], list[Participation]]:
+    """„Meine Stunden“: kommende Termine mit eigener Team-Rolle und die letzten 90 Tage."""
+    member = own_member(user)
+    if member is None:
+        return [], []
     now = timezone.now()
-    staffings = Staffing.objects.filter(user=user).select_related("occurrence__event")
-    coming = list(staffings.filter(occurrence__ends_at__gte=now).order_by("occurrence__starts_at")[:50])
+    rows = Participation.objects.filter(member=member, role__is_team=True, status__in=ACTIVE).select_related(
+        "occurrence__event", "role"
+    )
+    coming = list(rows.filter(occurrence__ends_at__gte=now).order_by("occurrence__starts_at")[:50])
     past = list(
-        staffings.filter(occurrence__ends_at__lt=now, occurrence__starts_at__gte=now - timedelta(days=90)).order_by(
+        rows.filter(occurrence__ends_at__lt=now, occurrence__starts_at__gte=now - timedelta(days=90)).order_by(
             "-occurrence__starts_at"
         )
     )
@@ -583,8 +737,8 @@ def own_staffings(user: User) -> tuple[list[Staffing], list[Staffing]]:
 
 
 def participant_users(occurrence: Occurrence) -> set[User]:
-    """Benutzer der angemeldeten Mitglieder (das Mitglied selbst, Eltern bis 18)."""
+    """Benutzer aller aktiven Teilnahmen inkl. Team (das Mitglied selbst, Eltern bis 18)."""
     users: set[User] = set()
-    for registration in occurrence.registrations.filter(status__in=ACTIVE).select_related("member"):
-        users.update(members.member_users(registration.member))
+    for participation in occurrence.participations.filter(status__in=ACTIVE).select_related("member"):
+        users.update(members.member_users(participation.member))
     return users

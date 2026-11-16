@@ -1,0 +1,9 @@
+{% extends "events/_form_page.html" %}
+{% block heading %}{% if event_type %}{{ event_type.name }} bearbeiten{% else %}Veranstaltungsart anlegen{% endif %}{% endblock %}
+{% block heading2 %}{% if event_type %}{{ event_type.name }} bearbeiten{% else %}Veranstaltungsart anlegen{% endif %}{% endblock %}
+{% block back_url %}{% url 'event_type_list' %}{% endblock %}
+{% block cancel_url %}{% url 'event_type_list' %}{% endblock %}
+{% block back_label %}Veranstaltungsarten{% endblock %}
+{% block after %}{% if event_type %}
+<form method="post" action="{% url 'event_type_delete' event_type.pk %}" class="mt-4">{% csrf_token %}<button class="btn btn-ghost btn-error btn-sm"><i class="bi bi-trash" aria-hidden="true"></i> Veranstaltungsart löschen</button></form>
+{% endif %}{% endblock %}

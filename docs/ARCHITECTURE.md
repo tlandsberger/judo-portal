@@ -33,9 +33,9 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | `portal.core` | App-Rahmen, Startseite, Bausteine, PWA (Manifest, Service Worker), Healthcheck, Backup, Zeitplaner |
 | `portal.accounts` | Benutzer, Rollen, Einladungen, Benutzerverwaltung, Anpassungen an allauth |
 | `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Benutzer ↔ Mitglied (m:n), „Meine Daten“ (ADR 0009) |
-| `portal.events` | Veranstaltungen, Zeitpläne, Termine, Zielgruppen, Anmeldung mit Warteliste, Begleitung durch Übungsleiter (ADR 0010) |
+| `portal.events` | Veranstaltungen, Arten, Zeitpläne, Termine, Zielgruppen, Teilnahme mit Rollen und Warteliste (ADR 0010, 0012) |
 | `portal.notifications` | Push-Benachrichtigungen je Gerät mit Mail als Ersatz, Aktionsknöpfe (ADR 0011) |
-| *(folgt)* `portal.billing` | Übungsleiterabrechnung (auf Basis der bestätigten Begleitungen) |
+| *(folgt)* `portal.billing` | Übungsleiterabrechnung (auf Basis der bestätigten Stunden) |
 
 Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kommen aus eigenen Übersetzungen in
 `portal/locale/` (`LOCALE_PATHS`); allauth selbst bleibt unverändert.
@@ -45,8 +45,8 @@ Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kom
 | Rolle | Zweck |
 |---|---|
 | Mitglied (`member`) | Grundrolle für Vereinsmitglieder mit eigenem Zugang |
-| Übungsleiter (`trainer`) | Begleitet Termine als Trainer oder Kotrainer, plant Teams; sieht Teilnehmer nur bei eigenen Terminen (ADR 0010) |
-| Abteilungsleiter (`department_head`) | Verwaltet Benutzer (einladen, Rollen außer Administrator), Mitglieder, Zugänge, Veranstaltungen und Zielgruppen |
+| Übungsleiter (`trainer`) | Übernimmt über das eigene Mitgliedsprofil Team-Rollen (Trainer, Co-Trainer, Prüfer, Betreuer), plant Teams; sieht Teilnehmer nur bei eigenen Terminen (ADR 0012) |
+| Abteilungsleiter (`department_head`) | Verwaltet Benutzer (einladen, Rollen außer Administrator), Mitglieder, Zugänge, Veranstaltungen, Zielgruppen, Arten und Rollen |
 | Administrator (`admin`) | Technische Rolle: alles, inkl. technischer Verwaltung (Django-Admin unter `/technik/`) |
 
 Eltern sind keine Rolle: Ihr Benutzer wird mit den Kindern verknüpft (bis zu deren 18. Geburtstag). Was ein Benutzer
@@ -98,6 +98,6 @@ Geräteeinstellung oder Umschalter.
 |---|---|---|
 | 1 | Fundament: Anmeldung, Rollen, Einladungen, Design, CI/CD, Betrieb | ✅ |
 | 2 | Mitgliederverwaltung inkl. CSV-Import und Zugängen für Mitglieder/Eltern | ✅ |
-| 3 | Veranstaltungen und Termine mit Zielgruppen, Anmeldung und Begleitung | ✅ |
+| 3 | Veranstaltungen und Termine mit Zielgruppen, Anmeldung und Teilnahme mit Rollen | ✅ |
 | 4 | Übungsleiterabrechnung | offen |
 | 5 | Datenschutz-Funktionen (Änderungsprotokoll, Export, Löschung) | offen |

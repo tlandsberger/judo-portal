@@ -30,11 +30,11 @@
       <div><h2 class="card-title text-base">Termine</h2><p class="text-sm text-base-content/70">Trainings und Veranstaltungen, An- und Abmelden</p></div>
     </div>
   </a>
-  {% if is_trainer %}
-  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'my_staffings' %}">
+  {% if can_join_team %}
+  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'my_hours' %}">
     <div class="card-body flex-row items-center gap-4">
       <span class="pikto pikto-judo-training" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Meine Einsätze</h2><p class="text-sm text-base-content/70">Begleitete Termine und Bestätigungen</p></div>
+      <div><h2 class="card-title text-base">Meine Stunden</h2><p class="text-sm text-base-content/70">Termine im Team und bestätigte Stunden</p></div>
     </div>
   </a>
   {% endif %}

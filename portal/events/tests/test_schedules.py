@@ -7,9 +7,9 @@ from django.core import mail
 from django.utils import timezone
 
 from portal.events import services
-from portal.events.models import Event, EventStaff, Registration, Schedule, StaffFunction
+from portal.events.models import Event, Participation, Schedule
 
-from .conftest import make_occurrence
+from .conftest import make_occurrence, role
 
 pytestmark = pytest.mark.django_db
 
@@ -28,13 +28,15 @@ def schedule(event: Event, weekday: int, weeks: int = 4, start: time = time(17))
 
 def test_generate_from_several_schedules_with_default_staff(trainer):
     event = Event.objects.create(title="Training U12")
-    EventStaff.objects.create(event=event, user=trainer, function=StaffFunction.TRAINER)
-    assert services.generate(schedule(event, 1)) == 4
+    tuesday = schedule(event, 1)
+    tuesday.team.create(member=services.own_member(trainer), role=role("Trainer"))
+    assert services.generate(tuesday) == 4
     assert services.generate(schedule(event, 3)) == 4
     occurrences = list(event.occurrences.all())
     assert len(occurrences) == 8
     assert {timezone.localtime(o.starts_at).weekday() for o in occurrences} == {1, 3}
-    assert all(o.staffings.get().user == trainer for o in occurrences)
+    team = [o for o in occurrences if o.participations.filter(member__links__user=trainer).exists()]
+    assert {timezone.localtime(o.starts_at).weekday() for o in team} == {1} and len(team) == 4
     assert services.generate(event.schedules.first()) == 0  # keine Doppelten
 
 
@@ -59,7 +61,7 @@ def test_regenerate_keeps_occurrences_with_registrations(child, parent):
     kept = services.regenerate(plan)
     assert kept == [first]
     assert event.occurrences.count() == 4
-    assert Registration.objects.get().occurrence == first
+    assert Participation.objects.get().occurrence == first
     later = event.occurrences.exclude(pk=first.pk)
     assert all(timezone.localtime(o.starts_at).hour == 18 for o in later)
 
@@ -88,7 +90,7 @@ def test_modified_occurrence_survives_regeneration():
 def test_cancel_range_mails_participants_and_staff(child, parent, trainer, django_capture_on_commit_callbacks):
     event = Event.objects.create(title="Training")
     plan = schedule(event, (timezone.localdate() + timedelta(days=2)).weekday())
-    EventStaff.objects.create(event=event, user=trainer, function=StaffFunction.TRAINER)
+    plan.team.create(member=services.own_member(trainer), role=role("Trainer"))
     services.generate(plan)
     first = event.occurrences.first()
     services.register(first, child, parent)
@@ -112,3 +114,18 @@ def test_ensure_generated_fills_new_schedule():
 
 def test_occurrence_minutes():
     assert make_occurrence(hours=1.5).minutes == 90
+
+
+def test_registration_window_from_schedule_rule():
+    event = Event.objects.create(title="Training")
+    plan = schedule(event, (timezone.localdate() + timedelta(days=3)).weekday())
+    plan.opens_hours_before, plan.closes_hours_before = 48, 2
+    plan.save()
+    services.generate(plan)
+    first = event.occurrences.first()
+    assert first.registration_opens == first.starts_at - timedelta(hours=48)
+    assert first.registration_closes == first.starts_at - timedelta(hours=2)
+    plan.closes_hours_before = 1
+    plan.save()
+    services.regenerate(plan)
+    assert all(o.registration_closes == o.starts_at - timedelta(hours=1) for o in event.occurrences.all())

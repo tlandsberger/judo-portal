@@ -33,7 +33,7 @@
         <div class="w-16 text-center"><div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"D" }}</div><div class="text-lg font-bold">{{ occurrence.starts_at|date:"d.m." }}</div></div>
         <div class="list-col-grow">
           <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a>
-          <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %}{% for staffing in occurrence.staffings.all %}{% if forloop.first %} · {% endif %}{{ staffing.user.get_short_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+          <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %}{% for p in occurrence.participations.all %}{% if p.role.is_team and p.is_active %} · {{ p.member.first_name }} ({{ p.role.name }}){% endif %}{% endfor %}</div>
           {% if occurrence.is_cancelled %}<span class="badge badge-warning badge-sm mt-1">abgesagt</span>{% endif %}
         </div>
       </li>
