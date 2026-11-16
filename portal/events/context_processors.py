@@ -8,12 +8,12 @@ from . import services
 
 
 def events(request: HttpRequest) -> dict[str, Any]:
-    """Navigation: „Meine Einsätze“ für Übungsleiter, „Veranstaltungen“ für Abteilungsleitung und Übungsleiter."""
+    """Navigation: „Meine Stunden“ und „Veranstaltungen“ für alle, die Team sein können, und die Abteilungsleitung."""
     user = getattr(request, "user", None)
     if user is None or not user.is_authenticated:
         return {}
     return {
-        "is_trainer": services.is_trainer(user),
+        "can_join_team": services.can_join_team(user),
         "can_plan_events": services.can_plan_staff(user),
         "can_manage_events": services.can_manage_events(user),
     }

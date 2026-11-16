@@ -5,14 +5,15 @@ from typing import Any
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Count, Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from portal.accounts.models import Role, User
+from portal.accounts.models import User
 from portal.accounts.permissions import role_required
 from portal.members import services as members
 from portal.members.models import Member
@@ -22,14 +23,25 @@ from .forms import (
     CancelRangeForm,
     ConfirmForm,
     EventForm,
+    EventTypeForm,
     NoteForm,
     OccurrenceForm,
+    ParticipantRoleForm,
     RegisterForm,
     ScheduleForm,
-    StaffForm,
     TargetGroupForm,
+    TeamForm,
 )
-from .models import Event, EventStaff, Occurrence, Registration, Schedule, StaffFunction, Staffing, TargetGroup
+from .models import (
+    Event,
+    EventType,
+    Occurrence,
+    ParticipantRole,
+    Participation,
+    Schedule,
+    ScheduleTeam,
+    TargetGroup,
+)
 from .services import MANAGE_EVENTS, Match, RegistrationError
 
 
@@ -64,6 +76,10 @@ def _own_member(request: HttpRequest, member_pk: int) -> Member:
     return member
 
 
+def _team_form(event: Event, data: Any = None, prefix: str | None = None) -> TeamForm:
+    return TeamForm(data, prefix=prefix, candidates=services.team_candidates(event), roles=services.team_roles(event))
+
+
 @login_required
 def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
     occurrence = get_object_or_404(Occurrence.objects.select_related("event", "schedule"), pk=pk)
@@ -72,33 +88,40 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
     window = services.window(occurrence)
     own = []
     for link in members.effective_links(user):
-        registration = Registration.objects.filter(occurrence=occurrence, member=link.member).first()
+        participation = (
+            Participation.objects.filter(occurrence=occurrence, member=link.member).select_related("role").first()
+        )
         match = services.match_event(occurrence.event, link.member, on)
-        own.append((link, services.AgendaItem(occurrence, match, registration, window)))
+        own.append((link, services.AgendaItem(occurrence, match, participation, window)))
     lead = services.can_lead(user, occurrence)
     show_participants = services.can_see_participants(user, occurrence)
-    staffings = list(occurrence.staffings.select_related("user"))
-    own_staffing = next((staffing for staffing in staffings if staffing.user_id == user.pk), None)
+    team = services.team(occurrence)
+    member = services.own_member(user)
+    own_team = next((p for p in team if member and p.member_id == member.pk), None)
     context = {
         "occurrence": occurrence,
         "event": occurrence.event,
         "window": window,
         "own": own,
-        "staffings": staffings,
-        "own_staffing": own_staffing,
+        "team": team,
+        "own_team": own_team,
         "lead": lead,
         "can_manage": services.can_manage_events(user),
-        "is_trainer": services.is_trainer(user),
+        "can_join_team": services.can_join_team(user),
         "started": occurrence.starts_at <= timezone.now(),
         "participants": services.participants(occurrence) if show_participants else None,
         "registered": services.registered_count(occurrence),
     }
     if lead:
         context["note_form"] = NoteForm(instance=occurrence)
-        context["staff_form"] = StaffForm(trainers=services.trainers())
-    elif services.is_trainer(user) and not own_staffing:
-        context["self_staff_functions"] = StaffFunction.choices
-    if own_staffing and not own_staffing.is_confirmed:
+        context["team_form"] = _team_form(occurrence.event)
+    elif member and not own_team:
+        context["self_roles"] = [
+            role
+            for role in services.team_roles(occurrence.event)
+            if services.can_take_role(member, role, occurrence.event)
+        ]
+    if own_team and own_team.role.is_billable and not own_team.is_confirmed:
         context["confirm_form"] = ConfirmForm(initial={"minutes": occurrence.minutes})
     return render(request, "events/occurrence_detail.html", context)
 
@@ -123,13 +146,13 @@ def register(request: HttpRequest, pk: int, member_pk: int) -> HttpResponse:
     if quick or form.is_valid():
         data = form.cleaned_data if not quick else {}
         try:
-            registration = services.register(
+            participation = services.register(
                 occurrence, member, _user(request), weight=data.get("weight"), note=data.get("note", "")
             )
         except RegistrationError as error:
             messages.error(request, str(error))
         else:
-            if registration.status == "waitlist":
+            if participation.status == "waitlist":
                 messages.info(request, f"{member.first_name} steht auf der Warteliste.")
             else:
                 messages.success(request, f"{member.first_name} ist angemeldet.")
@@ -147,9 +170,9 @@ def register(request: HttpRequest, pk: int, member_pk: int) -> HttpResponse:
 def unregister(request: HttpRequest, pk: int, member_pk: int) -> HttpResponse:
     occurrence = get_object_or_404(Occurrence, pk=pk)
     member = _own_member(request, member_pk)
-    registration = get_object_or_404(Registration, occurrence=occurrence, member=member)
+    participation = get_object_or_404(Participation, occurrence=occurrence, member=member, role__is_team=False)
     try:
-        services.unregister(registration, _user(request))
+        services.unregister(participation, _user(request))
     except RegistrationError as error:
         messages.error(request, str(error))
     else:
@@ -164,7 +187,7 @@ def _next(request: HttpRequest, occurrence: Occurrence) -> str:
     return reverse("occurrence_detail", args=[occurrence.pk])
 
 
-# Termin leiten (Abteilungsleitung, begleitende Übungsleiter)
+# Termin leiten (Abteilungsleitung, Team des Termins)
 
 
 def _lead_occurrence(request: HttpRequest, pk: int) -> Occurrence:
@@ -213,64 +236,71 @@ def occurrence_cancel(request: HttpRequest, pk: int) -> HttpResponse:
 
 @require_POST
 @login_required
-def occurrence_staff(request: HttpRequest, pk: int) -> HttpResponse:
-    """Team eines Termins: Begleiter ändern beliebige Einträge, Übungsleiter tragen sich selbst ein."""
-    occurrence = get_object_or_404(Occurrence, pk=pk)
+def occurrence_team(request: HttpRequest, pk: int) -> HttpResponse:
+    """Team eines Termins: wer den Termin leitet, trägt beliebige Mitglieder ein; sonst trägt man sich selbst ein."""
+    occurrence = get_object_or_404(Occurrence.objects.select_related("event"), pk=pk)
     user = _user(request)
-    if services.can_lead(user, occurrence):
-        form = StaffForm(request.POST, trainers=services.trainers())
+    if services.can_lead(user, occurrence) and "member" in request.POST:
+        form = _team_form(occurrence.event, request.POST)
         if not form.is_valid():
             _errors(request, form)
             return redirect("occurrence_detail", pk=pk)
-        target, function = form.cleaned_data["user"], form.cleaned_data["function"]
-    elif services.is_trainer(user):
-        target, function = user, request.POST.get("function", StaffFunction.CO_TRAINER)
-        if function not in StaffFunction.values:
-            raise PermissionDenied
+        member, role = form.cleaned_data["member"], form.cleaned_data["role"]
     else:
-        raise PermissionDenied
+        member = services.own_member(user)
+        role = ParticipantRole.objects.filter(pk=request.POST.get("role", 0), is_team=True).first()
+        if member is None or role is None:
+            raise PermissionDenied
     try:
-        services.set_staffing(occurrence, target, function)
-    except ValueError as error:
+        services.set_team(occurrence, member, role, user)
+    except RegistrationError as error:
         messages.error(request, str(error))
     else:
-        messages.success(request, f"{target.display_name} ist als {StaffFunction(function).label} eingetragen.")
+        messages.success(request, f"{member.display_name} ist als {role.name} eingetragen.")
     return redirect("occurrence_detail", pk=pk)
 
 
 @require_POST
 @login_required
-def occurrence_staff_remove(request: HttpRequest, pk: int, staffing_pk: int) -> HttpResponse:
-    staffing = get_object_or_404(
-        Staffing.objects.select_related("occurrence", "user"), pk=staffing_pk, occurrence_id=pk
+def occurrence_team_remove(request: HttpRequest, pk: int, participation_pk: int) -> HttpResponse:
+    participation = get_object_or_404(
+        Participation.objects.select_related("occurrence", "member", "role"),
+        pk=participation_pk,
+        occurrence_id=pk,
+        role__is_team=True,
     )
     user = _user(request)
-    if staffing.user_id != user.pk and not services.can_lead(user, staffing.occurrence):
+    member = services.own_member(user)
+    is_self = member is not None and participation.member_id == member.pk
+    if not is_self and not services.can_lead(user, participation.occurrence):
         raise PermissionDenied
     try:
-        services.remove_staffing(staffing)
-    except ValueError as error:
+        services.remove_team(participation)
+    except RegistrationError as error:
         messages.error(request, str(error))
     else:
-        messages.success(request, f"{staffing.user.display_name} ist ausgetragen.")
+        messages.success(request, f"{participation.member.display_name} ist ausgetragen.")
     return redirect("occurrence_detail", pk=pk)
 
 
 @require_POST
 @login_required
-def staffing_confirm(request: HttpRequest, pk: int) -> HttpResponse:
-    staffing = get_object_or_404(Staffing.objects.select_related("occurrence"), occurrence_id=pk, user=request.user)
+def hours_confirm(request: HttpRequest, pk: int) -> HttpResponse:
+    member = services.own_member(request.user)
+    participation = get_object_or_404(
+        Participation.objects.select_related("occurrence", "role"), occurrence_id=pk, member=member, role__is_team=True
+    )
     form = ConfirmForm(request.POST)
     if not form.is_valid():
         _errors(request, form)
         return redirect("occurrence_detail", pk=pk)
     try:
-        services.confirm(staffing, form.cleaned_data["minutes"])
-    except ValueError as error:
+        services.confirm(participation, form.cleaned_data["minutes"])
+    except RegistrationError as error:
         messages.error(request, str(error))
     else:
-        messages.success(request, "Danke, deine Begleitung ist bestätigt.")
-    return redirect(_next(request, staffing.occurrence))
+        messages.success(request, "Danke, deine Stunden sind bestätigt.")
+    return redirect(_next(request, participation.occurrence))
 
 
 @login_required
@@ -300,26 +330,24 @@ def participant_add(request: HttpRequest, pk: int) -> HttpResponse:
 
 @require_POST
 @login_required
-def participant_remove(request: HttpRequest, pk: int, registration_pk: int) -> HttpResponse:
+def participant_remove(request: HttpRequest, pk: int, participation_pk: int) -> HttpResponse:
     occurrence = _lead_occurrence(request, pk)
-    registration = get_object_or_404(Registration, pk=registration_pk, occurrence=occurrence)
-    services.unregister(registration, _user(request), force=True)
-    messages.success(request, f"{registration.member.display_name} ist abgemeldet.")
+    participation = get_object_or_404(Participation, pk=participation_pk, occurrence=occurrence, role__is_team=False)
+    services.unregister(participation, _user(request), force=True)
+    messages.success(request, f"{participation.member.display_name} ist abgemeldet.")
     return redirect("occurrence_detail", pk=pk)
 
 
-# Meine Einsätze (Übungsleiter)
+# Meine Stunden (Team)
 
 
-@role_required(Role.TRAINER)
-def my_staffings(request: HttpRequest) -> HttpResponse:
+@login_required
+def my_hours(request: HttpRequest) -> HttpResponse:
+    if not services.can_join_team(request.user):
+        raise PermissionDenied
     services.ensure_generated()
-    coming, past = services.own_staffings(_user(request))
-    return render(
-        request,
-        "events/my_staffings.html",
-        {"coming": coming, "past": past, "now": timezone.now()},
-    )
+    coming, past = services.own_team(_user(request))
+    return render(request, "events/my_hours.html", {"coming": coming, "past": past, "now": timezone.now()})
 
 
 # Veranstaltungen verwalten
@@ -336,7 +364,7 @@ def event_list(request: HttpRequest) -> HttpResponse:
     services.ensure_generated()
     now = timezone.now()
     rows = []
-    for event in Event.objects.prefetch_related("target_groups", "schedules"):
+    for event in Event.objects.select_related("event_type").prefetch_related("target_groups", "schedules"):
         upcoming = event.occurrences.filter(ends_at__gte=now, cancelled_at__isnull=True).first()
         rows.append((event, upcoming))
     return render(
@@ -349,15 +377,19 @@ def event_list(request: HttpRequest) -> HttpResponse:
 @login_required
 def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
     _plan_staff(request)
-    event = get_object_or_404(Event.objects.prefetch_related("target_groups", "staff__user"), pk=pk)
+    event = get_object_or_404(Event.objects.select_related("event_type").prefetch_related("target_groups"), pk=pk)
     services.ensure_generated()
-    occurrences = event.occurrences.filter(ends_at__gte=timezone.now()).prefetch_related("staffings__user")[:20]
+    occurrences = event.occurrences.filter(ends_at__gte=timezone.now()).prefetch_related(
+        "participations__role", "participations__member"
+    )[:20]
+    schedules = list(event.schedules.prefetch_related("team__member", "team__role"))
+    for schedule in schedules:
+        schedule.team_form = _team_form(event, prefix=f"s{schedule.pk}")  # type: ignore[attr-defined]
     context = {
         "event": event,
-        "schedules": event.schedules.all(),
+        "schedules": schedules,
         "occurrences": occurrences,
         "can_manage": services.can_manage_events(request.user),
-        "staff_form": StaffForm(trainers=services.trainers()),
         "cancel_form": CancelRangeForm(),
     }
     return render(request, "events/event_detail.html", context)
@@ -378,8 +410,8 @@ def event_edit(request: HttpRequest, pk: int | None = None) -> HttpResponse:
 @role_required(*MANAGE_EVENTS)
 def event_delete(request: HttpRequest, pk: int) -> HttpResponse:
     event = get_object_or_404(Event, pk=pk)
-    if Staffing.objects.filter(occurrence__event=event, confirmed_at__isnull=False).exists():
-        messages.error(request, "Die Veranstaltung hat bestätigte Begleitungen und bleibt für die Abrechnung erhalten.")
+    if Participation.objects.filter(occurrence__event=event, confirmed_at__isnull=False).exists():
+        messages.error(request, "Die Veranstaltung hat bestätigte Stunden und bleibt für die Abrechnung erhalten.")
         return redirect("event_detail", pk=pk)
     event.delete()
     messages.success(request, f"„{event.title}“ gelöscht.")
@@ -429,9 +461,8 @@ def occurrence_create(request: HttpRequest, pk: int) -> HttpResponse:
         occurrence = form.save(commit=False)
         occurrence.event = event
         occurrence.save()
-        services.add_default_staff(occurrence)
-        messages.success(request, "Termin angelegt.")
-        return redirect("event_detail", pk=event.pk)
+        messages.success(request, "Termin angelegt. Trag hier das Team ein.")
+        return redirect("occurrence_detail", pk=occurrence.pk)
     return render(request, "events/occurrence_edit.html", {"form": form, "event": event, "occurrence": None})
 
 
@@ -450,30 +481,105 @@ def event_cancel_range(request: HttpRequest, pk: int) -> HttpResponse:
 
 @require_POST
 @login_required
-def event_staff(request: HttpRequest, pk: int) -> HttpResponse:
+def schedule_team(request: HttpRequest, pk: int, schedule_pk: int) -> HttpResponse:
     _plan_staff(request)
-    event = get_object_or_404(Event, pk=pk)
-    form = StaffForm(request.POST, trainers=services.trainers())
+    schedule = get_object_or_404(Schedule.objects.select_related("event"), pk=schedule_pk, event_id=pk)
+    form = _team_form(schedule.event, request.POST, prefix=f"s{schedule.pk}")
     if not form.is_valid():
         _errors(request, form)
     else:
         try:
-            services.set_default_staff(event, form.cleaned_data["user"], form.cleaned_data["function"])
-        except ValueError as error:
+            services.set_schedule_team(schedule, form.cleaned_data["member"], form.cleaned_data["role"])
+        except RegistrationError as error:
             messages.error(request, str(error))
         else:
-            messages.success(request, "Standard-Team gespeichert; kommende Termine übernehmen es.")
+            messages.success(request, f"Standard-Team für „{schedule}“ gespeichert; kommende Termine übernehmen es.")
     return redirect("event_detail", pk=pk)
 
 
 @require_POST
 @login_required
-def event_staff_remove(request: HttpRequest, pk: int, staff_pk: int) -> HttpResponse:
+def schedule_team_remove(request: HttpRequest, pk: int, schedule_pk: int, entry_pk: int) -> HttpResponse:
     _plan_staff(request)
-    staff = get_object_or_404(EventStaff.objects.select_related("user"), pk=staff_pk, event_id=pk)
-    services.remove_default_staff(staff)
-    messages.success(request, f"{staff.user.display_name} ist nicht mehr im Standard-Team.")
+    entry = get_object_or_404(
+        ScheduleTeam.objects.select_related("member", "schedule"),
+        pk=entry_pk,
+        schedule_id=schedule_pk,
+        schedule__event_id=pk,
+    )
+    services.remove_schedule_team(entry)
+    messages.success(request, f"{entry.member.display_name} ist nicht mehr im Standard-Team.")
     return redirect("event_detail", pk=pk)
+
+
+# Veranstaltungsarten und Rollen
+
+
+@role_required(*MANAGE_EVENTS)
+def event_type_list(request: HttpRequest) -> HttpResponse:
+    types = EventType.objects.annotate(count=Count("events"))
+    return render(request, "events/event_type_list.html", {"types": types})
+
+
+@role_required(*MANAGE_EVENTS)
+def event_type_edit(request: HttpRequest, pk: int | None = None) -> HttpResponse:
+    event_type = get_object_or_404(EventType, pk=pk) if pk else None
+    form = EventTypeForm(request.POST or None, instance=event_type)
+    if request.method == "POST" and form.is_valid():
+        event_type = form.save()
+        messages.success(request, f"Veranstaltungsart „{event_type.name}“ gespeichert.")
+        return redirect("event_type_list")
+    return render(request, "events/event_type_edit.html", {"form": form, "event_type": event_type})
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def event_type_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    event_type = get_object_or_404(EventType, pk=pk)
+    if event_type.events.exists() or event_type.roles.exists():
+        messages.error(request, f"„{event_type.name}“ wird noch verwendet. Du kannst die Art deaktivieren.")
+        return redirect("event_type_edit", pk=pk)
+    event_type.delete()
+    messages.success(request, f"Veranstaltungsart „{event_type.name}“ gelöscht.")
+    return redirect("event_type_list")
+
+
+@role_required(*MANAGE_EVENTS)
+def role_list(request: HttpRequest) -> HttpResponse:
+    roles = ParticipantRole.objects.prefetch_related("event_types")
+    restricted = {value for role in roles if role.is_team for value in role.user_roles}
+    return render(
+        request,
+        "events/role_list.html",
+        {"roles": roles, "without_member": services.users_without_member(restricted)},
+    )
+
+
+@role_required(*MANAGE_EVENTS)
+def role_edit(request: HttpRequest, pk: int | None = None) -> HttpResponse:
+    role = get_object_or_404(ParticipantRole, pk=pk) if pk else None
+    form = ParticipantRoleForm(request.POST or None, instance=role)
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            if form.cleaned_data["is_default"]:
+                others = ParticipantRole.objects.filter(is_default=True)
+                (others.exclude(pk=role.pk) if role else others).update(is_default=False)
+            role = form.save()
+        messages.success(request, f"Rolle „{role.name}“ gespeichert.")
+        return redirect("role_list")
+    return render(request, "events/role_edit.html", {"form": form, "role": role})
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def role_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    role = get_object_or_404(ParticipantRole, pk=pk)
+    if role.is_default or role.participations.exists() or ScheduleTeam.objects.filter(role=role).exists():
+        messages.error(request, f"„{role.name}“ wird noch verwendet. Du kannst die Rolle deaktivieren.")
+        return redirect("role_edit", pk=pk)
+    role.delete()
+    messages.success(request, f"Rolle „{role.name}“ gelöscht.")
+    return redirect("role_list")
 
 
 # Zielgruppen

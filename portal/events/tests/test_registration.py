@@ -8,11 +8,11 @@ from django.core import mail
 from django.utils import timezone
 
 from portal.events import services
-from portal.events.models import Event, RegistrationStatus, TargetGroup
+from portal.events.models import Event, ParticipationStatus, TargetGroup
 from portal.events.services import RegistrationError
 from portal.members.models import LinkKind, MemberLink
 
-from .conftest import make_member, make_occurrence, make_user
+from .conftest import event_type, make_member, make_occurrence, make_user
 
 pytestmark = pytest.mark.django_db
 
@@ -20,11 +20,11 @@ pytestmark = pytest.mark.django_db
 def test_register_and_unregister(child, parent):
     occurrence = make_occurrence()
     registration = services.register(occurrence, child, parent, note="komme später")
-    assert registration.status == RegistrationStatus.REGISTERED
+    assert registration.status == ParticipationStatus.REGISTERED
     assert registration.registered_by == parent
     services.unregister(registration, parent)
-    assert registration.status == RegistrationStatus.CANCELLED
-    assert services.register(occurrence, child, parent).status == RegistrationStatus.REGISTERED
+    assert registration.status == ParticipationStatus.CANCELLED
+    assert services.register(occurrence, child, parent).status == ParticipationStatus.REGISTERED
 
 
 def test_target_group_blocks_registration(child, parent):
@@ -39,16 +39,18 @@ def test_exception_ignores_target_group_window_and_capacity(child, trainer):
     event.target_groups.set([TargetGroup.objects.create(name="Erwachsene", min_age=18)])
     occurrence = make_occurrence(event, in_days=-0.01)
     registration = services.register(occurrence, child, trainer, exception=True)
-    assert registration.status == RegistrationStatus.REGISTERED
+    assert registration.status == ParticipationStatus.REGISTERED
     assert registration.exception_by == trainer
 
 
 def test_fixed_registration_window(child, parent):
     now = timezone.now()
-    event = Event.objects.create(
-        title="Wettkampf", registration_opens_at=now + timedelta(days=1), registration_closes_at=now + timedelta(days=5)
+    occurrence = make_occurrence(
+        Event.objects.create(title="Wettkampf"),
+        in_days=10,
+        registration_opens_at=now + timedelta(days=1),
+        registration_closes_at=now + timedelta(days=5),
     )
-    occurrence = make_occurrence(event, in_days=10)
     assert services.window(occurrence) == "before"
     with pytest.raises(RegistrationError, match="öffnet am"):
         services.register(occurrence, child, parent)
@@ -56,30 +58,16 @@ def test_fixed_registration_window(child, parent):
     assert services.window(occurrence, now + timedelta(days=6)) == "closed"
 
 
-def test_relative_registration_window(child, parent):
-    event = Event.objects.create(title="Training", opens_days_before=7, closes_hours_before=2)
-    later = make_occurrence(event, in_days=8)
-    soon = make_occurrence(event, in_days=0.05)  # in gut einer Stunde
-    middle = make_occurrence(event, in_days=3)
-    assert services.window(later) == "before"
-    assert services.window(soon) == "closed"
-    assert services.window(middle) == "open"
-    assert services.register(middle, child, parent).status == RegistrationStatus.REGISTERED
-    with pytest.raises(RegistrationError, match="geschlossen"):
-        services.register(soon, child, parent)
-
-
 def test_no_unregister_after_deadline_except_force(child, parent, trainer):
     event = Event.objects.create(title="Wettkampf")
     occurrence = make_occurrence(event)
     registration = services.register(occurrence, child, parent)
-    event.registration_closes_at = timezone.now() - timedelta(minutes=1)
-    event.save()
-    registration.occurrence.refresh_from_db()
+    occurrence.registration_closes_at = timezone.now() - timedelta(minutes=1)
+    occurrence.save()
     with pytest.raises(RegistrationError, match="Anmeldeschluss"):
         services.unregister(registration, parent)
     services.unregister(registration, trainer, force=True)
-    assert registration.status == RegistrationStatus.CANCELLED
+    assert registration.status == ParticipationStatus.CANCELLED
 
 
 def test_cancelled_occurrence_blocks(child, parent):
@@ -93,14 +81,14 @@ def test_waitlist_and_promotion_with_mail(child, parent, django_capture_on_commi
     other_parent = make_user("zwei@example.org")
     other = make_member("Ben", age=10)
     MemberLink.objects.create(user=other_parent, member=other, kind=LinkKind.GUARDIAN)
-    occurrence = make_occurrence(Event.objects.create(title="Lehrgang", kind="course", capacity=1))
+    occurrence = make_occurrence(Event.objects.create(title="Lehrgang", event_type=event_type("Lehrgang"), capacity=1))
     first = services.register(occurrence, child, parent)
     second = services.register(occurrence, other, other_parent)
-    assert second.status == RegistrationStatus.WAITLIST
+    assert second.status == ParticipationStatus.WAITLIST
     with django_capture_on_commit_callbacks(execute=True):
         services.unregister(first, parent)
     second.refresh_from_db()
-    assert second.status == RegistrationStatus.REGISTERED
+    assert second.status == ParticipationStatus.REGISTERED
     assert [m.to for m in mail.outbox] == [[other_parent.email]]
     assert "Nachgerückt" in mail.outbox[0].subject
 

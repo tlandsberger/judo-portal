@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Veranstaltungsarten{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{% url 'event_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Veranstaltungen</a>
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div><h1 class="text-3xl font-bold">Veranstaltungsarten</h1><p class="mt-1 text-base-content/70">Training, Wettkampf, Lehrgang … Rollen lassen sich auf bestimmte Arten beschränken.</p></div>
+    <a class="btn btn-primary" href="{% url 'event_type_create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Art anlegen</a>
+  </div>
+  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-arten"><div class="card-body">
+    <h2 class="card-title" id="h-arten">{{ types|length }} Veranstaltungsart{{ types|length|pluralize:"en" }}</h2>
+    <ul class="list">
+      {% for event_type in types %}
+      <li class="list-row items-center px-0">
+        <div class="list-col-grow">
+          <a class="link link-hover font-semibold" href="{% url 'event_type_edit' event_type.pk %}">{{ event_type.name }}</a>
+          <div class="text-sm text-base-content/70">{{ event_type.count }} Veranstaltung{{ event_type.count|pluralize:"en" }}{% if not event_type.is_active %} · inaktiv{% endif %}</div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div></section>
+</div>
+{% endblock %}

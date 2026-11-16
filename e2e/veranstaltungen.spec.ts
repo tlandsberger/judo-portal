@@ -10,54 +10,62 @@ import {
 } from "./helpers";
 
 const PARENT = { email: "eltern-wk@test.local", password: "Sicher-Eltern-456" };
-const TRAINER = { email: "anna@test.local", password: "Sicher-Trainer-789" };
+const TRAINER = { email: "clara@test.local", password: "Sicher-Trainer-789" };
 
-test("Wettkampf anlegen, Kind mit Gewicht anmelden, Übungsleiter sieht Teilnehmer und bestätigt", async ({ browser }) => {
+test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sieht Teilnehmer und bestätigt Stunden", async ({ browser }) => {
   const admin = await (await browser.newContext({ storageState: ADMIN_STATE })).newPage();
   await importMembers(admin);
   await ensureYouthGroup(admin);
   await expect(admin.getByText("Passen heute: 3")).toBeVisible();
 
-  // Übungsleiterin einladen
+  // Übungsleiterin einladen und mit ihrem Mitgliedsprofil verknüpfen (Voraussetzung für Team-Rollen)
   await admin.goto("/verwaltung/benutzer/einladen/");
   await admin.getByLabel("E-Mail").fill(TRAINER.email);
-  await admin.getByLabel("Vorname").fill("Anna");
-  await admin.getByLabel("Nachname").fill("Trainer");
+  await admin.getByLabel("Vorname").fill("Clara");
+  await admin.getByLabel("Nachname").fill("Clever");
   await admin.getByLabel("Übungsleiter").check();
   await admin.getByRole("button", { name: "Einladung senden" }).click();
   const trainerContext = await browser.newContext();
   const trainer = await trainerContext.newPage();
   await acceptInvitation(trainer, TRAINER.email);
   await setPassword(trainer, TRAINER.password);
+  await admin.goto("/mitglieder/");
+  await admin.getByRole("link", { name: "Clever, Clara" }).click();
+  await admin.getByLabel("Clara selbst").check();
+  await admin.getByRole("button", { name: "Zugang geben" }).click();
+  await expect(admin.getByText("Eigenes Profil · clara@test.local")).toBeVisible();
 
-  // Veranstaltung mit Zielgruppe und Pflichtgewicht, Standard-Team, ein kommender und ein vergangener Termin
+  // Rollen: Trainer gibt es bei Lehrgängen, abrechnungsrelevant
+  await admin.goto("/rollen/");
+  await expect(admin.getByRole("link", { name: "Co-Trainer" })).toBeVisible();
+  await expectNoA11yViolations(admin);
+
+  // Lehrgang mit Zielgruppe und Pflichtgewicht, ein kommender und ein vergangener Termin, Team je Termin
   await admin.goto("/veranstaltungen/neu/");
-  await admin.getByLabel("Titel").fill("Kinderwettkampf");
-  await admin.getByLabel("Art").selectOption({ label: "Wettkampf" });
+  await admin.getByLabel("Titel").fill("Randori-Lehrgang");
+  await admin.getByLabel("Art").selectOption({ label: "Lehrgang" });
   await admin.getByLabel("Kinder und Jugend").check();
   await admin.getByLabel("Gewicht bei Anmeldung erforderlich").check();
   await expectNoA11yViolations(admin);
   await admin.getByRole("button", { name: "Speichern" }).click();
-  await expect(admin.getByRole("heading", { level: 1, name: "Kinderwettkampf" })).toBeVisible();
-  await admin.getByLabel("Übungsleiter").selectOption({ label: "Anna Trainer" });
-  await admin.getByRole("button", { name: "Ins Standard-Team" }).click();
+  await expect(admin.getByRole("heading", { level: 1, name: "Randori-Lehrgang" })).toBeVisible();
+  const eventUrl = admin.url();
   for (const [days, time] of [
     [10, "10:00"],
     [-1, "10:00"],
   ] as const) {
     await admin.getByRole("link", { name: "Termin", exact: true }).click();
-    await admin.getByLabel("Beginn").fill(localDateTime(days, time));
-    await admin.getByLabel("Ende").fill(localDateTime(days, "14:00"));
+    await admin.getByLabel("Beginn", { exact: true }).fill(localDateTime(days, time));
+    await admin.getByLabel("Ende", { exact: true }).fill(localDateTime(days, "14:00"));
     await admin.getByRole("button", { name: "Speichern" }).click();
-    await expect(admin.getByText("Termin angelegt.")).toBeVisible();
+    await expect(admin.getByText("Termin angelegt. Trag hier das Team ein.")).toBeVisible();
+    await admin.getByLabel("Mitglied").selectOption({ label: "Clara Clever" });
+    await admin.getByLabel("Rolle").selectOption({ label: "Trainer" });
+    await admin.getByRole("button", { name: "Eintragen oder Rolle ändern" }).click();
+    await expect(admin.getByText("Clara Clever ist als Trainer eingetragen.")).toBeVisible();
+    await expectNoA11yViolations(admin);
+    await admin.goto(eventUrl);
   }
-  await expectNoA11yViolations(admin);
-
-  // Beide Termine übernehmen das Standard-Team
-  await admin.goto("/termine/");
-  await admin.getByRole("link", { name: "Kinderwettkampf" }).click();
-  await expect(admin.getByText("Anna Trainer (Trainer)")).toBeVisible();
-  await expectNoA11yViolations(admin);
 
   // Elternteil für Mia einladen
   await admin.goto("/mitglieder/");
@@ -75,7 +83,7 @@ test("Wettkampf anlegen, Kind mit Gewicht anmelden, Übungsleiter sieht Teilnehm
   await expect(parent.getByRole("heading", { name: "Nächste Termine" })).toBeVisible();
   await parent.goto("/termine/");
   await expectNoA11yViolations(parent);
-  await parent.getByRole("link", { name: /Mia für Kinderwettkampf am .* anmelden/ }).click();
+  await parent.getByRole("link", { name: /Mia für Randori-Lehrgang am .* anmelden/ }).click();
   await expect(parent.getByLabel("Gewicht (kg)")).not.toHaveValue("");
   await parent.getByLabel("Gewicht (kg)").fill("26,1");
   await parent.getByLabel("Hinweis").fill("kommt mit dem Bus");
@@ -89,19 +97,19 @@ test("Wettkampf anlegen, Kind mit Gewicht anmelden, Übungsleiter sieht Teilnehm
   await expect(parent.getByText("26,1 kg")).toBeVisible();
   await parentContext.close();
 
-  // Übungsleiterin: Teilnehmer mit Notfallkontakt, Begleitung des vergangenen Termins bestätigen
-  await trainer.goto("/einsaetze/");
+  // Trainerin: Teilnehmer mit Notfallkontakt, Stunden des vergangenen Termins bestätigen
+  await trainer.goto("/stunden/");
   await expectNoA11yViolations(trainer);
-  await trainer.getByRole("region", { name: "Kommende" }).getByRole("link", { name: "Kinderwettkampf" }).click();
+  await trainer.getByRole("region", { name: "Kommende" }).getByRole("link", { name: "Randori-Lehrgang" }).click();
   await expect(trainer.getByRole("heading", { name: "Teilnehmer (1)" })).toBeVisible();
   await expect(trainer.getByText("„kommt mit dem Bus“")).toBeVisible();
   await expect(trainer.getByRole("link", { name: PARENT.email })).toBeVisible();
   await expectNoA11yViolations(trainer);
   // Mitglieder sieht sie sonst nicht
   expect((await trainer.goto("/mitglieder/"))?.status()).toBe(403);
-  await trainer.goto("/einsaetze/");
-  await trainer.getByRole("button", { name: /Kinderwettkampf am .* bestätigen/ }).click();
-  await expect(trainer.getByText("Danke, deine Begleitung ist bestätigt.")).toBeVisible();
+  await trainer.goto("/stunden/");
+  await trainer.getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
+  await expect(trainer.getByText("Danke, deine Stunden sind bestätigt.")).toBeVisible();
   await expect(trainer.getByText("bestätigt · 240 Min.")).toBeVisible();
   await expectNoA11yViolations(trainer);
   await trainerContext.close();

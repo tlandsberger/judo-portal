@@ -1,4 +1,4 @@
-"""Veranstaltungen, Termine, Anmeldungen und Begleitung durch Übungsleiter (ADR 0010)."""
+"""Veranstaltungen, Termine und Teilnahme mit Rollen (Teilnehmer, Trainer, Co-Trainer …), ADR 0010 und 0012."""
 
 from __future__ import annotations
 
@@ -75,19 +75,34 @@ def _range(label: str, low: object, high: object, unit: str = "") -> str:
     return f"{label} bis {fmt(high)}{unit}"
 
 
-class EventKind(models.TextChoices):
-    TRAINING = "training", "Training"
-    COMPETITION = "competition", "Wettkampf"
-    COURSE = "course", "Lehrgang"
-    EXAM = "exam", "Prüfung"
-    OTHER = "other", "Sonstiges"
+class EventType(models.Model):
+    """Veranstaltungsart (Training, Wettkampf …), pflegt die Abteilungsleitung."""
+
+    name = models.CharField("Name", max_length=60, unique=True)
+    order = models.PositiveSmallIntegerField("Reihenfolge", default=0)
+    is_active = models.BooleanField("Aktiv", default=True, help_text="Inaktive Arten stehen nicht mehr zur Auswahl.")
+
+    class Meta:
+        verbose_name = "Veranstaltungsart"
+        verbose_name_plural = "Veranstaltungsarten"
+        ordering = ("order", "name")
+
+    def __str__(self) -> str:
+        return self.name
+
+
+def default_event_type() -> int | None:
+    first = EventType.objects.filter(is_active=True).order_by("order", "name").first()
+    return first.pk if first else None
 
 
 class Event(models.Model):
     """Das „Was“: Training, Wettkampf … Termine entstehen aus Zeitplänen oder werden von Hand ergänzt."""
 
     title = models.CharField("Titel", max_length=120)
-    kind = models.CharField("Art", max_length=12, choices=EventKind.choices, default=EventKind.TRAINING)
+    event_type = models.ForeignKey(
+        EventType, on_delete=models.PROTECT, related_name="events", verbose_name="Art", default=default_event_type
+    )
     description = models.TextField("Beschreibung", blank=True)
     location = models.CharField("Ort", max_length=120, blank=True)
     target_groups = models.ManyToManyField(
@@ -105,14 +120,6 @@ class Event(models.Model):
     )
     weight_required = models.BooleanField(
         "Gewicht bei Anmeldung erforderlich", default=False, help_text="Zum Beispiel für Wettkämpfe."
-    )
-    registration_opens_at = models.DateTimeField("Anmeldung ab", null=True, blank=True)
-    registration_closes_at = models.DateTimeField("Anmeldeschluss", null=True, blank=True)
-    opens_days_before = models.PositiveSmallIntegerField(
-        "Anmeldung öffnet (Tage vorher)", null=True, blank=True, help_text="Für wiederkehrende Termine."
-    )
-    closes_hours_before = models.PositiveSmallIntegerField(
-        "Anmeldung schließt (Stunden vorher)", null=True, blank=True, help_text="Für wiederkehrende Termine."
     )
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
@@ -144,6 +151,12 @@ class Schedule(models.Model):
     end_time = models.TimeField("Ende")
     valid_from = models.DateField("Gültig ab")
     valid_until = models.DateField("Gültig bis", null=True, blank=True, help_text="Leer heißt: bis auf Weiteres.")
+    opens_hours_before = models.PositiveSmallIntegerField(
+        "Anmeldung öffnet (Stunden vorher)", null=True, blank=True, help_text="Leer heißt: sofort."
+    )
+    closes_hours_before = models.PositiveSmallIntegerField(
+        "Anmeldung schließt (Stunden vorher)", null=True, blank=True, help_text="Leer heißt: zum Beginn."
+    )
     generated_until = models.DateField(null=True, blank=True, editable=False)
 
     class Meta:
@@ -164,6 +177,10 @@ class Occurrence(models.Model):
     ends_at = models.DateTimeField("Ende")
     location = models.CharField("Abweichender Ort", max_length=120, blank=True)
     note = models.CharField("Hinweis", max_length=300, blank=True)
+    registration_opens_at = models.DateTimeField("Anmeldung ab", null=True, blank=True, help_text="Leer heißt: sofort.")
+    registration_closes_at = models.DateTimeField(
+        "Anmeldeschluss", null=True, blank=True, help_text="Leer heißt: bis zum Beginn."
+    )
     is_modified = models.BooleanField(default=False, editable=False)
     cancelled_at = models.DateTimeField(null=True, blank=True)
 
@@ -189,35 +206,84 @@ class Occurrence(models.Model):
 
     @property
     def registration_opens(self) -> datetime | None:
-        event = self.event
-        if event.registration_opens_at:
-            return event.registration_opens_at
-        if event.opens_days_before is not None:
-            return self.starts_at - timedelta(days=event.opens_days_before)
-        return None
+        return self.registration_opens_at
 
     @property
     def registration_closes(self) -> datetime:
-        event = self.event
-        if event.registration_closes_at:
-            return event.registration_closes_at
-        if event.closes_hours_before is not None:
-            return self.starts_at - timedelta(hours=event.closes_hours_before)
-        return self.starts_at
+        return self.registration_closes_at or self.starts_at
+
+    def apply_rule(self, schedule: Schedule) -> None:
+        """Anmeldezeitraum aus der Regel des Zeitplans (Stunden vor Beginn)."""
+        opens, closes = schedule.opens_hours_before, schedule.closes_hours_before
+        self.registration_opens_at = self.starts_at - timedelta(hours=opens) if opens is not None else None
+        self.registration_closes_at = self.starts_at - timedelta(hours=closes) if closes is not None else None
 
 
-class RegistrationStatus(models.TextChoices):
+class ParticipantRole(models.Model):
+    """Rolle an einem Termin: Teilnehmer, Trainer, Co-Trainer … pflegt die Abteilungsleitung (ADR 0012)."""
+
+    name = models.CharField("Name", max_length=60, unique=True)
+    order = models.PositiveSmallIntegerField("Reihenfolge", default=0)
+    is_active = models.BooleanField("Aktiv", default=True)
+    event_types = models.ManyToManyField(
+        EventType,
+        verbose_name="Veranstaltungsarten",
+        blank=True,
+        related_name="roles",
+        help_text="Bei welchen Arten die Rolle angeboten wird. Nichts ausgewählt heißt: bei allen.",
+    )
+    user_roles = models.JSONField(
+        "Benutzerrollen",
+        default=list,
+        blank=True,
+        help_text="Wer die Rolle übernehmen darf. Nichts ausgewählt heißt: jedes Mitglied.",
+    )
+    is_team = models.BooleanField(
+        "Team",
+        default=False,
+        help_text="Zählt nicht zur Höchstzahl, sieht die Teilnehmerliste eigener Termine und darf den Termin leiten.",
+    )
+    is_billable = models.BooleanField(
+        "Abrechnungsrelevant",
+        default=False,
+        help_text="Die Stunden werden nach dem Termin bestätigt; Grundlage der Übungsleiterabrechnung.",
+    )
+    is_default = models.BooleanField(
+        "Rolle bei Anmeldung",
+        default=False,
+        help_text="Diese Rolle bekommt, wer sich anmeldet oder angemeldet wird. Genau eine Rolle hat sie.",
+    )
+
+    class Meta:
+        verbose_name = "Rolle"
+        verbose_name_plural = "Rollen"
+        ordering = ("order", "name")
+        constraints = [
+            models.UniqueConstraint(fields=["is_default"], condition=models.Q(is_default=True), name="one_default_role")
+        ]
+
+    def __str__(self) -> str:
+        return self.name
+
+    def get_user_roles_display(self) -> str:
+        from portal.accounts.models import Role
+
+        return ", ".join(str(Role(role).label) for role in self.user_roles if role in Role.values) or "alle Mitglieder"
+
+
+class ParticipationStatus(models.TextChoices):
     REGISTERED = "registered", "Angemeldet"
     WAITLIST = "waitlist", "Warteliste"
     CANCELLED = "cancelled", "Abgemeldet"
 
 
-class Registration(models.Model):
-    """Teilnahme eines Mitglieds an einem Termin."""
+class Participation(models.Model):
+    """Teilnahme eines Mitglieds an einem Termin mit genau einer Rolle (Teilnehmer, Trainer …)."""
 
-    occurrence = models.ForeignKey(Occurrence, on_delete=models.CASCADE, related_name="registrations")
-    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="registrations")
-    status = models.CharField("Status", max_length=10, choices=RegistrationStatus.choices)
+    occurrence = models.ForeignKey(Occurrence, on_delete=models.CASCADE, related_name="participations")
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="participations")
+    role = models.ForeignKey(ParticipantRole, on_delete=models.PROTECT, related_name="participations")
+    status = models.CharField("Status", max_length=10, choices=ParticipationStatus.choices)
     registered_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
@@ -231,63 +297,45 @@ class Registration(models.Model):
     )
     weight = models.DecimalField("Gewicht (kg)", max_digits=4, decimal_places=1, null=True, blank=True)
     note = models.CharField("Hinweis", max_length=200, blank=True)
+    confirmed_at = models.DateTimeField("Bestätigt am", null=True, blank=True)
+    minutes = models.PositiveIntegerField("Dauer (Minuten)", null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Anmeldung"
-        verbose_name_plural = "Anmeldungen"
+        verbose_name = "Teilnahme"
+        verbose_name_plural = "Teilnahmen"
         ordering = ("created_at",)
-        constraints = [models.UniqueConstraint(fields=["occurrence", "member"], name="registration_unique")]
+        constraints = [models.UniqueConstraint(fields=["occurrence", "member"], name="participation_unique")]
 
     def __str__(self) -> str:
-        return f"{self.member} – {self.occurrence} ({self.get_status_display()})"
+        return f"{self.member} – {self.occurrence} ({self.role}, {self.get_status_display()})"
 
     @property
     def is_active(self) -> bool:
-        return self.status != RegistrationStatus.CANCELLED
+        return self.status != ParticipationStatus.CANCELLED
 
-
-class StaffFunction(models.TextChoices):
-    TRAINER = "trainer", "Trainer"
-    CO_TRAINER = "co_trainer", "Kotrainer"
-
-
-class EventStaff(models.Model):
-    """Standard-Team einer Veranstaltung; neue Termine übernehmen es."""
-
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="staff")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="event_staff")
-    function = models.CharField("Funktion", max_length=10, choices=StaffFunction.choices)
-
-    class Meta:
-        verbose_name = "Standard-Team"
-        verbose_name_plural = "Standard-Team"
-        ordering = ("function", "user__first_name")
-        constraints = [models.UniqueConstraint(fields=["event", "user"], name="event_staff_unique")]
-
-    def __str__(self) -> str:
-        return f"{self.user} – {self.event} ({self.get_function_display()})"
-
-
-class Staffing(models.Model):
-    """Begleitung eines Termins durch einen Übungsleiter. Grundlage der späteren Übungsleiterabrechnung."""
-
-    occurrence = models.ForeignKey(Occurrence, on_delete=models.CASCADE, related_name="staffings")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="staffings")
-    function = models.CharField("Funktion", max_length=10, choices=StaffFunction.choices)
-    confirmed_at = models.DateTimeField("Bestätigt am", null=True, blank=True)
-    minutes = models.PositiveIntegerField("Dauer (Minuten)", null=True, blank=True)
-
-    class Meta:
-        verbose_name = "Begleitung"
-        verbose_name_plural = "Begleitungen"
-        ordering = ("function", "user__first_name")
-        constraints = [models.UniqueConstraint(fields=["occurrence", "user"], name="staffing_unique")]
-
-    def __str__(self) -> str:
-        return f"{self.user} – {self.occurrence} ({self.get_function_display()})"
+    @property
+    def is_team(self) -> bool:
+        return self.role.is_team
 
     @property
     def is_confirmed(self) -> bool:
         return self.confirmed_at is not None
+
+
+class ScheduleTeam(models.Model):
+    """Standard-Team eines Zeitplans; seine Termine übernehmen es."""
+
+    schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE, related_name="team")
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="schedule_teams")
+    role = models.ForeignKey(ParticipantRole, on_delete=models.PROTECT, related_name="+")
+
+    class Meta:
+        verbose_name = "Standard-Team"
+        verbose_name_plural = "Standard-Team"
+        ordering = ("role__order", "member__first_name")
+        constraints = [models.UniqueConstraint(fields=["schedule", "member"], name="schedule_team_unique")]
+
+    def __str__(self) -> str:
+        return f"{self.member} – {self.schedule} ({self.role})"

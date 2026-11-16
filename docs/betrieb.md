@@ -85,22 +85,25 @@ Einen Elternteil mit mehreren Kindern lädst du nacheinander für jedes Kind ein
 
 ## Veranstaltungen und Termine
 
-Unter **Veranstaltungen** (Abteilungsleitung; Übungsleiter sehen die Liste und planen Teams). Hintergründe in ADR 0010.
+Unter **Veranstaltungen** (Abteilungsleitung; Übungsleiter sehen die Liste und planen Teams). Hintergründe in ADR 0010
+und 0012.
 
 1. **Zielgruppen** anlegen (Veranstaltungen → Zielgruppen), zum Beispiel „U12“ mit „Alter bis 11“. Das Alter zählt nach
    Jahrgang. Die Seite zeigt sofort, wer heute passt.
-2. **Veranstaltung** anlegen: Art, Ort, Zielgruppen, optional Höchstzahl, Anmeldezeitraum und „Gewicht bei Anmeldung
-   erforderlich“.
+2. **Veranstaltung** anlegen: Art, Ort, Zielgruppen, optional Höchstzahl und „Gewicht bei Anmeldung erforderlich“.
+   Arten und Rollen pflegst du unter Veranstaltungen → **Veranstaltungsarten** bzw. **Rollen**.
 3. **Termine:**
-   - Wiederkehrend über einen oder mehrere **Zeitpläne** (Wochentag, Uhrzeit, gültig von–bis). Das Portal legt die
-     Termine bis zu einem Jahr im Voraus an.
-   - Einmalig über **Termin**.
+   - Wiederkehrend über einen oder mehrere **Zeitpläne** (Wochentag, Uhrzeit, gültig von–bis, Anmeldung X bzw. Y
+     Stunden vorher). Das Portal legt die Termine bis zu einem Jahr im Voraus an.
+   - Einmalig über **Termin**, mit Anmeldezeitraum; danach das Team am Termin eintragen.
    - Neue Trainingszeiten: alten Zeitplan mit „Gültig bis“ beenden, neuen anlegen.
-4. **Standard-Team:** Übungsleiter als Trainer oder Kotrainer; kommende Termine übernehmen es.
+4. **Standard-Team** je Zeitplan: Mitglied und Rolle (Trainer, Co-Trainer …); kommende Termine übernehmen es.
+   Übungsleiter brauchen dafür ein **eigenes Mitgliedsprofil** (Mitglied → Zugang geben → „… selbst“). Die Seite
+   „Rollen“ nennt alle, denen es noch fehlt.
 5. **Ferien und Ausfälle:** auf der Veranstaltung „Termine absagen“ mit Zeitraum. Angemeldete und Team bekommen eine
    Mail.
 
-Für Notfälle sehen begleitende Übungsleiter das Telefon des Mitglieds und der Eltern. Eltern tragen ihr Telefon unter
+Für Notfälle sieht das Team eines Termins das Telefon des Mitglieds und der Eltern. Eltern tragen ihr Telefon unter
 **Meine Anmeldung** ein. Die Mails bei Absage und Nachrücken laufen über die normale Mail-Konfiguration; neue
 Umgebungsvariablen gibt es nicht.
 

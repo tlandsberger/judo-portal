@@ -6,11 +6,38 @@ import pytest
 from django.utils import timezone
 
 from portal.accounts.models import Role, User
-from portal.events.models import Event, Occurrence
+from portal.events.models import Event, EventType, Occurrence, ParticipantRole
 from portal.members.models import LinkKind, Member, MemberLink
 from portal.members.tests.conftest import PASSWORD, make_member, make_user, years_ago
 
-__all__ = ["PASSWORD", "make_member", "make_occurrence", "make_user", "years_ago"]
+__all__ = [
+    "PASSWORD",
+    "event_type",
+    "make_member",
+    "make_occurrence",
+    "make_trainer",
+    "make_user",
+    "role",
+    "years_ago",
+]
+
+
+def role(name: str) -> ParticipantRole:
+    """Rollen aus der Migration: Teilnehmer, Trainer, Co-Trainer, Prüfer, Betreuer."""
+    return ParticipantRole.objects.get(name=name)
+
+
+def event_type(name: str) -> EventType:
+    """Arten aus der Migration: Training, Wettkampf, Lehrgang, Prüfung, Sonstiges."""
+    return EventType.objects.get(name=name)
+
+
+def make_trainer(email: str = "anna@example.org", first_name: str = "Anna") -> User:
+    """Übungsleiter mit eigenem Mitgliedsprofil (Voraussetzung für Team-Rollen)."""
+    user = make_user(email, Role.TRAINER)
+    member = make_member(first_name, last_name="Trainer", age=35)
+    MemberLink.objects.create(user=user, member=member, kind=LinkKind.SELF)
+    return user
 
 
 def make_occurrence(
@@ -28,7 +55,7 @@ def head(db) -> User:
 
 @pytest.fixture
 def trainer(db) -> User:
-    return make_user("anna@example.org", Role.TRAINER)
+    return make_trainer()
 
 
 @pytest.fixture

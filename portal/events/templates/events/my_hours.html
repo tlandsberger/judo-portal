@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Meine Stunden{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <h1 class="text-3xl font-bold">Meine Stunden</h1>
+  <p class="mt-1 mb-6 text-base-content/70">Termine, bei denen du im Team bist. Bei Trainer, Co-Trainer und anderen abrechnungsrelevanten Rollen bestätigst du nach dem Termin deine Stunden.</p>
+  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-kommend"><div class="card-body">
+    <h2 class="card-title" id="h-kommend">Kommende</h2>
+    {% if coming %}
+    <ul class="list">{% for p in coming %}{% include "events/_hours.html" %}{% endfor %}</ul>
+    {% else %}<p class="text-base-content/70">Gerade keine Termine im Team geplant.</p>{% endif %}
+  </div></section>
+  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-vergangen"><div class="card-body">
+    <h2 class="card-title" id="h-vergangen">Letzte 90 Tage</h2>
+    {% if past %}
+    <ul class="list">{% for p in past %}{% include "events/_hours.html" %}{% endfor %}</ul>
+    {% else %}<p class="text-base-content/70">Keine Termine im Team.</p>{% endif %}
+  </div></section>
+</div>
+{% endblock %}

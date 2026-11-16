@@ -1,6 +1,6 @@
 # 0010 – Veranstaltungen, Termine und Zielgruppen
 
-- Status: angenommen
+- Status: angenommen, teilweise ersetzt durch ADR 0012 (Teilnahme mit Rollen, Arten, Anmeldezeitraum am Termin)
 - Datum: 2026-11-15
 
 ## Kontext

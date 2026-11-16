@@ -9,13 +9,13 @@ from django.core import mail
 from django.utils import timezone
 
 from portal.events import notices, services
-from portal.events.models import Event, EventKind, RegistrationStatus, StaffFunction, Staffing, TargetGroup
+from portal.events.models import Event, ParticipationStatus, TargetGroup
 from portal.members.models import LinkKind, MemberLink
 from portal.notifications import services as notifications
 from portal.notifications.models import SentNotification
 from portal.notifications.services import Action
 
-from .conftest import make_member, make_occurrence, make_user
+from .conftest import event_type, make_member, make_occurrence, make_user, role
 
 pytestmark = pytest.mark.django_db
 
@@ -32,7 +32,7 @@ def run(django_capture_on_commit_callbacks):
 
 
 def competition(**extra) -> Event:
-    return Event.objects.create(title="Kinderwettkampf", kind=EventKind.COMPETITION, **extra)
+    return Event.objects.create(title="Kinderwettkampf", event_type=event_type("Wettkampf"), **extra)
 
 
 def subjects() -> list[str]:
@@ -49,12 +49,16 @@ def test_registration_open_once_for_matching_members(run, parent, child):
     assert SentNotification.objects.get().key == f"registration_open:{occurrence.pk}:{parent.pk}"
 
 
-def test_registration_open_skips_training_registered_unmatched_and_closed(run, parent, child):
-    make_occurrence(Event.objects.create(title="Training"), in_days=2)
+def test_registration_open_skips_series_registered_unmatched_and_closed(run, parent, child):
+    training = Event.objects.create(title="Training")
+    plan = training.schedules.create(weekday=0, start_time=time(17), end_time=time(18), valid_from=timezone.localdate())
+    make_occurrence(training, in_days=2, schedule=plan)
     adults = competition()
     adults.target_groups.set([TargetGroup.objects.create(name="Erwachsene", min_age=18)])
     make_occurrence(adults, in_days=5)
-    later = make_occurrence(competition(opens_days_before=3), in_days=10)
+    later = make_occurrence(competition(), in_days=10)
+    later.registration_opens_at = later.starts_at - timedelta(days=3)
+    later.save()
     registered = make_occurrence(competition(), in_days=6)
     services.register(registered, child, parent)
     run(notices.notify_registration_open)
@@ -80,21 +84,21 @@ def test_register_button(parent, child):
     token = Action("register", "Anmelden", {"o": occurrence.pk, "m": child.pk}).token(parent)
     result = notifications.run_action(token)
     assert result.ok and "Mia ist für Kinderwettkampf angemeldet" in result.message
-    assert occurrence.registrations.get().status == RegistrationStatus.REGISTERED
+    assert occurrence.participations.get().status == ParticipationStatus.REGISTERED
     # fremdes Kind, Pflichtgewicht, geschlossene Anmeldung
     stranger = make_user("fremd@example.org")
     assert not notifications.run_action(Action("register", "x", {"o": occurrence.pk, "m": child.pk}).token(stranger)).ok
     weighed = make_occurrence(competition(weight_required=True), in_days=10)
     result = notifications.run_action(Action("register", "x", {"o": weighed.pk, "m": child.pk}).token(parent))
     assert not result.ok and result.url.endswith(f"/anmelden/{child.pk}/")
-    closed = make_occurrence(competition(registration_closes_at=timezone.now() - timedelta(hours=1)), in_days=10)
+    closed = make_occurrence(competition(), in_days=10, registration_closes_at=timezone.now() - timedelta(hours=1))
     result = notifications.run_action(Action("register", "x", {"o": closed.pk, "m": child.pk}).token(parent))
     assert not result.ok and "geschlossen" in result.message
 
 
 def test_deadline_reminder(run, parent, child):
     closes = timezone.now() + timedelta(hours=20)
-    occurrence = make_occurrence(competition(registration_closes_at=closes), in_days=10)
+    occurrence = make_occurrence(competition(), in_days=10, registration_closes_at=closes)
     run(notices.notify_registration_open)
     run(notices.notify_deadlines)
     assert subjects() == ["Anmeldung offen: Kinderwettkampf"]  # gerade erst informiert
@@ -107,20 +111,20 @@ def test_deadline_reminder(run, parent, child):
     assert len(mail.outbox) == 2
 
 
-def test_confirm_staffing_reminder_in_the_evening(run, trainer):
+def test_confirm_hours_reminder_in_the_evening(run, trainer):
     day = timezone.localdate() - timedelta(days=1)
     starts = timezone.make_aware(datetime.combine(day, time(17)))
     event = Event.objects.create(title="Training")
     occurrence = event.occurrences.create(starts_at=starts, ends_at=starts + timedelta(hours=1, minutes=30))
-    staffing = Staffing.objects.create(occurrence=occurrence, user=trainer, function=StaffFunction.TRAINER)
-    run(notices.notify_confirm_staffing, now=starts + timedelta(hours=2))  # 19 Uhr: noch nicht
+    team = services.set_team(occurrence, services.own_member(trainer), role("Trainer"))
+    run(notices.notify_confirm_hours, now=starts + timedelta(hours=2))  # 19 Uhr: noch nicht
     assert mail.outbox == []
-    run(notices.notify_confirm_staffing, now=starts + timedelta(hours=3, minutes=5))
-    assert subjects() == ["Begleitung bestätigen"]
-    result = notifications.run_action(Action("confirm", "Bestätigen", {"s": staffing.pk}).token(trainer))
+    run(notices.notify_confirm_hours, now=starts + timedelta(hours=3, minutes=5))
+    assert subjects() == ["Stunden bestätigen"]
+    result = notifications.run_action(Action("confirm", "Bestätigen", {"p": team.pk}).token(trainer))
     assert result.ok and "90 Minuten" in result.message
-    staffing.refresh_from_db()
-    assert staffing.is_confirmed
+    team.refresh_from_db()
+    assert team.is_confirmed
 
 
 def test_confirm_due_for_late_occurrence():
@@ -132,7 +136,7 @@ def test_confirm_due_for_late_occurrence():
 def test_changed_notifies_participants_and_team_but_not_editor(run, parent, child, trainer, head):
     occurrence = make_occurrence(in_days=4)
     services.register(occurrence, child, parent)
-    Staffing.objects.create(occurrence=occurrence, user=trainer, function=StaffFunction.TRAINER)
+    services.set_team(occurrence, services.own_member(trainer), role("Trainer"))
     occurrence.location = "Turnhalle Nord"
     run(services.update_occurrence, occurrence, ["location"], trainer)
     assert sorted(m.to[0] for m in mail.outbox) == [parent.email]
@@ -146,14 +150,14 @@ def test_promoted_button_unregisters(parent, child, django_capture_on_commit_cal
     other_parent = make_user("zwei@example.org")
     other = make_member("Ben")
     MemberLink.objects.create(user=other_parent, member=other, kind=LinkKind.GUARDIAN)
-    occurrence = make_occurrence(Event.objects.create(title="Lehrgang", kind=EventKind.COURSE, capacity=1))
+    occurrence = make_occurrence(Event.objects.create(title="Lehrgang", event_type=event_type("Lehrgang"), capacity=1))
     first = services.register(occurrence, other, other_parent)
     second = services.register(occurrence, child, parent)
     with django_capture_on_commit_callbacks(execute=True):
         services.unregister(first, other_parent)
     assert subjects() == ["Nachgerückt: Lehrgang"]
-    result = notifications.run_action(Action("unregister", "Doch absagen", {"r": second.pk}).token(parent))
+    result = notifications.run_action(Action("unregister", "Doch absagen", {"p": second.pk}).token(parent))
     assert result.ok
     second.refresh_from_db()
-    assert second.status == RegistrationStatus.CANCELLED
-    assert not notifications.run_action(Action("unregister", "x", {"r": second.pk}).token(other_parent)).ok
+    assert second.status == ParticipationStatus.CANCELLED
+    assert not notifications.run_action(Action("unregister", "x", {"p": second.pk}).token(other_parent)).ok

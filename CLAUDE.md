@@ -45,8 +45,10 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
 - **Benutzer und Mitglieder sind getrennt;** Verknüpfungen (eigenes Profil, Erziehungsberechtigt …) sind m:n.
   Sichtbarkeit von Mitgliedern nur über `portal/members/services.py` (`visible_members`, `can_self_edit` …).
   `portal.accounts` kennt die anderen Apps nicht; sie docken über Signale an (`portal/accounts/signals.py`).
-- **Veranstaltungen:** Zielgruppen-Matching, Anmeldung und Rechte (`can_lead`, `can_see_participants`) nur über
-  `portal/events/services.py`. Übungsleiter sehen Mitgliederdaten nur in der Teilnehmerliste eigener Termine.
+- **Veranstaltungen:** Zielgruppen-Matching, Teilnahme mit Rollen und Rechte (`can_take_role`, `can_lead`,
+  `can_see_participants`) nur über `portal/events/services.py`. Eine Teilnahme je Mitglied und Termin; Rollen und
+  Arten sind Daten, keine Konstanten (ADR 0012). Das Team sieht Mitgliederdaten nur in der Teilnehmerliste eigener
+  Termine. Begriffe: „Co-Trainer“, „Stunden bestätigen“.
 - **Benachrichtigungen:** Tägliches nur über `portal.notifications.services.notify` (Push, sonst Mail; Schlüssel je
   Anlass, damit nichts doppelt rausgeht). Einladung, Anmeldecode, Sicherheit des Zugangs und neue Verknüpfungen
   immer direkt per Mail (ADR 0011). Wiederkehrende Jobs über `portal.core.scheduler.register_periodic`.
