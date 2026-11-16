@@ -15,13 +15,13 @@ const TRAINER = { email: "clara@test.local", password: "Sicher-Trainer-789" };
 const PARENTS = { email: "eltern-zwei@test.local", password: "Sicher-Eltern-321" };
 const GUEST = { email: "lena-gast@test.local" };
 
-test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sieht Teilnehmer und bestätigt Stunden", async ({ browser }) => {
+test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trainerin sieht Teilnehmer und bestätigt Stunden", async ({ browser }) => {
   const admin = await (await browser.newContext({ storageState: ADMIN_STATE })).newPage();
   await importMembers(admin);
   await ensureYouthGroup(admin);
   await expect(admin.getByText("Passen heute: 3")).toBeVisible();
 
-  // Übungsleiterin einladen und mit ihrem Mitgliedsprofil verknüpfen (Voraussetzung für Team-Rollen)
+  // Übungsleiterin einladen und mit ihrem Mitgliedsprofil verknüpfen (Voraussetzung für Übungsleiter-Rollen)
   await admin.goto("/verwaltung/benutzer/einladen/");
   await admin.getByLabel("E-Mail").fill(TRAINER.email);
   await admin.getByLabel("Vorname").fill("Clara");
@@ -43,7 +43,7 @@ test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sie
   await expect(admin.getByRole("link", { name: "Co-Trainer" })).toBeVisible();
   await expectNoA11yViolations(admin);
 
-  // Lehrgang mit Zielgruppe, Pflichtgewicht, Termin und Team in einem Schritt
+  // Lehrgang mit Zielgruppe, Pflichtgewicht, Termin und Übungsleiterin in einem Schritt
   await admin.goto("/veranstaltungen/neu/");
   await admin.getByLabel("Titel").fill("Randori-Lehrgang");
   await admin.getByLabel("Art").selectOption({ label: "Lehrgang" });
@@ -63,12 +63,12 @@ test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sie
   await expect(admin.getByText("„Randori-Lehrgang“ angelegt mit 1 Termin.")).toBeVisible();
   await expectNoA11yViolations(admin);
 
-  // Ein weiterer, schon vergangener Termin; das Team kommt am Termin dazu
+  // Ein weiterer, schon vergangener Termin; die Übungsleiterin kommt am Termin dazu
   await admin.getByRole("link", { name: "Termin", exact: true }).click();
   await admin.getByLabel("Beginn", { exact: true }).fill(localDateTime(-1, "10:00"));
   await admin.getByLabel("Ende", { exact: true }).fill(localDateTime(-1, "14:00"));
   await admin.getByRole("button", { name: "Speichern" }).click();
-  await expect(admin.getByText("Termin angelegt. Trag hier das Team ein.")).toBeVisible();
+  await expect(admin.getByText("Termin angelegt. Trag hier die Übungsleiter ein.")).toBeVisible();
   await admin.getByLabel("Mitglied").selectOption({ label: "Clara Clever" });
   await admin.getByLabel("Rolle").selectOption({ label: "Trainer" });
   await admin.getByRole("button", { name: "Eintragen oder Rolle ändern" }).click();

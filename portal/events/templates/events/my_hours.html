@@ -4,18 +4,18 @@
 {% block content %}
 <div class="mx-auto max-w-3xl">
   <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Meine Stunden</h1>{% help_link "stunden" %}</div>
-  <p class="mt-1 mb-6 text-base-content/70">Termine, bei denen du im Team bist. Bei Trainer, Co-Trainer und anderen abrechnungsrelevanten Rollen bestätigst du nach dem Termin deine Stunden; bis zum Einreichen der <a class="link" href="{% url 'billing_index' %}">Abrechnung</a> kannst du die Dauer noch ändern.</p>
+  <p class="mt-1 mb-6 text-base-content/70">Termine, bei denen du als Übungsleiter eingeteilt bist. Bei Trainer, Co-Trainer und anderen abrechnungsrelevanten Rollen bestätigst du nach dem Termin deine Stunden; bis zum Einreichen der <a class="link" href="{% url 'billing_index' %}">Abrechnung</a> kannst du die Dauer noch ändern.</p>
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-kommend"><div class="card-body">
     <h2 class="card-title" id="h-kommend">Kommende</h2>
     {% if coming %}
     <ul class="list">{% for p in coming %}{% include "events/_hours.html" %}{% endfor %}</ul>
-    {% else %}<p class="text-base-content/70">Gerade keine Termine im Team geplant.</p>{% endif %}
+    {% else %}<p class="text-base-content/70">Gerade keine Termine als Übungsleiter geplant.</p>{% endif %}
   </div></section>
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-vergangen"><div class="card-body">
     <h2 class="card-title" id="h-vergangen">Vergangen</h2>
     {% if past %}
     <ul class="list">{% for p in past %}{% include "events/_hours.html" %}{% endfor %}</ul>
-    {% else %}<p class="text-base-content/70">Keine Termine im Team.</p>{% endif %}
+    {% else %}<p class="text-base-content/70">Keine Termine als Übungsleiter.</p>{% endif %}
   </div></section>
 </div>
 {% endblock %}

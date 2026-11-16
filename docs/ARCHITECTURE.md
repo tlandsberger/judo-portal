@@ -47,7 +47,7 @@ Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kom
 | Rolle | Zweck |
 |---|---|
 | Mitglied (`member`) | Grundrolle für Vereinsmitglieder mit eigenem Zugang |
-| Übungsleiter (`trainer`) | Übernimmt über das eigene Mitgliedsprofil Team-Rollen (Trainer, Co-Trainer, Prüfer, Betreuer), plant Teams; sieht Teilnehmer nur bei eigenen Terminen (ADR 0012) |
+| Übungsleiter (`trainer`) | Übernimmt über das eigene Mitgliedsprofil Übungsleiter-Rollen (Trainer, Co-Trainer, Prüfer, Betreuer), teilt sich ein; sieht Teilnehmer nur bei eigenen Terminen (ADR 0012) |
 | Abteilungsleiter (`department_head`) | Verwaltet Benutzer (einladen, Rollen außer Administrator), Mitglieder, Zugänge, Veranstaltungen, Zielgruppen-Vorlagen, Arten und Rollen |
 | Administrator (`admin`) | Technische Rolle: alles, inkl. technischer Verwaltung (Django-Admin unter `/technik/`) |
 

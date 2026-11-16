@@ -40,7 +40,7 @@
 
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zeitplaene"><div class="card-body gap-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <div><h2 class="card-title" id="h-zeitplaene">Zeitpläne</h2><p class="text-sm text-base-content/70">Jeder Zeitplan hat sein Standard-Team; kommende Termine übernehmen es.</p></div>
+      <div><h2 class="card-title" id="h-zeitplaene">Zeitpläne</h2><p class="text-sm text-base-content/70">Jeder Zeitplan hat feste Übungsleiter; kommende Termine übernehmen sie.</p></div>
       {% if can_manage %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'schedule_create' event.pk %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Zeitplan</a>{% endif %}
     </div>
     {% for schedule in schedules %}
@@ -60,17 +60,17 @@
         {% for entry in schedule.team.all %}
         <li class="list-row items-center px-0">
           <div class="list-col-grow"><div class="font-semibold">{{ entry.member.display_name }}</div><div class="text-sm text-base-content/70">{{ entry.role.name }}</div></div>
-          <form method="post" action="{% url 'schedule_team_remove' event.pk schedule.pk entry.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ entry.member.display_name }} aus dem Standard-Team von {{ schedule }} nehmen">Entfernen</button></form>
+          <form method="post" action="{% url 'schedule_team_remove' event.pk schedule.pk entry.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ entry.member.display_name }} bei {{ schedule }} nicht mehr fest einteilen">Entfernen</button></form>
         </li>
         {% endfor %}
       </ul>
-      {% else %}<p class="mt-2 text-sm text-base-content/70">Noch kein Standard-Team.</p>{% endif %}
+      {% else %}<p class="mt-2 text-sm text-base-content/70">Noch keine festen Übungsleiter.</p>{% endif %}
       <form method="post" action="{% url 'schedule_team' event.pk schedule.pk %}" class="mt-2 flex flex-col gap-2">{% csrf_token %}
         <div class="grid gap-x-4 sm:grid-cols-2">{{ schedule.team_form }}</div>
-        <div><button class="btn btn-primary btn-sm" type="submit">Ins Standard-Team</button></div>
+        <div><button class="btn btn-primary btn-sm" type="submit">Fest einteilen</button></div>
       </form>
     </div>
-    {% empty %}<p class="text-base-content/70">Kein Zeitplan – die Veranstaltung hat nur einzelne Termine. Deren Team trägst du am Termin ein.</p>{% endfor %}
+    {% empty %}<p class="text-base-content/70">Kein Zeitplan – die Veranstaltung hat nur einzelne Termine. Die Übungsleiter trägst du am Termin ein.</p>{% endfor %}
   </div></section>
 
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-termine"><div class="card-body gap-4">

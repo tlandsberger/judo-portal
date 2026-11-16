@@ -134,7 +134,7 @@ class Event(models.Model):
     guests_welcome = models.BooleanField(
         "Gäste willkommen",
         default=False,
-        help_text="Externe Gäste melden sich über einen Link an oder werden vom Team eingetragen.",
+        help_text="Externe Gäste melden sich über einen Link an oder werden von den Übungsleitern eingetragen.",
     )
     guest_token = models.CharField(max_length=40, blank=True, editable=False)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
@@ -270,7 +270,7 @@ class ParticipantRole(models.Model):
         help_text="Wer die Rolle übernehmen darf. Nichts ausgewählt heißt: jedes Mitglied.",
     )
     is_team = models.BooleanField(
-        "Team",
+        "Übungsleiter-Rolle",
         default=False,
         help_text="Zählt nicht zur Höchstzahl, sieht die Teilnehmerliste eigener Termine und darf den Termin leiten.",
     )
@@ -432,8 +432,8 @@ class ScheduleTeam(models.Model):
     role = models.ForeignKey(ParticipantRole, on_delete=models.PROTECT, related_name="+")
 
     class Meta:
-        verbose_name = "Standard-Team"
-        verbose_name_plural = "Standard-Team"
+        verbose_name = "Fester Übungsleiter"
+        verbose_name_plural = "Feste Übungsleiter"
         ordering = ("role__order", "member__first_name")
         constraints = [models.UniqueConstraint(fields=["schedule", "member"], name="schedule_team_unique")]
 

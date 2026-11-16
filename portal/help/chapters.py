@@ -58,7 +58,7 @@ class Chapter:
         return f"help/chapters/{self.slug}.html"
 
 
-GROUPS = ("Für alle", "Termine", "Im Team", "Verwaltung")
+GROUPS = ("Für alle", "Termine", "Als Übungsleiter", "Verwaltung")
 
 CHAPTERS = (
     Chapter(
@@ -103,9 +103,9 @@ CHAPTERS = (
     ),
     Chapter(
         "team",
-        "Im Team eines Termins",
+        "Als Übungsleiter am Termin",
         "bi-people",
-        "Im Team",
+        "Als Übungsleiter",
         "Als Trainer oder Co-Trainer eintragen, Teilnehmerliste, Hinweis, Absage, Gäste.",
         _team,
     ),
@@ -113,7 +113,7 @@ CHAPTERS = (
         "stunden",
         "Meine Stunden und Abrechnung",
         "bi-clipboard-check",
-        "Im Team",
+        "Als Übungsleiter",
         "Stunden bestätigen und korrigieren, Monat einreichen, Frist und Rückgabe.",
         _team,
     ),
@@ -130,7 +130,7 @@ CHAPTERS = (
         "Veranstaltungen planen",
         "bi-calendar3",
         "Verwaltung",
-        "Einmalig oder wiederkehrend anlegen, Zielgruppen, Teams, Rollen, Gäste, Absagen.",
+        "Einmalig oder wiederkehrend anlegen, Zielgruppen, Übungsleiter, Rollen, Gäste, Absagen.",
         _manage_events,
     ),
     Chapter(

@@ -86,7 +86,7 @@ Einen Elternteil mit mehreren Kindern lädst du nacheinander für jedes Kind ein
 
 ## Veranstaltungen und Termine
 
-Unter **Veranstaltungen** (Abteilungsleitung; Übungsleiter sehen die Liste und planen Teams). Hintergründe in ADR 0010
+Unter **Veranstaltungen** (Abteilungsleitung; Übungsleiter sehen die Liste und teilen sich ein). Hintergründe in ADR 0010
 und 0012.
 
 1. Optional **Zielgruppen-Vorlagen** anlegen (Veranstaltungen → Zielgruppen-Vorlagen), zum Beispiel „U12“ mit
@@ -94,24 +94,24 @@ und 0012.
 2. **Veranstaltung** anlegen: Art, Ort, Zielgruppen (direkt im Formular oder aus einer Vorlage kopiert), optional
    Höchstzahl und „Gewicht bei Anmeldung erforderlich“.
    Arten und Rollen pflegst du unter Veranstaltungen → **Veranstaltungsarten** bzw. **Rollen**.
-3. **Termine** gleich beim Anlegen, mit optionalem Team (Mitglied und Rolle):
+3. **Termine** gleich beim Anlegen, optional gleich mit einem Übungsleiter (Mitglied und Rolle):
    - **Einmalig:** Beginn, Ende (auch über mehrere Tage) und Anmeldezeitraum.
    - **Wiederkehrend:** Wochentage, Uhrzeit, gültig von–bis, Anmeldung X bzw. Y Stunden vorher. Je Wochentag entsteht
      ein **Zeitplan**; das Portal legt die Termine bis zu einem Jahr im Voraus an.
    - **Später festlegen:** Weitere Zeitpläne und Termine ergänzt du jederzeit auf der Veranstaltung; nach „Termin“
-     trägst du das Team am Termin ein.
+     trägst du die Übungsleiter am Termin ein.
    - Neue Trainingszeiten: alten Zeitplan mit „Gültig bis“ beenden, neuen anlegen.
-4. **Standard-Team** je Zeitplan: Mitglied und Rolle (Trainer, Co-Trainer …); kommende Termine übernehmen es.
+4. **Feste Übungsleiter** je Zeitplan: Mitglied und Rolle (Trainer, Co-Trainer …); kommende Termine übernehmen sie.
    Übungsleiter brauchen dafür ein **eigenes Mitgliedsprofil** (Mitglied → Zugang geben → „… selbst“). Die Seite
    „Rollen“ nennt alle, denen es noch fehlt.
 5. **Gäste:** Mit „Gäste willkommen“ zeigt die Veranstaltung einen **Anmeldelink** zum Teilen (z. B. an andere
    Vereine). Gäste bestätigen ihre Anmeldung per Mail; unbestätigte werden nach 24 Stunden gelöscht, alle Gastdaten
-   90 Tage nach dem letzten Termin. Das Team kann Gäste auch direkt am Termin eintragen („Gast eintragen“). Hintergründe
+   90 Tage nach dem letzten Termin. Die Übungsleiter können Gäste auch direkt am Termin eintragen („Gast eintragen“). Hintergründe
    in ADR 0013.
-6. **Ferien und Ausfälle:** auf der Veranstaltung „Termine absagen“ mit Zeitraum. Angemeldete und Team bekommen eine
+6. **Ferien und Ausfälle:** auf der Veranstaltung „Termine absagen“ mit Zeitraum. Angemeldete und Übungsleiter bekommen eine
    Mail.
 
-Für Notfälle sieht das Team eines Termins das Telefon des Mitglieds und der Eltern. Eltern tragen ihr Telefon unter
+Für Notfälle sehen die Übungsleiter eines Termins das Telefon des Mitglieds und der Eltern. Eltern tragen ihr Telefon unter
 **Meine Anmeldung** ein. Die Mails bei Absage und Nachrücken laufen über die normale Mail-Konfiguration; neue
 Umgebungsvariablen gibt es nicht.
 

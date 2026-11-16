@@ -614,7 +614,7 @@ def set_team(occurrence: Occurrence, member: Member, role: ParticipantRole, by: 
     """Mitglied mit einer Team-Rolle eintragen oder die Rolle wechseln. War es als Teilnehmer angemeldet, wird die
     Teilnahme umgestellt; ein frei gewordener Platz geht an die Warteliste."""
     if not role.is_team:
-        raise RegistrationError(f"{role.name} ist keine Team-Rolle.")
+        raise RegistrationError(f"{role.name} ist keine Übungsleiter-Rolle.")
     if not can_take_role(member, role, occurrence.event):
         raise RegistrationError(f"{member.first_name} kann bei {occurrence.event.title} nicht {role.name} sein.")
     existing = Participation.objects.filter(occurrence=occurrence, member=member).select_related("role").first()
@@ -706,7 +706,7 @@ def unconfirm(participation: Participation, by: User | None = None) -> None:
 
 def _check_absent(participation: Participation) -> None:
     if not participation.role.is_team:
-        raise RegistrationError("Das geht nur für das Team eines Termins.")
+        raise RegistrationError("Das geht nur für die Übungsleiter eines Termins.")
     if participation.occurrence.starts_at > timezone.now():
         raise RegistrationError("Vor dem Termin trägst du dich einfach aus.")
     _check_unlocked(participation)

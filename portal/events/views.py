@@ -239,7 +239,7 @@ def occurrence_cancel(request: HttpRequest, pk: int) -> HttpResponse:
         messages.success(request, "Der Termin findet wieder statt.")
     else:
         services.cancel(occurrence, _user(request))
-        messages.success(request, "Termin abgesagt. Angemeldete und Team bekommen eine Mail.")
+        messages.success(request, "Termin abgesagt. Angemeldete und Übungsleiter bekommen eine Mail.")
     return redirect("occurrence_detail", pk=occurrence.pk)
 
 
@@ -342,7 +342,7 @@ def hours_absent(request: HttpRequest, pk: int) -> HttpResponse:
                 messages.success(request, "Der Termin ist nachträglich abgesagt.")
             else:
                 services.withdraw(participation, user)
-                messages.success(request, "Du bist aus dem Team des Termins ausgetragen.")
+                messages.success(request, "Du bist als Übungsleiter des Termins ausgetragen.")
         except RegistrationError as error:
             messages.error(request, str(error))
         else:
@@ -593,7 +593,7 @@ def occurrence_create(request: HttpRequest, pk: int) -> HttpResponse:
         occurrence = form.save(commit=False)
         occurrence.event = event
         occurrence.save()
-        messages.success(request, "Termin angelegt. Trag hier das Team ein.")
+        messages.success(request, "Termin angelegt. Trag hier die Übungsleiter ein.")
         return redirect("occurrence_detail", pk=occurrence.pk)
     return render(request, "events/occurrence_edit.html", {"form": form, "event": event, "occurrence": None})
 
@@ -625,7 +625,9 @@ def schedule_team(request: HttpRequest, pk: int, schedule_pk: int) -> HttpRespon
         except RegistrationError as error:
             messages.error(request, str(error))
         else:
-            messages.success(request, f"Standard-Team für „{schedule}“ gespeichert; kommende Termine übernehmen es.")
+            messages.success(
+                request, f"Feste Übungsleiter für „{schedule}“ gespeichert; kommende Termine übernehmen sie."
+            )
     return redirect("event_detail", pk=pk)
 
 
@@ -640,7 +642,7 @@ def schedule_team_remove(request: HttpRequest, pk: int, schedule_pk: int, entry_
         schedule__event_id=pk,
     )
     services.remove_schedule_team(entry)
-    messages.success(request, f"{entry.member.display_name} ist nicht mehr im Standard-Team.")
+    messages.success(request, f"{entry.member.display_name} ist nicht mehr fest eingeteilt.")
     return redirect("event_detail", pk=pk)
 
 

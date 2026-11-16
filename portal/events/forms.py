@@ -266,9 +266,11 @@ class EventCreateForm(EventForm):
             if not data.get(name) and name not in self.errors:
                 self.add_error(name, "Bitte ausfüllen.")
         if bool(data.get("team_member")) != bool(data.get("team_role")):
-            self.add_error("team_role", "Für das Team bitte Mitglied und Rolle wählen – oder beides leer lassen.")
+            self.add_error(
+                "team_role", "Für die Übungsleiter bitte Mitglied und Rolle wählen – oder beides leer lassen."
+            )
         if mode == self.LATER and data.get("team_member"):
-            self.add_error("team_member", "Das Team trägst du ein, sobald es Termine gibt.")
+            self.add_error("team_member", "Die Übungsleiter trägst du ein, sobald es Termine gibt.")
         return data
 
 

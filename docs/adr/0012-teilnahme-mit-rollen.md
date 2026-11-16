@@ -3,6 +3,8 @@
 - Status: angenommen
 - Datum: 2026-11-16
 - Ergänzt ADR 0010 und ersetzt dort Anmeldung und Begleitung als getrennte Modelle sowie die festen Arten.
+- Begriff (November 2026): In Oberfläche, Hilfe und Doku heißt das „Team“ inzwischen **„Übungsleiter“**, das
+  Standard-Team „feste Übungsleiter“. Im Code und in diesem ADR bleibt `team`.
 
 ## Kontext
 

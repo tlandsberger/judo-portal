@@ -32,6 +32,9 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
   geht, passt auch „Zugang“. Mitglieder (Vereinsdaten) sind etwas anderes.
 - **„Push-Benachrichtigung“** – nie „Push“ allein oder „Push-Nachricht“; im Code `push_notification` /
   `PushNotification…` (Namen von Bibliotheken und Browser-APIs bleiben).
+- **„Übungsleiter“** für alle, die an einem Termin eine Rolle wie Trainer, Co-Trainer, Prüfer oder Betreuer haben –
+  nie „Team“. Im Code heißt das weiter `team` (`is_team`, `team_role`, `ScheduleTeam`); feste Übungsleiter eines
+  Zeitplans heißen in der Oberfläche „fest eingeteilt“.
 - Passkeys heißen „Passkey“, nicht „Sicherheitsschlüssel“. Texte von allauth und anderen Paketen passen wir über
   `portal/locale/de/LC_MESSAGES/django.po` an (Du-Form, Begriffe wie oben); danach
   `uv run pybabel compile -d portal/locale -D django` und die `.mo` mit committen.
@@ -49,7 +52,7 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
   `portal.accounts` kennt die anderen Apps nicht; sie docken über Signale an (`portal/accounts/signals.py`).
 - **Veranstaltungen:** Zielgruppen-Matching, Teilnahme mit Rollen und Rechte (`can_take_role`, `can_lead`,
   `can_see_participants`) nur über `portal/events/services.py`. Eine Teilnahme je Mitglied und Termin; Rollen und
-  Arten sind Daten, keine Konstanten (ADR 0012). Das Team sieht Mitgliederdaten nur in der Teilnehmerliste eigener
+  Arten sind Daten, keine Konstanten (ADR 0012). Übungsleiter sehen Mitgliederdaten nur in der Teilnehmerliste eigener
   Termine. Begriffe: „Co-Trainer“, „Stunden bestätigen“.
 - **Abrechnung:** Sätze, Monate, Einreichen und Freigabe nur über `portal/billing/services.py` (ADR 0014). Zeilen
   sind Schnappschüsse; Termine eingereichter Monate sperrt `billing` über `events.services.register_lock`.
