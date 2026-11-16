@@ -84,6 +84,7 @@ def test_head_approves_and_downloads(client, trainer, other_trainer, head):
     csv = client.get(month_url("claim_csv", month_ago())).content.decode("utf-8-sig")
     assert csv.splitlines()[1].split(";")[1:3] == ["Trainer", "Anna"]
     assert csv.splitlines()[1].split(";")[4:6] == ["1,50", "22,50"]
+    assert csv.splitlines()[1].split(";")[7] == "nein"
     login(client, trainer)
     assert client.get(reverse("claim_pdf", args=[claim.pk])).status_code == 200
 

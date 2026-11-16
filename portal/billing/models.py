@@ -61,6 +61,9 @@ class Claim(models.Model):
         verbose_name="Entschieden von",
     )
     decided_by_name = models.CharField("Entschieden von (Name)", max_length=200, blank=True)
+    is_late = models.BooleanField(
+        "Verspätet eingereicht", default=False, help_text="Nach der Frist (10. des dritten Folgemonats) eingereicht."
+    )
     feedback = models.TextField("Rückmeldung", blank=True)
     total_minutes = models.PositiveIntegerField("Minuten", default=0)
     total_amount = models.DecimalField("Betrag (€)", max_digits=9, decimal_places=2, default=Decimal("0"))

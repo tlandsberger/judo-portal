@@ -11,7 +11,7 @@
     {% else %}<p class="text-base-content/70">Gerade keine Termine im Team geplant.</p>{% endif %}
   </div></section>
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-vergangen"><div class="card-body">
-    <h2 class="card-title" id="h-vergangen">Letzte vier Monate</h2>
+    <h2 class="card-title" id="h-vergangen">Vergangen</h2>
     {% if past %}
     <ul class="list">{% for p in past %}{% include "events/_hours.html" %}{% endfor %}</ul>
     {% else %}<p class="text-base-content/70">Keine Termine im Team.</p>{% endif %}

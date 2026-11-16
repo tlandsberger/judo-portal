@@ -41,7 +41,7 @@ def render(claim: Claim) -> bytes:
     facts = [
         ("Übungsleiter", claim.member.display_name),
         ("Mitgliedsnummer", claim.member.member_number or "–"),
-        ("Eingereicht am", _when(claim.submitted_at)),
+        ("Eingereicht am", _when(claim.submitted_at) + (" (nach der Frist, Ausnahme)" if claim.is_late else "")),
         ("Freigegeben", f"{_when(claim.decided_at)} von {claim.decided_by_name or '–'}"),
     ]
     for label, value in facts:

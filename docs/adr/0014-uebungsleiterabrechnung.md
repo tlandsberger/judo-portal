@@ -16,10 +16,13 @@ Aufstellung, die die Abteilungsleitung freigegeben hat. Ausgezahlt wird weiterhi
   - Es gilt der Satz, der am Termintag gültig ist.
   - Ohne Satz lässt sich eine Rolle für diese Person nicht abrechnen; das Einreichen nennt die fehlenden Rollen.
   - Gepflegt von der Abteilungsleitung (Seite „Stundensätze“).
-- **Eine Abrechnung (`Claim`) je Übungsleiter und Monat**, höchstens drei abgeschlossene Monate zurück
-  (`MONTHS_BACK`).
+- **Eine Abrechnung (`Claim`) je Übungsleiter und Monat**, einzureichen nach Monatsende.
   - Ein noch offener Monat ist kein Datensatz, sondern wird aus den bestätigten Teilnahmen berechnet.
-  - Ältere Monate sind abgelaufen; eine zurückgegebene Abrechnung darf auch danach erneut eingereicht werden.
+  - **Frist:** der 10. (Kalendertag) des dritten Folgemonats, z. B. Januar bis 10. April (`deadline`).
+  - **Ausnahmen:** Auch nach der Frist lässt sich einreichen. Die Abrechnung ist dann als verspätet markiert
+    (`is_late`), und die Abteilungsleitung entscheidet beim Freigeben über die Ausnahme. Die Markierung entsteht beim
+    ersten Einreichen; wird eine fristgerecht eingereichte Abrechnung nach der Frist zurückgegeben, bleibt sie
+    fristgerecht.
 - **Ablauf:** eingereicht → freigegeben oder zurückgegeben (mit Pflicht-Rückmeldung) → erneut eingereicht.
   - Die Abteilungsleitung darf auch ihre eigene Abrechnung freigeben. Es gibt nicht immer eine Vertretung; das
     Vier-Augen-Prinzip liegt bei der Geschäftsstelle. Das PDF nennt, wer freigegeben hat.
@@ -37,15 +40,16 @@ Aufstellung, die die Abteilungsleitung freigegeben hat. Ausgezahlt wird weiterhi
     Unterschriftszeilen für Übungsleiter und Geschäftsstelle.
   - CSV je Monat mit allen freigegebenen Abrechnungen (Semikolon, UTF-8 mit BOM für Excel).
 - **Benachrichtigungen** über `notify` (ADR 0011): eingereicht an die Abteilungsleitung (ohne Abteilungsleitung an
-  Admins), Entscheidung an den Übungsleiter. Erinnerung am 3. für den Vormonat und am 20. für den Monat, der zum
-  Monatsende abläuft, jeweils ab 9 Uhr und je Monat nur einmal.
+  Admins), Entscheidung an den Übungsleiter. Am 3. eines Monats ab 9 Uhr Erinnerung an den Vormonat und an den
+  Monat, dessen Frist am 10. endet; je Monat und Anlass nur einmal.
 - Die Übungsleiterpauschale (§ 3 Nr. 26 EStG) überwacht das Portal nicht.
 
 ## Konsequenzen
 
 - Fehlende Sätze fallen beim Einreichen auf, nicht erst bei der Geschäftsstelle.
 - Abrechnungen bleiben dauerhaft erhalten; Löschfristen folgen mit den Datenschutz-Funktionen (Roadmap 5).
-- „Meine Stunden“ zeigt vergangene Termine vier Monate zurück, passend zum Zeitraum der Abrechnung.
+- „Meine Stunden“ zeigt vergangene Termine bis zur Frist zurück (135 Tage).
+- PDF und CSV weisen verspätete Abrechnungen aus, damit die Geschäftsstelle die Ausnahme sieht.
 - Neue Python-Abhängigkeit `fpdf2` (reines Python, braucht kein System-Paket im Image).
 
 ## Verworfene Alternativen
@@ -53,6 +57,8 @@ Aufstellung, die die Abteilungsleitung freigegeben hat. Ausgezahlt wird weiterhi
 - **Grundsatz je Person mit Abweichungen je Rolle:** weniger Pflege, aber ein vergessener Rollensatz würde still mit
   dem Grundsatz abgerechnet.
 - **Satz je Rolle für alle:** passt nicht zu Sätzen nach Lizenz.
+- **Ausnahme vorab freischalten** (Abteilungsleitung öffnet einen Monat je Person): ein Schritt mehr für beide
+  Seiten; die Entscheidung beim Freigeben genügt.
 - **Freigabe nur durch eine andere Person:** blockiert, wenn es keine Vertretung gibt.
 - **Druckansicht im Browser statt PDF:** uneinheitlich je Browser, kein fester Dateiname für die Ablage.
 - **WeasyPrint/ReportLab:** WeasyPrint braucht System-Bibliotheken (Pango) im Image; ReportLab ist für eine Tabelle

@@ -1,14 +1,15 @@
 """Fachlogik der Übungsleiterabrechnung (ADR 0014).
 
 Grundlage sind die bestätigten Stunden abrechnungsrelevanter Rollen aus ``portal.events``. Abgerechnet wird je
-Übungsleiter und Monat, höchstens drei abgeschlossene Monate zurück. Beim Einreichen werden Minuten, Satz und Betrag
-als Zeilen eingefroren; bis zum Zurückgeben sind die Termine des Monats gesperrt.
+Übungsleiter und Monat; Frist ist der 10. des dritten Folgemonats (Januar bis 10. April). Danach lässt sich weiter
+einreichen, die Abrechnung ist dann „verspätet“ und die Abteilungsleitung entscheidet über die Ausnahme. Beim
+Einreichen werden Minuten, Satz und Betrag als Zeilen eingefroren; bis zum Zurückgeben sind die Termine gesperrt.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
@@ -24,7 +25,9 @@ from portal.members.models import LinkKind, Member, MemberLink
 from . import notices
 from .models import Claim, ClaimLine, ClaimStatus, Rate, month_label
 
-MONTHS_BACK = 3
+# Frist: der 10. des dritten Folgemonats
+DEADLINE_MONTHS = 3
+DEADLINE_DAY = 10
 DECIDE = (Role.DEPARTMENT_HEAD, Role.ADMIN)
 CENT = Decimal("0.01")
 
@@ -53,15 +56,18 @@ def month_range(month: date) -> tuple[datetime, datetime]:
     return start, end
 
 
-def submittable_months(today: date | None = None) -> list[date]:
-    """Die letzten drei abgeschlossenen Monate, neuester zuerst. Im November: Oktober, September, August."""
-    current = first_of_month(today or timezone.localdate())
-    return [add_months(current, -count) for count in range(1, MONTHS_BACK + 1)]
+def deadline(month: date) -> date:
+    """Letzter Tag, um ``month`` fristgerecht einzureichen: der 10. des dritten Folgemonats (Januar → 10. April)."""
+    return add_months(first_of_month(month), DEADLINE_MONTHS).replace(day=DEADLINE_DAY)
 
 
-def last_day_to_submit(month: date) -> date:
-    """Bis zu diesem Tag lässt sich ``month`` einreichen."""
-    return add_months(month, MONTHS_BACK + 1) - timedelta(days=1)
+def is_overdue(month: date, today: date | None = None) -> bool:
+    return (today or timezone.localdate()) > deadline(month)
+
+
+def months_due(today: date | None = None) -> date:
+    """Der Monat, dessen Frist im laufenden Monat endet (im April: Januar)."""
+    return add_months(first_of_month(today or timezone.localdate()), -DEADLINE_MONTHS)
 
 
 def month_of(participation: Participation) -> date:
@@ -186,12 +192,12 @@ class Month:
 
     @property
     def status(self) -> str:
-        """offen, abgelaufen, eingereicht, zurückgegeben, freigegeben."""
+        """läuft, offen, überfällig, eingereicht, zurückgegeben, freigegeben."""
         if self.claim:
             return self.claim.get_status_display()
         if self.month >= first_of_month(timezone.localdate()):
             return "läuft"
-        return "offen" if self.month in submittable_months() else "abgelaufen"
+        return "überfällig" if is_overdue(self.month) else "offen"
 
     @property
     def is_open(self) -> bool:
@@ -210,8 +216,12 @@ class Month:
         return sum((line.amount or Decimal(0) for line in self.lines), Decimal(0))
 
     @property
-    def last_day(self) -> date:
-        return last_day_to_submit(self.month)
+    def deadline(self) -> date:
+        return deadline(self.month)
+
+    @property
+    def is_overdue(self) -> bool:
+        return is_overdue(self.month)
 
 
 def month_overview(member: Member, month: date, today: date | None = None) -> Month:
@@ -226,8 +236,8 @@ def month_overview(member: Member, month: date, today: date | None = None) -> Mo
     result.lines = [Line(p, rate_for(member, p.role, timezone.localdate(p.occurrence.starts_at))) for p in rows]
     result.lines = [line for line in result.lines if line.participation.is_confirmed]
     result.missing_roles = sorted({line.role_name for line in result.lines if line.rate is None})
-    in_window = month in submittable_months(today) or claim is not None
-    result.can_submit = bool(result.lines) and not result.missing_roles and in_window
+    finished = month < first_of_month(today or timezone.localdate())
+    result.can_submit = bool(result.lines) and not result.missing_roles and finished
     return result
 
 
@@ -256,22 +266,23 @@ def months(member: Member, today: date | None = None) -> list[Month]:
 
 @transaction.atomic
 def submit(member: Member, month: date, by: User, today: date | None = None) -> Claim:
-    """Monat einreichen: Zeilen einfrieren, Termine sperren, Abteilungsleitung benachrichtigen."""
+    """Monat einreichen: Zeilen einfrieren, Termine sperren, Abteilungsleitung benachrichtigen.
+
+    Nach der Frist wird die Abrechnung als verspätet markiert (beim ersten Einreichen; nach dem Zurückgeben bleibt
+    die Markierung, wie sie war). Ob die Ausnahme gilt, entscheidet die Abteilungsleitung beim Freigeben.
+    """
+    today = today or timezone.localdate()
     overview = month_overview(member, month, today)
     if overview.claim and overview.claim.status != ClaimStatus.RETURNED:
         raise BillingError(f"{overview.label} ist schon eingereicht.")
-    if first_of_month(month) >= first_of_month(today or timezone.localdate()):
+    if first_of_month(month) >= first_of_month(today):
         raise BillingError("Einreichen kannst du erst nach Monatsende.")
     if not overview.can_submit:
         if overview.missing_roles:
             roles = ", ".join(overview.missing_roles)
             raise BillingError(f"Für {roles} ist noch kein Satz hinterlegt – sag der Abteilungsleitung Bescheid.")
-        if not overview.lines:
-            raise BillingError(f"Für {overview.label} sind keine Stunden bestätigt.")
-        raise BillingError(
-            f"{overview.label} lässt sich nicht mehr einreichen (höchstens {MONTHS_BACK} Monate zurück)."
-        )
-    claim = overview.claim or Claim(member=member, month=overview.month)
+        raise BillingError(f"Für {overview.label} sind keine Stunden bestätigt.")
+    claim = overview.claim or Claim(member=member, month=overview.month, is_late=is_overdue(overview.month, today))
     claim.status = ClaimStatus.SUBMITTED
     claim.submitted_at = timezone.now()
     claim.submitted_by = by

@@ -42,8 +42,8 @@ HORIZON_DAYS = 365
 # So lange nach dem Termin sieht das Team noch die Teilnehmerliste.
 PARTICIPANTS_DAYS_AFTER = 14
 AGENDA_DAYS = 42
-# „Meine Stunden“ zeigt so weit zurück, wie sich noch abrechnen lässt (drei Monate plus der laufende).
-PAST_TEAM_DAYS = 124
+# „Meine Stunden“ zeigt so weit zurück wie die Frist der Abrechnung (10. des dritten Folgemonats).
+PAST_TEAM_DAYS = 135
 ACTIVE = (ParticipationStatus.REGISTERED, ParticipationStatus.WAITLIST)
 
 
@@ -816,7 +816,7 @@ def team(occurrence: Occurrence) -> list[Participation]:
 
 
 def own_team(user: User) -> tuple[list[Participation], list[Participation]]:
-    """„Meine Stunden“: kommende Termine mit eigener Team-Rolle und die letzten vier Monate (wie die Abrechnung)."""
+    """„Meine Stunden“: kommende Termine mit eigener Team-Rolle und vergangene bis zur Frist der Abrechnung."""
     member = own_member(user)
     if member is None:
         return [], []

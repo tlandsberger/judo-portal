@@ -60,7 +60,7 @@ def billing_index(request: HttpRequest) -> HttpResponse:
         {
             "months": services.months(member),
             "can_decide": services.can_decide(request.user),
-            "months_back": services.MONTHS_BACK,
+            "deadline_day": services.DEADLINE_DAY,
         },
     )
 
@@ -139,6 +139,7 @@ def claim_detail(request: HttpRequest, pk: int) -> HttpResponse:
             "lines": claim.lines.all(),
             "can_decide": services.can_decide(request.user),
             "send_back_form": SendBackForm(),
+            "deadline": services.deadline(claim.month),
         },
     )
 
@@ -194,7 +195,9 @@ def claim_csv(request: HttpRequest, year: int, month: int) -> HttpResponse:
     response["Content-Disposition"] = f'attachment; filename="abrechnung-{day:%Y-%m}.csv"'
     response.write("﻿")
     writer = csv.writer(response, delimiter=";", lineterminator="\r\n")
-    writer.writerow(["Monat", "Nachname", "Vorname", "Mitgliedsnummer", "Stunden", "Betrag (€)", "Freigegeben am"])
+    writer.writerow(
+        ["Monat", "Nachname", "Vorname", "Mitgliedsnummer", "Stunden", "Betrag (€)", "Freigegeben am", "Verspätet"]
+    )
     for claim in services.approved_for_month(day):
         writer.writerow(
             [
@@ -205,6 +208,7 @@ def claim_csv(request: HttpRequest, year: int, month: int) -> HttpResponse:
                 formats.number_format(claim.hours, 2),
                 formats.number_format(claim.total_amount, 2),
                 formats.date_format(timezone.localtime(claim.decided_at), "d.m.Y") if claim.decided_at else "",
+                "ja" if claim.is_late else "nein",
             ]
         )
     return response

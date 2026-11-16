@@ -19,10 +19,12 @@ from .conftest import make_shift, month_ago, role, set_rate
 pytestmark = pytest.mark.django_db
 
 
-def test_months_window():
-    assert services.submittable_months(date(2026, 11, 16)) == [date(2026, 10, 1), date(2026, 9, 1), date(2026, 8, 1)]
-    assert services.submittable_months(date(2026, 2, 1)) == [date(2026, 1, 1), date(2025, 12, 1), date(2025, 11, 1)]
-    assert services.last_day_to_submit(date(2026, 8, 1)) == date(2026, 11, 30)
+def test_deadline():
+    assert services.deadline(date(2026, 1, 1)) == date(2026, 4, 10)
+    assert services.deadline(date(2026, 10, 1)) == date(2027, 1, 10)
+    assert not services.is_overdue(date(2026, 1, 1), date(2026, 4, 10))
+    assert services.is_overdue(date(2026, 1, 1), date(2026, 4, 11))
+    assert services.months_due(date(2026, 4, 3)) == date(2026, 1, 1)
 
 
 def test_rate_for_role_and_valid_from(trainer):
@@ -88,11 +90,26 @@ def test_submit_rules(trainer):
     with pytest.raises(BillingError, match="Für Trainer ist noch kein Satz"):
         services.submit(member, month_ago(), trainer)
     set_rate(trainer)
-    make_shift(trainer, month_ago(4) + timedelta(days=1))
-    with pytest.raises(BillingError, match="nicht mehr einreichen"):
-        services.submit(member, month_ago(4), trainer)
-    assert services.month_overview(member, month_ago(4)).status == "abgelaufen"
-    services.submit(member, month_ago(), trainer)
+    assert services.submit(member, month_ago(), trainer).is_late is False
+
+
+def test_late_submission_is_marked_and_stays_marked(trainer, head):
+    member = events.own_member(trainer)
+    set_rate(trainer)
+    old = month_ago(4)  # Frist war der 10. des Vormonats
+    make_shift(trainer, old + timedelta(days=1))
+    overview = services.month_overview(member, old)
+    assert overview.status == "überfällig" and overview.can_submit
+    claim = services.submit(member, old, trainer)
+    assert claim.is_late
+    services.send_back(claim, head, "Bitte begründen")
+    assert services.submit(member, old, trainer).is_late
+    # Vor der Frist eingereicht, nach der Frist zurückgegeben: bleibt fristgerecht.
+    make_shift(trainer, month_ago() + timedelta(days=1))
+    on_time = services.submit(member, month_ago(), trainer)
+    services.send_back(on_time, head, "Bitte prüfen")
+    later = services.deadline(month_ago()) + timedelta(days=5)
+    assert services.submit(member, month_ago(), trainer, today=later).is_late is False
 
 
 def test_send_back_unlocks_and_resubmit(trainer, head):
@@ -112,16 +129,6 @@ def test_send_back_unlocks_and_resubmit(trainer, head):
     assert claim.status == ClaimStatus.APPROVED and claim.decided_by_name == head.display_name
     with pytest.raises(BillingError):
         services.send_back(claim, head, "zu spät")
-
-
-def test_returned_claim_can_be_resubmitted_after_window(trainer, head):
-    member = events.own_member(trainer)
-    set_rate(trainer)
-    old = month_ago(4)
-    make_shift(trainer, old + timedelta(days=1))
-    Claim.objects.create(member=member, month=old, status=ClaimStatus.RETURNED, submitted_at=timezone.now())
-    assert services.month_overview(member, old).can_submit
-    services.submit(member, old, trainer)
 
 
 def test_department_head_can_approve_own_claim(head):
@@ -162,9 +169,9 @@ def test_unsubmitted_and_reminders(trainer, other_trainer, run_on_commit):
     assert SentNotification.objects.filter(kind="claim_remind").count() == 1
     run_on_commit(notices.remind, today + timedelta(days=1))  # der 4.: nichts
     assert SentNotification.objects.filter(kind="claim_remind").count() == 1
-    last = services.add_months(month, 3) + timedelta(days=19)  # der 20. im letzten Monat
+    last = services.add_months(month, 3) + timedelta(days=2)  # der 3. im Monat der Frist
     run_on_commit(notices.remind, last)
-    assert SentNotification.objects.filter(kind="claim_remind", title__startswith="Nur noch").count() == 1
+    assert SentNotification.objects.filter(kind="claim_remind", title__startswith="Frist bis 10.").count() == 1
 
 
 def test_notices_on_submit_and_decide(trainer, head, run_on_commit):

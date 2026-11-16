@@ -1,7 +1,7 @@
 """Benachrichtigungen der Abrechnung über ``portal.notifications`` (Push, sonst Mail; ADR 0011, 0014).
 
-Sofort: eingereicht (an die Abteilungsleitung), freigegeben oder zurückgegeben (an den Übungsleiter). Täglich:
-Erinnerung am 3. an den Vormonat, am 20. an den Monat, der zum Monatsende abläuft.
+Sofort: eingereicht (an die Abteilungsleitung), freigegeben oder zurückgegeben (an den Übungsleiter). Am 3. des
+Monats: Erinnerung an den Vormonat und an den Monat, dessen Frist am 10. endet.
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from .models import Claim
 
 REMIND_DAY = 3
-LAST_REMIND_DAY = 20
 REMIND_HOUR = 9
 
 
@@ -40,7 +39,7 @@ def submitted(claim: Claim) -> None:
             kind="claim_submitted",
             title=f"Abrechnung {claim.month_label}",
             body=f"{claim.member.display_name} hat {claim.month_label} eingereicht "
-            f"({formats.number_format(claim.hours, 2)} Stunden).",
+            f"({formats.number_format(claim.hours, 2)} Stunden){' – verspätet' if claim.is_late else ''}.",
             url=url,
         )
 
@@ -65,36 +64,34 @@ def decided(claim: Claim) -> None:
 
 
 def remind(today: date | None = None) -> None:
-    """Am 3.: Vormonat einreichen. Am 20.: letzte Gelegenheit für den ältesten noch offenen Monat."""
+    """Am 3.: Vormonat einreichen; dazu letzte Erinnerung für den Monat, dessen Frist am 10. endet."""
     from . import services
 
     today = today or timezone.localdate()
-    if today.day == REMIND_DAY:
-        month, last = services.submittable_months(today)[0], False
-    elif today.day == LAST_REMIND_DAY:
-        month, last = services.submittable_months(today)[-1], True
-    else:
+    if today.day != REMIND_DAY:
         return
-    label = formats.date_format(month, "F")
-    for member in services.unsubmitted(month):
-        user = events.member_user(member)
-        if user is None:
-            continue
-        if last:
-            title, body = (
-                f"Nur noch bis Monatsende: {label}",
-                (f"Deine Stunden aus {label} kannst du nur noch bis Monatsende einreichen."),
+    previous = services.add_months(services.first_of_month(today), -1)
+    for month, last in ((previous, False), (services.months_due(today), True)):
+        label = formats.date_format(month, "F")
+        until = formats.date_format(services.deadline(month), "j. F")
+        for member in services.unsubmitted(month):
+            user = events.member_user(member)
+            if user is None:
+                continue
+            if last:
+                title = f"Frist bis {until}: {label}"
+                body = f"Deine Stunden aus {label} reichst du bitte bis zum {until} ein."
+            else:
+                title = f"Abrechnung {label}"
+                body = f"Deine Stunden aus {label} sind bereit zum Einreichen (bis {until})."
+            notifications.notify(
+                user,
+                key=f"claim-remind:{member.pk}:{month:%Y-%m}:{'last' if last else 'first'}",
+                kind="claim_remind",
+                title=title,
+                body=body,
+                url=reverse("billing_month", args=[month.year, month.month]),
             )
-        else:
-            title, body = f"Abrechnung {label}", f"Deine Stunden aus {label} sind bereit zum Einreichen."
-        notifications.notify(
-            user,
-            key=f"claim-remind:{member.pk}:{month:%Y-%m}:{'last' if last else 'first'}",
-            kind="claim_remind",
-            title=title,
-            body=body,
-            url=reverse("billing_month", args=[month.year, month.month]),
-        )
 
 
 def run_remind() -> None:

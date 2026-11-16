@@ -120,12 +120,14 @@ Unter **Abrechnung**. Hintergründe in ADR 0014.
 1. **Stundensätze** (Abteilungsleitung): je Übungsleiter und abrechnungsrelevanter Rolle (Trainer, Co-Trainer …) ein
    Satz in €/Stunde mit „gültig ab“. Für eine Erhöhung trägst du einen neuen Satz ein; alte Monate bleiben, wie sie
    sind. Welche Rollen abrechnungsrelevant sind, legst du unter Veranstaltungen → Rollen fest.
-2. **Übungsleiter** bestätigen nach jedem Termin ihre Stunden und reichen nach Monatsende den Monat ein, höchstens drei
-   Monate zurück. Erinnert werden sie am 3. und, bevor ein Monat abläuft, am 20.
-3. **Abteilungsleitung** gibt unter Abrechnung → Abrechnungen frei oder gibt mit Rückmeldung zurück. Die eigene
-   Abrechnung darfst du selbst freigeben; geprüft wird zusätzlich in der Geschäftsstelle.
+2. **Übungsleiter** bestätigen nach jedem Termin ihre Stunden und reichen nach Monatsende den Monat ein. **Frist** ist
+   der 10. des dritten Folgemonats (Januar bis 10. April). Erinnert werden sie am 3. eines Monats an den Vormonat und
+   an den Monat, dessen Frist am 10. endet. Später Eingereichtes ist als **verspätet** markiert.
+3. **Abteilungsleitung** gibt unter Abrechnung → Abrechnungen frei oder gibt mit Rückmeldung zurück. Bei verspäteten
+   Abrechnungen ist „Freigeben“ die Ausnahme; sonst gibst du sie mit Begründung zurück. Die eigene Abrechnung darfst
+   du selbst freigeben; geprüft wird zusätzlich in der Geschäftsstelle.
 4. **Für die Geschäftsstelle:** PDF je Abrechnung (mit Unterschriftszeilen) und eine CSV je Monat mit allen
-   freigegebenen Abrechnungen.
+   freigegebenen Abrechnungen; beide weisen verspätete Abrechnungen aus.
 
 ## Push-Benachrichtigungen
 

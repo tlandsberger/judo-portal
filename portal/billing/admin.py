@@ -17,6 +17,6 @@ class ClaimLineInline(admin.TabularInline):
 
 @admin.register(Claim)
 class ClaimAdmin(admin.ModelAdmin):
-    list_display = ("member", "month", "status", "total_minutes", "total_amount")
-    list_filter = ("status", "month")
+    list_display = ("member", "month", "status", "is_late", "total_minutes", "total_amount")
+    list_filter = ("status", "is_late", "month")
     inlines = (ClaimLineInline,)
