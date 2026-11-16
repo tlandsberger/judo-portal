@@ -18,6 +18,7 @@ urlpatterns = [
         name="occurrence_team_remove",
     ),
     path("termine/<int:pk>/bestaetigen/", views.hours_confirm, name="hours_confirm"),
+    path("termine/<int:pk>/bestaetigung-zuruecknehmen/", views.hours_unconfirm, name="hours_unconfirm"),
     path("termine/<int:pk>/teilnehmer/", views.participant_add, name="participant_add"),
     path(
         "termine/<int:pk>/teilnehmer/<int:participation_pk>/entfernen/",

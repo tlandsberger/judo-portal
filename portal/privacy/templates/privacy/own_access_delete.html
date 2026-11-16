@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Meinen Zugang löschen{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <a href="{% url 'security' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Meine Anmeldung</a>
+  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+    <h1 class="text-2xl font-bold">Meinen Zugang löschen</h1>
+    {% if blocked %}
+    <div role="alert" class="alert alert-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><span>{{ blocked }}</span></div>
+    {% else %}
+    <p>Gelöscht werden dein Benutzer {{ user.email }} mit Passwort, Passkeys, Geräten und Benachrichtigungen. Danach kannst du dich nicht mehr anmelden.</p>
+    {% if links %}
+    <div role="note" class="alert"><i class="bi bi-info-circle" aria-hidden="true"></i>
+      <div>
+        <p>Diese Mitglieder bleiben im Verein und im Portal erhalten, nur ohne deinen Zugang:</p>
+        <ul class="mt-1 list-disc pl-5">{% for link in links %}<li>{{ link.member.display_name }} ({{ link.get_kind_display }})</li>{% endfor %}</ul>
+        <p class="mt-1">Brauchst du später wieder Zugang, lädt dich die Abteilungsleitung neu ein.</p>
+      </div>
+    </div>
+    {% endif %}
+    <p class="text-sm text-base-content/70">Vorher kannst du dir die <a class="link" href="{% url 'my_privacy' %}">Datenauskunft (Art. 15 DSGVO)</a> herunterladen.</p>
+    <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+      {{ form }}
+      <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-error"><i class="bi bi-person-x" aria-hidden="true"></i> Zugang endgültig löschen</button><a class="btn" href="{% url 'security' %}">Abbrechen</a></div>
+    </form>
+    {% endif %}
+  </div></div>
+</div>
+{% endblock %}

@@ -36,8 +36,9 @@ Versandprotokoll nach 90 Tagen gelöscht; Mitglieder, Benutzer und Abrechnungen 
 
 ### Auskunft
 
-- Unter „Meine Daten“ → „Meine gespeicherten Daten“: der eigene Benutzer und alle sichtbaren Mitglieder (eigenes
-  Profil, Kinder unter 18) als Seite und als JSON-Datei.
+- Unter „Meine Daten“ → „Datenauskunft (Art. 15 DSGVO)“: der eigene Benutzer und alle sichtbaren Mitglieder (eigenes
+  Profil, Kinder unter 18) als Seite und als **PDF** (fpdf2 wie bei der Abrechnung; gleich aufgebaute Listen als
+  Tabelle). Maschinenlesbar (Art. 20) zusätzlich als JSON.
 - Ohne Geheimnisse (kein Passwort-Hash, keine Passkey-Schlüssel). Protokolleinträge zum Benutzer nur über ihn selbst,
   nicht das, was er (z. B. als Abteilungsleitung) bei anderen geändert hat.
 - Die Abteilungsleitung lädt dieselbe Auskunft für jedes Mitglied herunter.
@@ -57,6 +58,8 @@ Versandprotokoll nach 90 Tagen gelöscht; Mitglieder, Benutzer und Abrechnungen 
 - Im Protokoll bleibt „Mitglied Nr. … gelöscht (Grund)“. Die Mitgliedsnummer ist im Portal danach nicht mehr
   auflösbar. Rechtlich ist sie nur pseudonym, da der Hauptverein sie zuordnen kann; als Nachweis der Löschung ist das
   vertretbar und verschwindet nach einem Jahr mit dem Protokoll.
+- **Eigener Zugang:** Jeder kann seinen Benutzer selbst löschen (Meine Anmeldung), z. B. wenn ein Kind volljährig
+  ist. Die Mitglieder bleiben erhalten und können neu eingeladen werden; nur der letzte Administrator kann es nicht.
 - **CSV-Import** legt ausgetretene Mitglieder nie neu an (nur ohne Austritt oder mit Austritt in der Zukunft), damit
   Gelöschte nicht wiederkommen. Bestehende Mitglieder bekommen den Austritt weiterhin.
 - Alles in `portal.privacy` (`delete_member`, `run_daily`); keine andere App kennt sie.

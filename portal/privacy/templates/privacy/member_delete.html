@@ -19,7 +19,7 @@
         </ul>
       </div>
     </div>
-    <p class="text-sm text-base-content/70">Brauchst du die Daten noch? Lade vorher die <a class="link" href="{% url 'member_export' member.pk %}">Auskunft</a> herunter. Im Protokoll bleibt nur „Mitglied Nr. … gelöscht“.</p>
+    <p class="text-sm text-base-content/70">Brauchst du die Daten noch? Lade vorher die <a class="link" href="{% url 'member_export' member.pk %}">Datenauskunft (Art. 15 DSGVO)</a> herunter. Im Protokoll bleibt nur „Mitglied Nr. … gelöscht“.</p>
     <form method="post" class="flex flex-col gap-4">{% csrf_token %}
       {{ form }}
       <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-error"><i class="bi bi-trash" aria-hidden="true"></i> Endgültig löschen</button><a class="btn" href="{% url 'member_detail' member.pk %}">Abbrechen</a></div>

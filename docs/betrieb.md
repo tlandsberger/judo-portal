@@ -136,8 +136,11 @@ Hintergründe in ADR 0015.
 
 - **Protokoll** (Abteilungsleitung): wer wann was geändert hat, mit Filter nach Bereich, Text und Zeitraum. Am Mitglied
   stehen die letzten Änderungen. Einträge werden nach einem Jahr gelöscht.
-- **Auskunftsanfrage:** Jeder lädt seine Daten selbst unter **Meine Daten → Meine gespeicherten Daten** herunter (auch
-  für Kinder unter 18). Für eine Anfrage per Post oder Mail: auf der Seite des Mitglieds **Auskunft** herunterladen.
+- **Auskunftsanfrage:** Jeder lädt seine Daten selbst unter **Meine Daten → Datenauskunft (Art. 15 DSGVO)** als PDF
+  herunter (auch für Kinder unter 18; maschinenlesbar zusätzlich als JSON). Für eine Anfrage per Post oder Mail: auf der
+  Seite des Mitglieds **Datenauskunft (Art. 15 DSGVO)** herunterladen.
+- **Eigenen Zugang löschen:** unter **Meine Anmeldung → Meinen Zugang löschen**, z. B. wenn ein Kind volljährig ist.
+  Die Mitglieder bleiben erhalten und lassen sich neu einladen. Der letzte Administrator kann sich nicht löschen.
 - **Löschanfrage:** auf der Seite des Mitglieds **Löschen**. Die Bestätigungsseite zeigt, was verschwindet und welche
   Zugänge mitgelöscht werden.
 - **Austritt:** Trag das Austrittsdatum ein (oder per CSV-Import). Am Austrittsdatum bekommen die Zugänge eine Mail,

@@ -199,3 +199,11 @@ def test_role_change_blocked_in_submitted_month(trainer):
     services.submit(member, month_ago(), trainer)
     with pytest.raises(RegistrationError, match="eingereicht"):
         events.set_team(open_one.occurrence, member, role("Co-Trainer"))
+
+
+def test_unconfirm_blocked_in_submitted_month(trainer):
+    set_rate(trainer)
+    shift = make_shift(trainer, month_ago() + timedelta(days=2))
+    services.submit(events.own_member(trainer), month_ago(), trainer)
+    with pytest.raises(RegistrationError, match="eingereicht"):
+        events.unconfirm(shift)

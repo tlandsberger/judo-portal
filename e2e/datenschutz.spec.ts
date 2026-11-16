@@ -32,13 +32,25 @@ test("Protokoll, Auskunft für Eltern und Löschen eines Mitglieds mit Bestätig
 
   // Auskunft unter „Meine Daten“
   await parent.goto("/meine-daten/");
-  await parent.getByRole("link", { name: "Meine gespeicherten Daten" }).click();
-  await expect(parent.getByRole("heading", { level: 1, name: "Meine gespeicherten Daten" })).toBeVisible();
+  await parent.getByRole("link", { name: "Datenauskunft (Art. 15 DSGVO)" }).click();
+  await expect(parent.getByRole("heading", { level: 1, name: "Datenauskunft (Art. 15 DSGVO)" })).toBeVisible();
   await expect(parent.getByRole("heading", { name: "Paul Protokoll" })).toBeVisible();
   await expectNoA11yViolations(parent);
   const download = parent.waitForEvent("download");
-  await parent.getByRole("link", { name: "Als Datei herunterladen" }).click();
-  expect((await download).suggestedFilename()).toMatch(/^meine-daten-\d{4}-\d{2}-\d{2}\.json$/);
+  await parent.getByRole("link", { name: "Als PDF herunterladen" }).click();
+  expect((await download).suggestedFilename()).toMatch(/^datenauskunft-\d{4}-\d{2}-\d{2}\.pdf$/);
+
+  // Den eigenen Zugang löschen: Paul bleibt erhalten
+  await parent.goto("/zugang/anmeldung/");
+  await parent.getByRole("link", { name: "Meinen Zugang löschen" }).click();
+  await expect(parent.getByText("Paul Protokoll (Erziehungsberechtigt)")).toBeVisible();
+  await expectNoA11yViolations(parent);
+  await parent.getByLabel("Ich habe verstanden, dass die Daten endgültig gelöscht werden.").check();
+  await parent.getByRole("button", { name: "Zugang endgültig löschen" }).click();
+  await expect(parent.getByText("Dein Zugang ist gelöscht.")).toBeVisible();
+  await admin.reload();
+  await expect(admin.getByRole("heading", { level: 1, name: "Paul Protokoll" })).toBeVisible();
+  await expect(admin.getByRole("region", { name: "Zugänge" }).getByText(PARENT.email)).toHaveCount(0);
 
   // Protokoll-Seite
   await admin.goto("/protokoll/");
@@ -48,7 +60,6 @@ test("Protokoll, Auskunft für Eltern und Löschen eines Mitglieds mit Bestätig
   // Löschen mit Bestätigung: der Elternteil hat danach kein Mitglied mehr und wird mitgelöscht
   await admin.goto(memberUrl);
   await admin.getByRole("link", { name: "Löschen" }).click();
-  await expect(admin.getByText(/die Zugänge von .* weil sie danach kein Mitglied mehr haben/)).toBeVisible();
   await expectNoA11yViolations(admin);
   await admin.getByRole("button", { name: "Endgültig löschen" }).click();
   await expect(admin.getByLabel("Ich habe verstanden, dass die Daten endgültig gelöscht werden.")).toBeVisible();

@@ -116,6 +116,11 @@ test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sie
   await trainer.getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
   await expect(trainer.getByText("Danke, deine Stunden sind bestätigt.")).toBeVisible();
   await expect(trainer.getByText("bestätigt · 240 Min.")).toBeVisible();
+  // Versehentlich bestätigt? Zurücknehmen und erneut bestätigen
+  await trainer.getByRole("button", { name: /Bestätigung für Randori-Lehrgang am .* zurücknehmen/ }).click();
+  await expect(trainer.getByText("Die Bestätigung ist zurückgenommen.")).toBeVisible();
+  await trainer.getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
+  await expect(trainer.getByText("bestätigt · 240 Min.")).toBeVisible();
   await expectNoA11yViolations(trainer);
   await trainerContext.close();
   await admin.context().close();

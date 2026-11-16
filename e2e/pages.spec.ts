@@ -23,7 +23,8 @@ const pages = [
   { path: "/abrechnung/alle/", heading: "Abrechnungen" },
   { path: "/abrechnung/saetze/", heading: "Stundensätze" },
   { path: "/protokoll/", heading: "Protokoll" },
-  { path: "/meine-daten/auskunft/", heading: "Meine gespeicherten Daten" },
+  { path: "/meine-daten/auskunft/", heading: "Datenauskunft (Art. 15 DSGVO)" },
+  { path: "/zugang/loeschen/", heading: "Meinen Zugang löschen" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {

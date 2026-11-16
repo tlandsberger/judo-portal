@@ -43,7 +43,8 @@ def test_member_export_only_for_head(client, head, parent, child):
     client.force_login(parent)
     assert client.get(reverse("member_export", args=[child.pk])).status_code == 403
     client.force_login(head)
-    assert json.loads(client.get(reverse("member_export", args=[child.pk])).content)["Stammdaten"]["Vorname"] == "Mia"
+    url = reverse("member_export", args=[child.pk])
+    assert json.loads(client.get(url, {"format": "json"}).content)["Stammdaten"]["Vorname"] == "Mia"
 
 
 def test_delete_member_with_everything(trainer, head, run_on_commit):
@@ -154,3 +155,37 @@ def test_guest_cleanup_forgets_audit():
     assert guests.expire_pending() == 1
     assert not AuditEntry.objects.filter(guest_id=guest.pk).exists()
     assert AuditEntry.objects.get(action="guests_deleted").summary.startswith("1 Gäste gelöscht")
+
+
+def test_export_as_pdf(client, head, parent, child):
+    client.force_login(parent)
+    response = client.get(reverse("my_privacy"), {"format": "pdf"})
+    assert response["Content-Type"] == "application/pdf" and response.content.startswith(b"%PDF")
+    assert response["Content-Disposition"].startswith('attachment; filename="datenauskunft-')
+    client.force_login(head)
+    member_pdf = client.get(reverse("member_export", args=[child.pk]))
+    assert member_pdf.content.startswith(b"%PDF")
+    assert json.loads(client.get(reverse("member_export", args=[child.pk]), {"format": "json"}).content)
+
+
+def test_delete_own_access_keeps_members(client, parent, child, run_on_commit):
+    client.force_login(parent)
+    page = client.get(reverse("own_access_delete")).content.decode()
+    assert "Mia Muster" in page and "bleiben" in page
+    client.post(reverse("own_access_delete"), {})
+    assert User.objects.filter(pk=parent.pk).exists()
+    run_on_commit(client.post, reverse("own_access_delete"), {"confirm": "on"})
+    assert not User.objects.filter(pk=parent.pk).exists()
+    assert Member.objects.filter(pk=child.pk).exists() and not MemberLink.objects.exists()
+    assert mail.outbox[-1].to == [parent.email]
+
+
+def test_last_admin_cannot_delete_own_access(client):
+    admin = make_user("admin@example.org", Role.ADMIN)
+    client.force_login(admin)
+    assert "einzige Administrator" in client.get(reverse("own_access_delete")).content.decode()
+    client.post(reverse("own_access_delete"), {"confirm": "on"})
+    assert User.objects.filter(pk=admin.pk).exists()
+    make_user("zweite@example.org", Role.ADMIN)
+    client.post(reverse("own_access_delete"), {"confirm": "on"})
+    assert not User.objects.filter(pk=admin.pk).exists()

@@ -128,6 +128,8 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
         ]
     if own_team and own_team.role.is_billable and not own_team.is_confirmed:
         context["confirm_form"] = ConfirmForm(initial={"minutes": occurrence.minutes})
+    if own_team and own_team.is_confirmed and not services.locked_reason(own_team):
+        context["can_unconfirm"] = True
     return render(request, "events/occurrence_detail.html", context)
 
 
@@ -306,6 +308,25 @@ def hours_confirm(request: HttpRequest, pk: int) -> HttpResponse:
         messages.error(request, str(error))
     else:
         messages.success(request, "Die Dauer ist geändert." if corrected else "Danke, deine Stunden sind bestätigt.")
+    return redirect(_next(request, participation.occurrence))
+
+
+@require_POST
+@login_required
+def hours_unconfirm(request: HttpRequest, pk: int) -> HttpResponse:
+    member = services.own_member(request.user)
+    participation = get_object_or_404(
+        Participation.objects.select_related("occurrence__event", "role"),
+        occurrence_id=pk,
+        member=member,
+        role__is_team=True,
+    )
+    try:
+        services.unconfirm(participation, by=_user(request))
+    except RegistrationError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, "Die Bestätigung ist zurückgenommen.")
     return redirect(_next(request, participation.occurrence))
 
 

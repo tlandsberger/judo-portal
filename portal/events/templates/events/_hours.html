@@ -20,6 +20,9 @@
     <input id="min-{{ p.pk }}" class="input input-sm join-item w-20" type="number" name="minutes" min="1" max="1440" value="{{ p.minutes }}">
     <button class="btn btn-sm join-item">Ändern</button>
   </form>
+  <form method="post" action="{% url 'hours_unconfirm' occurrence.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+    <button class="btn btn-ghost btn-sm" aria-label="Bestätigung für {{ occurrence.event.title }} am {{ occurrence.starts_at|date:'d.m.' }} zurücknehmen" title="Bestätigung zurücknehmen"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
+  </form>
   {% endif %}
 </li>
 {% endwith %}

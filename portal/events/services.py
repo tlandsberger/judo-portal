@@ -650,6 +650,23 @@ def confirm(participation: Participation, minutes: int | None = None, by: User |
         )
 
 
+def unconfirm(participation: Participation, by: User | None = None) -> None:
+    """Bestätigung zurücknehmen (z. B. versehentlich bestätigt), bis der Monat zur Abrechnung eingereicht ist."""
+    _check_unlocked(participation)
+    if not participation.is_confirmed:
+        return
+    minutes = participation.minutes
+    participation.confirmed_at = None
+    participation.minutes = None
+    participation.save(update_fields=["confirmed_at", "minutes", "updated_at"])
+    _audit(
+        by,
+        "unconfirm",
+        f"Bestätigung für {_when(participation.occurrence)} zurückgenommen ({minutes} Minuten)",
+        participation,
+    )
+
+
 @transaction.atomic
 def create_event(
     event: Event,
