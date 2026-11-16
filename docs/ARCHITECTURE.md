@@ -16,7 +16,7 @@ Browser / installierte App (PWA)
         ▼
 Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
                                       ├─ Gunicorn + Django (Seiten, Anmeldung, statische Dateien)
-                                      ├─ Zeitplaner (Backup 02:00, Aufräumen, alle 10 Min. Erinnerungen)
+                                      ├─ Zeitplaner (Backup 02:00, Aufräumen, alle 5 Min. Erinnerungen)
                                       └─ /data: portal.sqlite3, backups/
                                       ──▶ IONOS-SMTP (Einladungen, Anmeldecodes, Sicherheitshinweise, Ersatz für Push)
                                       ──▶ Web-Push-Dienste (Google, Apple, Mozilla)

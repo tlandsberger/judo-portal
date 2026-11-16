@@ -1,4 +1,4 @@
-"""Kleiner Zeitplaner im App-Prozess: nächtliches Backup und Aufräumen, kurze Jobs alle 10 Minuten.
+"""Kleiner Zeitplaner im App-Prozess: nächtliches Backup und Aufräumen, kurze Jobs alle 5 Minuten.
 
 Läuft als Hintergrund-Thread im (einzigen) Gunicorn-Worker, so braucht es keinen zusätzlichen Container.
 Fach-Apps melden ihre Jobs in ``AppConfig.ready()`` an (``register_daily``, ``register_periodic``); ``portal.core``
@@ -22,7 +22,7 @@ from . import backup
 
 log = logging.getLogger(__name__)
 _started = False
-PERIODIC_SECONDS = 10 * 60
+PERIODIC_SECONDS = 5 * 60
 _daily: list[Callable[[], None]] = []
 _periodic: list[Callable[[], None]] = []
 
@@ -34,7 +34,7 @@ def register_daily(job: Callable[[], None]) -> None:
 
 
 def register_periodic(job: Callable[[], None]) -> None:
-    """Kurzer Job alle 10 Minuten, z. B. Erinnerungen. Muss idempotent sein."""
+    """Kurzer Job alle 5 Minuten, z. B. Erinnerungen. Muss idempotent sein."""
     if job not in _periodic:
         _periodic.append(job)
 

@@ -170,7 +170,7 @@ Anmeldecodes, Sicherheitshinweise und neue Verknüpfungen gehen immer per Mail. 
 - Der Container muss die Push-Dienste von Google, Apple und Mozilla per HTTPS erreichen (normaler ausgehender
   Verkehr).
 - iPhone und iPad können Push nur, wenn das Portal zum Home-Bildschirm hinzugefügt ist (iOS ab 16.4).
-- Die Erinnerungen prüft der Zeitplaner im Container alle 10 Minuten. Was rausging, steht in der technischen
+- Die Erinnerungen prüft der Zeitplaner im Container alle 5 Minuten. Was rausging, steht in der technischen
   Verwaltung unter „Versandte Benachrichtigungen“ (90 Tage).
 
 ## Backup und Wiederherstellung

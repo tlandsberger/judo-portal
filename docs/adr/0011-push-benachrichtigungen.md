@@ -48,7 +48,11 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
   - Safari (iPhone/iPad) und Firefox zeigen keine Knöpfe; dort öffnet der Tipp die passende Seite.
 - **Aussehen:** In der Nachricht steht das App-Icon. In der Statusleiste (Android) zeigt ein eigenes Badge die beiden
   Figuren des Signets (`badge-96.png` aus `scripts/make_icons.py`); Android nutzt davon nur die Form.
-- **Zeitplaner:** `portal.core.scheduler` führt neben dem nächtlichen Job alle 10 Minuten kurze Jobs aus.
+- **Dringlichkeit:** Absage, Änderung, Nachrücken und Anmeldeschluss gehen mit `Urgency: high` raus; Android weckt
+  dafür das Gerät auch im Ruhemodus. Alles andere bleibt „normal“ und kommt im nächsten Wartungsfenster. Bewusst
+  sparsam, weil Android Absender drosselt, deren dringende Nachrichten oft nicht angesehen werden. Auf Android zeigt
+  „Meine Anmeldung“ einen Hinweis, Chrome im Akku auf „Nicht eingeschränkt“ zu stellen.
+- **Zeitplaner:** `portal.core.scheduler` führt neben dem nächtlichen Job alle 5 Minuten kurze Jobs aus.
   - Fach-Apps melden sie über `register_periodic` und `register_daily` an.
   - Die Jobs der Veranstaltungen: Anmeldung offen, Erinnerung 24 h vor Anmeldeschluss, Stunden bestätigen (am Abend
     des Termins, bei späten Terminen am nächsten Morgen).
