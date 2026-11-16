@@ -21,3 +21,6 @@ docker run --rm --network host -v "$PWD":/work -v /tmp/portal-data/mails:/mails 
 - **Referenzbilder neu erzeugen** (nach gewollten Design-Änderungen): denselben Befehl mit `--update-snapshots`
   und die geänderten Dateien unter `e2e/__screenshots__/` committen. Die Version des Playwright-Images muss zur
   Version von `@playwright/test` in `package.json` passen.
+- **Screenshots der Hilfe** (ADR 0016): `e2e/hilfe.spec.ts` läuft als Projekt `hilfe` nach allen anderen Tests. Mit
+  `-e HELP_SCREENSHOTS=1` im obigen `docker run` und `npx playwright test --project=hilfe` (bzw.
+  `npm run help:screenshots`) landen die Bilder in `portal/help/static/help/img/`; die geänderten Dateien committen.

@@ -1,0 +1,14 @@
+{% load help %}
+<p>Unter <a href="{% url 'user_list' %}">Benutzer</a> verwaltest du alle, die sich anmelden können. Mitglieder und Eltern bekommen ihren Zugang meist direkt über das Mitglied („Zugang geben“).</p>
+
+<h2 id="einladen">Einladen und Rollen</h2>
+<ul>
+  <li><strong>Einladen:</strong> E-Mail, Name und Rollen (Übungsleiter, Abteilungsleiter, Administrator). Statt per Mail kannst du auch nur einen Link erzeugen und z. B. per Messenger weitergeben.</li>
+  <li><strong>Rollen ändern:</strong> Benutzer öffnen, Rollen wählen, speichern. Administratoren ändert nur ein Administrator.</li>
+  <li><strong>Deaktivieren:</strong> Ein deaktivierter Benutzer kann sich nicht mehr anmelden; aktivieren geht jederzeit.</li>
+  <li>Hat jemand den Zugang noch nicht eingerichtet, kannst du die Einladung <strong>erneut senden</strong>.</li>
+</ul>
+
+<h2 id="protokoll">Protokoll</h2>
+{% screenshot "protokoll" "Protokoll mit Filtern nach Bereich und Zeitraum" %}
+<p>Unter <a href="{% url 'audit_list' %}">Protokoll</a> steht, wer wann was geändert hat – Mitglieder, Benutzer, Anmeldewege, Termine und Abrechnungen, bei Änderungen mit altem und neuem Wert. Filtere nach Bereich, Text und Zeitraum. Einträge werden nach einem Jahr gelöscht. Am Mitglied stehen die letzten Änderungen direkt unter „Letzte Änderungen“.</p>

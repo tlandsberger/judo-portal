@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load help %}
 {% load privacy %}
 {% block title %}Mitglieder{% endblock %}
 {% block content %}
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-  <div><h1 class="text-3xl font-bold">Mitglieder</h1><p class="mt-1 text-base-content/70">Alle Mitglieder der Abteilung.</p></div>
+  <div><div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Mitglieder</h1>{% help_link "mitglieder" %}</div><p class="mt-1 text-base-content/70">Alle Mitglieder der Abteilung.</p></div>
   <div class="flex flex-wrap gap-2">
     <a class="btn btn-primary" href="{% url 'member_create' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Mitglied anlegen</a>
     <a class="btn btn-outline btn-primary" href="{% url 'member_import' %}"><i class="bi bi-upload" aria-hidden="true"></i> CSV-Import</a>

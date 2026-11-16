@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% load help %}
 {% block title %}Meine Daten{% endblock %}
 {% block content %}
-<h1 class="mb-2 text-3xl font-bold">Meine Daten</h1>
+<div class="mb-2 flex items-center gap-1"><h1 class="text-3xl font-bold">Meine Daten</h1>{% help_link "meine-daten" %}</div>
 {% if links %}
 <p class="mb-6 text-base-content/70">Wähle aus, wessen Daten du sehen oder ändern möchtest.</p>
 <div class="grid gap-4 sm:grid-cols-2">

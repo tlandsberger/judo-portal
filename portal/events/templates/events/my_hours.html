@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load help %}
 {% block title %}Meine Stunden{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-3xl">
-  <h1 class="text-3xl font-bold">Meine Stunden</h1>
+  <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Meine Stunden</h1>{% help_link "stunden" %}</div>
   <p class="mt-1 mb-6 text-base-content/70">Termine, bei denen du im Team bist. Bei Trainer, Co-Trainer und anderen abrechnungsrelevanten Rollen bestätigst du nach dem Termin deine Stunden; bis zum Einreichen der <a class="link" href="{% url 'billing_index' %}">Abrechnung</a> kannst du die Dauer noch ändern.</p>
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-kommend"><div class="card-body">
     <h2 class="card-title" id="h-kommend">Kommende</h2>

@@ -67,6 +67,9 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
   Bedien-Icons aus Bootstrap Icons. App-Icon und Favicons nur über `scripts/make_icons.py` erzeugen
   (`uv run --with pillow python scripts/make_icons.py`). Keine Inline-Skripte oder -Styles (CSP); JavaScript als Datei unter `static/js/`.
   Keine externen CDNs oder Schriften.
+- **Hilfe:** Ändert sich eine in der Hilfe beschriebene Seite oder ein Ablauf sichtbar, im selben PR das Kapitel in
+  `portal/help/templates/help/chapters/` anpassen und die Screenshots mit `npm run help:screenshots` (im
+  Playwright-Container, siehe `e2e/README.md`) neu erzeugen. Neue Bereiche bekommen ein Kapitel (ADR 0016).
 - **Barrierefreiheit:** WCAG AA; neue Seiten in `e2e/pages.spec.ts` mit axe prüfen.
 - **Tests:** pytest für Fachlogik und Rechte (`portal/<app>/tests/`), E2E für wichtige Abläufe.
 - **Datenbank:** SQLite; Änderungen nur über Django-Migrationen. Lange Schreibtransaktionen vermeiden.

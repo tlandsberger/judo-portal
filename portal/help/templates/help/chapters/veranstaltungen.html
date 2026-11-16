@@ -1,0 +1,32 @@
+{% load help %}
+<p>Unter <a href="{% url 'event_list' %}">Veranstaltungen</a> planst du Trainings, Wettkämpfe, Lehrgänge und Prüfungen. Übungsleiter sehen die Liste und planen Teams; anlegen und ändern kann die Abteilungsleitung.</p>
+
+<h2 id="anlegen">Veranstaltung anlegen</h2>
+<ol>
+  <li><strong>Veranstaltung anlegen</strong>: Titel, Art, Ort, Zielgruppen, optional Höchstzahl, „Gewicht bei Anmeldung erforderlich“ und „Gäste willkommen“.</li>
+  <li>Termine gleich mit festlegen:
+    <ul>
+      <li><strong>Einmalig:</strong> Beginn, Ende und Anmeldezeitraum.</li>
+      <li><strong>Wiederkehrend:</strong> Wochentage, Uhrzeit, gültig von–bis, Anmeldung X bzw. Y Stunden vorher. Das Portal legt die Termine bis zu einem Jahr im Voraus an.</li>
+      <li><strong>Später festlegen:</strong> nur die Veranstaltung, Termine ergänzt du danach.</li>
+    </ul>
+  </li>
+  <li>Optional gleich das Team: Mitglied und Rolle.</li>
+</ol>
+{% screenshot "veranstaltung-anlegen" "Formular Veranstaltung anlegen mit Terminen" %}
+
+<h2 id="einstellungen">Zielgruppen, Rollen und Arten</h2>
+<ul>
+  <li><strong>Zielgruppen:</strong> z. B. „U12“ mit „Alter bis 11“ (nach Jahrgang), Geschlecht, Graduierung, Gewicht, Interessen. Die Seite zeigt sofort, wer heute passt.</li>
+  <li><strong>Rollen:</strong> Teilnehmer, Trainer, Co-Trainer, Prüfer, Betreuer … – für welche Arten, welche Benutzerrollen, ob Team und ob abrechnungsrelevant.</li>
+  <li><strong>Veranstaltungsarten:</strong> Training, Wettkampf, Lehrgang, Prüfung, Sonstiges – erweiterbar.</li>
+</ul>
+
+<h2 id="zeitplaene">Zeitpläne und Standard-Team</h2>
+<p>Je Wochentag gibt es einen Zeitplan mit Standard-Team; kommende Termine übernehmen es. Neue Trainingszeiten: alten Zeitplan mit „Gültig bis“ beenden, neuen anlegen.</p>
+
+<h2 id="gaeste">Gäste</h2>
+<p>Mit „Gäste willkommen“ zeigt die Veranstaltung einen <strong>Anmeldelink</strong> zum Teilen, z. B. an andere Vereine. Gäste bestätigen ihre Anmeldung per Mail und sehen ihre Daten über ihren eigenen Link. Mit <strong>Neuen Link erzeugen</strong> wird der alte ungültig.</p>
+
+<h2 id="absagen">Ferien und Ausfälle</h2>
+<p>Auf der Veranstaltung „Termine absagen“ mit Zeitraum, dann <strong>Termine in diesem Zeitraum absagen</strong>. Angemeldete und Team bekommen eine Nachricht.</p>

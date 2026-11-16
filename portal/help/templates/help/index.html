@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Hilfe{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl">
+  <h1 class="text-3xl font-bold">Hilfe</h1>
+  <p class="mt-1 mb-6 text-base-content/70">So funktioniert das Vereinsportal von Wedeler TSV Judo. Du siehst die Kapitel, die zu deinem Zugang passen. Nicht gefunden, was du suchst? Schreib an <a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a>.</p>
+  {% for group, items in groups %}
+  <section class="mb-8" aria-labelledby="h-{{ forloop.counter }}">
+    <h2 class="mb-3 text-xl font-semibold" id="h-{{ forloop.counter }}">{{ group }}</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% for chapter in items %}
+      <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'help_chapter' chapter.slug %}">
+        <div class="card-body flex-row items-start gap-4">
+          <i class="bi {{ chapter.icon }} text-3xl text-primary" aria-hidden="true"></i>
+          <div><h3 class="card-title text-lg">{{ chapter.title }}</h3><p class="text-sm text-base-content/70">{{ chapter.summary }}</p></div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}
