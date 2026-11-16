@@ -551,7 +551,7 @@ def unregister(participation: Participation, by: User, *, force: bool = False) -
 
 
 def promote(occurrence: Occurrence) -> list[Participation]:
-    """Rückt von der Warteliste nach, solange Plätze frei sind, und benachrichtigt (Push, sonst Mail)."""
+    """Rückt von der Warteliste nach, solange Plätze frei sind, und benachrichtigt die Nachrückenden."""
     capacity = occurrence.event.capacity
     promoted: list[Participation] = []
     if capacity is None:

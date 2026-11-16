@@ -19,12 +19,12 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
 | Sicherheit des Zugangs: Passwort gesetzt/geändert, Passkey hinzugefügt/entfernt, Anmeldung auf neuem Gerät | immer Mail |
 | Neue Verknüpfung mit einem Mitglied | immer Mail |
 | Alles an Gäste (ohne Benutzer, ADR 0013) | immer Mail |
-| Tägliches: Termin abgesagt oder geändert, Nachgerückt, Anmeldung offen, Erinnerung Anmeldeschluss, Stunden bestätigen | Push, sonst Mail |
+| Tägliches: Termin abgesagt oder geändert, Nachgerückt, Anmeldung offen, Erinnerung Anmeldeschluss, Stunden bestätigen | Push-Benachrichtigung, sonst Mail |
 
-- Hat ein Benutzer mindestens ein Gerät mit Push, kommt Tägliches nur per Push.
+- Hat ein Benutzer mindestens ein Gerät mit Push-Benachrichtigungen, kommt Tägliches nur als Push-Benachrichtigung.
 - Nimmt keines seiner Geräte die Nachricht an, geht sie per Mail raus. Abgelaufene Abos (HTTP 404/410) werden dabei
   gelöscht.
-- Weitere Einstellungen gibt es bewusst nicht: Push lässt sich je Gerät ein- und ausschalten, das ist alles.
+- Weitere Einstellungen gibt es bewusst nicht: Push-Benachrichtigungen lassen sich je Gerät ein- und ausschalten, das ist alles.
 - Jede Benachrichtigung hat einen Schlüssel (z. B. `registration_open:<termin>:<benutzer>`) und geht nur einmal raus.
   Eltern mit mehreren Kindern bekommen eine Nachricht mit allen Namen.
 - Das Versandprotokoll (`SentNotification`) wird nach 90 Tagen gelöscht.
@@ -34,7 +34,7 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
 - **Web Push mit VAPID** über `pywebpush`.
   - Den Schlüssel geben `PORTAL_VAPID_PUBLIC_KEY` und `PORTAL_VAPID_PRIVATE_KEY` vor, erzeugt mit
     `manage.py generate_vapid_keys`.
-  - Ohne Schlüssel ist Push aus, und alles geht per Mail.
+  - Ohne Schlüssel sind Push-Benachrichtigungen aus, und alles geht per Mail.
 - **App `portal.notifications`:**
   - Abos je Gerät, `notify()` mit Ersatz per Mail, Aktionsknöpfe
   - Abschnitt „Benachrichtigungen“ unter „Meine Anmeldung“, Hinweis auf der Startseite
@@ -65,14 +65,14 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
 ## Konsequenzen
 
 - **Datenschutz:**
-  - Push-Inhalte sind Ende-zu-Ende-verschlüsselt (RFC 8291). Die Push-Dienste von Google, Apple und Mozilla sehen nur
+  - Inhalte von Push-Benachrichtigungen sind Ende-zu-Ende-verschlüsselt (RFC 8291). Die Dienste von Google, Apple und Mozilla sehen nur
     Metadaten.
   - Die Texte bleiben knapp: Name des Kindes, Termin, Ort; kein Gewicht, keine Kontaktdaten.
-- Auf iPhone/iPad geht Push nur, wenn das Portal zum Home-Bildschirm hinzugefügt ist (iOS ab 16.4). Die Oberfläche
+- Auf iPhone/iPad gehen Push-Benachrichtigungen nur, wenn das Portal zum Home-Bildschirm hinzugefügt ist (iOS ab 16.4). Die Oberfläche
   sagt das.
-- Der Versand läuft synchron nach dem Commit, Push mit 10 Sekunden Timeout je Gerät. Für die Größe der Abteilung
+- Der Versand läuft synchron nach dem Commit, Push-Benachrichtigungen mit 10 Sekunden Timeout je Gerät. Für die Größe der Abteilung
   reicht das; eine Queue brauchen wir nicht.
-- Wechselt das VAPID-Schlüsselpaar, verfallen alle Abos. Die Benutzer müssen Push dann neu einschalten.
+- Wechselt das VAPID-Schlüsselpaar, verfallen alle Abos. Die Benutzer müssen Push-Benachrichtigungen dann neu einschalten.
 
 ## Verworfene Alternativen
 

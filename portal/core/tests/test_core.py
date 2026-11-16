@@ -65,7 +65,7 @@ def test_pwa_files(client) -> None:
     worker = client.get("/sw.js")
     assert worker["Content-Type"] == "text/javascript"
     assert worker["Service-Worker-Allowed"] == "/"
-    assert "img/pwa/badge-96" in worker.content.decode()  # Symbol in der Statusleiste bei Push-Nachrichten
+    assert "img/pwa/badge-96" in worker.content.decode()  # Symbol in der Statusleiste bei Push-Benachrichtigungen
 
 
 @pytest.mark.django_db(transaction=True)

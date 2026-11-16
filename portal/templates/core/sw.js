@@ -1,9 +1,9 @@
 {% load static %}// Schlanker Service Worker: macht das Portal installierbar, zeigt ohne Netz eine Offline-Seite und
-// empfängt Push-Nachrichten (ADR 0011).
+// empfängt Push-Benachrichtigungen (ADR 0011).
 // Inhalte werden bewusst nicht zwischengespeichert (personenbezogene Daten, immer aktueller Stand).
 const CACHE = "wtsv-offline-{{ portal_version }}";
 const OFFLINE_URL = "{% url 'offline' %}";
-const ACTION_URL = "{% url 'push_action' %}";
+const ACTION_URL = "{% url 'push_notification_action' %}";
 const ICON = "{% static 'img/pwa/icon-192.png' %}";
 // Symbol in der Statusleiste (Android): nur die Form zählt, Android färbt selbst ein
 const BADGE = "{% static 'img/pwa/badge-96.png' %}";
@@ -31,7 +31,7 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
-// Push: Titel, Text, Ziel-URL und optionale Knöpfe (actions) mit signiertem Token kommen vom Server.
+// Push-Benachrichtigung: Titel, Text, Ziel-URL und optionale Knöpfe (actions) mit signiertem Token kommen vom Server.
 self.addEventListener("push", (event) => {
   let data = {};
   try {

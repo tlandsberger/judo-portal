@@ -1,9 +1,9 @@
-"""Benachrichtigungen für den täglichen Ablauf: Push auf alle Geräte des Benutzers, sonst per Mail (ADR 0011).
+"""Benachrichtigungen für den täglichen Ablauf: Push-Benachrichtigung auf alle Geräte, sonst per Mail (ADR 0011).
 
 Kritisches (Einladung, Anmeldecode, Sicherheit des Zugangs, neue Verknüpfung) geht nicht hierüber, sondern immer
 direkt per Mail.
 
-Aktionsknöpfe an Push-Nachrichten tragen einen signierten Link. Was eine Aktion tut, melden die Fach-Apps über
+Aktionsknöpfe an Push-Benachrichtigungen tragen einen signierten Link. Was eine Aktion tut, melden die Fach-Apps über
 ``register_action`` an; dieses Modul kennt sie nicht.
 """
 
@@ -26,25 +26,25 @@ from django.utils import timezone
 
 from portal.accounts.models import User
 
-from .models import Channel, PushSubscription, SentNotification
+from .models import Channel, PushNotificationSubscription, SentNotification
 
 log = logging.getLogger(__name__)
 
 ACTION_SALT = "portal.notifications.action"
 ACTION_MAX_AGE = timedelta(days=7)
 KEEP_DAYS = 90
-PUSH_TTL = 24 * 60 * 60
+PUSH_NOTIFICATION_TTL = 24 * 60 * 60
 # Zeitkritisches weckt Android sofort (Urgency „high“); der Rest kommt im nächsten Wartungsfenster des Ruhemodus.
 # Bewusst sparsam: Android drosselt Absender, deren dringende Nachrichten oft nicht angesehen werden.
 URGENT_KINDS = frozenset({"cancelled", "changed", "promoted", "deadline"})
 
 
-def push_enabled() -> bool:
+def push_notifications_enabled() -> bool:
     return bool(settings.VAPID_PUBLIC_KEY and settings.VAPID_PRIVATE_KEY)
 
 
-def has_push(user: User) -> bool:
-    return push_enabled() and user.push_subscriptions.exists()
+def has_push_notifications(user: User) -> bool:
+    return push_notifications_enabled() and user.push_notification_subscriptions.exists()
 
 
 # Aktionen
@@ -69,7 +69,7 @@ def register_action(name: str, handler: ActionHandler) -> None:
 
 @dataclass
 class Action:
-    """Knopf an einer Push-Nachricht, z. B. „Anmelden“."""
+    """Knopf an einer Push-Benachrichtigung, z. B. „Anmelden“."""
 
     name: str
     title: str
@@ -80,7 +80,7 @@ class Action:
 
 
 def run_action(token: str) -> ActionResult:
-    """Führt eine Aktion aus einem Push-Knopf aus. Der Token ersetzt Anmeldung und CSRF-Schutz."""
+    """Führt die Aktion eines Knopfs einer Push-Benachrichtigung aus; der Token ersetzt Anmeldung und CSRF-Schutz."""
     try:
         data = signing.loads(token, salt=ACTION_SALT, max_age=ACTION_MAX_AGE)
     except signing.SignatureExpired:
@@ -107,7 +107,7 @@ def notify(
     url: str,
     actions: Iterable[Action] = (),
 ) -> bool:
-    """Benachrichtigt einen Benutzer einmal je ``key``: per Push, wenn ein Gerät es annimmt, sonst per Mail.
+    """Benachrichtigt einmal je ``key``: als Push-Benachrichtigung, wenn ein Gerät sie annimmt, sonst per Mail.
 
     Gibt ``False`` zurück, wenn der Schlüssel schon vergeben war. Verschickt wird nach dem Commit.
     """
@@ -133,24 +133,26 @@ def _deliver(record: SentNotification, body: str, url: str, actions: list[Action
         "actions": [{"action": a.name, "title": a.title, "token": a.token(user)} for a in actions],
     }
     urgency = "high" if record.kind in URGENT_KINDS else "normal"
-    channel = Channel.PUSH if push_to_user(user, payload, urgency) else Channel.MAIL
+    channel = Channel.PUSH_NOTIFICATION if send_push_notifications(user, payload, urgency) else Channel.MAIL
     if channel == Channel.MAIL:
         send_mail(user, record.title, body, url)
     SentNotification.objects.filter(pk=record.pk).update(channel=channel)
 
 
-def push_to_user(user: User, payload: dict[str, Any], urgency: str = "normal") -> bool:
-    """Push an alle Geräte. Wahr, wenn mindestens eines die Nachricht angenommen hat."""
-    if not push_enabled():
+def send_push_notifications(user: User, payload: dict[str, Any], urgency: str = "normal") -> bool:
+    """Push-Benachrichtigung an alle Geräte. Wahr, wenn mindestens eines die Nachricht angenommen hat."""
+    if not push_notifications_enabled():
         return False
     delivered = False
-    for subscription in PushSubscription.objects.filter(user=user):
-        if send_push(subscription, payload, urgency):
+    for subscription in PushNotificationSubscription.objects.filter(user=user):
+        if send_push_notification(subscription, payload, urgency):
             delivered = True
     return delivered
 
 
-def send_push(subscription: PushSubscription, payload: dict[str, Any], urgency: str = "normal") -> bool:
+def send_push_notification(
+    subscription: PushNotificationSubscription, payload: dict[str, Any], urgency: str = "normal"
+) -> bool:
     from pywebpush import WebPushException, webpush
 
     try:
@@ -159,22 +161,22 @@ def send_push(subscription: PushSubscription, payload: dict[str, Any], urgency: 
             data=json.dumps(payload),
             vapid_private_key=settings.VAPID_PRIVATE_KEY,
             vapid_claims={"sub": settings.VAPID_SUBJECT},
-            ttl=PUSH_TTL,
+            ttl=PUSH_NOTIFICATION_TTL,
             headers={"Urgency": urgency},
             timeout=10,
         )
     except WebPushException as error:
         status = getattr(error.response, "status_code", None)
         if status in (404, 410):
-            log.info("Push-Abo %s ist abgelaufen und wird entfernt", subscription.pk)
+            log.info("Abo %s für Push-Benachrichtigungen ist abgelaufen und wird entfernt", subscription.pk)
             subscription.delete()
         else:
-            log.warning("Push an Abo %s fehlgeschlagen: %s", subscription.pk, status or error)
+            log.warning("Push-Benachrichtigung an Abo %s fehlgeschlagen: %s", subscription.pk, status or error)
         return False
     except Exception:
-        log.exception("Push an Abo %s fehlgeschlagen", subscription.pk)
+        log.exception("Push-Benachrichtigung an Abo %s fehlgeschlagen", subscription.pk)
         return False
-    PushSubscription.objects.filter(pk=subscription.pk).update(last_used_at=timezone.now())
+    PushNotificationSubscription.objects.filter(pk=subscription.pk).update(last_used_at=timezone.now())
     return True
 
 
@@ -196,22 +198,22 @@ def _absolute(url: str) -> str:
 # Geräte
 
 
-def subscribe(user: User, endpoint: str, p256dh: str, auth: str, device: str) -> PushSubscription:
-    subscription, _ = PushSubscription.objects.update_or_create(
+def subscribe(user: User, endpoint: str, p256dh: str, auth: str, device: str) -> PushNotificationSubscription:
+    subscription, _ = PushNotificationSubscription.objects.update_or_create(
         endpoint=endpoint, defaults={"user": user, "p256dh": p256dh, "auth": auth, "device": device[:100]}
     )
     return subscription
 
 
 def unsubscribe(user: User, endpoint: str) -> None:
-    PushSubscription.objects.filter(user=user, endpoint=endpoint).delete()
+    PushNotificationSubscription.objects.filter(user=user, endpoint=endpoint).delete()
 
 
-def send_test(subscription: PushSubscription) -> bool:
-    return send_push(
+def send_test(subscription: PushNotificationSubscription) -> bool:
+    return send_push_notification(
         subscription,
         {
-            "title": "Push funktioniert",
+            "title": "Push-Benachrichtigungen funktionieren",
             "body": "So sehen Benachrichtigungen von Wedeler TSV Judo aus.",
             "url": reverse("security"),
             "tag": "test",

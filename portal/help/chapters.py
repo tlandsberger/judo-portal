@@ -74,7 +74,7 @@ CHAPTERS = (
         "Benachrichtigungen",
         "bi-bell",
         "Für alle",
-        "Push aufs Handy einschalten, was per Mail kommt, wenn Nachrichten verspätet sind.",
+        "Push-Benachrichtigungen einschalten, was per Mail kommt, wenn sie verspätet sind.",
         _signed_in,
     ),
     Chapter(

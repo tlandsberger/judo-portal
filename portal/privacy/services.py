@@ -25,7 +25,7 @@ from portal.core import audit
 from portal.events.models import Participation
 from portal.members import services as members
 from portal.members.models import LinkKind, Member, MemberLink, PendingLink
-from portal.notifications.models import PushSubscription, SentNotification
+from portal.notifications.models import PushNotificationSubscription, SentNotification
 
 log = logging.getLogger(__name__)
 
@@ -390,9 +390,9 @@ def export_user(user: User) -> dict[str, Any]:
             {"Gerät": d.description, "Zuerst": _value(d.first_seen), "Zuletzt": _value(d.last_seen)}
             for d in KnownDevice.objects.filter(user=user)
         ],
-        "Push-Geräte": [
+        "Geräte für Push-Benachrichtigungen": [
             {"Gerät": s.device, "Eingerichtet": _value(s.created_at), "Zuletzt genutzt": _value(s.last_used_at)}
-            for s in PushSubscription.objects.filter(user=user)
+            for s in PushNotificationSubscription.objects.filter(user=user)
         ],
         "Benachrichtigungen": [
             {"Zeitpunkt": _value(n.created_at), "Anlass": n.kind, "Titel": n.title, "Kanal": n.get_channel_display()}

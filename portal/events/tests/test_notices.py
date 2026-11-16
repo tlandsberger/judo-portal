@@ -1,4 +1,4 @@
-"""Benachrichtigungen rund um Termine (ohne Push-Gerät landen sie per Mail)."""
+"""Benachrichtigungen rund um Termine (ohne Gerät für Push-Benachrichtigungen landen sie per Mail)."""
 
 from __future__ import annotations
 

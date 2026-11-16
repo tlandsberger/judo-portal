@@ -95,7 +95,7 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
     "benachrichtigungen",
     async (page) => {
       await page.goto("/zugang/anmeldung/");
-      await expect(page.getByRole("button", { name: "Push auf diesem Gerät einschalten" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Push-Benachrichtigungen auf diesem Gerät einschalten" })).toBeVisible();
     },
     (page) => page.getByRole("region", { name: "Benachrichtigungen" }),
   );

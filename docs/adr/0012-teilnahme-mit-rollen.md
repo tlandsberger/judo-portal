@@ -93,7 +93,7 @@ Nach dem ersten Release der Veranstaltungen (ADR 0010) zeigten sich drei Schwäc
   Mitglieds des Übungsleiters. Begleitungen von Übungsleitern ohne eigenes Mitgliedsprofil werden übersprungen und im
   Migrationslog genannt. Das Standard-Team der Veranstaltung geht an alle ihre Zeitpläne; „Tage vorher“ wird zu
   Stunden.
-- **Push-Knöpfe:** Die Tokens tragen jetzt die Teilnahme (`p`). Knöpfe aus Nachrichten vor dem Update führen ins
+- **Knöpfe an Push-Benachrichtigungen:** Die Tokens tragen jetzt die Teilnahme (`p`). Knöpfe aus Nachrichten vor dem Update führen ins
   Portal statt die Aktion auszuführen.
 - Übungsleiter brauchen ein eigenes Mitgliedsprofil, um ins Team zu kommen.
 

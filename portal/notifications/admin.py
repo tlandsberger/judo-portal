@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from .models import PushSubscription, SentNotification
+from .models import PushNotificationSubscription, SentNotification
 
 
-@admin.register(PushSubscription)
-class PushSubscriptionAdmin(admin.ModelAdmin):
+@admin.register(PushNotificationSubscription)
+class PushNotificationSubscriptionAdmin(admin.ModelAdmin):
     list_display = ("user", "device", "created_at", "last_used_at")
 
 
