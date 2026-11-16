@@ -11,6 +11,15 @@
 </ol>
 <p>Ändern und zurücknehmen geht, bis der Monat zur Abrechnung eingereicht ist.</p>
 
+<h2 id="nicht-dabei">Nicht dabei?</h2>
+<p>Lief es anders als geplant, tippe in der Erinnerung, unter <a href="{% url 'my_hours' %}">Meine Stunden</a> oder am Termin auf <strong>Nicht dabei?</strong> und wähle:</p>
+<ul>
+  <li><strong>Ich war nicht dabei – austragen:</strong> Du verschwindest aus dem Team des Termins.</li>
+  <li><strong>Ich wurde vertreten:</strong> Wähle, wer dich vertreten hat und in welcher Rolle. Die Vertretung wird eingetragen und bekommt eine Push-Benachrichtigung, um ihre Stunden zu bestätigen.</li>
+  <li><strong>Der Termin hat nicht stattgefunden – absagen:</strong> Der Termin gilt als ausgefallen. Teilnehmer bekommen keine Nachricht mehr. Hat schon jemand anderes im Team bestätigt, sprecht euch bitte vorher ab.</li>
+</ul>
+{% screenshot "nicht-dabei" "Seite Nicht dabei? mit Austragen, Vertretung und Absage" %}
+
 <h2 id="abrechnung">Abrechnung einreichen</h2>
 <ol>
   <li>Öffne <a href="{% url 'billing_index' %}">Abrechnung</a> und den Monat.</li>

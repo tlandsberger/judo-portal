@@ -86,6 +86,10 @@ Nach dem ersten Release der Veranstaltungen (ADR 0010) zeigten sich drei Schwäc
 - „Co-Trainer“ statt „Kotrainer“.
 - „Stunden“ statt „Begleitung“ oder „Einsatz“: „Stunden bestätigen“, Seite „Meine Stunden“ (`/stunden/`).
 - Eine Bestätigung lässt sich zurücknehmen (z. B. versehentlich bestätigt), solange der Monat nicht zur Abrechnung eingereicht ist.
+- **Nicht dabei?** Nachträglich (ab Beginn des Termins) kann sich ein Team-Mitglied austragen, an eine Vertretung
+  übertragen (die Vertretung wird eingetragen und bekommt die Erinnerung zum Bestätigen) oder den Termin nachträglich
+  absagen (ohne Nachrichten an Teilnehmer; nicht, wenn jemand anderes schon bestätigt hat). Die Erinnerung „Stunden
+  bestätigen“ hat dafür einen zweiten Knopf, der die Seite öffnet. Alles respektiert die Sperre durch die Abrechnung.
 
 ## Konsequenzen
 

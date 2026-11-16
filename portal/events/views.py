@@ -21,6 +21,7 @@ from portal.members.models import Member
 
 from . import guests, services
 from .forms import (
+    AbsentForm,
     CancelRangeForm,
     ConfirmForm,
     EventCreateForm,
@@ -309,6 +310,53 @@ def hours_confirm(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         messages.success(request, "Die Dauer ist geändert." if corrected else "Danke, deine Stunden sind bestätigt.")
     return redirect(_next(request, participation.occurrence))
+
+
+@login_required
+def hours_absent(request: HttpRequest, pk: int) -> HttpResponse:
+    """„Nicht dabei?“: Team-Teilnahme nachträglich austragen, an eine Vertretung übertragen oder Termin absagen."""
+    member = services.own_member(request.user)
+    participation = get_object_or_404(
+        Participation.objects.select_related("occurrence__event", "role"),
+        occurrence_id=pk,
+        member=member,
+        role__is_team=True,
+        status__in=services.ACTIVE,
+    )
+    occurrence = participation.occurrence
+    roles = services.team_roles(occurrence.event)
+    candidates = [m for m in services.team_candidates(occurrence.event) if m != member]
+    form = AbsentForm(request.POST or None, candidates=candidates, roles=roles, initial={"role": participation.role_id})
+    locked = services.locked_reason(participation)
+    if request.method == "POST" and not locked and form.is_valid():
+        user = _user(request)
+        what = form.cleaned_data["what"]
+        try:
+            if what == AbsentForm.HAND_OVER:
+                substitute = form.cleaned_data["member"]
+                services.hand_over(participation, substitute, form.cleaned_data["role"], user)
+                messages.success(request, f"Übertragen: {substitute.display_name} bekommt die Stunden zum Bestätigen.")
+            elif what == AbsentForm.CANCEL:
+                services.cancel_after(occurrence, user)
+                messages.success(request, "Der Termin ist nachträglich abgesagt.")
+            else:
+                services.withdraw(participation, user)
+                messages.success(request, "Du bist aus dem Team des Termins ausgetragen.")
+        except RegistrationError as error:
+            messages.error(request, str(error))
+        else:
+            return redirect("my_hours")
+    return render(
+        request,
+        "events/hours_absent.html",
+        {
+            "participation": participation,
+            "occurrence": occurrence,
+            "form": form,
+            "locked": locked,
+            "started": occurrence.starts_at <= timezone.now(),
+        },
+    )
 
 
 @require_POST

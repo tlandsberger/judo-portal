@@ -74,6 +74,8 @@ class Action:
     name: str
     title: str
     data: dict[str, Any] = field(default_factory=dict)
+    # Statt eine Aktion auszuführen, öffnet der Knopf diese Seite (z. B. wenn dort noch etwas auszuwählen ist).
+    url: str = ""
 
     def token(self, user: User) -> str:
         return signing.dumps({"u": user.pk, "a": self.name, "d": self.data}, salt=ACTION_SALT, compress=True)
@@ -130,7 +132,12 @@ def _deliver(record: SentNotification, body: str, url: str, actions: list[Action
         "body": body,
         "url": url,
         "tag": record.key,
-        "actions": [{"action": a.name, "title": a.title, "token": a.token(user)} for a in actions],
+        "actions": [
+            {"action": a.name, "title": a.title, "url": a.url}
+            if a.url
+            else {"action": a.name, "title": a.title, "token": a.token(user)}
+            for a in actions
+        ],
     }
     urgency = "high" if record.kind in URGENT_KINDS else "normal"
     channel = Channel.PUSH_NOTIFICATION if send_push_notifications(user, payload, urgency) else Channel.MAIL

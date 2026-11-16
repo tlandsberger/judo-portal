@@ -63,6 +63,17 @@ test("Übungsleiterin bestätigt und reicht den Vormonat ein, die Abteilungsleit
   await admin.getByLabel("Rolle").selectOption({ label: "Trainer" });
   await admin.getByRole("button", { name: "Speichern" }).click();
   await expect(admin.getByText("„Techniktraining“ angelegt mit 1 Termin.")).toBeVisible();
+  // Ein zweiter Termin, bei dem Dora dann doch nicht dabei war
+  await admin.goto("/veranstaltungen/neu/");
+  await admin.getByLabel("Titel").fill("Zusatztraining");
+  await admin.getByLabel("Art").selectOption({ label: "Training" });
+  await admin.getByLabel("Einmalig").check();
+  await admin.getByLabel("Beginn", { exact: true }).fill(lastMonth(12, "18:00"));
+  await admin.getByLabel("Ende", { exact: true }).fill(lastMonth(12, "19:30"));
+  await admin.getByLabel("Mitglied").selectOption({ label: "Dora Daumen" });
+  await admin.getByLabel("Rolle").selectOption({ label: "Trainer" });
+  await admin.getByRole("button", { name: "Speichern" }).click();
+  await expect(admin.getByText("„Zusatztraining“ angelegt mit 1 Termin.")).toBeVisible();
 
   // Dora bestätigt im Vormonat und reicht ein
   const month = lastMonthLabel();
@@ -74,6 +85,19 @@ test("Übungsleiterin bestätigt und reicht den Vormonat ein, die Abteilungsleit
   await expect(trainer.getByText("Danke, deine Stunden sind bestätigt.")).toBeVisible();
   await expect(trainer.getByRole("cell", { name: "22,50 €" }).first()).toBeVisible();
   await expectNoA11yViolations(trainer);
+  // Beim Zusatztraining war Dora nicht dabei: austragen
+  await trainer.getByRole("link", { name: /Nicht dabei\? Zusatztraining/ }).click();
+  await expect(trainer.getByRole("heading", { level: 1, name: "Nicht dabei?" })).toBeVisible();
+  await expect(trainer.getByLabel("Vertreten von")).toBeHidden();
+  await trainer.getByLabel("Ich wurde vertreten").check();
+  await expect(trainer.getByLabel("Vertreten von")).toBeVisible();
+  await expectNoA11yViolations(trainer);
+  await trainer.getByLabel("Ich war nicht dabei – austragen").check();
+  await trainer.getByRole("button", { name: "Speichern" }).click();
+  await expect(trainer.getByText("Du bist aus dem Team des Termins ausgetragen.")).toBeVisible();
+  await trainer.goto("/abrechnung/");
+  await trainer.getByRole("link", { name: month }).click();
+  await expect(trainer.getByRole("heading", { name: "Nicht bestätigt" })).toHaveCount(0);
   await trainer.getByRole("button", { name: `${month} einreichen` }).click();
   await expect(trainer.getByText(`${month} ist eingereicht.`)).toBeVisible();
   await expect(trainer.getByRole("button", { name: "Ändern" })).toHaveCount(0);

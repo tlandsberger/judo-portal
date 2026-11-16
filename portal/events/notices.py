@@ -257,8 +257,29 @@ def notify_confirm_hours(now: datetime | None = None) -> None:
             body=f"Warst du bei {occurrence.event.title} am {_when(occurrence)} als {participation.role.name} dabei? "
             "Bitte bestätige deine Stunden.",
             url=reverse("my_hours"),
-            actions=[Action("confirm", "Bestätigen", {"p": participation.pk})],
+            actions=[
+                Action("confirm", "Bestätigen", {"p": participation.pk}),
+                Action("absent", "Nicht dabei?", url=reverse("hours_absent", args=[occurrence.pk])),
+            ],
         )
+
+
+def substitute(participation: Participation, absent: str) -> None:
+    """Die Vertretung soll ihre Stunden bestätigen; gleicher Schlüssel wie die Abend-Erinnerung, also nur einmal."""
+    occurrence = participation.occurrence
+    user = services.member_user(participation.member) if participation.member else None
+    if user is None:
+        return
+    notifications.notify(
+        user,
+        key=f"confirm:{participation.pk}",
+        kind="confirm",
+        title="Stunden bestätigen",
+        body=f"Du hast {absent} bei {occurrence.event.title} am {_when(occurrence)} als {participation.role.name} "
+        "vertreten. Bitte bestätige deine Stunden.",
+        url=reverse("my_hours"),
+        actions=[Action("confirm", "Bestätigen", {"p": participation.pk})],
+    )
 
 
 def run_jobs() -> None:

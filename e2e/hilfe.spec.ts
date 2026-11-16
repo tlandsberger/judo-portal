@@ -110,6 +110,13 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
     await page.getByRole("region", { name: "Kommende" }).getByRole("link", { name: "Randori-Lehrgang" }).click();
     await expect(page.getByRole("heading", { name: /Teilnehmer/ })).toBeVisible();
   });
+  await shoot(browser, clara, "nicht-dabei", async (page) => {
+    await page.goto("/stunden/");
+    const href = await page.getByRole("region", { name: "Vergangen" }).getByRole("link", { name: "Randori-Lehrgang" }).first().getAttribute("href");
+    await page.goto(`${href}nicht-dabei/`);
+    await page.getByLabel("Ich wurde vertreten").check();
+    await expect(page.getByLabel("Vertreten von")).toBeVisible();
+  });
   await shoot(browser, dora, "abrechnung-monat", async (page) => {
     await page.goto(lastMonthPath());
     await expect(page.getByRole("heading", { name: "Bestätigte Stunden" })).toBeVisible();

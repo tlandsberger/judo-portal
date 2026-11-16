@@ -207,3 +207,13 @@ def test_unconfirm_blocked_in_submitted_month(trainer):
     services.submit(events.own_member(trainer), month_ago(), trainer)
     with pytest.raises(RegistrationError, match="eingereicht"):
         events.unconfirm(shift)
+
+
+def test_absent_blocked_in_submitted_month(trainer):
+    set_rate(trainer)
+    shift = make_shift(trainer, month_ago() + timedelta(days=2))
+    services.submit(events.own_member(trainer), month_ago(), trainer)
+    with pytest.raises(RegistrationError, match="eingereicht"):
+        events.withdraw(shift, trainer)
+    with pytest.raises(RegistrationError, match="eingereicht"):
+        events.cancel_after(shift.occurrence, trainer)
