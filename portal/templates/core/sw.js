@@ -7,6 +7,8 @@ const ACTION_URL = "{% url 'push_notification_action' %}";
 const ICON = "{% static 'img/pwa/icon-192.png' %}";
 // Symbol in der Statusleiste (Android): nur die Form zählt, Android färbt selbst ein
 const BADGE = "{% static 'img/pwa/badge-96.png' %}";
+// Android zeigt links schon das App-Symbol; ein „icon“ erschiene rechts zusätzlich groß. Dort also nur das Badge.
+const IMAGES = /Android/i.test(self.navigator.userAgent) ? { badge: BADGE } : { icon: ICON, badge: BADGE };
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([
@@ -42,8 +44,7 @@ self.addEventListener("push", (event) => {
   const actions = data.actions || [];
   event.waitUntil(self.registration.showNotification(data.title || "Wedeler TSV Judo", {
     body: data.body || "",
-    icon: ICON,
-    badge: BADGE,
+    ...IMAGES,
     tag: data.tag,
     data: { url: data.url || "/", actions },
     actions: actions.map((action) => ({ action: action.action, title: action.title })),
@@ -76,8 +77,7 @@ self.addEventListener("notificationclick", (event) => {
       .then((result) => {
         const shown = self.registration.showNotification("Wedeler TSV Judo", {
           body: result.message,
-          icon: ICON,
-          badge: BADGE,
+          ...IMAGES,
           tag: (notification.tag || "aktion") + "-ergebnis",
         });
         return result.ok ? shown : shown.then(() => openPage(result.url || data.url));
