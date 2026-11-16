@@ -12,6 +12,7 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta
 from typing import Any
 
+from django.db import transaction
 from django.urls import reverse
 from django.utils import formats, timezone
 
@@ -22,7 +23,7 @@ from portal.notifications import services as notifications
 from portal.notifications.models import SentNotification
 from portal.notifications.services import Action, ActionResult
 
-from . import services
+from . import guests, services
 from .models import Occurrence, Participation, ParticipationStatus
 
 log = logging.getLogger(__name__)
@@ -77,6 +78,7 @@ def cancelled(occurrence: Occurrence, by: User | None = None) -> None:
             body=body,
             url=_url(occurrence),
         )
+    guests.notify(occurrence, f"Abgesagt: {title}", body)
 
 
 def changed(occurrence: Occurrence, by: User | None = None) -> None:
@@ -96,11 +98,19 @@ def changed(occurrence: Occurrence, by: User | None = None) -> None:
             body=body,
             url=_url(occurrence),
         )
+    guests.notify(occurrence, f"Geändert: {title}", body)
 
 
 def promoted(participation: Participation) -> None:
     occurrence, member = participation.occurrence, participation.member
     title = occurrence.event.title
+    if member is None and participation.guest:
+        guest = participation.guest
+        body = f"Ein Platz ist frei geworden: Du bist jetzt für {title} am {_when(occurrence)} angemeldet."
+        transaction.on_commit(lambda: guests.send_mail(guest, f"Nachgerückt: {title}", body))
+        return
+    if member is None:
+        return
     for user in members.member_users(member):
         notifications.notify(
             user,
@@ -236,7 +246,7 @@ def notify_confirm_hours(now: datetime | None = None) -> None:
     ).select_related("occurrence__event", "member", "role")
     for participation in open_rows:
         occurrence = participation.occurrence
-        user = services.member_user(participation.member)
+        user = services.member_user(participation.member) if participation.member else None
         if user is None or now < confirm_due(occurrence.ends_at):
             continue
         notifications.notify(
@@ -285,18 +295,17 @@ def action_register(user: User, data: dict[str, Any]) -> ActionResult:
 
 def action_unregister(user: User, data: dict[str, Any]) -> ActionResult:
     rows = Participation.objects.select_related("occurrence__event", "member", "role")
-    participation = rows.filter(pk=data.get("p", 0), role__is_team=False).first()
-    if participation is None or not members.can_self_edit(user, participation.member):
+    participation = rows.filter(pk=data.get("p", 0), role__is_team=False, member__isnull=False).first()
+    member = participation.member if participation else None
+    if participation is None or member is None or not members.can_self_edit(user, member):
         return _failed("Das hat nicht geklappt. Öffne bitte das Portal.", reverse("agenda"))
     if not participation.is_active:
-        return ActionResult(True, f"{participation.member.first_name} ist schon abgemeldet.")
+        return ActionResult(True, f"{member.first_name} ist schon abgemeldet.")
     try:
         services.unregister(participation, user)
     except services.RegistrationError as error:
         return _failed(str(error), _url(participation.occurrence))
-    return ActionResult(
-        True, f"{participation.member.first_name} ist von {participation.occurrence.event.title} abgemeldet."
-    )
+    return ActionResult(True, f"{member.first_name} ist von {participation.occurrence.event.title} abgemeldet.")
 
 
 def action_confirm(user: User, data: dict[str, Any]) -> ActionResult:

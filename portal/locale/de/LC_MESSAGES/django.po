@@ -268,3 +268,6 @@ msgstr "Passkey"
 msgid "Edit Security Key"
 msgstr "Passkey bearbeiten"
 
+
+msgid "- Select an option -"
+msgstr "– bitte wählen –"

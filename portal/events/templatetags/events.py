@@ -4,12 +4,14 @@ from typing import Any
 
 from django import template
 
+from portal.members import services as members
+
 from .. import services
 
 register = template.Library()
 
 
 @register.simple_tag
-def next_dates(user: Any, count: int = 3) -> list[tuple[Any, services.AgendaItem]]:
-    """Für die Startseite: die nächsten passenden Termine über alle eigenen Mitglieder."""
-    return services.next_items(user, count)
+def next_dates(user: Any, count: int = 3) -> dict[str, Any]:
+    """Für die Startseite: die nächsten passenden Termine über alle eigenen Mitglieder, jeder nur einmal."""
+    return {"entries": services.next_entries(user, count), "several": len(members.effective_links(user)) > 1}

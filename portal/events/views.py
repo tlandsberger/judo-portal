@@ -4,6 +4,7 @@ from typing import Any
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Q
@@ -18,12 +19,15 @@ from portal.accounts.permissions import role_required
 from portal.members import services as members
 from portal.members.models import Member
 
-from . import services
+from . import guests, services
 from .forms import (
     CancelRangeForm,
     ConfirmForm,
+    EventCreateForm,
     EventForm,
     EventTypeForm,
+    GuestForm,
+    GuestRegisterForm,
     NoteForm,
     OccurrenceForm,
     ParticipantRoleForm,
@@ -35,6 +39,7 @@ from .forms import (
 from .models import (
     Event,
     EventType,
+    Guest,
     Occurrence,
     ParticipantRole,
     Participation,
@@ -60,10 +65,10 @@ def _errors(request: HttpRequest, form: Any) -> None:
 
 @login_required
 def agenda(request: HttpRequest) -> HttpResponse:
-    """Die nächsten Termine je eigenem Mitglied. Ohne eigene Mitglieder: alle Termine zur Übersicht."""
-    sections = services.agenda(request.user)
-    context: dict[str, Any] = {"sections": sections, "several": len(sections) > 1}
-    if not sections:
+    """Die nächsten Termine, jeder einmal, mit den eigenen Mitgliedern. Ohne eigene Mitglieder: alle zur Übersicht."""
+    result = services.agenda(request.user)
+    context: dict[str, Any] = {"agenda": result}
+    if result is None:
         services.ensure_generated()
         context["occurrences"] = services.upcoming()
     return render(request, "events/agenda.html", context)
@@ -279,7 +284,7 @@ def occurrence_team_remove(request: HttpRequest, pk: int, participation_pk: int)
     except RegistrationError as error:
         messages.error(request, str(error))
     else:
-        messages.success(request, f"{participation.member.display_name} ist ausgetragen.")
+        messages.success(request, f"{participation.person.display_name} ist ausgetragen.")
     return redirect("occurrence_detail", pk=pk)
 
 
@@ -334,7 +339,7 @@ def participant_remove(request: HttpRequest, pk: int, participation_pk: int) -> 
     occurrence = _lead_occurrence(request, pk)
     participation = get_object_or_404(Participation, pk=participation_pk, occurrence=occurrence, role__is_team=False)
     services.unregister(participation, _user(request), force=True)
-    messages.success(request, f"{participation.member.display_name} ist abgemeldet.")
+    messages.success(request, f"{participation.person.display_name} ist abgemeldet.")
     return redirect("occurrence_detail", pk=pk)
 
 
@@ -391,19 +396,49 @@ def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "occurrences": occurrences,
         "can_manage": services.can_manage_events(request.user),
         "cancel_form": CancelRangeForm(),
+        "guest_link": request.build_absolute_uri(reverse("guest_register", args=[guests.enable_link(event)]))
+        if event.guests_welcome
+        else None,
     }
     return render(request, "events/event_detail.html", context)
 
 
 @role_required(*MANAGE_EVENTS)
-def event_edit(request: HttpRequest, pk: int | None = None) -> HttpResponse:
-    event = get_object_or_404(Event, pk=pk) if pk else None
+def event_edit(request: HttpRequest, pk: int) -> HttpResponse:
+    event = get_object_or_404(Event, pk=pk)
     form = EventForm(request.POST or None, instance=event)
     if request.method == "POST" and form.is_valid():
         event = form.save()
         messages.success(request, f"„{event.title}“ gespeichert.")
         return redirect("event_detail", pk=event.pk)
     return render(request, "events/event_edit.html", {"form": form, "event": event})
+
+
+@role_required(*MANAGE_EVENTS)
+def event_create(request: HttpRequest) -> HttpResponse:
+    """Veranstaltung mit Terminen anlegen: einmalig, wiederkehrend oder später."""
+    form = EventCreateForm(request.POST or None, candidates=services.team_candidates(), roles=services.team_roles())
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        team = (data["team_member"], data["team_role"]) if data.get("team_member") else None
+        try:
+            with transaction.atomic():
+                event = form.save()
+                occurrences = services.create_event(
+                    event,
+                    dates=data["dates"],
+                    once={name: data[name] for name in form.ONCE_FIELDS},
+                    weekly={name: data[name] for name in form.WEEKLY_FIELDS},
+                    team=team,
+                )
+        except RegistrationError as error:
+            form.add_error("team_role", str(error))
+        else:
+            count = len(occurrences)
+            dates = f" mit {count} Termin{'en' if count != 1 else ''}" if count else ""
+            messages.success(request, f"„{event.title}“ angelegt{dates}.")
+            return redirect("event_detail", pk=event.pk)
+    return render(request, "events/event_create.html", {"form": form})
 
 
 @require_POST
@@ -509,6 +544,115 @@ def schedule_team_remove(request: HttpRequest, pk: int, schedule_pk: int, entry_
     )
     services.remove_schedule_team(entry)
     messages.success(request, f"{entry.member.display_name} ist nicht mehr im Standard-Team.")
+    return redirect("event_detail", pk=pk)
+
+
+# Gäste (ADR 0013)
+
+GUEST_LIMIT = 10  # Anmeldungen je IP-Adresse und Stunde über den öffentlichen Link
+
+
+def _too_many(request: HttpRequest) -> bool:
+    key = f"guest-register:{request.META.get('REMOTE_ADDR', '')}"
+    count = cache.get(key, 0)
+    if count >= GUEST_LIMIT:
+        return True
+    cache.set(key, count + 1, 3600)
+    return False
+
+
+def guest_register(request: HttpRequest, token: str) -> HttpResponse:
+    """Öffentliche Anmeldung für Gäste über den Link der Veranstaltung, ohne Zugang."""
+    event = guests.event_for_link(token)
+    if event is None:
+        return render(request, "events/guest_link_invalid.html", status=404)
+    occurrences = guests.open_occurrences(event)
+    form = GuestRegisterForm(request.POST or None, event=event, occurrences=occurrences)
+    if request.method == "POST" and form.is_valid():
+        if _too_many(request):
+            form.add_error(None, "Zu viele Anmeldungen von hier. Bitte versuch es später noch einmal.")
+        else:
+            data = {name: form.cleaned_data[name] for name in GuestForm.Meta.fields}
+            try:
+                guest = guests.register(event, data, form.cleaned_data["occurrences"])
+            except RegistrationError as error:
+                form.add_error(None, str(error))
+            else:
+                return render(request, "events/guest_register_done.html", {"event": event, "guest": guest})
+    return render(request, "events/guest_register.html", {"event": event, "form": form, "occurrences": occurrences})
+
+
+def guest_page(request: HttpRequest, token: str) -> HttpResponse:
+    """Persönliche Seite eines Gastes: Termine, Daten, bestätigen, ab- und anmelden."""
+    guest = Guest.objects.select_related("event").filter(token=token).first()
+    if guest is None:
+        return render(request, "events/guest_link_invalid.html", status=404)
+    event = guest.event
+    form = GuestForm(instance=guest, event=event)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        try:
+            if action == "confirm":
+                guests.confirm(guest)
+                messages.success(request, "Danke! Deine Anmeldung ist bestätigt.")
+            elif action == "cancel":
+                participation = get_object_or_404(guest.participations, pk=request.POST.get("participation"))
+                guests.unregister(participation)
+                messages.success(request, "Du bist von diesem Termin abgemeldet.")
+            elif action == "add":
+                occurrence = get_object_or_404(event.occurrences, pk=request.POST.get("occurrence"))
+                guests.add(guest, occurrence)
+                messages.success(request, "Du bist für den Termin angemeldet.")
+            elif action == "save":
+                form = GuestForm(request.POST, instance=Guest.objects.get(pk=guest.pk), event=event)
+                if form.is_valid():
+                    guests.update(guest, {name: form.cleaned_data[name] for name in GuestForm.Meta.fields})
+                    messages.success(request, "Deine Daten sind gespeichert.")
+                else:
+                    return _guest_page(request, guest, form)
+        except RegistrationError as error:
+            messages.error(request, str(error))
+        return redirect("guest_page", token=token)
+    return _guest_page(request, guest, form)
+
+
+def _guest_page(request: HttpRequest, guest: Guest, form: GuestForm) -> HttpResponse:
+    participations = list(guest.participations.select_related("occurrence__event").order_by("occurrence__starts_at"))
+    taken = {p.occurrence_id for p in participations if p.status != "cancelled"}
+    rows = [(p, services.window(p.occurrence)) for p in participations]
+    more = [o for o in guests.open_occurrences(guest.event) if o.pk not in taken] if guest.confirmed_at else []
+    return render(
+        request,
+        "events/guest_page.html",
+        {"guest": guest, "event": guest.event, "rows": rows, "more": more, "form": form},
+    )
+
+
+@login_required
+def guest_add(request: HttpRequest, pk: int) -> HttpResponse:
+    """Das Team trägt einen Gast für einen Termin ein; der Gast bekommt eine Mail mit seinem Link."""
+    occurrence = _lead_occurrence(request, pk)
+    if not occurrence.event.guests_welcome:
+        raise PermissionDenied
+    form = GuestForm(request.POST or None, event=occurrence.event)
+    if request.method == "POST" and form.is_valid():
+        data = {name: form.cleaned_data[name] for name in GuestForm.Meta.fields}
+        try:
+            guest = guests.register(occurrence.event, data, [occurrence], by=_user(request))
+        except RegistrationError as error:
+            messages.error(request, str(error))
+        else:
+            messages.success(request, f"{guest.display_name} ist als Gast eingetragen und bekommt eine Mail.")
+            return redirect("occurrence_detail", pk=pk)
+    return render(request, "events/guest_add.html", {"occurrence": occurrence, "form": form})
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def event_guest_link(request: HttpRequest, pk: int) -> HttpResponse:
+    event = get_object_or_404(Event, pk=pk)
+    guests.renew_link(event)
+    messages.success(request, "Neuer Anmeldelink erzeugt. Der alte gilt nicht mehr.")
     return redirect("event_detail", pk=pk)
 
 

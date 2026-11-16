@@ -24,6 +24,7 @@ from portal.members.models import LinkKind, Member, MemberLink, grade_rank
 from . import notices
 from .models import (
     Event,
+    Guest,
     Occurrence,
     ParticipantRole,
     Participation,
@@ -171,12 +172,18 @@ class Match(IntEnum):
     YES = 2
 
 
-def age_in_year(member: Member, on: date) -> int:
+def age_in_year(member: Member | Guest, on: date) -> int:
     """Alter nach Jahrgang, wie bei Judo-Altersklassen (U11, U13 …)."""
     return on.year - member.birth_date.year
 
 
-def match_group(group: TargetGroup, member: Member, on: date, interest_ids: set[int] | None = None) -> Match:
+def match_group(
+    group: TargetGroup,
+    member: Member | Guest,
+    on: date,
+    interest_ids: set[int] | None = None,
+) -> Match:
+    """Passt ein Mitglied (oder ein Gast) zur Zielgruppe? Bei Gästen zählen Interessen nicht."""
     age = age_in_year(member, on)
     if group.min_age is not None and age < group.min_age:
         return Match.NO
@@ -190,7 +197,7 @@ def match_group(group: TargetGroup, member: Member, on: date, interest_ids: set[
     if group.max_grade and rank > grade_rank(group.max_grade):
         return Match.NO
     group_interests = {interest.pk for interest in group.interests.all()}
-    if group_interests:
+    if group_interests and not isinstance(member, Guest):
         if interest_ids is None:
             interest_ids = {interest.pk for interest in member.interests.all()}
         if not group_interests & interest_ids:
@@ -205,7 +212,7 @@ def match_group(group: TargetGroup, member: Member, on: date, interest_ids: set[
     return Match.YES
 
 
-def match_event(event: Event, member: Member, on: date, interest_ids: set[int] | None = None) -> Match:
+def match_event(event: Event, member: Member | Guest, on: date, interest_ids: set[int] | None = None) -> Match:
     """Ohne Zielgruppe passt jeder; sonst das beste Ergebnis über alle Zielgruppen (ODER)."""
     groups = list(event.target_groups.all())
     if not groups:
@@ -487,7 +494,7 @@ def promote(occurrence: Occurrence) -> list[Participation]:
     if capacity is None:
         return promoted
     free = capacity - registered_count(occurrence)
-    waiting = occurrence.participations.filter(status=ParticipationStatus.WAITLIST).select_related("member")
+    waiting = occurrence.participations.filter(status=ParticipationStatus.WAITLIST).select_related("member", "guest")
     for participation in waiting[: max(free, 0)]:
         participation.status = ParticipationStatus.REGISTERED
         participation.save(update_fields=["status", "updated_at"])
@@ -544,6 +551,39 @@ def confirm(participation: Participation, minutes: int | None = None) -> None:
     participation.confirmed_at = timezone.now()
     participation.minutes = minutes or participation.occurrence.minutes
     participation.save(update_fields=["confirmed_at", "minutes", "updated_at"])
+
+
+@transaction.atomic
+def create_event(
+    event: Event,
+    *,
+    dates: str,
+    once: dict[str, Any] | None = None,
+    weekly: dict[str, Any] | None = None,
+    team: tuple[Member, ParticipantRole] | None = None,
+) -> list[Occurrence]:
+    """Veranstaltung mit ihren Terminen in einem Schritt anlegen (ADR 0012).
+
+    ``dates``: „once“ (ein Termin, Team am Termin), „weekly“ (je Wochentag ein Zeitplan mit Standard-Team) oder
+    „later“ (nur die Veranstaltung). ``event`` ist gespeichert; schlägt etwas fehl, wird alles zurückgerollt.
+    """
+    if team and not can_take_role(team[0], team[1], event):
+        raise RegistrationError(f"{team[0].first_name} kann bei {event.title} nicht {team[1].name} sein.")
+    if dates == "once" and once:
+        occurrence = Occurrence.objects.create(event=event, **once)
+        if team:
+            set_team(occurrence, *team)
+        return [occurrence]
+    if dates == "weekly" and weekly:
+        rule = dict(weekly)
+        weekdays = rule.pop("weekdays")
+        for weekday in sorted(weekdays):
+            schedule = Schedule.objects.create(event=event, weekday=weekday, **rule)
+            if team:
+                ScheduleTeam.objects.create(schedule=schedule, member=team[0], role=team[1])
+            generate(schedule)
+        return list(event.occurrences.all())
+    return []
 
 
 def _future(schedule: Schedule) -> QuerySet[Occurrence]:
@@ -617,14 +657,30 @@ class AgendaItem:
 
 
 @dataclass
-class AgendaSection:
+class AgendaRow:
+    """Ein eigenes Mitglied an einem Termin."""
+
     link: MemberLink
-    items: list[AgendaItem] = field(default_factory=list)
-    others: list[AgendaItem] = field(default_factory=list)
+    item: AgendaItem
 
     @property
     def member(self) -> Member:
         return self.link.member
+
+
+@dataclass
+class AgendaEntry:
+    """Ein Termin mit den eigenen Mitgliedern, für die er passt oder die eingetragen sind – jeder Termin nur einmal."""
+
+    occurrence: Occurrence
+    rows: list[AgendaRow] = field(default_factory=list)
+
+
+@dataclass
+class Agenda:
+    entries: list[AgendaEntry] = field(default_factory=list)
+    others: list[Occurrence] = field(default_factory=list)  # passen zu keinem eigenen Mitglied
+    several: bool = False  # mehrere eigene Mitglieder: Namen an jeder Zeile
 
 
 def upcoming(days: int = AGENDA_DAYS) -> QuerySet[Occurrence]:
@@ -636,11 +692,14 @@ def upcoming(days: int = AGENDA_DAYS) -> QuerySet[Occurrence]:
     )
 
 
-def agenda(user: Any, days: int = AGENDA_DAYS) -> list[AgendaSection]:
-    """Je eigenem Mitglied die nächsten Termine: passende oben, alle anderen unter „Weitere“."""
+def agenda(user: Any, days: int = AGENDA_DAYS) -> Agenda | None:
+    """Die nächsten Termine nach Datum, jeder einmal; darunter die eigenen Mitglieder mit Status und Knopf.
+
+    Ohne eigene Mitglieder: ``None``.
+    """
     links = members.effective_links(user)
     if not links:
-        return []
+        return None
     ensure_generated()
     occurrences = list(upcoming(days))
     member_ids = [link.member.pk for link in links]
@@ -650,32 +709,31 @@ def agenda(user: Any, days: int = AGENDA_DAYS) -> list[AgendaSection]:
             "role"
         )
     }
-    sections = []
-    for link in links:
-        member = link.member
-        interest_ids = {interest.pk for interest in member.interests.all()}
-        section = AgendaSection(link=link)
-        for occurrence in occurrences:
-            match = match_event(occurrence.event, member, timezone.localdate(occurrence.starts_at), interest_ids)
+    interests = {link.member.pk: {interest.pk for interest in link.member.interests.all()} for link in links}
+    result = Agenda(several=len(links) > 1)
+    for occurrence in occurrences:
+        on = timezone.localdate(occurrence.starts_at)
+        state = window(occurrence)
+        entry = AgendaEntry(occurrence)
+        for link in links:
+            member = link.member
+            match = match_event(occurrence.event, member, on, interests[member.pk])
             participation = participations.get((occurrence.pk, member.pk))
-            item = AgendaItem(occurrence, match, participation, window(occurrence))
             if match != Match.NO or (participation and participation.is_active):
-                section.items.append(item)
-            else:
-                section.others.append(item)
-        sections.append(section)
-    return sections
+                entry.rows.append(AgendaRow(link, AgendaItem(occurrence, match, participation, state)))
+        if entry.rows:
+            result.entries.append(entry)
+        else:
+            result.others.append(occurrence)
+    return result
 
 
-def next_items(user: Any, count: int = 3) -> list[tuple[Member, AgendaItem]]:
-    """Für die Startseite: die nächsten passenden Termine über alle eigenen Mitglieder."""
-    items = [
-        (section.member, item)
-        for section in agenda(user, days=21)
-        for item in section.items
-        if not item.occurrence.is_cancelled
-    ]
-    return sorted(items, key=lambda pair: pair[1].occurrence.starts_at)[:count]
+def next_entries(user: Any, count: int = 3) -> list[AgendaEntry]:
+    """Für die Startseite: die nächsten Termine, die zu einem eigenen Mitglied passen – jeder nur einmal."""
+    result = agenda(user, days=21)
+    if result is None:
+        return []
+    return [entry for entry in result.entries if not entry.occurrence.is_cancelled][:count]
 
 
 @dataclass
@@ -686,22 +744,31 @@ class Participant:
     guardians: list[User]
 
     @property
-    def member(self) -> Member:
+    def member(self) -> Member | None:
         return self.participation.member
+
+    @property
+    def guest(self) -> Guest | None:
+        return self.participation.guest
+
+    @property
+    def person(self) -> Member | Guest:
+        return self.participation.person
 
 
 def participants(occurrence: Occurrence) -> list[Participant]:
-    """Teilnehmerliste (ohne Team) mit Judo-Daten und Notfallkontakt (Telefon des Mitglieds, Eltern)."""
+    """Teilnehmerliste (ohne Team) mit Judo-Daten und Notfallkontakt (Telefon des Mitglieds, Eltern; bei Gästen
+    Telefon und Erziehungsberechtigte)."""
     on = timezone.localdate(occurrence.starts_at)
     rows = occurrence.participations.filter(status__in=ACTIVE, role__is_team=False).select_related(
-        "member", "exception_by", "role"
+        "member", "guest", "exception_by", "role"
     )
     return [
         Participant(
             participation=participation,
-            age=age_in_year(participation.member, on),
-            weight=participation.weight or participation.member.weight,
-            guardians=members.guardians(participation.member),
+            age=age_in_year(participation.person, on),
+            weight=participation.weight or participation.person.weight,
+            guardians=members.guardians(participation.member) if participation.member else [],
         )
         for participation in rows
     ]
@@ -739,6 +806,11 @@ def own_team(user: User) -> tuple[list[Participation], list[Participation]]:
 def participant_users(occurrence: Occurrence) -> set[User]:
     """Benutzer aller aktiven Teilnahmen inkl. Team (das Mitglied selbst, Eltern bis 18)."""
     users: set[User] = set()
-    for participation in occurrence.participations.filter(status__in=ACTIVE).select_related("member"):
-        users.update(members.member_users(participation.member))
+    rows = occurrence.participations.filter(status__in=ACTIVE, member__isnull=False).select_related("member")
+    for participation in rows:
+        users.update(members.member_users(participation.member))  # type: ignore[arg-type]
     return users
+
+
+def participant_guests(occurrence: Occurrence) -> list[Guest]:
+    return [p.guest for p in occurrence.participations.filter(status__in=ACTIVE).select_related("guest") if p.guest]

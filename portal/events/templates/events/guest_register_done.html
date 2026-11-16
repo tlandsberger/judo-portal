@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Fast geschafft{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-3">
+    <h1 class="text-2xl font-bold">Fast geschafft, {{ guest.first_name }}!</h1>
+    <p>Wir haben dir eine Mail an <strong>{{ guest.email }}</strong> geschickt. Bitte öffne den Link darin und bestätige deine Anmeldung zu {{ event.title }} innerhalb von 24 Stunden – erst dann ist dein Platz reserviert.</p>
+    <p class="text-sm text-base-content/70">Keine Mail bekommen? Schau bitte auch im Spam-Ordner nach oder schreib an <a class="link" href="mailto:judo@wedeler-tsv.de">judo@wedeler-tsv.de</a>.</p>
+  </div></div>
+</div>
+{% endblock %}

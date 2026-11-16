@@ -13,8 +13,17 @@
       <div><dt class="text-sm text-base-content/70">Zielgruppen</dt><dd>{% for group in event.target_groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}alle{% endfor %}</dd></div>
       <div><dt class="text-sm text-base-content/70">Höchstzahl</dt><dd>{{ event.capacity|default:"unbegrenzt" }}</dd></div>
       <div><dt class="text-sm text-base-content/70">Gewicht bei Anmeldung</dt><dd>{{ event.weight_required|yesno:"erforderlich,nicht nötig" }}</dd></div>
+      <div><dt class="text-sm text-base-content/70">Gäste</dt><dd>{{ event.guests_welcome|yesno:"willkommen,nein" }}</dd></div>
     </dl>
     {% if event.description %}<p class="whitespace-pre-line">{{ event.description }}</p>{% endif %}
+    {% if guest_link and can_manage %}
+    <div class="flex flex-col gap-2 rounded-box bg-base-200 p-4">
+      <label class="font-semibold" for="gaestelink">Anmeldelink für Gäste</label>
+      <input class="input w-full" id="gaestelink" type="text" value="{{ guest_link }}" readonly>
+      <p class="text-sm text-base-content/70">Zum Teilen, z. B. per Mail an andere Vereine. Gäste bestätigen ihre Anmeldung per Mail.</p>
+      <form method="post" action="{% url 'event_guest_link' event.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm">Neuen Link erzeugen</button></form>
+    </div>
+    {% endif %}
   </div></div>
 
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zeitplaene"><div class="card-body gap-4">
