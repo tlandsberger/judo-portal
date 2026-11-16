@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from typing import Any
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -99,6 +100,9 @@ class Member(models.Model):
         validators=[MinValueValidator(Decimal("10")), MaxValueValidator(Decimal("250"))],
     )
     interests = models.ManyToManyField(Interest, verbose_name="Interessen", blank=True, related_name="members")
+    deletion_notice_sent_at = models.DateTimeField(
+        "Löschhinweis verschickt", null=True, blank=True, editable=False, help_text="Mail zum Austritt (ADR 0015)."
+    )
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -109,6 +113,16 @@ class Member(models.Model):
 
     def __str__(self) -> str:
         return self.display_name
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        # Geänderter oder entfernter Austritt: der Hinweis auf die Löschung geht (erneut) raus, wenn es so weit ist.
+        if self.pk and self.deletion_notice_sent_at:
+            old = Member.objects.filter(pk=self.pk).values_list("left_on", flat=True).first()
+            if old != self.left_on:
+                self.deletion_notice_sent_at = None
+                if kwargs.get("update_fields") is not None:
+                    kwargs["update_fields"] = {*kwargs["update_fields"], "deletion_notice_sent_at"}
+        super().save(*args, **kwargs)
 
     @property
     def display_name(self) -> str:

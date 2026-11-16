@@ -1,0 +1,14 @@
+{% autoescape off %}Hallo {{ user.get_short_name }},
+
+{% if own %}dein Austritt aus der Judo-Abteilung ist eingetragen{% else %}der Austritt von {{ member.display_name }} aus der Judo-Abteilung ist eingetragen{% endif %} ({{ member.left_on|date:"d.m.Y" }}).
+
+Am {{ when|date:"d.m.Y" }} löschen wir {% if own %}deine Daten{% else %}die Daten von {{ member.display_name }}{% endif %} im Vereinsportal: Stammdaten, Teilnahmen an Terminen und Abrechnungen. Hast du dann kein weiteres Mitglied im Portal, wird auch dein Zugang gelöscht.
+
+Bis dahin kannst du unter „Meine Daten“ eine Auskunft über alle gespeicherten Daten herunterladen:
+{{ url }}
+
+Stimmt der Austritt nicht? Dann gib uns bitte kurz Bescheid.
+
+Wedeler TSV e.V. – Abteilung Judo
+judo@wedeler-tsv.de · https://www.wedeler-tsv.de/sportangebote-judo/
+{% endautoescape %}

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load privacy %}
 {% block title %}{{ member.display_name }}{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-3xl">
@@ -8,8 +9,13 @@
       <div>
         <h1 class="text-2xl font-bold">{{ member.display_name }}</h1>
         {% if not member.is_active %}<span class="badge badge-ghost mt-1">ausgetreten</span>{% endif %}
+        {% deletion_date member as deletes_on %}{% if deletes_on %}<p class="mt-1 text-sm text-base-content/70">Wird am {{ deletes_on|date:"d.m.Y" }} gelöscht (drei Monate nach dem Austritt).</p>{% endif %}
       </div>
-      <a class="btn btn-outline btn-primary btn-sm" href="{% url 'member_edit' member.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
+      <div class="flex flex-wrap gap-2">
+        <a class="btn btn-outline btn-primary btn-sm" href="{% url 'member_edit' member.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
+        <a class="btn btn-outline btn-primary btn-sm" href="{% url 'member_export' member.pk %}"><i class="bi bi-download" aria-hidden="true"></i> Auskunft</a>
+        <a class="btn btn-outline btn-error btn-sm" href="{% url 'member_delete' member.pk %}"><i class="bi bi-trash" aria-hidden="true"></i> Löschen</a>
+      </div>
     </div>
     {% include "members/_facts.html" with all=True %}
   </div></div>
@@ -54,5 +60,14 @@
       {% endif %}
     </div>
   </section>
+
+  <section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-aenderungen"><div class="card-body">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 class="card-title" id="h-aenderungen">Letzte Änderungen</h2>
+      <a class="link text-sm" href="{% url 'audit_list' %}?mitglied={{ member.pk }}">Ganzes Protokoll</a>
+    </div>
+    {% if changes %}<ul class="list">{% for entry in changes %}{% include "privacy/_entry.html" %}{% endfor %}</ul>
+    {% else %}<p class="text-base-content/70">Noch keine Einträge.</p>{% endif %}
+  </div></section>
 </div>
 {% endblock %}

@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 
 from portal.accounts import services as accounts
 from portal.accounts.permissions import role_required
+from portal.core import audit
 
 from . import csv_import, services
 from .forms import AccessForm, ImportForm, InterestForm, MemberForm, SelfServiceForm
@@ -52,6 +53,7 @@ def member_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "links": member.links.select_related("user"),
         "pending": member.pending_links.filter(invitation__accepted_at__isnull=True).select_related("invitation"),
         "access_form": AccessForm(kinds=kinds, member=member) if kinds else None,
+        "changes": audit.entries(member_id=member.pk)[:10],
     }
     return render(request, "members/member_detail.html", context)
 
@@ -60,8 +62,10 @@ def member_detail(request: HttpRequest, pk: int) -> HttpResponse:
 def member_edit(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     member = get_object_or_404(Member, pk=pk) if pk else None
     form = MemberForm(request.POST or None, instance=member)
+    before = services.member_snapshot(member)
     if request.method == "POST" and form.is_valid():
         member = form.save()
+        services.record_change(member, before, request.user)  # type: ignore[arg-type]
         messages.success(request, f"{member.display_name} gespeichert.")
         return redirect("member_detail", pk=member.pk)
     return render(request, "members/member_edit.html", {"form": form, "member": member})
@@ -109,7 +113,7 @@ def member_access(request: HttpRequest, pk: int) -> HttpResponse:
 @role_required(*MANAGE_MEMBERS)
 def member_unlink(request: HttpRequest, pk: int, link_pk: int) -> HttpResponse:
     member_link = get_object_or_404(MemberLink, pk=link_pk, member_id=pk)
-    services.unlink(member_link)
+    services.unlink(member_link, by=request.user)  # type: ignore[arg-type]
     messages.success(request, f"Verknüpfung mit {member_link.user.display_name} gelöst.")
     return redirect("member_detail", pk=pk)
 
@@ -153,7 +157,7 @@ def member_import(request: HttpRequest) -> HttpResponse:
         if not text:
             messages.error(request, "Die Vorschau ist abgelaufen. Lade die Datei bitte noch einmal hoch.")
             return redirect("member_import")
-        result = csv_import.apply(text)
+        result = csv_import.apply(text, by=request.user)
         counts = result.counts
         messages.success(
             request,
@@ -205,8 +209,10 @@ def my_member(request: HttpRequest, pk: int) -> HttpResponse:
 def my_member_edit(request: HttpRequest, pk: int) -> HttpResponse:
     member = _own_member(request, pk)
     form = SelfServiceForm(request.POST or None, instance=member)
+    before = services.member_snapshot(member)
     if request.method == "POST" and form.is_valid():
         form.save()
+        services.record_change(member, before, request.user, "selbst")  # type: ignore[arg-type]
         messages.success(request, "Deine Änderungen sind gespeichert.")
         return redirect("my_member", pk=member.pk)
     return render(request, "members/my_member_edit.html", {"member": member, "form": form})

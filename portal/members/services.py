@@ -14,6 +14,7 @@ from django.urls import reverse
 
 from portal.accounts import services as accounts
 from portal.accounts.models import Invitation, Role, User
+from portal.core import audit
 
 from .models import ADULT_AGE, OWN_ACCESS_AGE, LinkKind, Member, MemberLink, PendingLink
 
@@ -81,7 +82,7 @@ def link_kinds_for(member: Member) -> list[LinkKind]:
 
 
 @transaction.atomic
-def link(member: Member, user: User, kind: LinkKind | str) -> MemberLink:
+def link(member: Member, user: User, kind: LinkKind | str, by: User | None = None) -> MemberLink:
     """Verknüpft Benutzer und Mitglied. Wer sein eigenes Profil verknüpft, bekommt die Rolle Mitglied."""
     kind = LinkKind(kind)
     if kind == LinkKind.SELF:
@@ -92,12 +93,28 @@ def link(member: Member, user: User, kind: LinkKind | str) -> MemberLink:
     member_link, _ = MemberLink.objects.update_or_create(user=user, member=member, defaults={"kind": kind})
     if kind == LinkKind.SELF and not user.has_role(Role.MEMBER):
         user.set_roles([*user.roles, Role.MEMBER])
+    audit.log(
+        by,
+        audit.Area.MEMBERS,
+        "link",
+        f"{user.display_name} mit {member.display_name} verknüpft ({kind.label})",
+        member=member,
+        user=user,
+    )
     log.info("%s mit Mitglied %s verknüpft (%s)", user.email, member.pk, kind.value)
     return member_link
 
 
-def unlink(member_link: MemberLink) -> None:
+def unlink(member_link: MemberLink, by: User | None = None) -> None:
     member_link.delete()
+    audit.log(
+        by,
+        audit.Area.MEMBERS,
+        "unlink",
+        f"Verknüpfung {member_link.user.display_name} ↔ {member_link.member.display_name} gelöst",
+        member=member_link.member_id,
+        user=member_link.user_id,
+    )
     log.info("Verknüpfung %s mit Mitglied %s gelöst", member_link.user.email, member_link.member.pk)
 
 
@@ -115,7 +132,7 @@ def give_access(
     email = email.strip().lower()
     user = User.objects.filter(email=email, is_active=True).first()
     if user is not None:
-        link(member, user, kind)
+        link(member, user, kind, by=invited_by)
         transaction.on_commit(lambda: send_link_notice(user, member, kind))
         return "linked", None
 
@@ -128,6 +145,13 @@ def give_access(
     invitation = accounts.invite(email, first_name=first_name, last_name=last_name, invited_by=invited_by, send=send)
     pending = {member_id: pending_kind for member_id, pending_kind in earlier}
     pending[member.pk] = kind
+    audit.log(
+        invited_by,
+        audit.Area.MEMBERS,
+        "invite",
+        f"Einladung an {email} für {member.display_name} ({kind.label})",
+        member=member,
+    )
     PendingLink.objects.bulk_create(
         [PendingLink(invitation=invitation, member_id=member_id, kind=k) for member_id, k in pending.items()]
     )
@@ -138,7 +162,7 @@ def complete_pending_links(invitation: Invitation, user: User) -> None:
     """Beim Annehmen einer Einladung: vorgemerkte Verknüpfungen anlegen."""
     for pending in PendingLink.objects.filter(invitation=invitation).select_related("member"):
         try:
-            link(pending.member, user, pending.kind)
+            link(pending.member, user, pending.kind, by=user)
         except ValueError:
             log.warning("Verknüpfung %s mit Mitglied %s übersprungen", user.email, pending.member.pk, exc_info=True)
         pending.delete()
@@ -160,3 +184,45 @@ def send_link_notice(user: User, member: Member, kind: LinkKind) -> None:
     )
     message.attach_alternative(render_to_string("members/email/link_notice.html", context), "text/html")
     message.send()
+
+
+# Protokoll (ADR 0015)
+
+MEMBER_FIELDS = (
+    "member_number",
+    "first_name",
+    "last_name",
+    "birth_date",
+    "gender",
+    "joined_on",
+    "left_on",
+    "email",
+    "phone",
+    "grade",
+    "weight",
+    "interests",
+)
+
+
+def member_snapshot(member: Member | None) -> dict[str, Any] | None:
+    return audit.snapshot(member, MEMBER_FIELDS) if member is not None and member.pk else None
+
+
+def record_change(member: Member, before: dict[str, Any] | None, by: User | None, how: str = "") -> None:
+    """Anlegen oder Ändern eines Mitglieds protokollieren; ``before`` aus ``member_snapshot`` vor dem Speichern."""
+    after = audit.snapshot(member, MEMBER_FIELDS)
+    suffix = f" ({how})" if how else ""
+    if before is None:
+        audit.log(by, audit.Area.MEMBERS, "create", f"{member.display_name} angelegt{suffix}", member=member)
+        return
+    changes = audit.diff(before, after, audit.labels_for(Member, MEMBER_FIELDS))
+    if changes:
+        fields = ", ".join(changes)
+        audit.log(
+            by,
+            audit.Area.MEMBERS,
+            "update",
+            f"{member.display_name} geändert{suffix}: {fields}",
+            member=member,
+            changes=changes,
+        )

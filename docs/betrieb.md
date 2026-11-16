@@ -60,7 +60,7 @@ mit „Übernehmen“. Regeln und Hintergründe stehen in ADR 0009.
 | Vorname, Nachname | ja | |
 | Geburtsdatum | ja | `TT.MM.JJJJ` oder `JJJJ-MM-TT` |
 | Geschlecht | | `w`, `m` oder `d` |
-| Eintritt, Austritt | | Datum wie oben; wer ein Austrittsdatum in der Vergangenheit hat, gilt als ausgetreten |
+| Eintritt, Austritt | | Datum wie oben; wer ein Austrittsdatum in der Vergangenheit hat, gilt als ausgetreten und wird nicht neu angelegt |
 | E-Mail, Telefon | | |
 | Graduierung | | z. B. `5. Kyu`, `1. Dan` |
 | Gewicht | | kg, z. B. `32,5` |
@@ -70,6 +70,7 @@ mit „Übernehmen“. Regeln und Hintergründe stehen in ADR 0009.
 - Kodierung UTF-8 oder Windows/Excel (cp1252). Die Vorlage gibt es auf der Import-Seite.
 - Leere Zellen überschreiben nichts.
 - Mitglieder, die nicht in der Datei stehen, bleiben unverändert. Der Import löscht nie.
+- Ausgetretene legt der Import nie neu an (ADR 0015); bestehende Mitglieder bekommen das Austrittsdatum.
 
 ### Zugänge für Mitglieder und Eltern
 
@@ -128,6 +129,28 @@ Unter **Abrechnung**. Hintergründe in ADR 0014.
    du selbst freigeben; geprüft wird zusätzlich in der Geschäftsstelle.
 4. **Für die Geschäftsstelle:** PDF je Abrechnung (mit Unterschriftszeilen) und eine CSV je Monat mit allen
    freigegebenen Abrechnungen; beide weisen verspätete Abrechnungen aus.
+
+## Datenschutz
+
+Hintergründe in ADR 0015.
+
+- **Protokoll** (Abteilungsleitung): wer wann was geändert hat, mit Filter nach Bereich, Text und Zeitraum. Am Mitglied
+  stehen die letzten Änderungen. Einträge werden nach einem Jahr gelöscht.
+- **Auskunftsanfrage:** Jeder lädt seine Daten selbst unter **Meine Daten → Meine gespeicherten Daten** herunter (auch
+  für Kinder unter 18). Für eine Anfrage per Post oder Mail: auf der Seite des Mitglieds **Auskunft** herunterladen.
+- **Löschanfrage:** auf der Seite des Mitglieds **Löschen**. Die Bestätigungsseite zeigt, was verschwindet und welche
+  Zugänge mitgelöscht werden.
+- **Austritt:** Trag das Austrittsdatum ein (oder per CSV-Import). Am Austrittsdatum bekommen die Zugänge eine Mail,
+  drei Monate danach löscht das Portal das Mitglied mit allem, auch Teilnahmen und Abrechnungen. Wer doch bleibt:
+  Austrittsdatum entfernen.
+
+| Was | Frist |
+|---|---|
+| Mitglieder mit allem | 3 Monate nach Austritt |
+| Protokoll | 1 Jahr |
+| Gäste | 90 Tage nach dem letzten Termin, unbestätigte nach 24 Stunden |
+| Versandprotokoll | 90 Tage |
+| Backups | Aufbewahrung von restic in der Homecloud |
 
 ## Push-Benachrichtigungen
 

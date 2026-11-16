@@ -18,6 +18,7 @@ from django.db.models import Q, QuerySet
 from django.utils import timezone
 
 from portal.accounts.models import Role, User
+from portal.core import audit
 from portal.events import services as events
 from portal.events.models import ParticipantRole, Participation, ParticipationStatus
 from portal.members.models import LinkKind, Member, MemberLink
@@ -306,6 +307,15 @@ def submit(member: Member, month: date, by: User, today: date | None = None) -> 
         )
         for line in overview.lines
     )
+    late = " (verspätet)" if claim.is_late else ""
+    audit.log(
+        by,
+        audit.Area.BILLING,
+        "submit",
+        f"Abrechnung {claim.month_label} von {member.display_name} eingereicht{late}: "
+        f"{claim.total_minutes} Minuten, {claim.total_amount} €",
+        member=member,
+    )
     transaction.on_commit(lambda: notices.submitted(claim))
     return claim
 
@@ -324,6 +334,14 @@ def _decide(claim: Claim, by: User, status: ClaimStatus, feedback: str = "") -> 
     claim.decided_by_name = by.display_name
     claim.feedback = feedback
     claim.save(update_fields=["status", "decided_at", "decided_by", "decided_by_name", "feedback"])
+    verb = "freigegeben" if status == ClaimStatus.APPROVED else f"zurückgegeben: {feedback}"
+    audit.log(
+        by,
+        audit.Area.BILLING,
+        "approve" if status == ClaimStatus.APPROVED else "send_back",
+        f"Abrechnung {claim.month_label} von {claim.member.display_name} {verb}",
+        member=claim.member_id,
+    )
 
 
 @transaction.atomic

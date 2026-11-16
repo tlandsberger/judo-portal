@@ -1,0 +1,10 @@
+<li class="list-row px-0">
+  <div class="w-24 shrink-0 text-sm text-base-content/70"><div>{{ entry.at|date:"d.m.Y" }}</div><div>{{ entry.at|date:"H:i" }} Uhr</div></div>
+  <div class="list-col-grow min-w-0">
+    <div class="break-words">{{ entry.summary }}</div>
+    <div class="text-sm text-base-content/70">{{ entry.who }} · {{ entry.get_area_display }}</div>
+    {% if entry.changes %}
+    <ul class="mt-1 text-sm">{% for field, values in entry.changes.items %}<li class="break-words"><span class="font-semibold">{{ field }}:</span> {{ values.0|default:"–" }} → {{ values.1|default:"–" }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+</li>

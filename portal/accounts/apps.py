@@ -26,3 +26,7 @@ class AccountsConfig(AppConfig):
             services.check_new_device(request, user)  # type: ignore[arg-type]
 
         user_logged_in.connect(complete_on_login, dispatch_uid="portal_complete_invitations", weak=False)
+
+        from . import audit_signals
+
+        audit_signals.connect()

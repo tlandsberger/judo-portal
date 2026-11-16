@@ -12,6 +12,7 @@ from django.utils import formats, timezone
 from django.views.decorators.http import require_POST
 
 from portal.accounts.models import User
+from portal.core import audit
 from portal.events import services as events
 from portal.members.models import Member
 
@@ -238,6 +239,13 @@ def rate_member(request: HttpRequest, member_pk: int) -> HttpResponse:
     form = RateForm(request.POST or None, instance=Rate(member=row.member), roles=roles)
     if request.method == "POST" and form.is_valid():
         rate = form.save()
+        audit.log(
+            request.user,
+            audit.Area.BILLING,
+            "rate",
+            f"Satz für {row.member.display_name}: {rate.role.name} {rate.hourly_rate} € ab {rate.valid_from:%d.%m.%Y}",
+            member=row.member,
+        )
         messages.success(request, f"Satz für {rate.role.name} ab {rate.valid_from:%d.%m.%Y} gespeichert.")
         return redirect("rate_member", member_pk=member_pk)
     return render(
@@ -255,5 +263,12 @@ def rate_delete(request: HttpRequest, pk: int) -> HttpResponse:
     rate = get_object_or_404(Rate, pk=pk)
     member_pk = rate.member_id
     rate.delete()
+    audit.log(
+        request.user,
+        audit.Area.BILLING,
+        "rate_delete",
+        f"Satz für {rate.member.display_name} gelöscht: {rate.role.name} ab {rate.valid_from:%d.%m.%Y}",
+        member=member_pk,
+    )
     messages.success(request, "Der Satz ist gelöscht.")
     return redirect("rate_member", member_pk=member_pk)

@@ -317,7 +317,7 @@ def action_confirm(user: User, data: dict[str, Any]) -> ActionResult:
     if participation.is_confirmed:
         return ActionResult(True, "Deine Stunden sind schon bestätigt.")
     try:
-        services.confirm(participation)
+        services.confirm(participation, by=user)
     except services.RegistrationError as error:
         return _failed(str(error), reverse("my_hours"))
     return ActionResult(

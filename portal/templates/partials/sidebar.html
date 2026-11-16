@@ -17,13 +17,16 @@
       <li><a href="{% url 'billing_index' %}"{% if url_name in 'billing_index billing_month claim_list claim_detail rate_list rate_member' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-cash-coin" aria-hidden="true"></i> Abrechnung</a></li>
       {% endif %}
       {% if has_own_members %}
-      <li><a href="{% url 'my_data' %}"{% if url_name in 'my_data my_member my_member_edit' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-vcard" aria-hidden="true"></i> Meine Daten</a></li>
+      <li><a href="{% url 'my_data' %}"{% if url_name in 'my_data my_member my_member_edit my_privacy' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-vcard" aria-hidden="true"></i> Meine Daten</a></li>
       {% endif %}
       {% if can_manage_members %}
-      <li><a href="{% url 'member_list' %}"{% if url_name in 'member_list member_detail member_edit member_create member_import interest_list interest_edit' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-lines-fill" aria-hidden="true"></i> Mitglieder</a></li>
+      <li><a href="{% url 'member_list' %}"{% if url_name in 'member_list member_detail member_edit member_create member_import interest_list interest_edit member_delete' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-lines-fill" aria-hidden="true"></i> Mitglieder</a></li>
       {% endif %}
       {% if can_plan_events %}
       <li><a href="{% url 'event_list' %}"{% if url_name in 'event_list event_detail event_edit event_create schedule_edit schedule_create occurrence_create target_group_list target_group_edit target_group_create target_group_members role_list role_edit role_create event_type_list event_type_edit event_type_create' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a></li>
+      {% endif %}
+      {% if can_manage_members %}
+      <li><a href="{% url 'audit_list' %}"{% if url_name == 'audit_list' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i> Protokoll</a></li>
       {% endif %}
       {% if can_manage_users %}
       <li><a href="{% url 'user_list' %}"{% if url_name in 'user_list invite edit_user invitation_link' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-people" aria-hidden="true"></i> Benutzer</a></li>
