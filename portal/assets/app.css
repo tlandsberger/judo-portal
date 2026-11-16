@@ -118,3 +118,9 @@
   .pikto-verein-finanzen::after { mask-image: url("../img/icons/verein-finanzen.png"); }
   .pikto-judo-judogi::after { mask-image: url("../img/icons/judo-judogi.png"); }
 }
+
+/* Hilfe: Screenshots passend zum Theme. Ausgeblendete Bilder lädt der Browser dank loading="lazy" nicht. */
+[data-theme="wtsv-dark"] .help-shot-light,
+:root:not([data-theme="wtsv-dark"]) .help-shot-dark {
+  display: none;
+}

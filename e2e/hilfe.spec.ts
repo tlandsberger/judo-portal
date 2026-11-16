@@ -16,6 +16,12 @@ const VIEWS: Record<string, BrowserContextOptions> = {
   handy: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
 };
 
+/** Je Theme ein Bild; die Hilfe zeigt das zum gewählten Theme passende. */
+const SCHEMES = [
+  ["light", ""],
+  ["dark", "-dunkel"],
+] as const;
+
 type State = string | Awaited<ReturnType<import("@playwright/test").BrowserContext["storageState"]>> | undefined;
 
 async function stateFor(browser: Browser, email: string, password: string): Promise<State> {
@@ -27,7 +33,7 @@ async function stateFor(browser: Browser, email: string, password: string): Prom
   return state;
 }
 
-/** Je ein Bild für Desktop und Handy. ``open`` führt zur Seite, ``target`` wählt optional einen Ausschnitt. */
+/** Je ein Bild für Desktop und Handy, hell und dunkel. ``open`` führt zur Seite, ``target`` wählt optional einen Ausschnitt. */
 async function shoot(
   browser: Browser,
   state: State,
@@ -35,13 +41,13 @@ async function shoot(
   open: (page: Page) => Promise<void>,
   target?: (page: Page) => import("@playwright/test").Locator,
 ) {
-  for (const [view, options] of Object.entries(VIEWS)) {
-    const context = await browser.newContext({ ...options, storageState: state, colorScheme: "light", locale: "de-DE" });
+  for (const [view, options] of Object.entries(VIEWS)) for (const [scheme, suffix] of SCHEMES) {
+    const context = await browser.newContext({ ...options, storageState: state, colorScheme: scheme, locale: "de-DE" });
     await freshNotificationPermission(context);
     const page = await context.newPage();
     await open(page);
     await page.evaluate(() => document.fonts.ready);
-    const path = `${OUT}/${name}-${view}.jpg`;
+    const path = `${OUT}/${name}-${view}${suffix}.jpg`;
     if (target) {
       await target(page).screenshot({ path, type: "jpeg", quality: 80, animations: "disabled" });
     } else {
@@ -58,7 +64,7 @@ function lastMonthPath(): string {
 }
 
 test("Screenshots für die Hilfe", async ({ browser }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(360_000);
   const parents = await stateFor(browser, "eltern-zwei@test.local", "Sicher-Eltern-321");
   const clara = await stateFor(browser, "clara@test.local", "Sicher-Trainer-789");
   const dora = await stateFor(browser, "dora@test.local", "Sicher-Trainer-246");
