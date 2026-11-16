@@ -118,7 +118,10 @@ def test_event_management_only_for_head(client, head, trainer):
     assert client.get(reverse("target_group_list")).status_code == 403
     client.logout()
     login(client, head)
-    response = client.post(reverse("event_create"), {"title": "Training U12", "event_type": event_type("Training").pk})
+    response = client.post(
+        reverse("event_create"),
+        {"title": "Training U12", "event_type": event_type("Training").pk, "dates": "later"},
+    )
     event = Event.objects.get()
     assert response.url == reverse("event_detail", args=[event.pk])
     today = timezone.localdate()
@@ -191,3 +194,55 @@ def test_role_and_event_type_pages(client, head, trainer):
     assert ParticipantRole.objects.filter(name="Trainer").exists()
     client.post(reverse("event_type_create"), {"name": "Ausflug", "order": 60, "is_active": "on"})
     assert "Ausflug" in client.get(reverse("event_type_list")).content.decode()
+
+
+def test_create_event_weekly_with_team(client, head, trainer):
+    login(client, head)
+    today = timezone.localdate()
+    anna = services.own_member(trainer)
+    client.post(
+        reverse("event_create"),
+        {
+            "title": "Training U12",
+            "event_type": event_type("Training").pk,
+            "dates": "weekly",
+            "weekdays": ["1", "3"],
+            "start_time": "17:00",
+            "end_time": "18:30",
+            "valid_from": today.isoformat(),
+            "valid_until": (today + timedelta(days=27)).isoformat(),
+            "opens_hours_before": "72",
+            "closes_hours_before": "2",
+            "team_member": anna.pk,
+            "team_role": role("Trainer").pk,
+        },
+    )
+    event = Event.objects.get()
+    assert [s.weekday for s in event.schedules.all()] == [1, 3]
+    assert event.occurrences.count() == 8
+    first = event.occurrences.first()
+    assert first.registration_closes == first.starts_at - timedelta(hours=2)
+    assert all(o.participations.get().role.name == "Trainer" for o in event.occurrences.all())
+
+
+def test_create_event_once_and_validation(client, head, trainer):
+    login(client, head)
+    base = {"title": "Turnier", "event_type": event_type("Wettkampf").pk, "dates": "once"}
+    page = client.post(reverse("event_create"), base)
+    assert "Bitte ausfüllen." in page.content.decode()
+    # Trainer gibt es bei Wettkämpfen nicht: nichts wird angelegt
+    starts = timezone.localtime() + timedelta(days=20)
+    once = {
+        **base,
+        "starts_at": starts.strftime("%Y-%m-%dT10:00"),
+        "ends_at": starts.strftime("%Y-%m-%dT16:00"),
+        "registration_closes_at": (starts - timedelta(days=7)).strftime("%Y-%m-%dT20:00"),
+        "team_member": services.own_member(trainer).pk,
+    }
+    page = client.post(reverse("event_create"), {**once, "team_role": role("Trainer").pk})
+    assert "nicht Trainer sein" in page.content.decode()
+    assert not Event.objects.exists()
+    client.post(reverse("event_create"), {**once, "team_role": role("Betreuer").pk})
+    occurrence = Event.objects.get().occurrences.get()
+    assert occurrence.registration_closes_at is not None
+    assert occurrence.participations.get().role.name == "Betreuer"

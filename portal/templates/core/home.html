@@ -12,14 +12,14 @@
 </section>
 
 {% include "notifications/_teaser.html" %}
-{% next_dates user as next_items %}
-{% if next_items %}
+{% next_dates user as next %}
+{% if next.entries %}
 <section class="card mb-8 bg-base-100 shadow-sm" aria-labelledby="h-naechste"><div class="card-body">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 class="card-title" id="h-naechste">Nächste Termine</h2>
     <a class="link link-hover text-sm" href="{% url 'agenda' %}">Alle Termine</a>
   </div>
-  <ul class="list">{% for member, item in next_items %}{% include "events/_item.html" %}{% endfor %}</ul>
+  <ul class="list">{% for entry in next.entries %}{% include "events/_entry.html" with several=next.several %}{% endfor %}</ul>
 </div></section>
 {% endif %}
 

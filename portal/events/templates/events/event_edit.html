@@ -1,7 +1,7 @@
 {% extends "events/_form_page.html" %}
-{% block heading %}{% if event %}{{ event.title }} bearbeiten{% else %}Veranstaltung anlegen{% endif %}{% endblock %}
-{% block heading2 %}{% if event %}{{ event.title }} bearbeiten{% else %}Veranstaltung anlegen{% endif %}{% endblock %}
-{% block back_url %}{% if event %}{% url 'event_detail' event.pk %}{% else %}{% url 'event_list' %}{% endif %}{% endblock %}
-{% block cancel_url %}{% if event %}{% url 'event_detail' event.pk %}{% else %}{% url 'event_list' %}{% endif %}{% endblock %}
-{% block back_label %}{% if event %}{{ event.title }}{% else %}Veranstaltungen{% endif %}{% endblock %}
-{% block intro %}{% if not event %}<p class="text-sm text-base-content/70">Termine legst du danach an: als Zeitplan für wiederkehrende Trainings oder als einzelnen Termin.</p>{% endif %}{% endblock %}
+{% block heading %}{{ event.title }} bearbeiten{% endblock %}
+{% block heading2 %}{{ event.title }} bearbeiten{% endblock %}
+{% block back_url %}{% url 'event_detail' event.pk %}{% endblock %}
+{% block cancel_url %}{% url 'event_detail' event.pk %}{% endblock %}
+{% block back_label %}{{ event.title }}{% endblock %}
+

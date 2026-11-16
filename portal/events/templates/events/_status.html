@@ -1,0 +1,12 @@
+{# Status eines eigenen Mitglieds an einem Termin; item = AgendaItem. #}
+{% with occurrence=item.occurrence %}
+{% if item.team_role %}<span class="badge badge-soft badge-primary badge-sm">{{ item.team_role.name }}</span>
+{% elif item.status == "registered" %}<span class="badge badge-soft badge-primary badge-sm">angemeldet</span>
+{% elif item.status == "waitlist" %}<span class="badge badge-neutral badge-sm">Warteliste</span>
+{% elif item.status == "cancelled" %}<span class="badge badge-ghost badge-sm">abgemeldet</span>{% endif %}
+{% if not occurrence.is_cancelled and not item.participation.is_active %}
+  {% if item.window == "before" %}<span class="badge badge-ghost badge-sm">Anmeldung ab {{ occurrence.registration_opens|date:"d.m. H:i" }}</span>
+  {% elif item.window == "closed" %}<span class="badge badge-ghost badge-sm">Anmeldung geschlossen</span>{% endif %}
+{% endif %}
+{% if item.match == 1 and not item.participation.is_active %}<span class="badge badge-ghost badge-sm">Gewicht fehlt</span>{% endif %}
+{% endwith %}

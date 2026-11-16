@@ -108,7 +108,7 @@ def test_required_weight_falls_back_to_profile(child, trainer):
     assert services.register(occurrence, child, trainer, exception=True).weight == Decimal("30.0")
 
 
-def test_agenda_sections_for_parent_with_two_children(parent, child):
+def test_agenda_lists_each_occurrence_once_for_two_children(parent, child):
     adult_group = TargetGroup.objects.create(name="Erwachsene", min_age=18)
     kids = Event.objects.create(title="Kindertraining")
     adults = Event.objects.create(title="Erwachsenentraining")
@@ -117,16 +117,18 @@ def test_agenda_sections_for_parent_with_two_children(parent, child):
     make_occurrence(adults)
     sibling = make_member("Ole", age=7)
     MemberLink.objects.create(user=parent, member=sibling, kind=LinkKind.GUARDIAN)
-    sections = services.agenda(parent)
-    assert [s.member.first_name for s in sections] == ["Mia", "Ole"]
-    assert [i.occurrence.event.title for i in sections[0].items] == ["Kindertraining"]
-    assert [i.occurrence.event.title for i in sections[0].others] == ["Erwachsenentraining"]
-    assert sections[0].items[0].can_register
-    assert not sections[0].others[0].can_register
+    result = services.agenda(parent)
+    assert result.several
+    [entry] = result.entries
+    assert entry.occurrence.event.title == "Kindertraining"
+    assert [row.member.first_name for row in entry.rows] == ["Mia", "Ole"]
+    assert all(row.item.can_register for row in entry.rows)
+    assert [o.event.title for o in result.others] == ["Erwachsenentraining"]
+    assert [e.occurrence for e in services.next_entries(parent)] == [entry.occurrence]
 
 
 def test_guardian_link_ends_at_18(parent):
     grown = make_member("Lea", age=18)
     MemberLink.objects.create(user=parent, member=grown, kind=LinkKind.GUARDIAN)
     make_occurrence()
-    assert services.agenda(parent) == []
+    assert services.agenda(parent) is None

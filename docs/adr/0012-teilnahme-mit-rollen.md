@@ -66,6 +66,21 @@ Nach dem ersten Release der Veranstaltungen (ADR 0010) zeigten sich drei Schwäc
 - „Anmeldung offen“ und die Erinnerung zum Anmeldeschluss gehen nur für Einzeltermine raus (ohne Zeitplan), nicht mehr
   über die Art „Training“.
 
+### Anlegen mit Terminen
+
+- „Veranstaltung anlegen“ fragt gleich nach den Terminen: **einmalig** (ein Termin mit Anmeldezeitraum),
+  **wiederkehrend** (Wochentage, Uhrzeit, Gültigkeit, Regel für den Anmeldezeitraum; je Wochentag ein Zeitplan) oder
+  **später**. Optional ein Team (Mitglied und Rolle): bei „wiederkehrend“ das Standard-Team der Zeitpläne.
+- `services.create_event` legt alles atomar an. Passt die Rolle nicht zur Art, wird nichts gespeichert.
+- `static/js/event-form.js` blendet die Felder der gewählten Variante ein; ohne JavaScript sind alle sichtbar.
+
+### Termine ohne Doppelungen
+
+- „Termine“ und die Startseite zeigen jeden Termin einmal. Darunter stehen die eigenen Mitglieder, für die er passt
+  oder die eingetragen sind, mit Status (auch Team-Rolle) und eigenem Knopf (`services.agenda` → `AgendaEntry`).
+- Mit nur einem eigenen Mitglied stehen Status und Knopf direkt in der Terminzeile.
+- Termine, die zu keinem eigenen Mitglied passen, stehen zugeklappt unter „Weitere Veranstaltungen“.
+
 ### Begriffe
 
 - „Co-Trainer“ statt „Kotrainer“.

@@ -27,7 +27,7 @@ urlpatterns = [
     path("stunden/", views.my_hours, name="my_hours"),
     path("einsaetze/", RedirectView.as_view(pattern_name="my_hours", permanent=True)),
     path("veranstaltungen/", views.event_list, name="event_list"),
-    path("veranstaltungen/neu/", views.event_edit, name="event_create"),
+    path("veranstaltungen/neu/", views.event_create, name="event_create"),
     path("veranstaltungen/<int:pk>/", views.event_detail, name="event_detail"),
     path("veranstaltungen/<int:pk>/bearbeiten/", views.event_edit, name="event_edit"),
     path("veranstaltungen/<int:pk>/loeschen/", views.event_delete, name="event_delete"),

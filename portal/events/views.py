@@ -22,6 +22,7 @@ from . import services
 from .forms import (
     CancelRangeForm,
     ConfirmForm,
+    EventCreateForm,
     EventForm,
     EventTypeForm,
     NoteForm,
@@ -60,10 +61,10 @@ def _errors(request: HttpRequest, form: Any) -> None:
 
 @login_required
 def agenda(request: HttpRequest) -> HttpResponse:
-    """Die nächsten Termine je eigenem Mitglied. Ohne eigene Mitglieder: alle Termine zur Übersicht."""
-    sections = services.agenda(request.user)
-    context: dict[str, Any] = {"sections": sections, "several": len(sections) > 1}
-    if not sections:
+    """Die nächsten Termine, jeder einmal, mit den eigenen Mitgliedern. Ohne eigene Mitglieder: alle zur Übersicht."""
+    result = services.agenda(request.user)
+    context: dict[str, Any] = {"agenda": result}
+    if result is None:
         services.ensure_generated()
         context["occurrences"] = services.upcoming()
     return render(request, "events/agenda.html", context)
@@ -396,14 +397,41 @@ def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 @role_required(*MANAGE_EVENTS)
-def event_edit(request: HttpRequest, pk: int | None = None) -> HttpResponse:
-    event = get_object_or_404(Event, pk=pk) if pk else None
+def event_edit(request: HttpRequest, pk: int) -> HttpResponse:
+    event = get_object_or_404(Event, pk=pk)
     form = EventForm(request.POST or None, instance=event)
     if request.method == "POST" and form.is_valid():
         event = form.save()
         messages.success(request, f"„{event.title}“ gespeichert.")
         return redirect("event_detail", pk=event.pk)
     return render(request, "events/event_edit.html", {"form": form, "event": event})
+
+
+@role_required(*MANAGE_EVENTS)
+def event_create(request: HttpRequest) -> HttpResponse:
+    """Veranstaltung mit Terminen anlegen: einmalig, wiederkehrend oder später."""
+    form = EventCreateForm(request.POST or None, candidates=services.team_candidates(), roles=services.team_roles())
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        team = (data["team_member"], data["team_role"]) if data.get("team_member") else None
+        try:
+            with transaction.atomic():
+                event = form.save()
+                occurrences = services.create_event(
+                    event,
+                    dates=data["dates"],
+                    once={name: data[name] for name in form.ONCE_FIELDS},
+                    weekly={name: data[name] for name in form.WEEKLY_FIELDS},
+                    team=team,
+                )
+        except RegistrationError as error:
+            form.add_error("team_role", str(error))
+        else:
+            count = len(occurrences)
+            dates = f" mit {count} Termin{'en' if count != 1 else ''}" if count else ""
+            messages.success(request, f"„{event.title}“ angelegt{dates}.")
+            return redirect("event_detail", pk=event.pk)
+    return render(request, "events/event_create.html", {"form": form})
 
 
 @require_POST

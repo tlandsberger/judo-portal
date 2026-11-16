@@ -6,24 +6,35 @@
     <div><h1 class="text-3xl font-bold">Termine</h1><p class="mt-1 text-base-content/70">Die nächsten sechs Wochen.</p></div>
     {% if can_plan_events %}<a class="btn btn-outline btn-primary" href="{% url 'event_list' %}"><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a>{% endif %}
   </div>
-  {% for section in sections %}
-  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-member-{{ section.member.pk }}"><div class="card-body">
-    <h2 class="card-title" id="h-member-{{ section.member.pk }}">{% if several %}{% if section.link.kind == "self" %}Ich · {% endif %}{{ section.member.display_name }}{% else %}Für dich{% endif %}</h2>
-    {% if section.items %}
-    <ul class="list">{% for item in section.items %}{% include "events/_item.html" with member=section.member %}{% endfor %}</ul>
+  {% if agenda %}
+  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-fuer-dich"><div class="card-body">
+    <h2 class="card-title" id="h-fuer-dich">{% if agenda.several %}Für euch{% else %}Für dich{% endif %}</h2>
+    {% if agenda.entries %}
+    <ul class="list">{% for entry in agenda.entries %}{% include "events/_entry.html" with several=agenda.several %}{% endfor %}</ul>
     {% else %}<p class="text-base-content/70">Gerade keine passenden Termine.</p>{% endif %}
-    {% if section.others %}
+    {% if agenda.others %}
     <details class="collapse collapse-arrow mt-2 bg-base-200">
-      <summary class="collapse-title font-semibold">Weitere Veranstaltungen ({{ section.others|length }})</summary>
+      <summary class="collapse-title font-semibold">Weitere Veranstaltungen ({{ agenda.others|length }})</summary>
       <div class="collapse-content">
-        <p class="mb-2 text-sm text-base-content/70">Passen nicht zu {{ section.member.first_name }}. Möchtest du trotzdem teilnehmen, sprich bitte die Übungsleiter an.</p>
-        <ul class="list">{% for item in section.others %}{% include "events/_item.html" with member=section.member %}{% endfor %}</ul>
+        <p class="mb-2 text-sm text-base-content/70">Passen gerade nicht. Möchtest du trotzdem teilnehmen, sprich bitte die Trainer an.</p>
+        <ul class="list">
+          {% for occurrence in agenda.others %}
+          <li class="list-row items-center px-0">
+            <div class="w-16 text-center"><div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"D" }}</div><div class="text-lg font-bold">{{ occurrence.starts_at|date:"d.m." }}</div></div>
+            <div class="list-col-grow">
+              <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a>
+              <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %} · {{ occurrence.event.event_type }}</div>
+              {% if occurrence.is_cancelled %}<span class="badge badge-warning badge-sm mt-1">abgesagt</span>{% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
       </div>
     </details>
     {% endif %}
   </div></section>
-  {% endfor %}
-  {% if not sections %}
+  {% endif %}
+  {% if agenda is None %}
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-alle"><div class="card-body">
     <h2 class="card-title" id="h-alle">Alle Termine</h2>
     {% if occurrences %}
