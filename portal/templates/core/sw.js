@@ -65,8 +65,8 @@ self.addEventListener("notificationclick", (event) => {
   const data = notification.data || {};
   notification.close();
   const action = (data.actions || []).find((item) => item.action === event.action);
-  if (!action) {
-    event.waitUntil(openPage(data.url));
+  if (!action || action.url) {
+    event.waitUntil(openPage(action ? action.url : data.url));
     return;
   }
   // Knopf: Aktion direkt ausführen und das Ergebnis als kurze Nachricht zeigen; klappt es nicht, Seite öffnen.

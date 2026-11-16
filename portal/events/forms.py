@@ -346,6 +346,43 @@ class ParticipantRoleForm(forms.ModelForm):
         return data
 
 
+class AbsentForm(forms.Form):
+    """„Nicht dabei?“ – austragen, übertragen an eine Vertretung oder den Termin nachträglich absagen."""
+
+    WITHDRAW, HAND_OVER, CANCEL = "withdraw", "hand_over", "cancel"
+    what = forms.ChoiceField(
+        label="Was ist passiert?",
+        widget=forms.RadioSelect,
+        choices=[
+            (WITHDRAW, "Ich war nicht dabei – austragen"),
+            (HAND_OVER, "Ich wurde vertreten"),
+            (CANCEL, "Der Termin hat nicht stattgefunden – absagen"),
+        ],
+    )
+    member = forms.ModelChoiceField(label="Vertreten von", queryset=Member.objects.none(), required=False)
+    role = forms.ModelChoiceField(label="Als", queryset=ParticipantRole.objects.none(), required=False)
+
+    def __init__(self, *args: Any, candidates: list[Member], roles: list[ParticipantRole], **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        member = self.fields["member"]
+        member.queryset = Member.objects.filter(pk__in=[m.pk for m in candidates]).order_by(  # type: ignore[attr-defined]
+            "first_name", "last_name"
+        )
+        member.label_from_instance = lambda m: m.display_name  # type: ignore[attr-defined]
+        self.fields["role"].queryset = ParticipantRole.objects.filter(  # type: ignore[attr-defined]
+            pk__in=[r.pk for r in roles]
+        )
+
+    def clean(self) -> dict[str, Any]:
+        data = super().clean() or {}
+        if data.get("what") == self.HAND_OVER:
+            if not data.get("member"):
+                self.add_error("member", "Wähle bitte, wer dich vertreten hat.")
+            if not data.get("role"):
+                self.add_error("role", "Wähle bitte die Rolle der Vertretung.")
+        return data
+
+
 class ConfirmForm(forms.Form):
     minutes = forms.IntegerField(label="Dauer (Minuten)", min_value=1, max_value=24 * 60)
 

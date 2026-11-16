@@ -55,9 +55,12 @@
           <div class="text-sm text-base-content/70">{{ p.occurrence.starts_at|date:"D d.m. H:i" }} Uhr · {{ p.role.name }} · {{ p.occurrence.minutes }} Min.</div>
         </div>
         {% if overview.is_open and p.occurrence.starts_at <= now %}
+        <div class="flex flex-wrap items-center justify-end gap-1">
         <form method="post" action="{% url 'hours_confirm' p.occurrence_id %}">{% csrf_token %}<input type="hidden" name="minutes" value="{{ p.occurrence.minutes }}"><input type="hidden" name="next" value="{{ request.path }}">
           <button class="btn btn-primary btn-sm" aria-label="{{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }} bestätigen">Bestätigen</button>
         </form>
+        <a class="btn btn-ghost btn-sm" href="{% url 'hours_absent' p.occurrence_id %}" aria-label="Nicht dabei? {{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }}">Nicht dabei?</a>
+        </div>
         {% endif %}
       </li>
       {% endfor %}

@@ -11,9 +11,12 @@
     </div>
   </div>
   {% if p.role.is_billable and not p.is_confirmed and not occurrence.is_cancelled and occurrence.starts_at <= now %}
+  <div class="flex flex-wrap items-center justify-end gap-1">
   <form method="post" action="{% url 'hours_confirm' occurrence.pk %}">{% csrf_token %}<input type="hidden" name="minutes" value="{{ occurrence.minutes }}"><input type="hidden" name="next" value="{{ request.path }}">
     <button class="btn btn-primary btn-sm" aria-label="{{ occurrence.event.title }} am {{ occurrence.starts_at|date:'d.m.' }} bestätigen">Bestätigen</button>
   </form>
+  <a class="btn btn-ghost btn-sm" href="{% url 'hours_absent' occurrence.pk %}" aria-label="Nicht dabei? {{ occurrence.event.title }} am {{ occurrence.starts_at|date:'d.m.' }}">Nicht dabei?</a>
+  </div>
   {% elif p.is_confirmed and not p.locked %}
   <form method="post" action="{% url 'hours_confirm' occurrence.pk %}" class="join">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
     <label class="sr-only" for="min-{{ p.pk }}">Minuten für {{ occurrence.event.title }} am {{ occurrence.starts_at|date:'d.m.' }}</label>

@@ -404,14 +404,15 @@ def update_occurrence(occurrence: Occurrence, fields: Iterable[str], by: User | 
 
 
 @transaction.atomic
-def cancel(occurrence: Occurrence, by: User | None = None) -> None:
+def cancel(occurrence: Occurrence, by: User | None = None, *, notify: bool = True) -> None:
     if occurrence.is_cancelled:
         return
     occurrence.cancelled_at = timezone.now()
     occurrence.save(update_fields=["cancelled_at"])
     log.info("Termin %s abgesagt", occurrence.pk)
-    _audit(by, "cancel", f"{_when(occurrence)} abgesagt")
-    notices.cancelled(occurrence, by)
+    _audit(by, "cancel", f"{_when(occurrence)} abgesagt{'' if notify else ' (nachträglich)'}")
+    if notify:
+        notices.cancelled(occurrence, by)
 
 
 def cancel_range(event: Event, first: date, last: date, by: User | None = None) -> int:
@@ -665,6 +666,64 @@ def unconfirm(participation: Participation, by: User | None = None) -> None:
         f"Bestätigung für {_when(participation.occurrence)} zurückgenommen ({minutes} Minuten)",
         participation,
     )
+
+
+# Nicht dabei? Nachträglich richtigstellen (ADR 0012)
+
+
+def _check_absent(participation: Participation) -> None:
+    if not participation.role.is_team:
+        raise RegistrationError("Das geht nur für das Team eines Termins.")
+    if participation.occurrence.starts_at > timezone.now():
+        raise RegistrationError("Vor dem Termin trägst du dich einfach aus.")
+    _check_unlocked(participation)
+
+
+@transaction.atomic
+def withdraw(participation: Participation, by: User | None = None) -> None:
+    """Nachträglich austragen: „Ich war nicht dabei.“ Eine eigene Bestätigung wird dabei zurückgenommen."""
+    _check_absent(participation)
+    unconfirm(participation, by)
+    remove_team(participation, by)
+
+
+@transaction.atomic
+def hand_over(
+    participation: Participation, member: Member, role: ParticipantRole, by: User | None = None
+) -> Participation:
+    """Nachträglich übertragen: „Ich wurde vertreten von …“. Die Vertretung bekommt die Stunden zum Bestätigen."""
+    _check_absent(participation)
+    occurrence = participation.occurrence
+    if member.pk == participation.member_id:
+        raise RegistrationError("Wähle bitte, wer dich vertreten hat.")
+    existing = occurrence.participations.filter(member=member, role__is_team=True, status__in=ACTIVE).first()
+    if existing:
+        raise RegistrationError(f"{member.display_name} ist schon als {existing.role.name} eingetragen.")
+    unconfirm(participation, by)
+    absent = participation.person.display_name
+    remove_team(participation, by)
+    substitute = set_team(occurrence, member, role, by)
+    _audit(by, "hand_over", f"{absent} wurde bei {_when(occurrence)} von {member.display_name} vertreten", substitute)
+    if role.is_billable:
+        transaction.on_commit(lambda: notices.substitute(substitute, absent))
+    return substitute
+
+
+@transaction.atomic
+def cancel_after(occurrence: Occurrence, by: User | None = None) -> None:
+    """Nachträglich absagen: „Der Termin hat nicht stattgefunden.“ Ohne Nachrichten an Teilnehmer."""
+    if occurrence.starts_at > timezone.now():
+        raise RegistrationError("Vor dem Termin sagst du ihn über „Absagen“ ab.")
+    confirmed = occurrence.participations.filter(role__is_team=True, confirmed_at__isnull=False).exclude(
+        member__isnull=True
+    )
+    for participation in confirmed.select_related("member", "role"):
+        _check_unlocked(participation)
+        if by is None or participation.member != own_member(by):
+            name = participation.person.display_name
+            raise RegistrationError(f"{name} hat schon Stunden bestätigt – sprecht euch bitte kurz ab.")
+        unconfirm(participation, by)
+    cancel(occurrence, by, notify=False)
 
 
 @transaction.atomic

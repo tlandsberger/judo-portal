@@ -19,6 +19,7 @@ urlpatterns = [
     ),
     path("termine/<int:pk>/bestaetigen/", views.hours_confirm, name="hours_confirm"),
     path("termine/<int:pk>/bestaetigung-zuruecknehmen/", views.hours_unconfirm, name="hours_unconfirm"),
+    path("termine/<int:pk>/nicht-dabei/", views.hours_absent, name="hours_absent"),
     path("termine/<int:pk>/teilnehmer/", views.participant_add, name="participant_add"),
     path(
         "termine/<int:pk>/teilnehmer/<int:participation_pk>/entfernen/",
