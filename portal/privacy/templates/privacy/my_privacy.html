@@ -1,13 +1,16 @@
 {% extends "base.html" %}
 {% load privacy %}
-{% block title %}Meine gespeicherten Daten{% endblock %}
+{% block title %}Datenauskunft (Art. 15 DSGVO){% endblock %}
 {% block content %}
 <div class="mx-auto max-w-3xl">
   <a href="{% url 'my_data' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Meine Daten</a>
   <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-    <div><h1 class="text-3xl font-bold">Meine gespeicherten Daten</h1>
+    <div><h1 class="text-3xl font-bold">Datenauskunft (Art. 15 DSGVO)</h1>
       <p class="mt-1 text-base-content/70">Alles, was das Portal zu deinem Zugang{% if data.Mitglieder %} und zu {% for name in data.Mitglieder %}{{ name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %} speichert. Fragen oder Korrekturen an <a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a>.</p></div>
-    <a class="btn btn-primary" href="?format=json"><i class="bi bi-download" aria-hidden="true"></i> Als Datei herunterladen</a>
+    <div class="flex flex-col items-start gap-1">
+      <a class="btn btn-primary" href="?format=pdf"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Als PDF herunterladen</a>
+      <a class="link text-sm" href="?format=json">maschinenlesbar als JSON</a>
+    </div>
   </div>
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zugang"><div class="card-body">
     <h2 class="card-title" id="h-zugang">Dein Zugang</h2>

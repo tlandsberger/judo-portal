@@ -133,3 +133,14 @@ def test_own_team_for_my_hours(trainer):
     assert [p.role.name for p in coming] == ["Trainer"]
     assert [p.role.name for p in past] == ["Co-Trainer"]
     assert services.own_team(make_user("x@example.org")) == ([], [])
+
+
+def test_unconfirm_until_submitted(trainer):
+    occurrence = make_occurrence(in_days=-1)
+    participation = services.set_team(occurrence, services.own_member(trainer), role("Trainer"))
+    services.confirm(participation, 60)
+    services.unconfirm(participation, by=trainer)
+    participation.refresh_from_db()
+    assert participation.confirmed_at is None and participation.minutes is None
+    services.confirm(participation)
+    assert participation.is_confirmed

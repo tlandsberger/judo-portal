@@ -85,6 +85,7 @@ Nach dem ersten Release der Veranstaltungen (ADR 0010) zeigten sich drei Schwäc
 
 - „Co-Trainer“ statt „Kotrainer“.
 - „Stunden“ statt „Begleitung“ oder „Einsatz“: „Stunden bestätigen“, Seite „Meine Stunden“ (`/stunden/`).
+- Eine Bestätigung lässt sich zurücknehmen (z. B. versehentlich bestätigt), solange der Monat nicht zur Abrechnung eingereicht ist.
 
 ## Konsequenzen
 

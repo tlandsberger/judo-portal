@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from allauth.mfa.models import Authenticator
@@ -161,10 +162,12 @@ def preview_deletion(member: Member) -> DeletionPreview:
 def delete_user(user: User, by: User | None, reason: str) -> None:
     """Benutzer mit Anmeldewegen, Geräten und Benachrichtigungen löschen; vorher eine Mail."""
     email, name = user.email, user.display_name
+    # Wer sich selbst löscht, kann nicht mehr als Handelnder im Protokoll stehen.
+    actor = None if by is not None and by.pk == user.pk else by
     transaction.on_commit(lambda: _send_user_deleted(email, name, reason))
     audit.forget_user(user.pk)
     user.delete()
-    audit.log(by, audit.Area.PRIVACY, "user_deleted", f"Benutzer gelöscht ({reason})")
+    audit.log(actor, audit.Area.PRIVACY, "user_deleted", f"Benutzer gelöscht ({reason})")
 
 
 def _send_user_deleted(email: str, name: str, reason: str) -> None:
@@ -176,6 +179,38 @@ def _send_user_deleted(email: str, name: str, reason: str) -> None:
     )
     message.attach_alternative(render_to_string("privacy/email/user_deleted.html", context), "text/html")
     message.send()
+
+
+REASON_SELF = "auf eigenen Wunsch"
+
+
+class DeletionError(Exception):
+    """Löschen ist so nicht möglich; die Nachricht ist für die Oberfläche."""
+
+
+def check_own_deletion(user: User) -> None:
+    """Den eigenen Zugang darf jeder löschen, nur nicht der letzte aktive Administrator."""
+    if user.has_role(Role.ADMIN):
+        admins = [other for other in User.objects.filter(is_active=True) if other.has_role(Role.ADMIN)]
+        if len(admins) <= 1:
+            raise DeletionError("Du bist der einzige Administrator. Gib die Rolle erst jemand anderem.")
+
+
+@transaction.atomic
+def delete_own_access(user: User) -> list[Member]:
+    """Eigenen Zugang löschen (z. B. Kind volljährig). Die Mitglieder bleiben und können neu eingeladen werden."""
+    check_own_deletion(user)
+    kept = [link.member for link in MemberLink.objects.filter(user=user).select_related("member")]
+    for member in kept:
+        audit.log(
+            None,
+            audit.Area.MEMBERS,
+            "unlink",
+            f"Zugang {user.email} zu {member.display_name} selbst gelöscht",
+            member=member,
+        )
+    delete_user(user, user, REASON_SELF)
+    return kept
 
 
 REASON_LEFT = "nach Austritt"
@@ -222,6 +257,8 @@ def _value(value: Any) -> Any:
         return value.strftime("%d.%m.%Y")
     if value is None or isinstance(value, bool | int | str):
         return value
+    if isinstance(value, Decimal):
+        return str(value).replace(".", ",")
     return str(value)
 
 
@@ -237,16 +274,21 @@ def _row(instance: Any, fields: list[str]) -> dict[str, Any]:
 
 
 def _audit_rows(rows: Any) -> list[dict[str, Any]]:
-    return [
-        {
+    result = []
+    for entry in rows[:500]:
+        row = {
             "Zeitpunkt": _value(entry.at),
             "Von": entry.who,
             "Bereich": entry.get_area_display(),
             "Beschreibung": entry.summary,
-            "Änderungen": entry.changes,
         }
-        for entry in rows[:500]
-    ]
+        changes = []
+        for field_name, values in (entry.changes or {}).items():
+            old, new = [*values, None, None][:2] if isinstance(values, list) else (None, values)
+            changes.append(f"{field_name}: {old or '–'} → {new or '–'}")
+        row["Änderungen"] = "; ".join(changes)
+        result.append(row)
+    return result
 
 
 def export_member(member: Member) -> dict[str, Any]:
@@ -266,10 +308,9 @@ def export_member(member: Member) -> dict[str, Any]:
                 "phone",
                 "grade",
                 "weight",
-                "created_at",
-                "updated_at",
             ],
-        ),
+        )
+        | {"Angelegt am": _value(member.created_at), "Zuletzt geändert": _value(member.updated_at)},
         "Interessen": [str(interest) for interest in member.interests.all()],
         "Zugänge": [
             {"Benutzer": link.user.email, "Art": link.get_kind_display(), "Seit": _value(link.created_at)}

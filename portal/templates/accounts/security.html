@@ -29,6 +29,9 @@
       <div><button type="submit" class="btn btn-primary">Speichern</button></div>
     </form>
   </div></section>
-  <p class="mt-6"><a class="link" href="{% url 'my_privacy' %}"><i class="bi bi-shield-check" aria-hidden="true"></i> Meine gespeicherten Daten (Auskunft)</a></p>
+  <div class="mt-6 flex flex-wrap gap-2">
+    <a class="btn btn-outline btn-primary" href="{% url 'my_privacy' %}"><i class="bi bi-shield-check" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a>
+    <a class="btn btn-outline btn-error" href="{% url 'own_access_delete' %}"><i class="bi bi-person-x" aria-hidden="true"></i> Meinen Zugang löschen</a>
+  </div>
 </div>
 {% endblock %}

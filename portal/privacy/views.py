@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
@@ -14,7 +16,7 @@ from portal.accounts.models import User
 from portal.core import audit
 from portal.members.models import Member
 
-from . import services
+from . import pdf, services
 from .forms import AuditFilterForm, DeleteForm
 
 
@@ -23,22 +25,28 @@ def _manager(request: HttpRequest) -> None:
         raise PermissionDenied
 
 
-def _json(data: dict[str, object], name: str) -> HttpResponse:
-    response = HttpResponse(
-        json.dumps(data, ensure_ascii=False, indent=2), content_type="application/json; charset=utf-8"
-    )
-    response["Content-Disposition"] = f'attachment; filename="{name}-{timezone.localdate():%Y-%m-%d}.json"'
+def _download(data: dict[str, Any], name: str, subject: str, as_json: bool) -> HttpResponse:
+    """Datenauskunft als PDF; maschinenlesbar (Art. 20) als JSON mit ``?format=json``."""
+    stamp = f"{timezone.localdate():%Y-%m-%d}"
+    if as_json:
+        response = HttpResponse(
+            json.dumps(data, ensure_ascii=False, indent=2), content_type="application/json; charset=utf-8"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{name}-{stamp}.json"'
+    else:
+        response = HttpResponse(pdf.render(data, subject), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{name}-{stamp}.pdf"'
     response["Cache-Control"] = "no-store"
     return response
 
 
 @login_required
 def my_privacy(request: HttpRequest) -> HttpResponse:
-    """„Meine gespeicherten Daten“: Auskunft zum eigenen Benutzer und zu den eigenen Mitgliedern (Art. 15)."""
+    """Datenauskunft zum eigenen Benutzer und zu den eigenen Mitgliedern (Art. 15)."""
     user: User = request.user  # type: ignore[assignment]
     data = services.export(user)
-    if request.GET.get("format") == "json":
-        return _json(data, "meine-daten")
+    if request.GET.get("format") in ("pdf", "json"):
+        return _download(data, "datenauskunft", user.display_name, request.GET["format"] == "json")
     response = render(request, "privacy/my_privacy.html", {"data": data})
     response["Cache-Control"] = "no-store"
     return response
@@ -48,7 +56,8 @@ def my_privacy(request: HttpRequest) -> HttpResponse:
 def member_export(request: HttpRequest, pk: int) -> HttpResponse:
     _manager(request)
     member = get_object_or_404(Member, pk=pk)
-    return _json(services.export_member(member), f"auskunft-{member.member_number or member.pk}")
+    name = f"datenauskunft-{member.member_number or member.pk}"
+    return _download(services.export_member(member), name, member.display_name, request.GET.get("format") == "json")
 
 
 @login_required
@@ -67,6 +76,25 @@ def member_delete(request: HttpRequest, pk: int) -> HttpResponse:
         "privacy/member_delete.html",
         {"member": member, "preview": preview, "form": form, "when": services.deletion_date(member)},
     )
+
+
+@login_required
+def own_access_delete(request: HttpRequest) -> HttpResponse:
+    """Eigenen Zugang löschen, mit Bestätigung. Die verknüpften Mitglieder bleiben erhalten."""
+    user: User = request.user  # type: ignore[assignment]
+    blocked = None
+    try:
+        services.check_own_deletion(user)
+    except services.DeletionError as error:
+        blocked = str(error)
+    form = DeleteForm(request.POST or None)
+    if request.method == "POST" and not blocked and form.is_valid():
+        logout(request)
+        services.delete_own_access(user)
+        messages.success(request, "Dein Zugang ist gelöscht. Wir haben dir eine Bestätigung per Mail geschickt.")
+        return redirect("account_login")
+    links = user.member_links.select_related("member")
+    return render(request, "privacy/own_access_delete.html", {"form": form, "links": links, "blocked": blocked})
 
 
 @login_required

@@ -81,6 +81,10 @@
       <div class="w-40">{{ confirm_form }}</div>
       <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Stunden bestätigen</button>
     </form>
+    {% elif can_unconfirm %}
+    <form method="post" action="{% url 'hours_unconfirm' occurrence.pk %}">{% csrf_token %}
+      <button class="btn btn-outline btn-sm" type="submit"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Bestätigung zurücknehmen</button>
+    </form>
     {% endif %}
     {% if note_form %}
     <form method="post" action="{% url 'occurrence_note' occurrence.pk %}" class="flex flex-col gap-2">{% csrf_token %}

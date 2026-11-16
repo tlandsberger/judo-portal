@@ -6,8 +6,8 @@
       <p style="margin:0 0 16px;font-size:16px;">Hallo {{ user.get_short_name }},</p>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">{% if own %}dein Austritt aus der Judo-Abteilung ist eingetragen{% else %}der Austritt von <strong>{{ member.display_name }}</strong> aus der Judo-Abteilung ist eingetragen{% endif %} ({{ member.left_on|date:"d.m.Y" }}).</p>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Am <strong>{{ when|date:"d.m.Y" }}</strong> löschen wir {% if own %}deine Daten{% else %}die Daten von {{ member.display_name }}{% endif %} im Vereinsportal: Stammdaten, Teilnahmen an Terminen und Abrechnungen. Hast du dann kein weiteres Mitglied im Portal, wird auch dein Zugang gelöscht.</p>
-      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Bis dahin kannst du unter „Meine Daten“ eine Auskunft über alle gespeicherten Daten herunterladen.</p>
-      <p style="margin:24px 0;"><a href="{{ url }}" style="background:#027d31;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;display:inline-block;">Meine gespeicherten Daten</a></p>
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Bis dahin kannst du unter „Meine Daten“ die Datenauskunft (Art. 15 DSGVO) als PDF herunterladen.</p>
+      <p style="margin:24px 0;"><a href="{{ url }}" style="background:#027d31;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;display:inline-block;">Datenauskunft (Art. 15 DSGVO)</a></p>
       <p style="margin:0;font-size:14px;color:#5c5c5c;line-height:1.5;">Stimmt der Austritt nicht? Dann gib uns bitte kurz Bescheid.</p>
     </td></tr>
     <tr><td style="padding:16px 28px;border-top:1px solid #d9d9d9;font-size:13px;color:#5c5c5c;">Wedeler TSV e.V. – Abteilung Judo · judo@wedeler-tsv.de</td></tr>

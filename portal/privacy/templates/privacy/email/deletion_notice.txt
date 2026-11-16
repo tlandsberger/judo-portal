@@ -4,7 +4,7 @@
 
 Am {{ when|date:"d.m.Y" }} löschen wir {% if own %}deine Daten{% else %}die Daten von {{ member.display_name }}{% endif %} im Vereinsportal: Stammdaten, Teilnahmen an Terminen und Abrechnungen. Hast du dann kein weiteres Mitglied im Portal, wird auch dein Zugang gelöscht.
 
-Bis dahin kannst du unter „Meine Daten“ eine Auskunft über alle gespeicherten Daten herunterladen:
+Bis dahin kannst du unter „Meine Daten“ die Datenauskunft (Art. 15 DSGVO) als PDF herunterladen:
 {{ url }}
 
 Stimmt der Austritt nicht? Dann gib uns bitte kurz Bescheid.
