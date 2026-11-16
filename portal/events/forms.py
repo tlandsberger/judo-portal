@@ -4,13 +4,13 @@ from typing import Any
 
 from django import forms
 from django.db import models
-from django.utils import timezone
+from django.utils import formats, timezone
 
 from portal.accounts.models import Role
 from portal.members.forms import DateInput, WeightInput
 from portal.members.models import Gender, Member
 
-from .models import Event, EventType, Occurrence, ParticipantRole, Schedule, TargetGroup, Weekday
+from .models import Event, EventType, Guest, Occurrence, ParticipantRole, Schedule, TargetGroup, Weekday
 
 
 class DateTimeInput(forms.DateTimeInput):
@@ -68,7 +68,16 @@ class TargetGroupForm(forms.ModelForm):
 class EventForm(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ("title", "event_type", "description", "location", "target_groups", "capacity", "weight_required")
+        fields = (
+            "title",
+            "event_type",
+            "description",
+            "location",
+            "target_groups",
+            "capacity",
+            "weight_required",
+            "guests_welcome",
+        )
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
             "target_groups": forms.CheckboxSelectMultiple(),
@@ -339,3 +348,68 @@ class ParticipantRoleForm(forms.ModelForm):
 
 class ConfirmForm(forms.Form):
     minutes = forms.IntegerField(label="Dauer (Minuten)", min_value=1, max_value=24 * 60)
+
+
+class GuestForm(forms.ModelForm):
+    """Daten eines Gastes: vom Team eingetragen, über den Anmeldelink oder auf der Gast-Seite geändert."""
+
+    class Meta:
+        model = Guest
+        fields = (
+            "first_name",
+            "last_name",
+            "birth_year",
+            "gender",
+            "grade",
+            "weight",
+            "club",
+            "email",
+            "phone",
+            "guardian_name",
+        )
+        localized_fields = ("weight",)
+        widgets = {"weight": WeightInput()}
+
+    def __init__(self, *args: Any, event: Event, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.event = event
+        if event.weight_required:
+            self.fields["weight"].required = True
+            self.fields["weight"].help_text = "Für diese Veranstaltung erforderlich."
+
+    def clean(self) -> dict[str, Any]:
+        data = super().clean() or {}
+        year = data.get("birth_year")
+        if year and timezone.localdate().year - year < 18 and not data.get("guardian_name"):
+            self.add_error("guardian_name", "Bei Minderjährigen brauchen wir den Namen eines Erziehungsberechtigten.")
+        return data
+
+
+class GuestRegisterForm(GuestForm):
+    """Öffentliche Anmeldung über den Link der Veranstaltung (ohne Zugang)."""
+
+    occurrences = forms.ModelMultipleChoiceField(
+        label="Termine", queryset=Occurrence.objects.none(), widget=forms.CheckboxSelectMultiple
+    )
+    consent = forms.BooleanField(
+        label="Ich habe den Datenschutzhinweis gelesen und bin einverstanden, dass meine Angaben für diese "
+        "Veranstaltung gespeichert werden.",
+    )
+    # Honeypot gegen Spam: Menschen sehen das Feld nicht und lassen es leer.
+    website = forms.CharField(label="Webseite", required=False)
+
+    def __init__(self, *args: Any, event: Event, occurrences: list[Occurrence], **kwargs: Any) -> None:
+        super().__init__(*args, event=event, **kwargs)
+        field = self.fields["occurrences"]
+        field.queryset = Occurrence.objects.filter(pk__in=[o.pk for o in occurrences])  # type: ignore[attr-defined]
+        field.label_from_instance = lambda o: (  # type: ignore[attr-defined]
+            f"{formats.date_format(timezone.localtime(o.starts_at), 'D d.m.Y, H:i')}–"
+            f"{timezone.localtime(o.ends_at):%H:%M} Uhr"
+        )
+        if len(occurrences) == 1:
+            field.initial = [occurrences[0].pk]
+
+    def clean_website(self) -> str:
+        if self.cleaned_data.get("website"):
+            raise forms.ValidationError("Bitte lass dieses Feld leer.")
+        return ""

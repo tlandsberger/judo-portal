@@ -24,6 +24,7 @@ from portal.members.models import LinkKind, Member, MemberLink, grade_rank
 from . import notices
 from .models import (
     Event,
+    Guest,
     Occurrence,
     ParticipantRole,
     Participation,
@@ -171,12 +172,18 @@ class Match(IntEnum):
     YES = 2
 
 
-def age_in_year(member: Member, on: date) -> int:
+def age_in_year(member: Member | Guest, on: date) -> int:
     """Alter nach Jahrgang, wie bei Judo-Altersklassen (U11, U13 …)."""
     return on.year - member.birth_date.year
 
 
-def match_group(group: TargetGroup, member: Member, on: date, interest_ids: set[int] | None = None) -> Match:
+def match_group(
+    group: TargetGroup,
+    member: Member | Guest,
+    on: date,
+    interest_ids: set[int] | None = None,
+) -> Match:
+    """Passt ein Mitglied (oder ein Gast) zur Zielgruppe? Bei Gästen zählen Interessen nicht."""
     age = age_in_year(member, on)
     if group.min_age is not None and age < group.min_age:
         return Match.NO
@@ -190,7 +197,7 @@ def match_group(group: TargetGroup, member: Member, on: date, interest_ids: set[
     if group.max_grade and rank > grade_rank(group.max_grade):
         return Match.NO
     group_interests = {interest.pk for interest in group.interests.all()}
-    if group_interests:
+    if group_interests and not isinstance(member, Guest):
         if interest_ids is None:
             interest_ids = {interest.pk for interest in member.interests.all()}
         if not group_interests & interest_ids:
@@ -205,7 +212,7 @@ def match_group(group: TargetGroup, member: Member, on: date, interest_ids: set[
     return Match.YES
 
 
-def match_event(event: Event, member: Member, on: date, interest_ids: set[int] | None = None) -> Match:
+def match_event(event: Event, member: Member | Guest, on: date, interest_ids: set[int] | None = None) -> Match:
     """Ohne Zielgruppe passt jeder; sonst das beste Ergebnis über alle Zielgruppen (ODER)."""
     groups = list(event.target_groups.all())
     if not groups:
@@ -487,7 +494,7 @@ def promote(occurrence: Occurrence) -> list[Participation]:
     if capacity is None:
         return promoted
     free = capacity - registered_count(occurrence)
-    waiting = occurrence.participations.filter(status=ParticipationStatus.WAITLIST).select_related("member")
+    waiting = occurrence.participations.filter(status=ParticipationStatus.WAITLIST).select_related("member", "guest")
     for participation in waiting[: max(free, 0)]:
         participation.status = ParticipationStatus.REGISTERED
         participation.save(update_fields=["status", "updated_at"])
@@ -737,22 +744,31 @@ class Participant:
     guardians: list[User]
 
     @property
-    def member(self) -> Member:
+    def member(self) -> Member | None:
         return self.participation.member
+
+    @property
+    def guest(self) -> Guest | None:
+        return self.participation.guest
+
+    @property
+    def person(self) -> Member | Guest:
+        return self.participation.person
 
 
 def participants(occurrence: Occurrence) -> list[Participant]:
-    """Teilnehmerliste (ohne Team) mit Judo-Daten und Notfallkontakt (Telefon des Mitglieds, Eltern)."""
+    """Teilnehmerliste (ohne Team) mit Judo-Daten und Notfallkontakt (Telefon des Mitglieds, Eltern; bei Gästen
+    Telefon und Erziehungsberechtigte)."""
     on = timezone.localdate(occurrence.starts_at)
     rows = occurrence.participations.filter(status__in=ACTIVE, role__is_team=False).select_related(
-        "member", "exception_by", "role"
+        "member", "guest", "exception_by", "role"
     )
     return [
         Participant(
             participation=participation,
-            age=age_in_year(participation.member, on),
-            weight=participation.weight or participation.member.weight,
-            guardians=members.guardians(participation.member),
+            age=age_in_year(participation.person, on),
+            weight=participation.weight or participation.person.weight,
+            guardians=members.guardians(participation.member) if participation.member else [],
         )
         for participation in rows
     ]
@@ -790,6 +806,11 @@ def own_team(user: User) -> tuple[list[Participation], list[Participation]]:
 def participant_users(occurrence: Occurrence) -> set[User]:
     """Benutzer aller aktiven Teilnahmen inkl. Team (das Mitglied selbst, Eltern bis 18)."""
     users: set[User] = set()
-    for participation in occurrence.participations.filter(status__in=ACTIVE).select_related("member"):
-        users.update(members.member_users(participation.member))
+    rows = occurrence.participations.filter(status__in=ACTIVE, member__isnull=False).select_related("member")
+    for participation in rows:
+        users.update(members.member_users(participation.member))  # type: ignore[arg-type]
     return users
+
+
+def participant_guests(occurrence: Occurrence) -> list[Guest]:
+    return [p.guest for p in occurrence.participations.filter(status__in=ACTIVE).select_related("guest") if p.guest]

@@ -5,6 +5,7 @@ import {
   ensureYouthGroup,
   expectNoA11yViolations,
   importMembers,
+  lastMailTo,
   localDateTime,
   setPassword,
 } from "./helpers";
@@ -12,6 +13,7 @@ import {
 const PARENT = { email: "eltern-wk@test.local", password: "Sicher-Eltern-456" };
 const TRAINER = { email: "clara@test.local", password: "Sicher-Trainer-789" };
 const PARENTS = { email: "eltern-zwei@test.local", password: "Sicher-Eltern-321" };
+const GUEST = { email: "lena-gast@test.local" };
 
 test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sieht Teilnehmer und bestätigt Stunden", async ({ browser }) => {
   const admin = await (await browser.newContext({ storageState: ADMIN_STATE })).newPage();
@@ -177,4 +179,46 @@ test("Training wiederkehrend anlegen; Elternteil mit zwei Kindern sieht jeden Te
   await expectNoA11yViolations(parent);
   await parentContext.close();
   await admin.context().close();
+});
+
+test("Gast meldet sich über den Link an, bestätigt per Mail und sieht seine Anmeldung", async ({ browser }) => {
+  const admin = await (await browser.newContext({ storageState: ADMIN_STATE })).newPage();
+  await admin.goto("/veranstaltungen/neu/");
+  await admin.getByLabel("Titel").fill("Offener Lehrgang");
+  await admin.getByLabel("Art").selectOption({ label: "Lehrgang" });
+  await admin.getByLabel("Gäste willkommen").check();
+  await admin.getByLabel("Beginn", { exact: true }).fill(localDateTime(7, "10:00"));
+  await admin.getByLabel("Ende", { exact: true }).fill(localDateTime(7, "15:00"));
+  await admin.getByRole("button", { name: "Speichern" }).click();
+  const link = await admin.getByLabel("Anmeldelink für Gäste").inputValue();
+  await expectNoA11yViolations(admin);
+  await admin.context().close();
+
+  const guestContext = await browser.newContext();
+  const guest = await guestContext.newPage();
+  await guest.goto(new URL(link).pathname);
+  await expect(guest.getByRole("heading", { level: 1, name: "Offener Lehrgang" })).toBeVisible();
+  await guest.getByLabel("Vorname").fill("Lena");
+  await guest.getByLabel("Nachname").fill("Gast");
+  await guest.getByLabel("Jahrgang").fill("1995");
+  await guest.getByLabel("Geschlecht").selectOption({ label: "weiblich" });
+  await guest.getByLabel("Verein").fill("JC Pinneberg");
+  await guest.getByLabel("E-Mail").fill(GUEST.email);
+  await guest.getByLabel("Telefon für Notfälle").fill("0170 111");
+  await guest.getByLabel(/Datenschutzhinweis gelesen/).check();
+  await expectNoA11yViolations(guest);
+  await guest.getByRole("button", { name: "Anmelden" }).click();
+  await expect(guest.getByRole("heading", { name: "Fast geschafft, Lena!" })).toBeVisible();
+
+  const mail = lastMailTo(GUEST.email);
+  const page = mail.match(/https?:\/\/\S+\/gast\/[\w-]+\//);
+  expect(page).not.toBeNull();
+  await guest.goto(new URL(page![0]).pathname);
+  await expect(guest.getByText("noch nicht bestätigt")).toBeVisible();
+  await expectNoA11yViolations(guest);
+  await guest.getByRole("button", { name: "Anmeldung bestätigen" }).click();
+  await expect(guest.getByText("Danke! Deine Anmeldung ist bestätigt.")).toBeVisible();
+  await expect(guest.getByText("angemeldet", { exact: true })).toBeVisible();
+  await expectNoA11yViolations(guest);
+  await guestContext.close();
 });

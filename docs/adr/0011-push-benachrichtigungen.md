@@ -18,6 +18,7 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
 | Einladung, Anmeldecode | immer Mail |
 | Sicherheit des Zugangs: Passwort gesetzt/geändert, Passkey hinzugefügt/entfernt, Anmeldung auf neuem Gerät | immer Mail |
 | Neue Verknüpfung mit einem Mitglied | immer Mail |
+| Alles an Gäste (ohne Benutzer, ADR 0013) | immer Mail |
 | Tägliches: Termin abgesagt oder geändert, Nachgerückt, Anmeldung offen, Erinnerung Anmeldeschluss, Stunden bestätigen | Push, sonst Mail |
 
 - Hat ein Benutzer mindestens ein Gerät mit Push, kommt Tägliches nur per Push.

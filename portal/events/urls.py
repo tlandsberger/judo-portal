@@ -24,6 +24,9 @@ urlpatterns = [
         views.participant_remove,
         name="participant_remove",
     ),
+    path("termine/<int:pk>/gast/", views.guest_add, name="guest_add"),
+    path("gaeste/anmelden/<str:token>/", views.guest_register, name="guest_register"),
+    path("gast/<str:token>/", views.guest_page, name="guest_page"),
     path("stunden/", views.my_hours, name="my_hours"),
     path("einsaetze/", RedirectView.as_view(pattern_name="my_hours", permanent=True)),
     path("veranstaltungen/", views.event_list, name="event_list"),
@@ -38,6 +41,7 @@ urlpatterns = [
     ),
     path("veranstaltungen/<int:pk>/termine/neu/", views.occurrence_create, name="occurrence_create"),
     path("veranstaltungen/<int:pk>/absagen/", views.event_cancel_range, name="event_cancel_range"),
+    path("veranstaltungen/<int:pk>/gaestelink/", views.event_guest_link, name="event_guest_link"),
     path("veranstaltungen/<int:pk>/zeitplaene/<int:schedule_pk>/team/", views.schedule_team, name="schedule_team"),
     path(
         "veranstaltungen/<int:pk>/zeitplaene/<int:schedule_pk>/team/<int:entry_pk>/entfernen/",

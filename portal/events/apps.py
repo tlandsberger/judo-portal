@@ -6,6 +6,7 @@ class EventsConfig(AppConfig):
     verbose_name = "Veranstaltungen"
 
     def ready(self) -> None:
-        from . import notices
+        from . import guests, notices
 
         notices.register_all()
+        guests.register_all()

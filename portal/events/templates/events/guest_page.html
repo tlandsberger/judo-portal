@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Deine Anmeldung: {{ event.title }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <div class="mb-6">
+    <p class="text-sm text-base-content/70">{{ event.event_type }} · Deine Anmeldung als Gast</p>
+    <h1 class="text-3xl font-bold">{{ event.title }}</h1>
+    <p class="mt-1 text-base-content/70">{{ guest.display_name }}{% if guest.club %} · {{ guest.club }}{% endif %}</p>
+  </div>
+
+  {% if not guest.confirmed_at %}
+  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-bestaetigen"><div class="card-body gap-3">
+    <h2 class="card-title" id="h-bestaetigen">Bitte bestätige deine Anmeldung</h2>
+    <p>Erst mit deiner Bestätigung ist dein Platz reserviert. Unbestätigte Anmeldungen werden nach 24 Stunden gelöscht.</p>
+    <form method="post">{% csrf_token %}<button class="btn btn-primary" name="action" value="confirm">Anmeldung bestätigen</button></form>
+  </div></section>
+  {% endif %}
+
+  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-termine"><div class="card-body gap-2">
+    <h2 class="card-title" id="h-termine">Termine</h2>
+    <ul class="list">
+      {% for p, window in rows %}
+      {% with occurrence=p.occurrence %}
+      <li class="list-row items-center px-0">
+        <div class="w-16 text-center"><div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"D" }}</div><div class="text-lg font-bold">{{ occurrence.starts_at|date:"d.m." }}</div></div>
+        <div class="list-col-grow">
+          <div class="font-semibold">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr</div>
+          <div class="text-sm text-base-content/70">{{ occurrence.place|default:"Ort folgt" }}</div>
+          <div class="mt-1 flex flex-wrap gap-1">
+            {% if occurrence.is_cancelled %}<span class="badge badge-warning badge-sm">abgesagt</span>
+            {% elif p.status == "registered" %}<span class="badge badge-soft badge-primary badge-sm">angemeldet</span>
+            {% elif p.status == "waitlist" %}<span class="badge badge-neutral badge-sm">Warteliste</span>
+            {% elif p.status == "pending" %}<span class="badge badge-neutral badge-sm">noch nicht bestätigt</span>
+            {% else %}<span class="badge badge-ghost badge-sm">abgemeldet</span>{% endif %}
+          </div>
+          {% if occurrence.note %}<p class="mt-1 text-sm">{{ occurrence.note }}</p>{% endif %}
+        </div>
+        {% if p.status != "cancelled" and window != "closed" and not occurrence.is_cancelled %}
+        <form method="post">{% csrf_token %}<input type="hidden" name="participation" value="{{ p.pk }}"><button class="btn btn-outline btn-sm" name="action" value="cancel" aria-label="Vom Termin am {{ occurrence.starts_at|date:'d.m.' }} abmelden">Abmelden</button></form>
+        {% endif %}
+      </li>
+      {% endwith %}
+      {% endfor %}
+    </ul>
+    {% if more %}
+    <form method="post" class="flex flex-wrap items-end gap-2 border-t border-base-300 pt-4">{% csrf_token %}
+      <div class="fieldset"><label class="fieldset-legend text-sm" for="id_occurrence">Weiterer Termin</label>
+        <select class="select" name="occurrence" id="id_occurrence">{% for occurrence in more %}<option value="{{ occurrence.pk }}">{{ occurrence.starts_at|date:"D d.m.Y, H:i" }} Uhr</option>{% endfor %}</select>
+      </div>
+      <button class="btn btn-primary" name="action" value="add">Anmelden</button>
+    </form>
+    {% endif %}
+  </div></section>
+
+  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-daten"><div class="card-body gap-4">
+    <h2 class="card-title" id="h-daten">Deine Daten</h2>
+    <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+      <div class="grid gap-x-4 sm:grid-cols-2">{% for field in form %}{{ field.as_field_group }}{% endfor %}</div>
+      <div><button class="btn btn-primary" name="action" value="save">Speichern</button></div>
+    </form>
+    {% include "events/_privacy.html" %}
+  </div></section>
+</div>
+{% endblock %}

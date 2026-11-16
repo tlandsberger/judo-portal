@@ -51,7 +51,8 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
   Termine. Begriffe: „Co-Trainer“, „Stunden bestätigen“.
 - **Benachrichtigungen:** Tägliches nur über `portal.notifications.services.notify` (Push, sonst Mail; Schlüssel je
   Anlass, damit nichts doppelt rausgeht). Einladung, Anmeldecode, Sicherheit des Zugangs und neue Verknüpfungen
-  immer direkt per Mail (ADR 0011). Wiederkehrende Jobs über `portal.core.scheduler.register_periodic`.
+  immer direkt per Mail (ADR 0011). Gäste haben keinen Benutzer: alles an sie per Mail über
+  `portal/events/guests.py` (ADR 0013). Wiederkehrende Jobs über `portal.core.scheduler.register_periodic`.
 - **Anmeldung:** django-allauth; Passkey, Passwort und Mail-Code sind gleichwertig (kein erzwungener zweiter Faktor,
   siehe `PortalAccountAdapter`). Keine Selbstregistrierung, Zugänge nur per Einladung.
 - **Oberfläche:** Tailwind CSS mit DaisyUI (ADR 0008). DaisyUI-Komponenten so verwenden, wie sie dokumentiert sind,

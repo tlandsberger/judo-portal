@@ -95,22 +95,26 @@
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-teilnehmer"><div class="card-body gap-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h2 class="card-title" id="h-teilnehmer">Teilnehmer ({{ participants|length }})</h2>
-      {% if lead %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'participant_add' occurrence.pk %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Ausnahme eintragen</a>{% endif %}
+      {% if lead %}<div class="flex flex-wrap gap-2">
+        <a class="btn btn-outline btn-primary btn-sm" href="{% url 'participant_add' occurrence.pk %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Ausnahme eintragen</a>
+        {% if event.guests_welcome %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'guest_add' occurrence.pk %}"><i class="bi bi-person-badge" aria-hidden="true"></i> Gast eintragen</a>{% endif %}
+      </div>{% endif %}
     </div>
     {% if participants %}
     <ul class="list">
       {% for row in participants %}
       <li class="list-row items-start px-0">
         <div class="list-col-grow">
-          <div class="font-semibold">{{ row.member.display_name }}{% if row.participation.status == "waitlist" %} <span class="badge badge-neutral badge-sm">Warteliste</span>{% endif %}{% if row.participation.exception_by %} <span class="badge badge-ghost badge-sm">Ausnahme</span>{% endif %}</div>
-          <div class="text-sm text-base-content/70">Jahrgang {{ row.member.birth_date|date:"Y" }} ({{ row.age }}) · {{ row.member.grade_short|default:"keine Graduierung" }} · {% if row.weight %}{{ row.weight|floatformat:1 }} kg{% else %}<span class="text-error">Gewicht fehlt</span>{% endif %}</div>
+          <div class="font-semibold">{{ row.person.display_name }}{% if row.guest %} <span class="badge badge-neutral badge-sm">Gast{% if row.guest.club %} · {{ row.guest.club }}{% endif %}</span>{% endif %}{% if row.participation.status == "waitlist" %} <span class="badge badge-neutral badge-sm">Warteliste</span>{% endif %}{% if row.participation.exception_by %} <span class="badge badge-ghost badge-sm">Ausnahme</span>{% endif %}</div>
+          <div class="text-sm text-base-content/70">Jahrgang {{ row.person.birth_date|date:"Y" }} ({{ row.age }}) · {{ row.person.grade_short|default:"keine Graduierung" }} · {% if row.weight %}{{ row.weight|floatformat:1 }} kg{% else %}<span class="text-error">Gewicht fehlt</span>{% endif %}</div>
           {% if row.participation.note %}<div class="text-sm">„{{ row.participation.note }}“</div>{% endif %}
           <div class="mt-1 text-sm"><span class="text-base-content/70">Notfall:</span>
-            {% if row.member.phone %}<a class="link" href="tel:{{ row.member.phone }}">{{ row.member.phone }}</a>{% endif %}
-            {% for guardian in row.guardians %}{% if forloop.first and row.member.phone %} · {% endif %}{{ guardian.display_name }}{% if guardian.phone %} <a class="link" href="tel:{{ guardian.phone }}">{{ guardian.phone }}</a>{% else %} <a class="link break-all" href="mailto:{{ guardian.email }}">{{ guardian.email }}</a>{% endif %}{% if not forloop.last %} · {% endif %}{% empty %}{% if not row.member.phone %}–{% endif %}{% endfor %}
+            {% if row.person.phone %}<a class="link" href="tel:{{ row.person.phone }}">{{ row.person.phone }}</a>{% endif %}
+            {% if row.guest %}{% if row.guest.guardian_name %} · {{ row.guest.guardian_name }}{% endif %} · <a class="link break-all" href="mailto:{{ row.guest.email }}">{{ row.guest.email }}</a>{% endif %}
+            {% for guardian in row.guardians %}{% if forloop.first and row.person.phone %} · {% endif %}{{ guardian.display_name }}{% if guardian.phone %} <a class="link" href="tel:{{ guardian.phone }}">{{ guardian.phone }}</a>{% else %} <a class="link break-all" href="mailto:{{ guardian.email }}">{{ guardian.email }}</a>{% endif %}{% if not forloop.last %} · {% endif %}{% empty %}{% if not row.person.phone and not row.guest %}–{% endif %}{% endfor %}
           </div>
         </div>
-        {% if lead %}<form method="post" action="{% url 'participant_remove' occurrence.pk row.participation.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ row.member.display_name }} abmelden">Abmelden</button></form>{% endif %}
+        {% if lead %}<form method="post" action="{% url 'participant_remove' occurrence.pk row.participation.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ row.person.display_name }} abmelden">Abmelden</button></form>{% endif %}
       </li>
       {% endfor %}
     </ul>

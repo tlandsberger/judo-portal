@@ -102,7 +102,11 @@ und 0012.
 4. **Standard-Team** je Zeitplan: Mitglied und Rolle (Trainer, Co-Trainer …); kommende Termine übernehmen es.
    Übungsleiter brauchen dafür ein **eigenes Mitgliedsprofil** (Mitglied → Zugang geben → „… selbst“). Die Seite
    „Rollen“ nennt alle, denen es noch fehlt.
-5. **Ferien und Ausfälle:** auf der Veranstaltung „Termine absagen“ mit Zeitraum. Angemeldete und Team bekommen eine
+5. **Gäste:** Mit „Gäste willkommen“ zeigt die Veranstaltung einen **Anmeldelink** zum Teilen (z. B. an andere
+   Vereine). Gäste bestätigen ihre Anmeldung per Mail; unbestätigte werden nach 24 Stunden gelöscht, alle Gastdaten
+   90 Tage nach dem letzten Termin. Das Team kann Gäste auch direkt am Termin eintragen („Gast eintragen“). Hintergründe
+   in ADR 0013.
+6. **Ferien und Ausfälle:** auf der Veranstaltung „Termine absagen“ mit Zeitraum. Angemeldete und Team bekommen eine
    Mail.
 
 Für Notfälle sieht das Team eines Termins das Telefon des Mitglieds und der Eltern. Eltern tragen ihr Telefon unter

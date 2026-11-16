@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -121,6 +121,12 @@ class Event(models.Model):
     weight_required = models.BooleanField(
         "Gewicht bei Anmeldung erforderlich", default=False, help_text="Zum Beispiel für Wettkämpfe."
     )
+    guests_welcome = models.BooleanField(
+        "Gäste willkommen",
+        default=False,
+        help_text="Externe Gäste melden sich über einen Link an oder werden vom Team eingetragen.",
+    )
+    guest_token = models.CharField(max_length=40, blank=True, editable=False)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
@@ -271,17 +277,74 @@ class ParticipantRole(models.Model):
         return ", ".join(str(Role(role).label) for role in self.user_roles if role in Role.values) or "alle Mitglieder"
 
 
+class Guest(models.Model):
+    """Externer Gast einer Veranstaltung (ADR 0013). Ohne Zugang; sieht seine Daten über einen geheimen Link."""
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="guests")
+    first_name = models.CharField("Vorname", max_length=60)
+    last_name = models.CharField("Nachname", max_length=60)
+    birth_year = models.PositiveSmallIntegerField(
+        "Jahrgang", validators=[MinValueValidator(1900), MaxValueValidator(2100)]
+    )
+    gender = models.CharField("Geschlecht", max_length=1, choices=Gender.choices)
+    grade = models.CharField("Graduierung", max_length=5, choices=Grade.choices, blank=True)
+    weight = models.DecimalField(
+        "Gewicht (kg)",
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(10), MaxValueValidator(250)],
+    )
+    club = models.CharField("Verein", max_length=120, blank=True)
+    email = models.EmailField("E-Mail")
+    phone = models.CharField("Telefon für Notfälle", max_length=40)
+    guardian_name = models.CharField(
+        "Erziehungsberechtigte", max_length=120, blank=True, help_text="Bei Minderjährigen: Name von Mutter oder Vater."
+    )
+    consent_at = models.DateTimeField("Datenschutz zugestimmt am")
+    token = models.CharField(max_length=40, unique=True, editable=False)
+    confirmed_at = models.DateTimeField("E-Mail bestätigt am", null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        verbose_name = "Gast"
+        verbose_name_plural = "Gäste"
+        ordering = ("last_name", "first_name")
+
+    def __str__(self) -> str:
+        return self.display_name
+
+    @property
+    def display_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
+    @property
+    def birth_date(self) -> date:
+        """Für das Zielgruppen-Matching zählt nur der Jahrgang."""
+        return date(self.birth_year, 1, 1)
+
+    @property
+    def grade_short(self) -> str:
+        return Grade(self.grade).short_label if self.grade else ""
+
+
 class ParticipationStatus(models.TextChoices):
+    PENDING = "pending", "Unbestätigt"
     REGISTERED = "registered", "Angemeldet"
     WAITLIST = "waitlist", "Warteliste"
     CANCELLED = "cancelled", "Abgemeldet"
 
 
 class Participation(models.Model):
-    """Teilnahme eines Mitglieds an einem Termin mit genau einer Rolle (Teilnehmer, Trainer …)."""
+    """Teilnahme eines Mitglieds oder Gastes an einem Termin mit genau einer Rolle (Teilnehmer, Trainer …)."""
 
     occurrence = models.ForeignKey(Occurrence, on_delete=models.CASCADE, related_name="participations")
-    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="participations")
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="participations", null=True, blank=True)
+    guest = models.ForeignKey(Guest, on_delete=models.CASCADE, related_name="participations", null=True, blank=True)
     role = models.ForeignKey(ParticipantRole, on_delete=models.PROTECT, related_name="participations")
     status = models.CharField("Status", max_length=10, choices=ParticipationStatus.choices)
     registered_by = models.ForeignKey(
@@ -306,14 +369,26 @@ class Participation(models.Model):
         verbose_name = "Teilnahme"
         verbose_name_plural = "Teilnahmen"
         ordering = ("created_at",)
-        constraints = [models.UniqueConstraint(fields=["occurrence", "member"], name="participation_unique")]
+        constraints = [
+            models.UniqueConstraint(fields=["occurrence", "member"], name="participation_unique"),
+            models.UniqueConstraint(fields=["occurrence", "guest"], name="participation_guest_unique"),
+            models.CheckConstraint(
+                condition=models.Q(member__isnull=False, guest__isnull=True)
+                | models.Q(member__isnull=True, guest__isnull=False),
+                name="participation_member_or_guest",
+            ),
+        ]
 
     def __str__(self) -> str:
-        return f"{self.member} – {self.occurrence} ({self.role}, {self.get_status_display()})"
+        return f"{self.person} – {self.occurrence} ({self.role}, {self.get_status_display()})"
+
+    @property
+    def person(self) -> Member | Guest:
+        return self.member or self.guest  # type: ignore[return-value]
 
     @property
     def is_active(self) -> bool:
-        return self.status != ParticipationStatus.CANCELLED
+        return self.status in (ParticipationStatus.REGISTERED, ParticipationStatus.WAITLIST)
 
     @property
     def is_team(self) -> bool:
