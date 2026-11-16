@@ -16,7 +16,7 @@ Browser / installierte App (PWA)
         ▼
 Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
                                       ├─ Gunicorn + Django (Seiten, Anmeldung, statische Dateien)
-                                      ├─ Zeitplaner (Backup 02:00, Aufräumen, alle 10 Min. Erinnerungen)
+                                      ├─ Zeitplaner (Backup 02:00, Aufräumen, alle 5 Min. Erinnerungen)
                                       └─ /data: portal.sqlite3, backups/
                                       ──▶ IONOS-SMTP (Einladungen, Anmeldecodes, Sicherheitshinweise, Ersatz für Push)
                                       ──▶ Web-Push-Dienste (Google, Apple, Mozilla)
@@ -36,6 +36,7 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | `portal.events` | Veranstaltungen, Arten, Zeitpläne, Termine, Zielgruppen, Teilnahme mit Rollen und Warteliste, Gäste (ADR 0010, 0012, 0013) |
 | `portal.notifications` | Push-Benachrichtigungen je Gerät mit Mail als Ersatz, Aktionsknöpfe (ADR 0011) |
 | `portal.privacy` | Auskunft, Löschen auf Wunsch und nach Austritt, Seite „Protokoll“ (ADR 0015) |
+| `portal.help` | Hilfe im Portal: Kapitel je Rolle, Kontexthilfe, Screenshots aus Playwright (ADR 0016) |
 | `portal.billing` | Übungsleiterabrechnung: Stundensätze, Monatsabrechnung, Freigabe, PDF und CSV (ADR 0014) |
 
 Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kommen aus eigenen Übersetzungen in

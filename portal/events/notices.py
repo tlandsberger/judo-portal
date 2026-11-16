@@ -1,6 +1,6 @@
 """Benachrichtigungen rund um Termine: Push, sonst Mail (über ``portal.notifications``, ADR 0011).
 
-Sofort: Absage, Änderung, Nachrücken. Über den Zeitplaner (alle 10 Minuten): Anmeldung offen, Erinnerung an den
+Sofort: Absage, Änderung, Nachrücken. Über den Zeitplaner (alle 5 Minuten): Anmeldung offen, Erinnerung an den
 Anmeldeschluss, Stunden bestätigen. Jede Nachricht geht je Benutzer und Anlass nur einmal raus.
 """
 

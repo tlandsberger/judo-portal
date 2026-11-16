@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "portal.billing",
     "portal.notifications",
     "portal.privacy",
+    "portal.help",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

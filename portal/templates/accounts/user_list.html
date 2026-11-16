@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load help %}
 {% block title %}Benutzer{% endblock %}
 {% block content %}
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-  <div><h1 class="text-3xl font-bold">Benutzer</h1><p class="mt-1 text-base-content/70">Zugänge zum Portal und ihre Rollen.</p></div>
+  <div><div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Benutzer</h1>{% help_link "benutzer" %}</div><p class="mt-1 text-base-content/70">Zugänge zum Portal und ihre Rollen.</p></div>
   <a class="btn btn-primary" href="{% url 'invite' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Person einladen</a>
 </div>
 

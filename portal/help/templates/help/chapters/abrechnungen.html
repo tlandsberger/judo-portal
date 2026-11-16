@@ -1,0 +1,24 @@
+{% load help %}
+<p>Unter <a href="{% url 'billing_index' %}">Abrechnung</a> → <strong>Abrechnungen</strong> prüfst du die Monatsabrechnungen der Übungsleiter, unter <strong>Stundensätze</strong> pflegst du die Sätze.</p>
+
+<h2 id="saetze">Stundensätze</h2>
+<ol>
+  <li>Unter <a href="{% url 'rate_list' %}">Stundensätze</a> stehen alle Übungsleiter mit ihren Rollen; fehlende Sätze sind markiert.</li>
+  <li>Übungsleiter öffnen, Rolle, Satz (€/Stunde) und „gültig ab“ eintragen, <strong>Speichern</strong>.</li>
+</ol>
+<p>Für eine Erhöhung trägst du einen neuen Satz mit neuem „gültig ab“ ein. Es gilt der Satz, der am Tag des Termins gültig ist; eingereichte Abrechnungen ändern sich nicht.</p>
+
+<h2 id="pruefen">Prüfen und freigeben</h2>
+{% screenshot "abrechnungen" "Liste der Abrechnungen mit „Zu prüfen“" %}
+<ol>
+  <li>Unter <a href="{% url 'claim_list' %}">Abrechnungen</a> stehen eingereichte oben unter <strong>Zu prüfen</strong>. Du bekommst bei jeder Einreichung eine Nachricht.</li>
+  <li>Abrechnung öffnen, Zeilen prüfen.</li>
+  <li><strong>Freigeben</strong> – oder mit einer Rückmeldung <strong>Zurückgeben</strong>. Der Übungsleiter wird benachrichtigt.</li>
+</ol>
+<p>„Verspätet“ heißt: nach der Frist (5. des dritten Folgemonats) eingereicht. Mit „Freigeben“ lässt du die Ausnahme zu. Deine eigene Abrechnung darfst du selbst freigeben; geprüft wird zusätzlich in der Geschäftsstelle.</p>
+
+<h2 id="geschaeftsstelle">Für die Geschäftsstelle</h2>
+<ul>
+  <li><strong>PDF</strong> je freigegebener Abrechnung, mit Unterschriftszeilen.</li>
+  <li><strong>CSV</strong> je Monat mit allen freigegebenen Abrechnungen, eine Zeile je Übungsleiter.</li>
+</ul>

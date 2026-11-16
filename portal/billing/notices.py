@@ -95,7 +95,7 @@ def remind(today: date | None = None) -> None:
 
 
 def run_remind() -> None:
-    """Läuft alle 10 Minuten; erinnert wird tagsüber, je Monat und Anlass nur einmal."""
+    """Läuft alle 5 Minuten; erinnert wird tagsüber, je Monat und Anlass nur einmal."""
     if timezone.localtime().hour >= REMIND_HOUR:
         remind()
 

@@ -6,7 +6,8 @@
     "vendor": "node scripts/vendor.mjs && npm run css",
     "css": "tailwindcss -i portal/assets/app.css -o portal/static/vendor/app.css --minify",
     "watch": "tailwindcss -i portal/assets/app.css -o portal/static/vendor/app.css --watch",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "help:screenshots": "HELP_SCREENSHOTS=1 playwright test --project=hilfe"
   },
   "dependencies": {
     "@tailwindcss/cli": "4.3.5",

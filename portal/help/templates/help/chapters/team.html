@@ -1,0 +1,20 @@
+{% load help %}
+<p>Als Übungsleiter bist du an Terminen im <strong>Team</strong>: als Trainer, Co-Trainer, Prüfer oder Betreuer – je nach Veranstaltung. Voraussetzung ist, dass dein Zugang mit deinem eigenen Mitgliedsprofil verknüpft ist (das macht die Abteilungsleitung).</p>
+
+<h2 id="eintragen">Sich eintragen</h2>
+<ol>
+  <li>Öffne den Termin (über <a href="{% url 'agenda' %}">Termine</a> oder <a href="{% url 'my_hours' %}">Meine Stunden</a>).</li>
+  <li>Tippe auf <strong>Mich als Trainer eintragen</strong> bzw. <strong>Mich als Co-Trainer eintragen</strong>.</li>
+</ol>
+<p>Bei Trainings mit festem Zeitplan trägt die Abteilungsleitung meist ein Standard-Team ein; dann stehst du automatisch bei allen kommenden Terminen.</p>
+
+<h2 id="termin">Am Termin</h2>
+{% screenshot "termin-team" "Termin aus Sicht des Teams" %}
+<ul>
+  <li><strong>Teilnehmerliste:</strong> Wer angemeldet ist, mit Hinweisen und Telefon für Notfälle (bis 14 Tage nach dem Termin).</li>
+  <li><strong>Hinweis speichern:</strong> Eine kurze Info für alle, z. B. „Bitte Kata-Gürtel mitbringen“.</li>
+  <li><strong>Absagen:</strong> Der Termin fällt aus, alle Angemeldeten und das Team bekommen eine Nachricht. Mit <strong>Findet doch statt</strong> nimmst du die Absage zurück.</li>
+  <li><strong>Ausnahme eintragen:</strong> Jemanden anmelden, der nicht zur Zielgruppe passt oder nach dem Anmeldeschluss kommt.</li>
+  <li><strong>Gast eintragen:</strong> Bei Veranstaltungen mit Gästen trägst du Externe mit Name und Notfallkontakt ein. Sie bekommen eine Mail mit ihrem eigenen Link.</li>
+  <li><strong>Eintragen oder Rolle ändern / Austragen:</strong> Das Team des Termins anpassen.</li>
+</ul>

@@ -1,0 +1,21 @@
+{% load help %}
+<p>Unter <a href="{% url 'my_data' %}">Meine Daten</a> siehst du die Vereinsdaten zu dir und zu deinen Kindern unter 18.</p>
+{% screenshot "meine-daten" "Meine Daten eines Kindes mit Graduierung, Gewicht und Kontakt" %}
+
+<h2 id="aendern">Daten ändern</h2>
+<ol>
+  <li>Öffne <a href="{% url 'my_data' %}">Meine Daten</a>. Hast du mehrere Mitglieder (z. B. zwei Kinder), wähle zuerst aus, wessen Daten du sehen willst.</li>
+  <li>Tippe auf <strong>Bearbeiten</strong>. Selbst ändern kannst du E-Mail, Telefon, Graduierung, Gewicht und Interessen.</li>
+  <li>Stimmt etwas anderes nicht (Name, Geburtsdatum, Mitgliedsnummer), schreib an <a href="mailto:{{ club_email }}">{{ club_email }}</a>.</li>
+</ol>
+<p>Ab dem 18. Geburtstag sehen Eltern die Daten ihres Kindes nicht mehr. Das Mitglied bekommt dann einen eigenen Zugang.</p>
+
+<h2 id="auskunft">Datenauskunft (Art. 15 DSGVO)</h2>
+<p>Unter <a href="{% url 'my_privacy' %}">Datenauskunft (Art. 15 DSGVO)</a> siehst du alles, was das Portal zu dir und deinen Kindern speichert: Stammdaten, Zugänge, Anmeldungen zu Terminen, Abrechnungen, Geräte, Benachrichtigungen und das Protokoll der Änderungen. Mit <strong>Als PDF herunterladen</strong> bekommst du alles als Dokument.</p>
+
+<h2 id="fristen">Wie lange wird gespeichert?</h2>
+<ul>
+  <li><strong>Nach dem Austritt</strong> bekommst du eine Mail. Drei Monate danach löscht das Portal das Mitglied mit allem: Anmeldungen, Abrechnungen, Protokoll. Hast du dann kein Mitglied mehr im Portal, wird auch dein Zugang gelöscht.</li>
+  <li><strong>Protokoll der Änderungen:</strong> ein Jahr.</li>
+  <li><strong>Gäste:</strong> 90 Tage nach dem letzten Termin.</li>
+</ul>

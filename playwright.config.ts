@@ -23,5 +23,9 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /hilfe\.spec\.ts/ },
+    // Screenshots für die Hilfe: zuletzt, mit den Daten der anderen Tests (e2e/hilfe.spec.ts)
+    { name: "hilfe", use: { ...devices["Desktop Chrome"] }, testMatch: /hilfe\.spec\.ts/, dependencies: ["chromium"] },
+  ],
 });

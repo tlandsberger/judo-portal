@@ -26,7 +26,7 @@ Teilnehmerliste stehen und ihre eigenen Angaben jederzeit sehen können.
      und neu erzeugen kann:
      - Auswahl der offenen Termine, Daten, Datenschutzhinweis mit Zustimmung.
      - **Double-Opt-in:** Die Anmeldung gilt erst nach Bestätigung über den Link in der Mail und zählt vorher nicht zur
-       Höchstzahl. Unbestätigte Gäste werden nach 24 Stunden gelöscht (Job alle 10 Minuten).
+       Höchstzahl. Unbestätigte Gäste werden nach 24 Stunden gelöscht (Job alle 5 Minuten).
      - **Spam-Schutz:** Honeypot-Feld und höchstens 10 Anmeldungen je IP-Adresse und Stunde.
 - **Gast-Seite** `/gast/<schlüssel>/` ohne Anmeldung: Termine mit Status, Ort und Hinweis; Anmeldung bestätigen,
   absagen (bis zum Anmeldeschluss), weitere offene Termine; eigene Daten ändern. Jede Mail an den Gast enthält den Link.

@@ -36,7 +36,7 @@ def pushes(monkeypatch):
         endpoint = subscription_info["endpoint"]
         if endpoint in failing:
             raise pywebpush.WebPushException("kaputt", response=SimpleNamespace(status_code=failing[endpoint]))
-        sent.append({"endpoint": endpoint, **json.loads(data)})
+        sent.append({"endpoint": endpoint, "urgency": kwargs.get("headers", {}).get("Urgency"), **json.loads(data)})
 
     monkeypatch.setattr(pywebpush, "webpush", fake)
     return SimpleNamespace(sent=sent, failing=failing)
@@ -173,3 +173,18 @@ def test_without_keys_no_push_offered(client, user):
     page = client.get(reverse("security")).content.decode()
     assert "Benachrichtigungen bekommst du per E-Mail." in page
     assert client.post(reverse("push_subscribe"), "{}", content_type="application/json").status_code == 400
+
+
+def test_urgency_high_only_for_time_critical(vapid, pushes, user, django_capture_on_commit_callbacks):
+    device(user)
+    with django_capture_on_commit_callbacks(execute=True):
+        services.notify(user, key="a", kind="cancelled", title="Abgesagt", body="", url="/")
+        services.notify(user, key="b", kind="registration_open", title="Anmeldung offen", body="", url="/")
+    assert [push["urgency"] for push in pushes.sent] == ["high", "normal"]
+
+
+def test_android_hint_only_on_android(vapid, client, user):
+    client.force_login(user)
+    android = "Mozilla/5.0 (Linux; Android 15; Pixel 9) Chrome/140.0 Mobile Safari/537.36"
+    assert "Nicht eingeschränkt" in client.get("/zugang/anmeldung/", HTTP_USER_AGENT=android).content.decode()
+    assert "Nicht eingeschränkt" not in client.get("/zugang/anmeldung/").content.decode()

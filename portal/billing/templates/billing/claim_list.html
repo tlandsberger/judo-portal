@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load help %}
 {% block title %}Abrechnungen{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-4xl">
-  <h1 class="text-3xl font-bold">Abrechnungen</h1>
+  <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Abrechnungen</h1>{% help_link "abrechnungen" %}</div>
   <p class="mt-1 mb-6 text-base-content/70">Monatsabrechnungen der Übungsleiter: prüfen, freigeben und für die Geschäftsstelle herunterladen.</p>
   {% include "billing/_tabs.html" with active="all" %}
   {% if pending %}

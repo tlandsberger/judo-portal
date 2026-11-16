@@ -25,6 +25,9 @@ const pages = [
   { path: "/protokoll/", heading: "Protokoll" },
   { path: "/meine-daten/auskunft/", heading: "Datenauskunft (Art. 15 DSGVO)" },
   { path: "/zugang/loeschen/", heading: "Meinen Zugang löschen" },
+  { path: "/hilfe/", heading: "Hilfe" },
+  { path: "/hilfe/erste-schritte/", heading: "Erste Schritte" },
+  { path: "/hilfe/veranstaltungen/", heading: "Veranstaltungen planen" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {

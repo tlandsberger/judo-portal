@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load help %}
 {% block title %}Protokoll{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-4xl">
-  <h1 class="text-3xl font-bold">Protokoll</h1>
+  <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Protokoll</h1>{% help_link "benutzer" %}</div>
   <p class="mt-1 mb-6 text-base-content/70">Wer hat wann was geändert. Einträge werden nach einem Jahr gelöscht, mit einem Mitglied auch seine Einträge.</p>
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-eintraege"><div class="card-body">
     <h2 class="card-title" id="h-eintraege">{{ page.paginator.count }} Eintr{{ page.paginator.count|pluralize:"ag,äge" }}</h2>

@@ -1,0 +1,8 @@
+{% load static %}
+<figure class="my-5">
+  <picture>
+    {% if mobile %}<source media="(max-width: 640px)" srcset="{% static 'help/img/'|add:name|add:'-handy.jpg' %}">{% endif %}
+    <img class="mx-auto w-full max-w-72 rounded-box border border-base-300 shadow-sm sm:max-w-full" src="{% static 'help/img/'|add:name|add:'-desktop.jpg' %}" alt="{{ alt }}" loading="lazy">
+  </picture>
+  {% if caption %}<figcaption class="mt-2 text-sm text-base-content/70">{{ caption }}</figcaption>{% endif %}
+</figure>

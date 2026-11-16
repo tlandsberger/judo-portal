@@ -34,6 +34,9 @@ ACTION_SALT = "portal.notifications.action"
 ACTION_MAX_AGE = timedelta(days=7)
 KEEP_DAYS = 90
 PUSH_TTL = 24 * 60 * 60
+# Zeitkritisches weckt Android sofort (Urgency „high“); der Rest kommt im nächsten Wartungsfenster des Ruhemodus.
+# Bewusst sparsam: Android drosselt Absender, deren dringende Nachrichten oft nicht angesehen werden.
+URGENT_KINDS = frozenset({"cancelled", "changed", "promoted", "deadline"})
 
 
 def push_enabled() -> bool:
@@ -129,24 +132,25 @@ def _deliver(record: SentNotification, body: str, url: str, actions: list[Action
         "tag": record.key,
         "actions": [{"action": a.name, "title": a.title, "token": a.token(user)} for a in actions],
     }
-    channel = Channel.PUSH if push_to_user(user, payload) else Channel.MAIL
+    urgency = "high" if record.kind in URGENT_KINDS else "normal"
+    channel = Channel.PUSH if push_to_user(user, payload, urgency) else Channel.MAIL
     if channel == Channel.MAIL:
         send_mail(user, record.title, body, url)
     SentNotification.objects.filter(pk=record.pk).update(channel=channel)
 
 
-def push_to_user(user: User, payload: dict[str, Any]) -> bool:
+def push_to_user(user: User, payload: dict[str, Any], urgency: str = "normal") -> bool:
     """Push an alle Geräte. Wahr, wenn mindestens eines die Nachricht angenommen hat."""
     if not push_enabled():
         return False
     delivered = False
     for subscription in PushSubscription.objects.filter(user=user):
-        if send_push(subscription, payload):
+        if send_push(subscription, payload, urgency):
             delivered = True
     return delivered
 
 
-def send_push(subscription: PushSubscription, payload: dict[str, Any]) -> bool:
+def send_push(subscription: PushSubscription, payload: dict[str, Any], urgency: str = "normal") -> bool:
     from pywebpush import WebPushException, webpush
 
     try:
@@ -156,6 +160,7 @@ def send_push(subscription: PushSubscription, payload: dict[str, Any]) -> bool:
             vapid_private_key=settings.VAPID_PRIVATE_KEY,
             vapid_claims={"sub": settings.VAPID_SUBJECT},
             ttl=PUSH_TTL,
+            headers={"Urgency": urgency},
             timeout=10,
         )
     except WebPushException as error:
@@ -212,6 +217,7 @@ def send_test(subscription: PushSubscription) -> bool:
             "tag": "test",
             "actions": [],
         },
+        "high",
     )
 
 

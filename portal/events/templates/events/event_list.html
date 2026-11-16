@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load help %}
 {% block title %}Veranstaltungen{% endblock %}
 {% block content %}
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-  <div><h1 class="text-3xl font-bold">Veranstaltungen</h1><p class="mt-1 text-base-content/70">Trainings, Wettkämpfe, Lehrgänge und Prüfungen mit ihren Terminen und Teams.</p></div>
+  <div><div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Veranstaltungen</h1>{% help_link "veranstaltungen" %}</div><p class="mt-1 text-base-content/70">Trainings, Wettkämpfe, Lehrgänge und Prüfungen mit ihren Terminen und Teams.</p></div>
   {% if can_manage %}
   <div class="flex flex-wrap gap-2">
     <a class="btn btn-primary" href="{% url 'event_create' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Veranstaltung anlegen</a>

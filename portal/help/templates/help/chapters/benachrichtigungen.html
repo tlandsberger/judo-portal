@@ -1,0 +1,25 @@
+{% load help %}
+<p>Absagen, Änderungen, Nachrücken von der Warteliste und Erinnerungen bekommst du per <strong>Push</strong> aufs Handy oder an den Rechner. Ohne Push kommen sie per E-Mail. Wichtiges zu deinem Zugang (Einladung, Anmeldecode, neues Gerät) kommt immer per E-Mail.</p>
+
+<h2 id="einschalten">Push einschalten</h2>
+<ol>
+  <li>Öffne <a href="{% url 'security' %}">Meine Anmeldung</a> (unten in der Seitenleiste auf deinen Namen tippen).</li>
+  <li>Unter <strong>Benachrichtigungen</strong> auf <strong>Push auf diesem Gerät einschalten</strong> tippen und die Frage des Browsers erlauben.</li>
+  <li>Mit <strong>Test</strong> schickst du dir eine Probe-Nachricht.</li>
+</ol>
+{% screenshot "benachrichtigungen" "Abschnitt Benachrichtigungen mit eingeschaltetem Push und Geräteliste" %}
+<p>Push gilt je Gerät. Willst du sie auf Handy und Rechner, schalte sie auf beiden ein. Unter <strong>Geräte mit Push</strong> kannst du ein Gerät wieder entfernen.</p>
+
+<h2 id="welche">Welche Nachrichten kommen?</h2>
+<ul>
+  <li><strong>Sofort:</strong> ein Termin fällt aus oder ändert sich, du rückst von der Warteliste nach.</li>
+  <li><strong>Erinnerungen:</strong> die Anmeldung für einen passenden Termin ist offen, der Anmeldeschluss naht, Stunden bestätigen (Übungsleiter), Abrechnung einreichen.</li>
+</ul>
+<p>Manche Nachrichten haben Knöpfe, z. B. <strong>Anmelden</strong> oder <strong>Bestätigen</strong> – das geht dann direkt aus der Nachricht.</p>
+
+<h2 id="probleme">Nachrichten kommen nicht oder verspätet</h2>
+<ul>
+  <li><strong>Android:</strong> Stell in den Einstellungen unter <strong>Apps → Chrome → Akku</strong> „Nicht eingeschränkt“ ein (bzw. für den Browser, mit dem du das Portal nutzt). Sonst hält Android Nachrichten im Ruhemodus zurück.</li>
+  <li><strong>iPhone:</strong> Push geht nur, wenn das Portal auf dem Home-Bildschirm liegt und du es von dort öffnest.</li>
+  <li><strong>Blockiert:</strong> Hast du Benachrichtigungen einmal abgelehnt, erlaube sie in den Einstellungen des Browsers für das Portal und lade die Seite neu.</li>
+</ul>

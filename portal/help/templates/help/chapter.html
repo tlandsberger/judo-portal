@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ chapter.title }} – Hilfe{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{% url 'help_index' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Hilfe</a>
+  <article class="card bg-base-100 shadow-sm"><div class="card-body">
+    <h1 class="flex items-center gap-3 text-3xl font-bold"><i class="bi {{ chapter.icon }} text-primary" aria-hidden="true"></i> {{ chapter.title }}</h1>
+    <div class="help-text mt-2 leading-relaxed [&_h2]:mt-8 [&_h2]:mb-2 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-5 [&_h3]:mb-1 [&_h3]:font-semibold [&_p]:my-2 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:my-1 [&_a]:link">
+      {% include chapter.template %}
+    </div>
+  </div></article>
+  <nav class="mt-6 flex flex-wrap justify-between gap-3" aria-label="Weitere Kapitel">
+    {% if previous %}<a class="btn btn-ghost" href="{% url 'help_chapter' previous.slug %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> {{ previous.title }}</a>{% else %}<span></span>{% endif %}
+    {% if next %}<a class="btn btn-ghost" href="{% url 'help_chapter' next.slug %}">{{ next.title }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
+  </nav>
+</div>
+{% endblock %}
