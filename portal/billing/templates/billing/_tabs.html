@@ -1,0 +1,6 @@
+{# Umschalter für die Abteilungsleitung: eigene Abrechnung (falls Übungsleiter), alle Abrechnungen, Stundensätze #}
+<nav class="mb-6 flex flex-wrap gap-2" aria-label="Bereiche der Abrechnung">
+  {% if is_trainer %}<a class="btn btn-sm {% if active == 'own' %}btn-primary{% else %}btn-outline btn-primary{% endif %}" href="{% url 'billing_index' %}"{% if active == 'own' %} aria-current="page"{% endif %}><i class="bi bi-person" aria-hidden="true"></i> Meine Abrechnung</a>{% endif %}
+  <a class="btn btn-sm {% if active == 'all' %}btn-primary{% else %}btn-outline btn-primary{% endif %}" href="{% url 'claim_list' %}"{% if active == 'all' %} aria-current="page"{% endif %}><i class="bi bi-inboxes" aria-hidden="true"></i> Abrechnungen</a>
+  <a class="btn btn-sm {% if active == 'rates' %}btn-primary{% else %}btn-outline btn-primary{% endif %}" href="{% url 'rate_list' %}"{% if active == 'rates' %} aria-current="page"{% endif %}><i class="bi bi-cash-stack" aria-hidden="true"></i> Stundensätze</a>
+</nav>

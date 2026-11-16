@@ -1,0 +1,35 @@
+{# Zeilen einer Abrechnung: Schnappschuss (ClaimLine) oder berechnet (services.Line). Auf dem Handy stehen Rolle und Satz unter der Veranstaltung. #}
+<div class="overflow-x-auto">
+  <table class="table">
+    <thead class="text-base-content/70"><tr>
+      <th scope="col">Datum</th><th scope="col">Veranstaltung</th><th scope="col" class="hidden sm:table-cell">Rolle</th>
+      <th scope="col" class="hidden text-right sm:table-cell">Minuten</th><th scope="col" class="hidden text-right sm:table-cell">Satz</th><th scope="col" class="text-right">Betrag</th>
+      {% if editable %}<th scope="col" class="hidden md:table-cell"><span class="sr-only">Dauer ändern</span></th>{% endif %}
+    </tr></thead>
+    <tbody>
+    {% for line in lines %}
+      <tr>
+        <td class="whitespace-nowrap">{{ line.day|date:"D d.m." }}</td>
+        <td>{{ line.event_title }}<div class="text-sm text-base-content/70 sm:hidden">{{ line.role_name }} · {{ line.minutes }} Min.{% if line.hourly_rate is not None %} · {{ line.hourly_rate|floatformat:"2g" }} €/h{% endif %}</div></td>
+        <td class="hidden sm:table-cell">{{ line.role_name }}</td>
+        <td class="hidden text-right sm:table-cell">{{ line.minutes }}</td>
+        <td class="hidden text-right whitespace-nowrap sm:table-cell">{% if line.hourly_rate is not None %}{{ line.hourly_rate|floatformat:"2g" }} €{% else %}<span class="badge badge-warning badge-sm">kein Satz</span>{% endif %}</td>
+        <td class="text-right whitespace-nowrap">{% if line.amount is not None %}{{ line.amount|floatformat:"2g" }} €{% else %}<span class="badge badge-warning badge-sm">kein Satz</span>{% endif %}</td>
+        {% if editable %}<td class="hidden md:table-cell">
+          <form method="post" action="{% url 'hours_confirm' line.participation.occurrence_id %}" class="join">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+            <label class="sr-only" for="min-{{ line.participation.pk }}">Minuten für {{ line.event_title }} am {{ line.day|date:"d.m." }}</label>
+            <input id="min-{{ line.participation.pk }}" class="input input-sm join-item w-20" type="number" name="minutes" min="1" max="1440" value="{{ line.minutes }}">
+            <button class="btn btn-sm join-item">Ändern</button>
+          </form>
+        </td>{% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr class="font-semibold text-base-content">
+      <td colspan="2">Summe · {{ hours|floatformat:"2g" }} Stunden</td><td class="hidden sm:table-cell"></td>
+      <td class="hidden text-right sm:table-cell">{{ total_minutes }}</td><td class="hidden sm:table-cell"></td>
+      <td class="text-right whitespace-nowrap">{{ total_amount|floatformat:"2g" }} €</td>{% if editable %}<td class="hidden md:table-cell"></td>{% endif %}
+    </tr></tfoot>
+  </table>
+</div>
+{% if editable %}<p class="text-sm text-base-content/70 md:hidden">Die Dauer änderst du unter <a class="link" href="{% url 'my_hours' %}">„Meine Stunden“</a>.</p>{% endif %}

@@ -6,13 +6,19 @@
     <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr · {{ p.role.name }}</div>
     <div class="mt-1 flex flex-wrap gap-1">
       {% if occurrence.is_cancelled %}<span class="badge badge-warning badge-sm">abgesagt</span>
-      {% elif p.is_confirmed %}<span class="badge badge-soft badge-primary badge-sm">bestätigt · {{ p.minutes }} Min.</span>
+      {% elif p.is_confirmed %}<span class="badge badge-soft badge-primary badge-sm">bestätigt · {{ p.minutes }} Min.</span>{% if p.locked %}<span class="badge badge-ghost badge-sm">abgerechnet</span>{% endif %}
       {% elif p.role.is_billable and occurrence.starts_at <= now %}<span class="badge badge-neutral badge-sm">noch bestätigen</span>{% endif %}
     </div>
   </div>
   {% if p.role.is_billable and not p.is_confirmed and not occurrence.is_cancelled and occurrence.starts_at <= now %}
   <form method="post" action="{% url 'hours_confirm' occurrence.pk %}">{% csrf_token %}<input type="hidden" name="minutes" value="{{ occurrence.minutes }}"><input type="hidden" name="next" value="{{ request.path }}">
     <button class="btn btn-primary btn-sm" aria-label="{{ occurrence.event.title }} am {{ occurrence.starts_at|date:'d.m.' }} bestätigen">Bestätigen</button>
+  </form>
+  {% elif p.is_confirmed and not p.locked %}
+  <form method="post" action="{% url 'hours_confirm' occurrence.pk %}" class="join">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+    <label class="sr-only" for="min-{{ p.pk }}">Minuten für {{ occurrence.event.title }} am {{ occurrence.starts_at|date:'d.m.' }}</label>
+    <input id="min-{{ p.pk }}" class="input input-sm join-item w-20" type="number" name="minutes" min="1" max="1440" value="{{ p.minutes }}">
+    <button class="btn btn-sm join-item">Ändern</button>
   </form>
   {% endif %}
 </li>

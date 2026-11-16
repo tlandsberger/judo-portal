@@ -13,6 +13,9 @@
       {% if can_join_team %}
       <li><a href="{% url 'my_hours' %}"{% if url_name == 'my_hours' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-clipboard-check" aria-hidden="true"></i> Meine Stunden</a></li>
       {% endif %}
+      {% if can_join_team or can_decide_claims %}
+      <li><a href="{% url 'billing_index' %}"{% if url_name in 'billing_index billing_month claim_list claim_detail rate_list rate_member' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-cash-coin" aria-hidden="true"></i> Abrechnung</a></li>
+      {% endif %}
       {% if has_own_members %}
       <li><a href="{% url 'my_data' %}"{% if url_name in 'my_data my_member my_member_edit' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-vcard" aria-hidden="true"></i> Meine Daten</a></li>
       {% endif %}

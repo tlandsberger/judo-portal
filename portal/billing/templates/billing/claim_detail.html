@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Abrechnung {{ claim.member.display_name }} {{ claim.month_label }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl">
+  <a href="{% if can_decide %}{% url 'claim_list' %}{% else %}{% url 'billing_index' %}{% endif %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> {% if can_decide %}Abrechnungen{% else %}Abrechnung{% endif %}</a>
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div><h1 class="text-3xl font-bold">{{ claim.member.display_name }}</h1><p class="mt-1 text-base-content/70">{{ claim.month_label }}{% if claim.member.member_number %} · Mitgliedsnummer {{ claim.member.member_number }}{% endif %}</p></div>
+    <div class="flex flex-wrap gap-1">{% if claim.is_late %}<span class="badge badge-warning badge-sm">verspätet</span>{% endif %}{% include "billing/_badge.html" with label=claim.get_status_display %}</div>
+  </div>
+  {% if claim.is_late %}
+  <div role="alert" class="alert alert-warning mb-6"><i class="bi bi-clock-history" aria-hidden="true"></i>
+    <span>Nach der Frist eingereicht (Frist war der {{ deadline|date:"d.m.Y" }}).{% if can_decide and claim.status == "submitted" %} Mit „Freigeben“ lässt du die Ausnahme zu; sonst gib die Abrechnung mit Begründung zurück.{% endif %}</span></div>
+  {% endif %}
+  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zeilen"><div class="card-body">
+    <h2 class="card-title" id="h-zeilen">Stunden</h2>
+    <p class="text-sm text-base-content/70">Eingereicht am {{ claim.submitted_at|date:"d.m.Y H:i" }} Uhr{% if claim.decided_at %} · {{ claim.get_status_display }} von {{ claim.decided_by_name }} am {{ claim.decided_at|date:"d.m.Y" }}{% endif %}</p>
+    {% if claim.status == "returned" %}<p><span class="font-semibold">Rückmeldung:</span> {{ claim.feedback }}</p>{% endif %}
+    {% include "billing/_lines.html" with lines=lines editable=False total_minutes=claim.total_minutes hours=claim.hours total_amount=claim.total_amount %}
+    {% if claim.status == "approved" %}<div><a class="btn btn-primary" href="{% url 'claim_pdf' claim.pk %}"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF herunterladen</a></div>{% endif %}
+  </div></section>
+  {% if can_decide and claim.status == "submitted" %}
+  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-entscheiden"><div class="card-body gap-4">
+    <h2 class="card-title" id="h-entscheiden">Prüfen</h2>
+    <form method="post" action="{% url 'claim_approve' claim.pk %}">{% csrf_token %}<button class="btn btn-primary"><i class="bi bi-check2" aria-hidden="true"></i> Freigeben</button></form>
+    <div class="divider my-0">oder</div>
+    <form method="post" action="{% url 'claim_send_back' claim.pk %}" class="flex flex-col gap-3">{% csrf_token %}
+      {{ send_back_form }}
+      <div><button class="btn"><i class="bi bi-arrow-return-left" aria-hidden="true"></i> Zurückgeben</button></div>
+    </form>
+  </div></section>
+  {% endif %}
+</div>
+{% endblock %}

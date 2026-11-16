@@ -49,6 +49,8 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
   `can_see_participants`) nur über `portal/events/services.py`. Eine Teilnahme je Mitglied und Termin; Rollen und
   Arten sind Daten, keine Konstanten (ADR 0012). Das Team sieht Mitgliederdaten nur in der Teilnehmerliste eigener
   Termine. Begriffe: „Co-Trainer“, „Stunden bestätigen“.
+- **Abrechnung:** Sätze, Monate, Einreichen und Freigabe nur über `portal/billing/services.py` (ADR 0014). Zeilen
+  sind Schnappschüsse; Termine eingereichter Monate sperrt `billing` über `events.services.register_lock`.
 - **Benachrichtigungen:** Tägliches nur über `portal.notifications.services.notify` (Push, sonst Mail; Schlüssel je
   Anlass, damit nichts doppelt rausgeht). Einladung, Anmeldecode, Sicherheit des Zugangs und neue Verknüpfungen
   immer direkt per Mail (ADR 0011). Gäste haben keinen Benutzer: alles an sie per Mail über

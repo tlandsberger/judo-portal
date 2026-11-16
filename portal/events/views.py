@@ -299,12 +299,13 @@ def hours_confirm(request: HttpRequest, pk: int) -> HttpResponse:
     if not form.is_valid():
         _errors(request, form)
         return redirect("occurrence_detail", pk=pk)
+    corrected = participation.is_confirmed
     try:
         services.confirm(participation, form.cleaned_data["minutes"])
     except RegistrationError as error:
         messages.error(request, str(error))
     else:
-        messages.success(request, "Danke, deine Stunden sind bestätigt.")
+        messages.success(request, "Die Dauer ist geändert." if corrected else "Danke, deine Stunden sind bestätigt.")
     return redirect(_next(request, participation.occurrence))
 
 
@@ -352,6 +353,8 @@ def my_hours(request: HttpRequest) -> HttpResponse:
         raise PermissionDenied
     services.ensure_generated()
     coming, past = services.own_team(_user(request))
+    for participation in past:
+        participation.locked = bool(services.locked_reason(participation))  # type: ignore[attr-defined]
     return render(request, "events/my_hours.html", {"coming": coming, "past": past, "now": timezone.now()})
 
 

@@ -6,7 +6,7 @@ Auf Mitglieder greift das Modul nur über ``portal.members.services`` zu (eigene
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
@@ -42,11 +42,38 @@ HORIZON_DAYS = 365
 # So lange nach dem Termin sieht das Team noch die Teilnehmerliste.
 PARTICIPANTS_DAYS_AFTER = 14
 AGENDA_DAYS = 42
+# „Meine Stunden“ zeigt so weit zurück wie die Frist der Abrechnung (5. des dritten Folgemonats).
+PAST_TEAM_DAYS = 135
 ACTIVE = (ParticipationStatus.REGISTERED, ParticipationStatus.WAITLIST)
 
 
 class RegistrationError(Exception):
     """Anmeldung, Abmeldung oder Rollenwechsel ist gerade nicht möglich; die Nachricht ist für die Oberfläche."""
+
+
+# Sperre durch die Abrechnung: ``portal.billing`` meldet eine Prüfung an, die einen Grund liefert, wenn eine
+# Teilnahme schon eingereicht ist. So kennt diese App die Abrechnung nicht.
+LockCheck = Callable[["Participation"], str | None]
+_locks: list[LockCheck] = []
+
+
+def register_lock(check: LockCheck) -> None:
+    if check not in _locks:
+        _locks.append(check)
+
+
+def locked_reason(participation: Participation) -> str | None:
+    for check in _locks:
+        reason = check(participation)
+        if reason:
+            return reason
+    return None
+
+
+def _check_unlocked(participation: Participation) -> None:
+    reason = locked_reason(participation)
+    if reason:
+        raise RegistrationError(reason)
 
 
 # Rollen
@@ -517,6 +544,8 @@ def set_team(occurrence: Occurrence, member: Member, role: ParticipantRole, by: 
     existing = Participation.objects.filter(occurrence=occurrence, member=member).select_related("role").first()
     if existing and existing.is_confirmed:
         raise RegistrationError("Bestätigte Stunden bleiben für die Abrechnung, wie sie sind.")
+    if existing:
+        _check_unlocked(existing)
     freed = existing is not None and not existing.role.is_team and existing.status == ParticipationStatus.REGISTERED
     participation, _ = Participation.objects.update_or_create(
         occurrence=occurrence,
@@ -541,14 +570,18 @@ def remove_team(participation: Participation) -> None:
 
 
 def confirm(participation: Participation, minutes: int | None = None) -> None:
-    """Nach dem Termin: „durchgeführt, ich war als Trainer/Co-Trainer da“ – die Stunden für die Abrechnung."""
+    """Nach dem Termin: „durchgeführt, ich war als Trainer/Co-Trainer da“ – die Stunden für die Abrechnung.
+
+    Bestätigte Stunden lassen sich so auch korrigieren, bis der Monat zur Abrechnung eingereicht ist.
+    """
+    _check_unlocked(participation)
     if not participation.role.is_billable:
         raise RegistrationError(f"Für {participation.role.name} werden keine Stunden bestätigt.")
     if participation.occurrence.starts_at > timezone.now():
         raise RegistrationError("Bestätigen kannst du erst, wenn der Termin begonnen hat.")
     if participation.occurrence.is_cancelled:
         raise RegistrationError("Der Termin ist abgesagt.")
-    participation.confirmed_at = timezone.now()
+    participation.confirmed_at = participation.confirmed_at or timezone.now()
     participation.minutes = minutes or participation.occurrence.minutes
     participation.save(update_fields=["confirmed_at", "minutes", "updated_at"])
 
@@ -783,7 +816,7 @@ def team(occurrence: Occurrence) -> list[Participation]:
 
 
 def own_team(user: User) -> tuple[list[Participation], list[Participation]]:
-    """„Meine Stunden“: kommende Termine mit eigener Team-Rolle und die letzten 90 Tage."""
+    """„Meine Stunden“: kommende Termine mit eigener Team-Rolle und vergangene bis zur Frist der Abrechnung."""
     member = own_member(user)
     if member is None:
         return [], []
@@ -793,9 +826,9 @@ def own_team(user: User) -> tuple[list[Participation], list[Participation]]:
     )
     coming = list(rows.filter(occurrence__ends_at__gte=now).order_by("occurrence__starts_at")[:50])
     past = list(
-        rows.filter(occurrence__ends_at__lt=now, occurrence__starts_at__gte=now - timedelta(days=90)).order_by(
-            "-occurrence__starts_at"
-        )
+        rows.filter(
+            occurrence__ends_at__lt=now, occurrence__starts_at__gte=now - timedelta(days=PAST_TEAM_DAYS)
+        ).order_by("-occurrence__starts_at")
     )
     return coming, past
 
