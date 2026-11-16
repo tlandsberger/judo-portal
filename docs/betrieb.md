@@ -113,6 +113,20 @@ Für Notfälle sieht das Team eines Termins das Telefon des Mitglieds und der El
 **Meine Anmeldung** ein. Die Mails bei Absage und Nachrücken laufen über die normale Mail-Konfiguration; neue
 Umgebungsvariablen gibt es nicht.
 
+## Übungsleiterabrechnung
+
+Unter **Abrechnung**. Hintergründe in ADR 0014.
+
+1. **Stundensätze** (Abteilungsleitung): je Übungsleiter und abrechnungsrelevanter Rolle (Trainer, Co-Trainer …) ein
+   Satz in €/Stunde mit „gültig ab“. Für eine Erhöhung trägst du einen neuen Satz ein; alte Monate bleiben, wie sie
+   sind. Welche Rollen abrechnungsrelevant sind, legst du unter Veranstaltungen → Rollen fest.
+2. **Übungsleiter** bestätigen nach jedem Termin ihre Stunden und reichen nach Monatsende den Monat ein, höchstens drei
+   Monate zurück. Erinnert werden sie am 3. und, bevor ein Monat abläuft, am 20.
+3. **Abteilungsleitung** gibt unter Abrechnung → Abrechnungen frei oder gibt mit Rückmeldung zurück. Die eigene
+   Abrechnung darfst du selbst freigeben; geprüft wird zusätzlich in der Geschäftsstelle.
+4. **Für die Geschäftsstelle:** PDF je Abrechnung (mit Unterschriftszeilen) und eine CSV je Monat mit allen
+   freigegebenen Abrechnungen.
+
 ## Push-Benachrichtigungen
 
 Tägliches (Absagen, Änderungen, Nachrücken, „Anmeldung offen“, Erinnerungen) kommt per Push aufs Handy, wenn der

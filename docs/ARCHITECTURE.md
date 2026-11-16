@@ -35,7 +35,7 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Benutzer ↔ Mitglied (m:n), „Meine Daten“ (ADR 0009) |
 | `portal.events` | Veranstaltungen, Arten, Zeitpläne, Termine, Zielgruppen, Teilnahme mit Rollen und Warteliste, Gäste (ADR 0010, 0012, 0013) |
 | `portal.notifications` | Push-Benachrichtigungen je Gerät mit Mail als Ersatz, Aktionsknöpfe (ADR 0011) |
-| *(folgt)* `portal.billing` | Übungsleiterabrechnung (auf Basis der bestätigten Stunden) |
+| `portal.billing` | Übungsleiterabrechnung: Stundensätze, Monatsabrechnung, Freigabe, PDF und CSV (ADR 0014) |
 
 Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kommen aus eigenen Übersetzungen in
 `portal/locale/` (`LOCALE_PATHS`); allauth selbst bleibt unverändert.
@@ -99,5 +99,5 @@ Geräteeinstellung oder Umschalter.
 | 1 | Fundament: Anmeldung, Rollen, Einladungen, Design, CI/CD, Betrieb | ✅ |
 | 2 | Mitgliederverwaltung inkl. CSV-Import und Zugängen für Mitglieder/Eltern | ✅ |
 | 3 | Veranstaltungen und Termine mit Zielgruppen, Anmeldung und Teilnahme mit Rollen | ✅ |
-| 4 | Übungsleiterabrechnung | offen |
+| 4 | Übungsleiterabrechnung | ✅ |
 | 5 | Datenschutz-Funktionen (Änderungsprotokoll, Export, Löschung) | offen |

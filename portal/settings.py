@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "portal.accounts",
     "portal.members",
     "portal.events",
+    "portal.billing",
     "portal.notifications",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -101,6 +102,7 @@ TEMPLATES = [
                 "portal.core.context_processors.portal",
                 "portal.members.context_processors.members",
                 "portal.events.context_processors.events",
+                "portal.billing.context_processors.billing",
             ],
         },
     }

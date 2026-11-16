@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Stundensätze{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl">
+  <h1 class="text-3xl font-bold">Stundensätze</h1>
+  <p class="mt-1 mb-6 text-base-content/70">Je Übungsleiter ein Satz pro abrechnungsrelevanter Rolle. Ohne Satz lässt sich eine Rolle nicht abrechnen.</p>
+  {% include "billing/_tabs.html" with active="rates" is_trainer=can_join_team %}
+  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-saetze"><div class="card-body">
+    <h2 class="card-title" id="h-saetze">{{ rows|length }} Übungsleiter</h2>
+    {% if rows %}
+    <ul class="list">
+      {% for row in rows %}
+      <li class="list-row items-center px-0">
+        <div class="list-col-grow">
+          <a class="link link-hover font-semibold" href="{% url 'rate_member' row.member.pk %}">{{ row.member.display_name }}</a>
+          <div class="mt-1 flex flex-wrap gap-1">
+            {% for role, rate in row.rates %}
+            {% if rate %}<span class="badge badge-soft badge-primary badge-sm">{{ role.name }} {{ rate.hourly_rate|floatformat:"2g" }} €</span>
+            {% else %}<span class="badge badge-warning badge-sm">{{ role.name }}: kein Satz</span>{% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <a class="btn btn-sm" href="{% url 'rate_member' row.member.pk %}" aria-label="Sätze von {{ row.member.display_name }} bearbeiten"><i class="bi bi-pencil" aria-hidden="true"></i> Sätze</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="text-base-content/70">Noch niemand kann abrechnungsrelevante Rollen übernehmen. Übungsleiter brauchen ein eigenes Mitgliedsprofil.</p>{% endif %}
+  </div></section>
+</div>
+{% endblock %}

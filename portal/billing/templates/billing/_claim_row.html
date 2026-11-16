@@ -1,0 +1,7 @@
+<li class="list-row items-center px-0">
+  <div class="list-col-grow">
+    <a class="link link-hover font-semibold" href="{% url 'claim_detail' claim.pk %}">{{ claim.member.display_name }} · {{ claim.month_label }}</a>
+    <div class="text-sm text-base-content/70">{{ claim.hours|floatformat:"2g" }} Stunden · {{ claim.total_amount|floatformat:"2g" }} € · eingereicht {{ claim.submitted_at|date:"d.m.Y" }}</div>
+  </div>
+  {% include "billing/_badge.html" with label=claim.get_status_display %}
+</li>

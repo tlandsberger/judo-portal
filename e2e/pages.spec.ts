@@ -20,6 +20,8 @@ const pages = [
   { path: "/rollen/neu/", heading: "Rolle anlegen" },
   { path: "/veranstaltungsarten/", heading: "Veranstaltungsarten" },
   { path: "/veranstaltungsarten/neu/", heading: "Veranstaltungsart anlegen" },
+  { path: "/abrechnung/alle/", heading: "Abrechnungen" },
+  { path: "/abrechnung/saetze/", heading: "Stundensätze" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {

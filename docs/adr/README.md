@@ -18,5 +18,6 @@ Mit dem Neuaufbau im November 2026 beginnt die Nummerierung neu; die ADRs der Vo
 | [0011](0011-push-benachrichtigungen.md) | Push-Benachrichtigungen mit Mail als Ersatz | angenommen |
 | [0012](0012-teilnahme-mit-rollen.md) | Teilnahme mit Rollen | angenommen |
 | [0013](0013-gaeste.md) | Gäste | angenommen |
+| [0014](0014-uebungsleiterabrechnung.md) | Übungsleiterabrechnung | angenommen |
 
 Vorlage: Kontext · Entscheidung · Konsequenzen · Verworfene Alternativen.
