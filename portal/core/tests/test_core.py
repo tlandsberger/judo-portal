@@ -66,6 +66,7 @@ def test_pwa_files(client) -> None:
     assert worker["Content-Type"] == "text/javascript"
     assert worker["Service-Worker-Allowed"] == "/"
     assert "img/pwa/badge-96" in worker.content.decode()  # Symbol in der Statusleiste bei Push-Benachrichtigungen
+    assert "Android" in worker.content.decode()  # auf Android kein zusätzliches großes Icon
 
 
 @pytest.mark.django_db(transaction=True)

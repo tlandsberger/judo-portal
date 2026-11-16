@@ -144,3 +144,19 @@ def test_unconfirm_until_submitted(trainer):
     assert participation.confirmed_at is None and participation.minutes is None
     services.confirm(participation)
     assert participation.is_confirmed
+
+
+def test_open_confirmations_for_start_page(trainer, client):
+    from django.urls import reverse
+
+    member = services.own_member(trainer)
+    past = services.set_team(make_occurrence(in_days=-1), member, role("Trainer"))
+    services.set_team(make_occurrence(in_days=2), member, role("Trainer"))  # Zukunft zählt nicht
+    exam = Event.objects.create(title="Prüfung", event_type=event_type("Prüfung"))
+    services.set_team(make_occurrence(exam, in_days=-1), member, role("Prüfer"))  # nicht abrechnungsrelevant
+    assert services.open_confirmations(trainer) == 1
+    client.force_login(trainer)
+    assert "1 Termin: Stunden bestätigen" in client.get(reverse("home")).content.decode()
+    services.confirm(past)
+    assert services.open_confirmations(trainer) == 0
+    assert "Stunden bestätigen" not in client.get(reverse("home")).content.decode()

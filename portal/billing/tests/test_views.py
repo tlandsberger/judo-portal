@@ -114,3 +114,13 @@ def test_rates_pages(client, trainer, head):
     assert Rate.objects.count() == 1
     client.post(reverse("rate_delete", args=[Rate.objects.get().pk]))
     assert not Rate.objects.exists()
+
+
+def test_start_page_shows_pending_claims_for_head(client, trainer, head):
+    set_rate(trainer)
+    make_shift(trainer, month_ago() + timedelta(days=2))
+    services.submit(events.own_member(trainer), month_ago(), trainer)
+    login(client, head)
+    assert "1 Abrechnung zu prüfen" in client.get(reverse("home")).content.decode()
+    login(client, trainer)
+    assert "zu prüfen" not in client.get(reverse("home")).content.decode()

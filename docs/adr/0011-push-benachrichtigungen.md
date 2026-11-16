@@ -46,8 +46,10 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
     Anmeldezeitraum, Zielgruppe, Höchstzahl.
   - Die Aktionen sind idempotent.
   - Safari (iPhone/iPad) und Firefox zeigen keine Knöpfe; dort öffnet der Tipp die passende Seite.
-- **Aussehen:** In der Nachricht steht das App-Icon. In der Statusleiste (Android) zeigt ein eigenes Badge die beiden
-  Figuren des Signets (`badge-96.png` aus `scripts/make_icons.py`); Android nutzt davon nur die Form.
+- **Aussehen:** In der Nachricht steht das App-Icon, außer auf Android: Dort zeigt das System links schon das
+  App-Symbol, ein zusätzliches `icon` erschiene rechts noch einmal groß. In der Statusleiste (Android) zeigt ein
+  eigenes Badge die beiden Figuren des Signets (`badge-96.png` aus `scripts/make_icons.py`); Android nutzt davon nur
+  die Form.
 - **Dringlichkeit:** Absage, Änderung, Nachrücken und Anmeldeschluss gehen mit `Urgency: high` raus; Android weckt
   dafür das Gerät auch im Ruhemodus. Alles andere bleibt „normal“ und kommt im nächsten Wartungsfenster. Bewusst
   sparsam, weil Android Absender drosselt, deren dringende Nachrichten oft nicht angesehen werden. Auf Android zeigt
