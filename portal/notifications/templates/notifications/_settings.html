@@ -1,36 +1,36 @@
-{% load notifications %}{% push_settings user as push %}
+{% load notifications %}{% push_notification_settings user as push_notifications %}
 <section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-benachrichtigungen"><div class="card-body gap-4">
   <h2 class="card-title" id="h-benachrichtigungen">Benachrichtigungen</h2>
-  {% if push.enabled %}
-  <p>Absagen, Erinnerungen und Neues zu Terminen bekommst du per Push aufs Handy oder an den Rechner. Ohne Push kommen sie per E-Mail. Wichtiges zu deinem Zugang kommt immer per E-Mail.</p>
-  <div class="flex flex-col gap-3" data-push data-push-key="{{ push.public_key }}" data-push-url="{% url 'push_subscribe' %}" data-push-unsubscribe-url="{% url 'push_unsubscribe' %}" data-csrf="{{ csrf_token }}">
-    <div data-push-state="off" hidden><button type="button" class="btn btn-primary" data-push-enable><i class="bi bi-bell" aria-hidden="true"></i> Push auf diesem Gerät einschalten</button></div>
-    <div data-push-state="on" class="flex flex-wrap items-center gap-3" hidden><span class="badge badge-soft badge-primary"><i class="bi bi-bell-fill" aria-hidden="true"></i> Auf diesem Gerät eingeschaltet</span><button type="button" class="btn btn-outline btn-sm" data-push-disable>Ausschalten</button></div>
-    <p data-push-state="denied" class="text-sm" hidden>Benachrichtigungen sind für das Portal in diesem Browser blockiert. Erlaube sie in den Einstellungen des Browsers und lade die Seite neu.</p>
-    <p data-push-state="unsupported" class="text-sm" hidden>Dieser Browser kann keine Push-Nachrichten. Auf iPhone und iPad füge das Portal zuerst zum Home-Bildschirm hinzu und öffne es dann von dort.</p>
-    <p data-push-state="error" class="text-sm text-error" hidden>Das Einschalten hat nicht geklappt. Versuch es bitte noch einmal.</p>
+  {% if push_notifications.enabled %}
+  <p>Absagen, Erinnerungen und Neues zu Terminen bekommst du als Push-Benachrichtigung aufs Handy oder an den Rechner. Ohne Push-Benachrichtigungen kommen sie per E-Mail. Wichtiges zu deinem Zugang kommt immer per E-Mail.</p>
+  <div class="flex flex-col gap-3" data-push-notification data-push-notification-key="{{ push_notifications.public_key }}" data-push-notification-url="{% url 'push_notification_subscribe' %}" data-push-notification-unsubscribe-url="{% url 'push_notification_unsubscribe' %}" data-csrf="{{ csrf_token }}">
+    <div data-push-notification-state="off" hidden><button type="button" class="btn btn-primary" data-push-notification-enable><i class="bi bi-bell" aria-hidden="true"></i> Push-Benachrichtigungen auf diesem Gerät einschalten</button></div>
+    <div data-push-notification-state="on" class="flex flex-wrap items-center gap-3" hidden><span class="badge badge-soft badge-primary"><i class="bi bi-bell-fill" aria-hidden="true"></i> Auf diesem Gerät eingeschaltet</span><button type="button" class="btn btn-outline btn-sm" data-push-notification-disable>Ausschalten</button></div>
+    <p data-push-notification-state="denied" class="text-sm" hidden>Benachrichtigungen sind für das Portal in diesem Browser blockiert. Erlaube sie in den Einstellungen des Browsers und lade die Seite neu.</p>
+    <p data-push-notification-state="unsupported" class="text-sm" hidden>Dieser Browser kann keine Push-Benachrichtigungen. Auf iPhone und iPad füge das Portal zuerst zum Home-Bildschirm hinzu und öffne es dann von dort.</p>
+    <p data-push-notification-state="error" class="text-sm text-error" hidden>Das Einschalten hat nicht geklappt. Versuch es bitte noch einmal.</p>
   </div>
-  {% if push.android %}
+  {% if push_notifications.android %}
   <div role="note" class="alert alert-soft"><i class="bi bi-battery-half" aria-hidden="true"></i>
     <span>Kommen Nachrichten auf Android verspätet? Stell in den Einstellungen unter <strong>Apps → Chrome → Akku</strong> „Nicht eingeschränkt“ ein (bzw. für den Browser, mit dem du das Portal nutzt).</span>
   </div>
   {% endif %}
-  {% if push.devices %}
+  {% if push_notifications.devices %}
   <div>
-    <h3 class="mb-1 font-semibold">Geräte mit Push</h3>
+    <h3 class="mb-1 font-semibold">Geräte mit Push-Benachrichtigungen</h3>
     <ul class="list">
-      {% for device in push.devices %}
+      {% for device in push_notifications.devices %}
       <li class="list-row items-center px-0">
         <i class="bi bi-phone text-2xl text-primary" aria-hidden="true"></i>
         <div class="list-col-grow"><div class="font-semibold">{{ device.device|default:"Gerät" }}</div><div class="text-sm text-base-content/70">eingeschaltet am {{ device.created_at|date:"d.m.Y" }}</div></div>
-        <form method="post" action="{% url 'push_test' device.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" aria-label="Test-Nachricht an {{ device.device|default:'Gerät' }}">Test</button></form>
-        <form method="post" action="{% url 'push_remove_device' device.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="Push für {{ device.device|default:'Gerät' }} ausschalten">Entfernen</button></form>
+        <form method="post" action="{% url 'push_notification_test' device.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" aria-label="Test-Nachricht an {{ device.device|default:'Gerät' }}">Test</button></form>
+        <form method="post" action="{% url 'push_notification_remove_device' device.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="Push-Benachrichtigungen für {{ device.device|default:'Gerät' }} ausschalten">Entfernen</button></form>
       </li>
       {% endfor %}
     </ul>
   </div>
   {% endif %}
-  {{ push.endpoints|json_script:"push-endpoints" }}
+  {{ push_notifications.endpoints|json_script:"push-notification-endpoints" }}
   {% else %}
   <p>Benachrichtigungen bekommst du per E-Mail.</p>
   {% endif %}

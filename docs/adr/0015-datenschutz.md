@@ -24,7 +24,7 @@ Versandprotokoll nach 90 Tagen gelöscht; Mitglieder, Benutzer und Abrechnungen 
   - Mitglieder: anlegen, ändern (auch CSV-Import und „Meine Daten“), Zugang geben, Verknüpfung lösen, löschen.
   - Benutzer: Einladungen, Rollen, sperren und entsperren, löschen.
   - Anmeldung und Einstellungen: Passwort gesetzt, geändert, zurückgesetzt; Passkey hinzugefügt oder entfernt;
-    E-Mail-Adresse und Telefon geändert; Anmeldung von neuem Gerät; Abmelden; Push an und aus.
+    E-Mail-Adresse und Telefon geändert; Anmeldung von neuem Gerät; Abmelden; Push-Benachrichtigungen an und aus.
   - Termine: An- und Abmeldung, Warteliste, Nachrücken, Ausnahmen, Team, Stunden, Absagen und Änderungen, Gäste.
   - Abrechnung: Sätze, einreichen, freigeben, zurückgeben.
 - **Nicht protokolliert:** Lesezugriffe und jede normale Anmeldung (zu viel Rauschen; neue Geräte reichen als

@@ -1,4 +1,4 @@
-"""Benachrichtigungen der Abrechnung über ``portal.notifications`` (Push, sonst Mail; ADR 0011, 0014).
+"""Benachrichtigungen der Abrechnung über ``portal.notifications`` (Push-Benachrichtigung, sonst Mail; ADR 0011, 0014).
 
 Sofort: eingereicht (an die Abteilungsleitung), freigegeben oder zurückgegeben (an den Übungsleiter). Am 1. des
 Monats: Erinnerung an den Vormonat und an den Monat, dessen Frist am 5. endet.

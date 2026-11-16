@@ -22,7 +22,7 @@ for (const scheme of ["light", "dark"] as const) {
         await freshNotificationPermission(context);
         const page = await context.newPage();
         await page.goto("/");
-        // Der Hinweis auf Push-Nachrichten erscheint per JavaScript, sobald der Service Worker bereit ist
+        // Der Hinweis auf Push-Benachrichtigungen erscheint per JavaScript, sobald der Service Worker bereit ist
         await expect(page.getByRole("heading", { name: "Benachrichtigungen aufs Handy?" })).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
         await expect(page).toHaveScreenshot(`start-${name}.png`, { fullPage: true });

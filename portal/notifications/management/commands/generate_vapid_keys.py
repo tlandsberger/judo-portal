@@ -1,4 +1,4 @@
-"""Einmalig: VAPID-Schlüsselpaar für Web Push erzeugen (PORTAL_VAPID_PUBLIC_KEY, PORTAL_VAPID_PRIVATE_KEY)."""
+"""Einmalig: VAPID-Schlüssel für Push-Benachrichtigungen (PORTAL_VAPID_PUBLIC_KEY, PORTAL_VAPID_PRIVATE_KEY)."""
 
 from __future__ import annotations
 
@@ -23,4 +23,7 @@ class Command(BaseCommand):
         public = key.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
         self.stdout.write(f"PORTAL_VAPID_PUBLIC_KEY={_b64(public)}")
         self.stdout.write(f"PORTAL_VAPID_PRIVATE_KEY={_b64(private)}")
-        self.stdout.write("Den privaten Schlüssel geheim halten (Portainer). Ein neues Paar beendet alle Push-Abos.")
+        self.stdout.write(
+            "Den privaten Schlüssel geheim halten (Portainer). "
+            "Ein neues Paar beendet alle Abos für Push-Benachrichtigungen."
+        )

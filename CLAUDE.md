@@ -30,6 +30,8 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
 - In Oberfläche und E-Mails heißt das Portal immer **„Wedeler TSV Judo“**; die Abkürzung „WTSV“ nur im Code.
 - **„Benutzer“** (Code: `user`) für alle, die sich anmelden können – nicht „Konto“. Wo es um den eigenen Zugang
   geht, passt auch „Zugang“. Mitglieder (Vereinsdaten) sind etwas anderes.
+- **„Push-Benachrichtigung“** – nie „Push“ allein oder „Push-Nachricht“; im Code `push_notification` /
+  `PushNotification…` (Namen von Bibliotheken und Browser-APIs bleiben).
 - Passkeys heißen „Passkey“, nicht „Sicherheitsschlüssel“. Texte von allauth und anderen Paketen passen wir über
   `portal/locale/de/LC_MESSAGES/django.po` an (Du-Form, Begriffe wie oben); danach
   `uv run pybabel compile -d portal/locale -D django` und die `.mo` mit committen.
@@ -54,7 +56,7 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
 - **Datenschutz:** Wer personenbezogene Daten ändert, protokolliert das mit `portal.core.audit.log` (bei Feldern mit
   `snapshot`/`diff`; ADR 0015). Auskunft und Löschen nur über `portal/privacy/services.py`; neue Daten zu Mitgliedern
   oder Benutzern dort in `export_*` aufnehmen und beim Löschen mitnehmen.
-- **Benachrichtigungen:** Tägliches nur über `portal.notifications.services.notify` (Push, sonst Mail; Schlüssel je
+- **Benachrichtigungen:** Tägliches nur über `portal.notifications.services.notify` (Push-Benachrichtigung, sonst Mail; Schlüssel je
   Anlass, damit nichts doppelt rausgeht). Einladung, Anmeldecode, Sicherheit des Zugangs und neue Verknüpfungen
   immer direkt per Mail (ADR 0011). Gäste haben keinen Benutzer: alles an sie per Mail über
   `portal/events/guests.py` (ADR 0013). Wiederkehrende Jobs über `portal.core.scheduler.register_periodic`.

@@ -1,4 +1,4 @@
-"""Benachrichtigungen rund um Termine: Push, sonst Mail (über ``portal.notifications``, ADR 0011).
+"""Benachrichtigungen rund um Termine: Push-Benachrichtigung, sonst Mail (über ``portal.notifications``, ADR 0011).
 
 Sofort: Absage, Änderung, Nachrücken. Über den Zeitplaner (alle 5 Minuten): Anmeldung offen, Erinnerung an den
 Anmeldeschluss, Stunden bestätigen. Jede Nachricht geht je Benutzer und Anlass nur einmal raus.
@@ -268,7 +268,7 @@ def run_jobs() -> None:
     notify_confirm_hours(now)
 
 
-# Knöpfe an Push-Nachrichten
+# Knöpfe an Push-Benachrichtigungen
 
 
 def _failed(message: str, url: str = "/") -> ActionResult:

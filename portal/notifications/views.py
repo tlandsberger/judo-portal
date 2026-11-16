@@ -14,15 +14,15 @@ from portal.accounts.models import User
 from portal.core import audit
 
 from . import services
-from .models import PushSubscription
+from .models import PushNotificationSubscription
 
 
 @require_POST
 @login_required
 def subscribe(request: HttpRequest) -> HttpResponse:
     """Abo aus ``pushManager.subscribe`` speichern (JSON, CSRF-Header)."""
-    if not services.push_enabled():
-        return HttpResponseBadRequest("Push ist nicht eingerichtet.")
+    if not services.push_notifications_enabled():
+        return HttpResponseBadRequest("Push-Benachrichtigungen sind nicht eingerichtet.")
     try:
         data = json.loads(request.body)
         endpoint, keys = str(data["endpoint"]), data["keys"]
@@ -34,7 +34,9 @@ def subscribe(request: HttpRequest) -> HttpResponse:
     user: User = request.user  # type: ignore[assignment]
     device = devices.describe(request.headers.get("User-Agent", ""))
     services.subscribe(user, endpoint, p256dh, auth, device)
-    audit.log(user, audit.Area.LOGIN, "push_on", f"Push eingeschaltet: {device}", user=user)
+    audit.log(
+        user, audit.Area.LOGIN, "push_notifications_on", f"Push-Benachrichtigungen eingeschaltet: {device}", user=user
+    )
     return JsonResponse({"ok": True})
 
 
@@ -46,36 +48,48 @@ def unsubscribe(request: HttpRequest) -> HttpResponse:
     except ValueError, KeyError, TypeError:
         return HttpResponseBadRequest("Ungültiges Abo.")
     services.unsubscribe(request.user, endpoint)  # type: ignore[arg-type]
-    audit.log(request.user, audit.Area.LOGIN, "push_off", "Push auf einem Gerät ausgeschaltet", user=request.user)
+    audit.log(
+        request.user,
+        audit.Area.LOGIN,
+        "push_notifications_off",
+        "Push-Benachrichtigungen auf einem Gerät ausgeschaltet",
+        user=request.user,
+    )
     return JsonResponse({"ok": True})
 
 
 @require_POST
 @login_required
 def remove_device(request: HttpRequest, pk: int) -> HttpResponse:
-    subscription = get_object_or_404(PushSubscription, pk=pk, user=request.user)
+    subscription = get_object_or_404(PushNotificationSubscription, pk=pk, user=request.user)
     subscription.delete()
     audit.log(
-        request.user, audit.Area.LOGIN, "push_off", f"Push-Gerät entfernt: {subscription.device}", user=request.user
+        request.user,
+        audit.Area.LOGIN,
+        "push_notifications_off",
+        f"Gerät für Push-Benachrichtigungen entfernt: {subscription.device}",
+        user=request.user,
     )
-    messages.success(request, f"Push für {subscription.device or 'das Gerät'} ist aus.")
+    messages.success(request, f"Push-Benachrichtigungen für {subscription.device or 'das Gerät'} sind aus.")
     return redirect("security")
 
 
 @require_POST
 @login_required
 def test(request: HttpRequest, pk: int) -> HttpResponse:
-    subscription = get_object_or_404(PushSubscription, pk=pk, user=request.user)
+    subscription = get_object_or_404(PushNotificationSubscription, pk=pk, user=request.user)
     if services.send_test(subscription):
         messages.success(request, f"Test-Nachricht an {subscription.device or 'das Gerät'} verschickt.")
     else:
-        messages.error(request, "Die Test-Nachricht kam nicht an. Schalte Push auf dem Gerät bitte neu ein.")
+        messages.error(
+            request, "Die Test-Nachricht kam nicht an. Schalte die Push-Benachrichtigungen auf dem Gerät bitte neu ein."
+        )
     return redirect("security")
 
 
 @csrf_exempt
 @require_POST
 def action(request: HttpRequest) -> HttpResponse:
-    """Knopf an einer Push-Nachricht. Der signierte Token ersetzt Anmeldung und CSRF-Token."""
+    """Knopf an einer Push-Benachrichtigung. Der signierte Token ersetzt Anmeldung und CSRF-Token."""
     result = services.run_action(request.POST.get("token", ""))
     return JsonResponse({"ok": result.ok, "message": result.message, "url": result.url})

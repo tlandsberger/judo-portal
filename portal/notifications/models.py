@@ -1,4 +1,4 @@
-"""Push-Abos je Gerät und Protokoll versendeter Benachrichtigungen (ADR 0011)."""
+"""Geräte für Push-Benachrichtigungen und Protokoll versendeter Benachrichtigungen (ADR 0011)."""
 
 from __future__ import annotations
 
@@ -7,10 +7,12 @@ from django.db import models
 from django.utils import timezone
 
 
-class PushSubscription(models.Model):
-    """Ein Gerät (Browser), auf dem der Benutzer Push-Nachrichten eingeschaltet hat."""
+class PushNotificationSubscription(models.Model):
+    """Ein Gerät (Browser), auf dem der Benutzer Push-Benachrichtigungen eingeschaltet hat."""
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="push_subscriptions")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="push_notification_subscriptions"
+    )
     endpoint = models.URLField("Endpoint", max_length=1000, unique=True)
     p256dh = models.CharField(max_length=200)
     auth = models.CharField(max_length=100)
@@ -19,8 +21,8 @@ class PushSubscription(models.Model):
     last_used_at = models.DateTimeField("Zuletzt genutzt", null=True, blank=True)
 
     class Meta:
-        verbose_name = "Push-Gerät"
-        verbose_name_plural = "Push-Geräte"
+        verbose_name = "Gerät für Push-Benachrichtigungen"
+        verbose_name_plural = "Geräte für Push-Benachrichtigungen"
         ordering = ("-created_at",)
 
     def __str__(self) -> str:
@@ -32,7 +34,7 @@ class PushSubscription(models.Model):
 
 class Channel(models.TextChoices):
     PENDING = "pending", "Wird verschickt"
-    PUSH = "push", "Push"
+    PUSH_NOTIFICATION = "push", "Push-Benachrichtigung"
     MAIL = "mail", "E-Mail"
 
 

@@ -18,8 +18,8 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
                                       ├─ Gunicorn + Django (Seiten, Anmeldung, statische Dateien)
                                       ├─ Zeitplaner (Backup 02:00, Aufräumen, alle 5 Min. Erinnerungen)
                                       └─ /data: portal.sqlite3, backups/
-                                      ──▶ IONOS-SMTP (Einladungen, Anmeldecodes, Sicherheitshinweise, Ersatz für Push)
-                                      ──▶ Web-Push-Dienste (Google, Apple, Mozilla)
+                                      ──▶ IONOS-SMTP (Einladungen, Anmeldecodes, Sicherheitshinweise, Ersatz für Push-Benachrichtigungen)
+                                      ──▶ Dienste für Push-Benachrichtigungen (Google, Apple, Mozilla)
 ```
 
 - **Ein Container**, ein Volume. Keine weitere Infrastruktur (kein Datenbank-Container, kein Keycloak).
@@ -79,7 +79,7 @@ Geräteeinstellung oder Umschalter.
 - HSTS, `X-Frame-Options: DENY`, sichere Cookies, CSRF-Schutz.
 - Datensparsamkeit: keine Adressen, keine Bank- oder Passdaten, Graduierung nur aktuell ohne Historie; Eltern sind
   verknüpfte Benutzer statt Kontaktdaten am Kind (ADR 0009).
-- Push-Nachrichten sind Ende-zu-Ende-verschlüsselt und knapp gehalten. Sicherheitsrelevantes (Passwort, Passkey, neues
+- Push-Benachrichtigungen sind Ende-zu-Ende-verschlüsselt und knapp gehalten. Sicherheitsrelevantes (Passwort, Passkey, neues
   Gerät) meldet das Portal immer per Mail (ADR 0011).
 - Änderungsprotokoll (1 Jahr), Auskunft der eigenen Daten unter „Meine Daten“, Löschung 3 Monate nach Austritt oder
   auf Wunsch (ADR 0015).

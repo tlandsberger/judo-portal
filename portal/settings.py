@@ -130,7 +130,7 @@ BACKUP_DIR = DATA_DIR / "backups"
 BACKUP_KEEP_DAYS = int(env("BACKUP_KEEP_DAYS", "14") or 14)
 BACKUP_HOUR = int(env("BACKUP_HOUR", "2") or 2)
 
-# Web Push (ADR 0011). Ohne Schlüssel ist Push aus, alle Benachrichtigungen gehen per Mail.
+# Push-Benachrichtigungen per Web Push (ADR 0011). Ohne Schlüssel sind sie aus, alles geht per Mail.
 # Erzeugen: python manage.py generate_vapid_keys
 VAPID_PUBLIC_KEY = env("VAPID_PUBLIC_KEY", "") or ""
 VAPID_PRIVATE_KEY = env("VAPID_PRIVATE_KEY", "") or ""

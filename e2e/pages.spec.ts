@@ -60,7 +60,7 @@ test("Push-Benachrichtigungen lassen sich einschalten; die Startseite bietet sie
   await expect(page.getByRole("heading", { name: "Benachrichtigungen aufs Handy?" })).toBeVisible();
   await page.goto("/zugang/anmeldung/");
   const section = page.getByRole("region", { name: "Benachrichtigungen" });
-  await expect(section.getByRole("button", { name: "Push auf diesem Gerät einschalten" })).toBeVisible();
+  await expect(section.getByRole("button", { name: "Push-Benachrichtigungen auf diesem Gerät einschalten" })).toBeVisible();
   await expectNoA11yViolations(page);
   // „Nein danke“ auf der Startseite blendet den Hinweis auf diesem Gerät dauerhaft aus
   await page.goto("/");

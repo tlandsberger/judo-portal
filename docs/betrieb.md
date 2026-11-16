@@ -157,7 +157,7 @@ Hintergründe in ADR 0015.
 
 ## Push-Benachrichtigungen
 
-Tägliches (Absagen, Änderungen, Nachrücken, „Anmeldung offen“, Erinnerungen) kommt per Push aufs Handy, wenn der
+Tägliches (Absagen, Änderungen, Nachrücken, „Anmeldung offen“, Erinnerungen) kommt als Push-Benachrichtigung aufs Handy, wenn der
 Benutzer es unter **Meine Anmeldung → Benachrichtigungen** eingeschaltet hat, sonst per Mail. Einladungen,
 Anmeldecodes, Sicherheitshinweise und neue Verknüpfungen gehen immer per Mail. Hintergründe stehen in ADR 0011.
 
@@ -167,9 +167,9 @@ Anmeldecodes, Sicherheitshinweise und neue Verknüpfungen gehen immer per Mail. 
    starten. Den privaten Schlüssel geheim halten; ein neues Paar beendet alle bestehenden Abos.
 
 **Was du wissen solltest:**
-- Der Container muss die Push-Dienste von Google, Apple und Mozilla per HTTPS erreichen (normaler ausgehender
+- Der Container muss die Dienste für Push-Benachrichtigungen von Google, Apple und Mozilla per HTTPS erreichen (normaler ausgehender
   Verkehr).
-- iPhone und iPad können Push nur, wenn das Portal zum Home-Bildschirm hinzugefügt ist (iOS ab 16.4).
+- iPhone und iPad können Push-Benachrichtigungen nur, wenn das Portal zum Home-Bildschirm hinzugefügt ist (iOS ab 16.4).
 - Die Erinnerungen prüft der Zeitplaner im Container alle 5 Minuten. Was rausging, steht in der technischen
   Verwaltung unter „Versandte Benachrichtigungen“ (90 Tage).
 

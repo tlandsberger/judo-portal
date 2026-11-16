@@ -1,19 +1,19 @@
 // Push-Benachrichtigungen ein- und ausschalten („Meine Anmeldung“) und Hinweis auf der Startseite (ADR 0011).
-// Elemente mit data-push; ihr Zustand wird über data-push-state gezeigt: off, on, denied, unsupported, error.
+// Elemente mit data-push-notification; ihr Zustand wird über data-push-notification-state gezeigt: off, on, denied, unsupported, error.
 (function () {
-  var roots = document.querySelectorAll("[data-push]");
+  var roots = document.querySelectorAll("[data-push-notification]");
   if (!roots.length) return;
   var DISMISS_KEY = "wtsv-push-teaser-dismissed";
   var supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   var known = [];
   try {
-    var script = document.getElementById("push-endpoints");
+    var script = document.getElementById("push-notification-endpoints");
     known = script ? JSON.parse(script.textContent) : [];
   } catch (e) { known = []; }
 
   function setState(root, state) {
-    root.querySelectorAll("[data-push-state]").forEach(function (part) {
-      part.hidden = part.getAttribute("data-push-state") !== state;
+    root.querySelectorAll("[data-push-notification-state]").forEach(function (part) {
+      part.hidden = part.getAttribute("data-push-notification-state") !== state;
     });
   }
   function dismissed() {
@@ -54,12 +54,12 @@
           return registration.pushManager.getSubscription().then(function (existing) {
             return existing || registration.pushManager.subscribe({
               userVisibleOnly: true,
-              applicationServerKey: keyBytes(root.getAttribute("data-push-key")),
+              applicationServerKey: keyBytes(root.getAttribute("data-push-notification-key")),
             });
           });
         })
         .then(function (subscription) {
-          return post(root.getAttribute("data-push-url"), root.getAttribute("data-csrf"), subscription.toJSON());
+          return post(root.getAttribute("data-push-notification-url"), root.getAttribute("data-csrf"), subscription.toJSON());
         })
         .then(function () { window.location.reload(); });
     }).catch(function () { setState(root, "error"); });
@@ -68,21 +68,21 @@
   function disable(root) {
     current().then(function (subscription) {
       if (!subscription) return null;
-      return post(root.getAttribute("data-push-unsubscribe-url"), root.getAttribute("data-csrf"), {
+      return post(root.getAttribute("data-push-notification-unsubscribe-url"), root.getAttribute("data-csrf"), {
         endpoint: subscription.endpoint,
       }).then(function () { return subscription.unsubscribe(); });
     }).then(function () { window.location.reload(); }).catch(function () { setState(root, "error"); });
   }
 
   roots.forEach(function (root) {
-    var teaser = root.hasAttribute("data-push-teaser");
-    root.querySelectorAll("[data-push-enable]").forEach(function (button) {
+    var teaser = root.hasAttribute("data-push-notification-teaser");
+    root.querySelectorAll("[data-push-notification-enable]").forEach(function (button) {
       button.addEventListener("click", function () { enable(root); });
     });
-    root.querySelectorAll("[data-push-disable]").forEach(function (button) {
+    root.querySelectorAll("[data-push-notification-disable]").forEach(function (button) {
       button.addEventListener("click", function () { disable(root); });
     });
-    root.querySelectorAll("[data-push-dismiss]").forEach(function (button) {
+    root.querySelectorAll("[data-push-notification-dismiss]").forEach(function (button) {
       button.addEventListener("click", function () {
         try { localStorage.setItem(DISMISS_KEY, "1"); } catch (e) {}
         root.hidden = true;
