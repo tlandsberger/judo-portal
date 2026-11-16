@@ -89,9 +89,10 @@ Einen Elternteil mit mehreren Kindern lädst du nacheinander für jedes Kind ein
 Unter **Veranstaltungen** (Abteilungsleitung; Übungsleiter sehen die Liste und planen Teams). Hintergründe in ADR 0010
 und 0012.
 
-1. **Zielgruppen** anlegen (Veranstaltungen → Zielgruppen), zum Beispiel „U12“ mit „Alter bis 11“. Das Alter zählt nach
-   Jahrgang. Die Seite zeigt sofort, wer heute passt.
-2. **Veranstaltung** anlegen: Art, Ort, Zielgruppen, optional Höchstzahl und „Gewicht bei Anmeldung erforderlich“.
+1. Optional **Zielgruppen-Vorlagen** anlegen (Veranstaltungen → Zielgruppen-Vorlagen), zum Beispiel „U12“ mit
+   „Alter bis 11“. Das Alter zählt nach Jahrgang. Die Seite zeigt sofort, wer heute passt.
+2. **Veranstaltung** anlegen: Art, Ort, Zielgruppen (direkt im Formular oder aus einer Vorlage kopiert), optional
+   Höchstzahl und „Gewicht bei Anmeldung erforderlich“.
    Arten und Rollen pflegst du unter Veranstaltungen → **Veranstaltungsarten** bzw. **Rollen**.
 3. **Termine** gleich beim Anlegen, mit optionalem Team (Mitglied und Rolle):
    - **Einmalig:** Beginn, Ende (auch über mehrere Tage) und Anmeldezeitraum.

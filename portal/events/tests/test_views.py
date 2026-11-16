@@ -13,6 +13,7 @@ from portal.events.models import (
     Participation,
     ParticipationStatus,
     TargetGroup,
+    TargetGroupTemplate,
 )
 from portal.members.models import Interest
 
@@ -24,6 +25,14 @@ pytestmark = pytest.mark.django_db
 def login(client, user):
     assert client.login(email=user.email, password=PASSWORD)
     return client
+
+
+def groups(*blocks: dict, initial: int = 0) -> dict:
+    """Formset-Daten für die Zielgruppen im Formular der Veranstaltung."""
+    data = {"zg-TOTAL_FORMS": str(len(blocks)), "zg-INITIAL_FORMS": str(initial)}
+    for index, block in enumerate(blocks):
+        data.update({f"zg-{index}-{name}": value for name, value in block.items()})
+    return data
 
 
 def test_agenda_quick_registration(client, parent, child):
@@ -76,7 +85,7 @@ def test_participants_only_for_own_team(client, trainer, parent, child):
 
 def test_trainer_adds_self_and_exception(client, trainer, child):
     occurrence = make_occurrence(Event.objects.create(title="Kader"))
-    occurrence.event.target_groups.set([TargetGroup.objects.create(name="Erwachsene", min_age=18)])
+    TargetGroup.objects.create(event=occurrence.event, name="Erwachsene", min_age=18)
     login(client, trainer)
     page = client.get(reverse("occurrence_detail", args=[occurrence.pk])).content.decode()
     assert "Mich als Trainer eintragen" in page and "Mich als Prüfer" not in page
@@ -120,7 +129,7 @@ def test_event_management_only_for_head(client, head, trainer):
     login(client, head)
     response = client.post(
         reverse("event_create"),
-        {"title": "Training U12", "event_type": event_type("Training").pk, "dates": "later"},
+        {"title": "Training U12", "event_type": event_type("Training").pk, "dates": "later", **groups()},
     )
     event = Event.objects.get()
     assert response.url == reverse("event_detail", args=[event.pk])
@@ -143,7 +152,7 @@ def test_target_group_pages(client, head, child):
     Interest.objects.create(name="Kata")
     login(client, head)
     client.post(reverse("target_group_create"), {"name": "U12", "max_age": "11", "genders": ["w"]})
-    group = TargetGroup.objects.get()
+    group = TargetGroupTemplate.objects.get()
     assert group.genders == ["w"]
     page = client.get(reverse("target_group_members", args=[group.pk])).content.decode()
     assert "Passen heute: 1" in page
@@ -215,6 +224,7 @@ def test_create_event_weekly_with_team(client, head, trainer):
             "closes_hours_before": "2",
             "team_member": anna.pk,
             "team_role": role("Trainer").pk,
+            **groups(),
         },
     )
     event = Event.objects.get()
@@ -227,7 +237,7 @@ def test_create_event_weekly_with_team(client, head, trainer):
 
 def test_create_event_once_and_validation(client, head, trainer):
     login(client, head)
-    base = {"title": "Turnier", "event_type": event_type("Wettkampf").pk, "dates": "once"}
+    base = {"title": "Turnier", "event_type": event_type("Wettkampf").pk, "dates": "once", **groups()}
     page = client.post(reverse("event_create"), base)
     assert "Bitte ausfüllen." in page.content.decode()
     # Trainer gibt es bei Wettkämpfen nicht: nichts wird angelegt

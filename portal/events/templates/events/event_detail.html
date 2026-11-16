@@ -10,12 +10,24 @@
     </div>
     <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">
       <div><dt class="text-sm text-base-content/70">Ort</dt><dd>{{ event.location|default:"–" }}</dd></div>
-      <div><dt class="text-sm text-base-content/70">Zielgruppen</dt><dd>{% for group in event.target_groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}alle{% endfor %}</dd></div>
+      <div><dt class="text-sm text-base-content/70">Zielgruppen</dt><dd>{% for group in event.target_groups.all %}{{ group }}{% if not forloop.last %}; {% endif %}{% empty %}alle{% endfor %}</dd></div>
       <div><dt class="text-sm text-base-content/70">Höchstzahl</dt><dd>{{ event.capacity|default:"unbegrenzt" }}</dd></div>
       <div><dt class="text-sm text-base-content/70">Gewicht bei Anmeldung</dt><dd>{{ event.weight_required|yesno:"erforderlich,nicht nötig" }}</dd></div>
       <div><dt class="text-sm text-base-content/70">Gäste</dt><dd>{{ event.guests_welcome|yesno:"willkommen,nein" }}</dd></div>
     </dl>
     {% if event.description %}<p class="whitespace-pre-line">{{ event.description }}</p>{% endif %}
+    {% if matching is not None %}
+    <details class="collapse collapse-arrow rounded-box bg-base-200">
+      <summary class="collapse-title font-semibold">Passende Mitglieder: {{ matching|length }}</summary>
+      <div class="collapse-content">
+        {% if matching %}
+        <ul class="flex flex-col gap-1 text-sm">
+          {% for member, match in matching %}<li><a class="link link-hover" href="{% url 'member_detail' member.pk %}">{{ member.last_name }}, {{ member.first_name }}</a> <span class="text-base-content/70">· {{ member.birth_date|date:"Y" }}{% if member.grade_short %} · {{ member.grade_short }}{% endif %}</span>{% if match == maybe %} <span class="badge badge-ghost badge-sm">Gewicht fehlt</span>{% endif %}</li>{% endfor %}
+        </ul>
+        {% else %}<p class="text-sm text-base-content/70">Gerade passt niemand.</p>{% endif %}
+      </div>
+    </details>
+    {% endif %}
     {% if guest_link and can_manage %}
     <div class="flex flex-col gap-2 rounded-box bg-base-200 p-4">
       <label class="font-semibold" for="gaestelink">Anmeldelink für Gäste</label>

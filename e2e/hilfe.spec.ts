@@ -135,6 +135,9 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
   await shoot(browser, ADMIN_STATE, "veranstaltung-anlegen", async (page) => {
     await page.goto("/veranstaltungen/neu/");
     await page.getByLabel("Titel").fill("Sommertraining");
+    await page.getByRole("button", { name: "Weitere Zielgruppe hinzufügen" }).click();
+    await page.getByLabel("Bezeichnung").fill("U12");
+    await page.getByLabel("Alter bis").fill("11");
     await page.getByLabel("Wiederkehrend").check();
   });
   await shoot(browser, ADMIN_STATE, "abrechnungen", async (page) => {

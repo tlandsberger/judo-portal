@@ -29,14 +29,14 @@ def test_register_and_unregister(child, parent):
 
 def test_target_group_blocks_registration(child, parent):
     event = Event.objects.create(title="Erwachsene")
-    event.target_groups.set([TargetGroup.objects.create(name="Erwachsene", min_age=18)])
+    TargetGroup.objects.create(event=event, name="Erwachsene", min_age=18)
     with pytest.raises(RegistrationError, match="passt nicht"):
         services.register(make_occurrence(event), child, parent)
 
 
 def test_exception_ignores_target_group_window_and_capacity(child, trainer):
     event = Event.objects.create(title="Kader", capacity=0)
-    event.target_groups.set([TargetGroup.objects.create(name="Erwachsene", min_age=18)])
+    TargetGroup.objects.create(event=event, name="Erwachsene", min_age=18)
     occurrence = make_occurrence(event, in_days=-0.01)
     registration = services.register(occurrence, child, trainer, exception=True)
     assert registration.status == ParticipationStatus.REGISTERED
@@ -109,10 +109,9 @@ def test_required_weight_falls_back_to_profile(child, trainer):
 
 
 def test_agenda_lists_each_occurrence_once_for_two_children(parent, child):
-    adult_group = TargetGroup.objects.create(name="Erwachsene", min_age=18)
     kids = Event.objects.create(title="Kindertraining")
     adults = Event.objects.create(title="Erwachsenentraining")
-    adults.target_groups.set([adult_group])
+    TargetGroup.objects.create(event=adults, name="Erwachsene", min_age=18)
     make_occurrence(kids)
     make_occurrence(adults)
     sibling = make_member("Ole", age=7)

@@ -71,9 +71,8 @@ def test_public_registration_needs_confirmation(django_capture_on_commit_callbac
 def test_target_group_window_and_interests():
     event = open_event()
     kata = Interest.objects.create(name="Kata")
-    group = TargetGroup.objects.create(name="U15", max_age=14)
+    group = TargetGroup.objects.create(event=event, name="U15", max_age=14)
     group.interests.set([kata])
-    event.target_groups.set([group])
     occurrence = make_occurrence(event, in_days=5)
     guests.register(event, DATA, [occurrence])  # Interessen zählen bei Gästen nicht
     with pytest.raises(RegistrationError, match="passt leider nicht"):

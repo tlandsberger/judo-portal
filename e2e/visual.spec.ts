@@ -48,7 +48,7 @@ for (const scheme of ["light", "dark"] as const) {
         await context.close();
       });
 
-      test("Zielgruppen", async ({ browser }) => {
+      test("Zielgruppen-Vorlagen", async ({ browser }) => {
         const context = await browser.newContext({ storageState: ADMIN_STATE, colorScheme: scheme, viewport });
         const page = await context.newPage();
         await importMembers(page);
@@ -56,6 +56,10 @@ for (const scheme of ["light", "dark"] as const) {
         await page.goto("/zielgruppen/");
         await page.evaluate(() => document.fonts.ready);
         await expect(page).toHaveScreenshot(`zielgruppen-${name}.png`, { fullPage: true });
+        await page.goto("/veranstaltungen/neu/");
+        await page.getByRole("button", { name: "Übernehmen" }).click();
+        await page.evaluate(() => document.fonts.ready);
+        await expect(page).toHaveScreenshot(`veranstaltung-anlegen-${name}.png`, { fullPage: true });
         await context.close();
       });
     });

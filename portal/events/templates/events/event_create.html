@@ -11,6 +11,8 @@
       <div class="flex flex-col gap-2">{% for field in form.event_fields %}{{ field.as_field_group }}{% endfor %}</div>
     </div></section>
 
+    {% include "events/_target_groups.html" %}
+
     <section class="card bg-base-100 shadow-sm" aria-labelledby="h-termine"><div class="card-body gap-4">
       <h2 class="card-title" id="h-termine">Termine</h2>
       {{ form.dates.as_field_group }}
@@ -35,4 +37,4 @@
   </form>
 </div>
 {% endblock %}
-{% block scripts %}<script src="{% static 'js/event-form.js' %}"></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/event-form.js' %}"></script><script src="{% static 'js/target-groups.js' %}"></script>{% endblock %}

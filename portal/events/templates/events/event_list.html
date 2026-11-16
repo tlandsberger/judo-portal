@@ -7,7 +7,7 @@
   {% if can_manage %}
   <div class="flex flex-wrap gap-2">
     <a class="btn btn-primary" href="{% url 'event_create' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Veranstaltung anlegen</a>
-    <a class="btn btn-outline btn-primary" href="{% url 'target_group_list' %}"><i class="bi bi-bullseye" aria-hidden="true"></i> Zielgruppen</a>
+    <a class="btn btn-outline btn-primary" href="{% url 'target_group_list' %}"><i class="bi bi-bullseye" aria-hidden="true"></i> Zielgruppen-Vorlagen</a>
     <a class="btn btn-outline btn-primary" href="{% url 'role_list' %}"><i class="bi bi-person-badge" aria-hidden="true"></i> Rollen</a>
     <a class="btn btn-outline btn-primary" href="{% url 'event_type_list' %}"><i class="bi bi-tags" aria-hidden="true"></i> Veranstaltungsarten</a>
   </div>
@@ -24,7 +24,7 @@
         <tr>
           <td><a class="link link-hover font-semibold" href="{% url 'event_detail' event.pk %}">{{ event.title }}</a></td>
           <td>{{ event.event_type }}</td>
-          <td>{% for group in event.target_groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}alle{% endfor %}</td>
+          <td>{% for group in event.target_groups.all %}{{ group }}{% if not forloop.last %}, {% endif %}{% empty %}alle{% endfor %}</td>
           <td>{% if upcoming %}{{ upcoming.starts_at|date:"D d.m. H:i" }}{% else %}–{% endif %}</td>
         </tr>
       {% endfor %}

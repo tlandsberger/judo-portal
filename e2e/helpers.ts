@@ -89,11 +89,11 @@ export async function importMembers(page: Page) {
   }
 }
 
-/** Zielgruppe „Kinder und Jugend“ (bis 18) anlegen, falls es sie noch nicht gibt. */
+/** Zielgruppen-Vorlage „Kinder und Jugend“ (bis 18) anlegen, falls es sie noch nicht gibt. */
 export async function ensureYouthGroup(page: Page) {
   await page.goto("/zielgruppen/");
   if (await page.getByRole("link", { name: "Kinder und Jugend" }).count()) return;
-  await page.getByRole("link", { name: "Zielgruppe anlegen" }).click();
+  await page.getByRole("link", { name: "Vorlage anlegen" }).click();
   await page.getByLabel("Name").fill("Kinder und Jugend");
   await page.getByLabel("Alter bis").fill("18");
   await page.getByRole("button", { name: "Speichern" }).click();

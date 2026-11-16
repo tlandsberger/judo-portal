@@ -1,7 +1,17 @@
-{% extends "events/_form_page.html" %}
-{% block heading %}{{ event.title }} bearbeiten{% endblock %}
-{% block heading2 %}{{ event.title }} bearbeiten{% endblock %}
-{% block back_url %}{% url 'event_detail' event.pk %}{% endblock %}
-{% block cancel_url %}{% url 'event_detail' event.pk %}{% endblock %}
-{% block back_label %}{{ event.title }}{% endblock %}
-
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ event.title }} bearbeiten{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <a href="{% url 'event_detail' event.pk %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> {{ event.title }}</a>
+  <form method="post" class="flex flex-col gap-6">{% csrf_token %}
+    <section class="card bg-base-100 shadow-sm" aria-labelledby="h-veranstaltung"><div class="card-body gap-4">
+      <h1 class="text-2xl font-bold" id="h-veranstaltung">{{ event.title }} bearbeiten</h1>
+      {{ form }}
+    </div></section>
+    {% include "events/_target_groups.html" %}
+    <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% url 'event_detail' event.pk %}">Abbrechen</a></div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/target-groups.js' %}"></script>{% endblock %}

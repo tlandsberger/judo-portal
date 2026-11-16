@@ -15,7 +15,7 @@ from typing import Any
 
 from django.db import transaction
 from django.db.models import Q, QuerySet
-from django.utils import timezone
+from django.utils import formats, timezone
 
 from portal.accounts.models import Role, User
 from portal.core import audit
@@ -24,6 +24,7 @@ from portal.members.models import LinkKind, Member, MemberLink, grade_rank
 
 from . import notices
 from .models import (
+    Criteria,
     Event,
     Guest,
     Occurrence,
@@ -32,7 +33,7 @@ from .models import (
     ParticipationStatus,
     Schedule,
     ScheduleTeam,
-    TargetGroup,
+    TargetGroupTemplate,
 )
 
 log = logging.getLogger(__name__)
@@ -223,7 +224,7 @@ def age_in_year(member: Member | Guest, on: date) -> int:
 
 
 def match_group(
-    group: TargetGroup,
+    group: Criteria,
     member: Member | Guest,
     on: date,
     interest_ids: set[int] | None = None,
@@ -265,16 +266,48 @@ def match_event(event: Event, member: Member | Guest, on: date, interest_ids: se
     return max(match_group(group, member, on, interest_ids) for group in groups)
 
 
-def matching_members(group: TargetGroup, on: date | None = None) -> list[tuple[Member, Match]]:
+def matching_members(target: Criteria | Event, on: date | None = None) -> list[tuple[Member, Match]]:
+    """Aktive Mitglieder, die zu einer Vorlage oder Veranstaltung passen (auch „vielleicht“)."""
     on = on or timezone.localdate()
     result: list[tuple[Member, Match]] = []
     for member in Member.objects.prefetch_related("interests"):
         if not member.is_active:
             continue
-        match = match_group(group, member, on)
+        match = match_event(target, member, on) if isinstance(target, Event) else match_group(target, member, on)
         if match != Match.NO:
             result.append((member, match))
     return result
+
+
+def save_target_groups(formset: Any) -> list[TargetGroupTemplate]:
+    """Zielgruppen einer Veranstaltung speichern; angehakte zusätzlich als Vorlage anlegen (Kopie)."""
+    formset.save()
+    templates = []
+    for form in formset.forms:
+        data = getattr(form, "cleaned_data", {})
+        if not data.get("save_as_template") or data.get("DELETE") or form.instance.pk is None:
+            continue
+        group = form.instance
+        template = TargetGroupTemplate.objects.create(
+            name=group.name.strip(), **{name: getattr(group, name) for name in group.CRITERIA}
+        )
+        template.interests.set(group.interests.all())
+        templates.append(template)
+    return templates
+
+
+def template_data() -> dict[str, dict[str, Any]]:
+    """Vorlagen für die Übernahme im Formular (als JSON ins Template)."""
+    data: dict[str, dict[str, Any]] = {}
+    for template in TargetGroupTemplate.objects.prefetch_related("interests"):
+        values: dict[str, Any] = {name: getattr(template, name) for name in template.CRITERIA}
+        for name in ("min_weight", "max_weight"):
+            if values[name] is not None:
+                values[name] = formats.number_format(values[name], 1)
+        values["name"] = template.name
+        values["interests"] = [interest.pk for interest in template.interests.all()]
+        data[str(template.pk)] = values
+    return data
 
 
 # Termine aus Zeitplänen

@@ -47,7 +47,10 @@ test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sie
   await admin.goto("/veranstaltungen/neu/");
   await admin.getByLabel("Titel").fill("Randori-Lehrgang");
   await admin.getByLabel("Art").selectOption({ label: "Lehrgang" });
-  await admin.getByLabel("Kinder und Jugend").check();
+  await admin.getByLabel("Aus Vorlage übernehmen").selectOption({ label: "Kinder und Jugend" });
+  await admin.getByRole("button", { name: "Übernehmen" }).click();
+  await expect(admin.getByLabel("Bezeichnung")).toHaveValue("Kinder und Jugend");
+  await expect(admin.getByLabel("Alter bis")).toHaveValue("18");
   await admin.getByLabel("Gewicht bei Anmeldung erforderlich").check();
   await admin.getByLabel("Einmalig").check();
   await expect(admin.getByLabel("Wochentage")).toBeHidden();
@@ -134,7 +137,10 @@ test("Training wiederkehrend anlegen; Elternteil mit zwei Kindern sieht jeden Te
   await admin.goto("/veranstaltungen/neu/");
   await admin.getByLabel("Titel").fill("Kindertraining");
   await admin.getByLabel("Art").selectOption({ label: "Training" });
-  await admin.getByLabel("Kinder und Jugend").check();
+  // Zielgruppe nur für diese Veranstaltung, ohne Vorlage
+  await admin.getByRole("button", { name: "Weitere Zielgruppe hinzufügen" }).click();
+  await admin.getByLabel("Bezeichnung").fill("Kinder");
+  await admin.getByLabel("Alter bis").fill("18");
   await admin.getByLabel("Wiederkehrend").check();
   await expect(admin.getByLabel("Beginn", { exact: true })).toBeHidden();
   await admin.getByLabel("Dienstag").check();

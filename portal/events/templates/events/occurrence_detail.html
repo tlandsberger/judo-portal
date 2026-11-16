@@ -26,7 +26,7 @@
       <div><dt class="text-sm text-base-content/70">Wo</dt><dd>{{ occurrence.place|default:"–" }}</dd></div>
       <div><dt class="text-sm text-base-content/70">Anmeldung</dt><dd>{% if window == "before" %}ab {{ occurrence.registration_opens|date:"d.m.Y H:i" }} Uhr{% elif window == "open" %}offen bis {{ occurrence.registration_closes|date:"d.m.Y H:i" }} Uhr{% else %}geschlossen{% endif %}</dd></div>
       <div><dt class="text-sm text-base-content/70">Plätze</dt><dd>{{ registered }}{% if event.capacity %} von {{ event.capacity }}{% endif %} angemeldet</dd></div>
-      {% if event.target_groups.all %}<div><dt class="text-sm text-base-content/70">Für</dt><dd>{% for group in event.target_groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd></div>{% endif %}
+      {% if event.target_groups.all %}<div><dt class="text-sm text-base-content/70">Für</dt><dd>{% for group in event.target_groups.all %}{{ group }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd></div>{% endif %}
       <div><dt class="text-sm text-base-content/70">Team</dt><dd>{% for p in team %}{{ p.member.display_name }} ({{ p.role.name }}){% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</dd></div>
     </dl>
     {% if event.description %}<p class="whitespace-pre-line">{{ event.description }}</p>{% endif %}

@@ -54,7 +54,7 @@ def test_registration_open_skips_series_registered_unmatched_and_closed(run, par
     plan = training.schedules.create(weekday=0, start_time=time(17), end_time=time(18), valid_from=timezone.localdate())
     make_occurrence(training, in_days=2, schedule=plan)
     adults = competition()
-    adults.target_groups.set([TargetGroup.objects.create(name="Erwachsene", min_age=18)])
+    TargetGroup.objects.create(event=adults, name="Erwachsene", min_age=18)
     make_occurrence(adults, in_days=5)
     later = make_occurrence(competition(), in_days=10)
     later.registration_opens_at = later.starts_at - timedelta(days=3)

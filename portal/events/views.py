@@ -34,7 +34,8 @@ from .forms import (
     ParticipantRoleForm,
     RegisterForm,
     ScheduleForm,
-    TargetGroupForm,
+    TargetGroupFormSet,
+    TargetGroupTemplateForm,
     TeamForm,
 )
 from .models import (
@@ -46,7 +47,7 @@ from .models import (
     Participation,
     Schedule,
     ScheduleTeam,
-    TargetGroup,
+    TargetGroupTemplate,
 )
 from .services import MANAGE_EVENTS, Match, RegistrationError
 
@@ -441,7 +442,7 @@ def event_list(request: HttpRequest) -> HttpResponse:
     services.ensure_generated()
     now = timezone.now()
     rows = []
-    for event in Event.objects.select_related("event_type").prefetch_related("target_groups", "schedules"):
+    for event in Event.objects.select_related("event_type").prefetch_related("target_groups__interests", "schedules"):
         upcoming = event.occurrences.filter(ends_at__gte=now, cancelled_at__isnull=True).first()
         rows.append((event, upcoming))
     return render(
@@ -454,7 +455,9 @@ def event_list(request: HttpRequest) -> HttpResponse:
 @login_required
 def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
     _plan_staff(request)
-    event = get_object_or_404(Event.objects.select_related("event_type").prefetch_related("target_groups"), pk=pk)
+    event = get_object_or_404(
+        Event.objects.select_related("event_type").prefetch_related("target_groups__interests"), pk=pk
+    )
     services.ensure_generated()
     occurrences = event.occurrences.filter(ends_at__gte=timezone.now()).prefetch_related(
         "participations__role", "participations__member"
@@ -462,11 +465,14 @@ def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
     schedules = list(event.schedules.prefetch_related("team__member", "team__role"))
     for schedule in schedules:
         schedule.team_form = _team_form(event, prefix=f"s{schedule.pk}")  # type: ignore[attr-defined]
+    can_manage = services.can_manage_events(request.user)
     context = {
         "event": event,
+        "matching": services.matching_members(event) if can_manage else None,
+        "maybe": Match.MAYBE,
         "schedules": schedules,
         "occurrences": occurrences,
-        "can_manage": services.can_manage_events(request.user),
+        "can_manage": can_manage,
         "cancel_form": CancelRangeForm(),
         "guest_link": request.build_absolute_uri(reverse("guest_register", args=[guests.enable_link(event)]))
         if event.guests_welcome
@@ -479,23 +485,40 @@ def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
 def event_edit(request: HttpRequest, pk: int) -> HttpResponse:
     event = get_object_or_404(Event, pk=pk)
     form = EventForm(request.POST or None, instance=event)
-    if request.method == "POST" and form.is_valid():
-        event = form.save()
-        messages.success(request, f"„{event.title}“ gespeichert.")
+    groups = TargetGroupFormSet(request.POST or None, instance=event, prefix="zg")
+    if request.method == "POST" and form.is_valid() and groups.is_valid():
+        with transaction.atomic():
+            event = form.save()
+            templates = services.save_target_groups(groups)
+        messages.success(request, f"„{event.title}“ gespeichert.{_templates_saved(templates)}")
         return redirect("event_detail", pk=event.pk)
-    return render(request, "events/event_edit.html", {"form": form, "event": event})
+    return render(
+        request,
+        "events/event_edit.html",
+        {"form": form, "event": event, "groups": groups, "templates": services.template_data()},
+    )
+
+
+def _templates_saved(templates: list[TargetGroupTemplate]) -> str:
+    if not templates:
+        return ""
+    names = ", ".join(f"„{template.name}“" for template in templates)
+    return f" Neue Vorlage{'n' if len(templates) > 1 else ''}: {names}."
 
 
 @role_required(*MANAGE_EVENTS)
 def event_create(request: HttpRequest) -> HttpResponse:
     """Veranstaltung mit Terminen anlegen: einmalig, wiederkehrend oder später."""
     form = EventCreateForm(request.POST or None, candidates=services.team_candidates(), roles=services.team_roles())
-    if request.method == "POST" and form.is_valid():
+    groups = TargetGroupFormSet(request.POST or None, instance=Event(), prefix="zg")
+    if request.method == "POST" and form.is_valid() and groups.is_valid():
         data = form.cleaned_data
         team = (data["team_member"], data["team_role"]) if data.get("team_member") else None
         try:
             with transaction.atomic():
                 event = form.save()
+                groups.instance = event
+                templates = services.save_target_groups(groups)
                 occurrences = services.create_event(
                     event,
                     dates=data["dates"],
@@ -508,9 +531,11 @@ def event_create(request: HttpRequest) -> HttpResponse:
         else:
             count = len(occurrences)
             dates = f" mit {count} Termin{'en' if count != 1 else ''}" if count else ""
-            messages.success(request, f"„{event.title}“ angelegt{dates}.")
+            messages.success(request, f"„{event.title}“ angelegt{dates}.{_templates_saved(templates)}")
             return redirect("event_detail", pk=event.pk)
-    return render(request, "events/event_create.html", {"form": form})
+    return render(
+        request, "events/event_create.html", {"form": form, "groups": groups, "templates": services.template_data()}
+    )
 
 
 @require_POST
@@ -798,32 +823,33 @@ def role_delete(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("role_list")
 
 
-# Zielgruppen
+# Zielgruppen-Vorlagen
 
 
 @role_required(*MANAGE_EVENTS)
 def target_group_list(request: HttpRequest) -> HttpResponse:
     groups = [
-        (group, len(services.matching_members(group))) for group in TargetGroup.objects.prefetch_related("interests")
+        (group, len(services.matching_members(group)))
+        for group in TargetGroupTemplate.objects.prefetch_related("interests")
     ]
     return render(request, "events/target_group_list.html", {"groups": groups})
 
 
 @role_required(*MANAGE_EVENTS)
 def target_group_edit(request: HttpRequest, pk: int | None = None) -> HttpResponse:
-    group = get_object_or_404(TargetGroup, pk=pk) if pk else None
-    form = TargetGroupForm(request.POST or None, instance=group)
+    group = get_object_or_404(TargetGroupTemplate, pk=pk) if pk else None
+    form = TargetGroupTemplateForm(request.POST or None, instance=group)
     if request.method == "POST" and form.is_valid():
         group = form.save()
         count = len(services.matching_members(group))
-        messages.success(request, f"Zielgruppe „{group.name}“ gespeichert. Aktuell passen {count} Mitglieder.")
+        messages.success(request, f"Vorlage „{group.name}“ gespeichert. Aktuell passen {count} Mitglieder.")
         return redirect("target_group_members", pk=group.pk)
     return render(request, "events/target_group_edit.html", {"form": form, "group": group})
 
 
 @role_required(*MANAGE_EVENTS)
 def target_group_members(request: HttpRequest, pk: int) -> HttpResponse:
-    group = get_object_or_404(TargetGroup, pk=pk)
+    group = get_object_or_404(TargetGroupTemplate, pk=pk)
     return render(
         request,
         "events/target_group_members.html",
@@ -834,7 +860,7 @@ def target_group_members(request: HttpRequest, pk: int) -> HttpResponse:
 @require_POST
 @role_required(*MANAGE_EVENTS)
 def target_group_delete(request: HttpRequest, pk: int) -> HttpResponse:
-    group = get_object_or_404(TargetGroup, pk=pk)
+    group = get_object_or_404(TargetGroupTemplate, pk=pk)
     group.delete()
-    messages.success(request, f"Zielgruppe „{group.name}“ gelöscht.")
+    messages.success(request, f"Vorlage „{group.name}“ gelöscht. Veranstaltungen behalten ihre Zielgruppen.")
     return redirect("target_group_list")
