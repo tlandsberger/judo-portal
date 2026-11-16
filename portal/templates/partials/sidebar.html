@@ -34,15 +34,13 @@
   </nav>
   <div class="border-t border-neutral-content/15 p-4">
     <ul class="menu w-full text-base [--menu-active-bg:var(--color-primary)] [--menu-active-fg:var(--color-primary-content)]">
-      {# Der angemeldete Benutzer führt zu „Meine Anmeldung“ (Anmeldewege, Geräte, Benachrichtigungen) #}
+      {# Der angemeldete Benutzer führt zu „Meine Anmeldung“ (Anmeldewege, Geräte, Benachrichtigungen, Abmelden) #}
       <li><a href="{% url 'security' %}" class="gap-3{% if url_name == 'security' %} menu-active{% endif %}"{% if url_name == 'security' %} aria-current="page"{% endif %}>
         <i class="bi bi-person-circle text-2xl" aria-hidden="true"></i>
         <span class="min-w-0"><span class="sr-only">Meine Anmeldung: </span><span class="block font-semibold">{{ user.display_name }}</span><span class="block truncate text-sm opacity-80">{{ user.email }}</span></span>
       </a></li>
       <li>{% include "partials/theme_toggle.html" with with_label=True %}</li>
-      <li><button type="submit" form="abmelden"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Abmelden</button></li>
     </ul>
-    <form id="abmelden" method="post" action="{% url 'account_logout' %}" hidden>{% csrf_token %}</form>
   </div>
   {% endif %}
 </aside>

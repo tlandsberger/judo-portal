@@ -9,6 +9,8 @@ Entscheidungen: `docs/adr/`, Betrieb: `docs/betrieb.md`.
   Vorher melden nur bei offenen fachlichen Fragen, Auswirkungen auf den Betrieb (Homecloud, Datenbank, Mail) oder
   nicht umkehrbaren Schritten (Release, Merge, Löschen).
 - Technische Entscheidungen trifft Claude selbst und hält sie als ADR fest.
+- Ist eine Änderung fertig und lokal geprüft (ruff, mypy, pytest, E2E bei Änderungen an der Oberfläche), erstellt
+  Claude den PR selbst, ohne nachzufragen. Merge und Release entscheidet weiterhin der Maintainer.
 - Doku, Kommentare und Oberflächentexte auf Deutsch (Du-Form), Code-Bezeichner englisch.
 
 ## Befehle

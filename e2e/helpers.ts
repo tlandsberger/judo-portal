@@ -50,7 +50,8 @@ export async function loginWithPassword(page: Page, email: string, password: str
 }
 
 export async function logout(page: Page) {
-  // Abmelden steht unten in der Seitenleiste (am Desktop immer sichtbar)
+  // Abmelden steht auf „Meine Anmeldung“
+  await page.goto("/zugang/anmeldung/");
   await page.getByRole("button", { name: "Abmelden" }).click();
   await expect(page.getByRole("button", { name: "Mit Passkey anmelden" })).toBeVisible();
   // Erst wenn alle Skripte geladen sind, hängt der Passkey-Button an der Anmeldung per WebAuthn
