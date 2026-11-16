@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load events billing %}
+{% load events billing navigation %}
 {% block title %}Start{% endblock %}
 {% block content %}
 {% open_confirmations user as open_hours %}{% pending_claims_count user as open_claims %}
@@ -25,58 +25,20 @@
 </div></section>
 {% endif %}
 
-<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'agenda' %}">
-    <div class="card-body flex-row items-center gap-4">
-      <span class="pikto pikto-judo-termine" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Termine</h2><p class="text-sm text-base-content/70">Trainings und Veranstaltungen, An- und Abmelden</p></div>
-    </div>
-  </a>
-  {% if can_join_team %}
-  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'my_hours' %}">
-    <div class="card-body flex-row items-center gap-4">
-      <span class="pikto pikto-judo-training" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Meine Stunden</h2><p class="text-sm text-base-content/70">Termine als Übungsleiter und bestätigte Stunden</p></div>
-    </div>
-  </a>
-  {% endif %}
-  {% if has_own_members %}
-  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'my_data' %}">
-    <div class="card-body flex-row items-center gap-4">
-      <span class="pikto pikto-judo-judogi" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Meine Daten</h2><p class="text-sm text-base-content/70">Kontakt, Graduierung und Gewicht</p></div>
-    </div>
-  </a>
-  {% endif %}
-  {% if can_manage_members %}
-  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'member_list' %}">
-    <div class="card-body flex-row items-center gap-4">
-      <span class="pikto pikto-verein-mitglieder" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Mitglieder</h2><p class="text-sm text-base-content/70">Mitglieder, Import und Zugänge</p></div>
-    </div>
-  </a>
-  {% endif %}
-  {% if can_plan_events %}
-  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'event_list' %}">
-    <div class="card-body flex-row items-center gap-4">
-      <span class="pikto pikto-judo-gemeinschaft" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Veranstaltungen</h2><p class="text-sm text-base-content/70">Zeitpläne, Zielgruppen und Übungsleiter</p></div>
-    </div>
-  </a>
-  {% endif %}
-  {% if can_manage_users %}
-  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'user_list' %}">
-    <div class="card-body flex-row items-center gap-4">
-      <span class="pikto pikto-verein-verwaltung" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Benutzer</h2><p class="text-sm text-base-content/70">Zugänge einladen und Rollen vergeben</p></div>
-    </div>
-  </a>
-  {% endif %}
-  <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'security' %}">
-    <div class="card-body flex-row items-center gap-4">
-      <span class="pikto pikto-verein-datenschutz" aria-hidden="true"></span>
-      <div><h2 class="card-title text-base">Meine Anmeldung</h2><p class="text-sm text-base-content/70">Passkeys, Passwort und Geräte</p></div>
-    </div>
-  </a>
-</div>
+{% menu "tiles" as groups %}
+{% for group in groups %}
+<section class="mb-6" {% if group.title %}aria-labelledby="h-kacheln-{{ forloop.counter }}"{% else %}aria-label="Für dich"{% endif %}>
+  {% if group.title %}<h2 class="mb-3 text-sm font-semibold text-base-content/70" id="h-kacheln-{{ forloop.counter }}">{{ group.title }}</h2>{% endif %}
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for item in group.items %}
+    <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{{ item.url }}">
+      <div class="card-body flex-row items-center gap-4">
+        <span class="grid size-12 flex-none place-items-center rounded-full bg-primary text-primary-content" aria-hidden="true"><i class="bi {{ item.icon }} text-2xl"></i></span>
+        <div><h3 class="card-title text-base">{{ item.label }}</h3><p class="text-sm text-base-content/70">{{ item.description }}</p></div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
 {% endblock %}
