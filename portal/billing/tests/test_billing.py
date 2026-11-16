@@ -20,11 +20,11 @@ pytestmark = pytest.mark.django_db
 
 
 def test_deadline():
-    assert services.deadline(date(2026, 1, 1)) == date(2026, 4, 10)
-    assert services.deadline(date(2026, 10, 1)) == date(2027, 1, 10)
-    assert not services.is_overdue(date(2026, 1, 1), date(2026, 4, 10))
-    assert services.is_overdue(date(2026, 1, 1), date(2026, 4, 11))
-    assert services.months_due(date(2026, 4, 3)) == date(2026, 1, 1)
+    assert services.deadline(date(2026, 1, 1)) == date(2026, 4, 5)
+    assert services.deadline(date(2026, 10, 1)) == date(2027, 1, 5)
+    assert not services.is_overdue(date(2026, 1, 1), date(2026, 4, 5))
+    assert services.is_overdue(date(2026, 1, 1), date(2026, 4, 6))
+    assert services.months_due(date(2026, 4, 1)) == date(2026, 1, 1)
 
 
 def test_rate_for_role_and_valid_from(trainer):
@@ -96,7 +96,7 @@ def test_submit_rules(trainer):
 def test_late_submission_is_marked_and_stays_marked(trainer, head):
     member = events.own_member(trainer)
     set_rate(trainer)
-    old = month_ago(4)  # Frist war der 10. des Vormonats
+    old = month_ago(4)  # Frist war der 5. des Vormonats
     make_shift(trainer, old + timedelta(days=1))
     overview = services.month_overview(member, old)
     assert overview.status == "überfällig" and overview.can_submit
@@ -163,15 +163,15 @@ def test_unsubmitted_and_reminders(trainer, other_trainer, run_on_commit):
     make_shift(trainer, month + timedelta(days=2))
     make_shift(other_trainer, month + timedelta(days=2), confirm=False)
     assert [m.first_name for m in services.unsubmitted(month)] == ["Anna"]
-    today = services.add_months(month, 1) + timedelta(days=2)  # der 3.
+    today = services.add_months(month, 1) + timedelta(days=0)  # der 1.
     run_on_commit(notices.remind, today)
     run_on_commit(notices.remind, today)
     assert SentNotification.objects.filter(kind="claim_remind").count() == 1
-    run_on_commit(notices.remind, today + timedelta(days=1))  # der 4.: nichts
+    run_on_commit(notices.remind, today + timedelta(days=1))  # der 2.: nichts
     assert SentNotification.objects.filter(kind="claim_remind").count() == 1
-    last = services.add_months(month, 3) + timedelta(days=2)  # der 3. im Monat der Frist
+    last = services.add_months(month, 3) + timedelta(days=0)  # der 1. im Monat der Frist
     run_on_commit(notices.remind, last)
-    assert SentNotification.objects.filter(kind="claim_remind", title__startswith="Frist bis 10.").count() == 1
+    assert SentNotification.objects.filter(kind="claim_remind", title__startswith="Frist bis 5.").count() == 1
 
 
 def test_notices_on_submit_and_decide(trainer, head, run_on_commit):

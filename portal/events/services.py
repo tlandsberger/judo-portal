@@ -42,7 +42,7 @@ HORIZON_DAYS = 365
 # So lange nach dem Termin sieht das Team noch die Teilnehmerliste.
 PARTICIPANTS_DAYS_AFTER = 14
 AGENDA_DAYS = 42
-# „Meine Stunden“ zeigt so weit zurück wie die Frist der Abrechnung (10. des dritten Folgemonats).
+# „Meine Stunden“ zeigt so weit zurück wie die Frist der Abrechnung (5. des dritten Folgemonats).
 PAST_TEAM_DAYS = 135
 ACTIVE = (ParticipationStatus.REGISTERED, ParticipationStatus.WAITLIST)
 

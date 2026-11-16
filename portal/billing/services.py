@@ -1,7 +1,7 @@
 """Fachlogik der Übungsleiterabrechnung (ADR 0014).
 
 Grundlage sind die bestätigten Stunden abrechnungsrelevanter Rollen aus ``portal.events``. Abgerechnet wird je
-Übungsleiter und Monat; Frist ist der 10. des dritten Folgemonats (Januar bis 10. April). Danach lässt sich weiter
+Übungsleiter und Monat; Frist ist der 5. des dritten Folgemonats (Januar bis 5. April). Danach lässt sich weiter
 einreichen, die Abrechnung ist dann „verspätet“ und die Abteilungsleitung entscheidet über die Ausnahme. Beim
 Einreichen werden Minuten, Satz und Betrag als Zeilen eingefroren; bis zum Zurückgeben sind die Termine gesperrt.
 """
@@ -25,9 +25,9 @@ from portal.members.models import LinkKind, Member, MemberLink
 from . import notices
 from .models import Claim, ClaimLine, ClaimStatus, Rate, month_label
 
-# Frist: der 10. des dritten Folgemonats
+# Frist: der 5. des dritten Folgemonats
 DEADLINE_MONTHS = 3
-DEADLINE_DAY = 10
+DEADLINE_DAY = 5
 DECIDE = (Role.DEPARTMENT_HEAD, Role.ADMIN)
 CENT = Decimal("0.01")
 
@@ -57,7 +57,7 @@ def month_range(month: date) -> tuple[datetime, datetime]:
 
 
 def deadline(month: date) -> date:
-    """Letzter Tag, um ``month`` fristgerecht einzureichen: der 10. des dritten Folgemonats (Januar → 10. April)."""
+    """Letzter Tag, um ``month`` fristgerecht einzureichen: der 5. des dritten Folgemonats (Januar → 5. April)."""
     return add_months(first_of_month(month), DEADLINE_MONTHS).replace(day=DEADLINE_DAY)
 
 

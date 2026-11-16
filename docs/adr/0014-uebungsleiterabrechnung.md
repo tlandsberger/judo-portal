@@ -18,7 +18,7 @@ Aufstellung, die die Abteilungsleitung freigegeben hat. Ausgezahlt wird weiterhi
   - Gepflegt von der Abteilungsleitung (Seite „Stundensätze“).
 - **Eine Abrechnung (`Claim`) je Übungsleiter und Monat**, einzureichen nach Monatsende.
   - Ein noch offener Monat ist kein Datensatz, sondern wird aus den bestätigten Teilnahmen berechnet.
-  - **Frist:** der 10. (Kalendertag) des dritten Folgemonats, z. B. Januar bis 10. April (`deadline`).
+  - **Frist:** der 5. (Kalendertag) des dritten Folgemonats, z. B. Januar bis 5. April (`deadline`).
   - **Ausnahmen:** Auch nach der Frist lässt sich einreichen. Die Abrechnung ist dann als verspätet markiert
     (`is_late`), und die Abteilungsleitung entscheidet beim Freigeben über die Ausnahme. Die Markierung entsteht beim
     ersten Einreichen; wird eine fristgerecht eingereichte Abrechnung nach der Frist zurückgegeben, bleibt sie
@@ -40,8 +40,8 @@ Aufstellung, die die Abteilungsleitung freigegeben hat. Ausgezahlt wird weiterhi
     Unterschriftszeilen für Übungsleiter und Geschäftsstelle.
   - CSV je Monat mit allen freigegebenen Abrechnungen (Semikolon, UTF-8 mit BOM für Excel).
 - **Benachrichtigungen** über `notify` (ADR 0011): eingereicht an die Abteilungsleitung (ohne Abteilungsleitung an
-  Admins), Entscheidung an den Übungsleiter. Am 3. eines Monats ab 9 Uhr Erinnerung an den Vormonat und an den
-  Monat, dessen Frist am 10. endet; je Monat und Anlass nur einmal.
+  Admins), Entscheidung an den Übungsleiter. Am 1. eines Monats ab 9 Uhr Erinnerung an den Vormonat und an den
+  Monat, dessen Frist am 5. endet; je Monat und Anlass nur einmal.
 - Die Übungsleiterpauschale (§ 3 Nr. 26 EStG) überwacht das Portal nicht.
 
 ## Konsequenzen

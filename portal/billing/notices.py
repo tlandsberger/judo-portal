@@ -1,7 +1,7 @@
 """Benachrichtigungen der Abrechnung über ``portal.notifications`` (Push, sonst Mail; ADR 0011, 0014).
 
-Sofort: eingereicht (an die Abteilungsleitung), freigegeben oder zurückgegeben (an den Übungsleiter). Am 3. des
-Monats: Erinnerung an den Vormonat und an den Monat, dessen Frist am 10. endet.
+Sofort: eingereicht (an die Abteilungsleitung), freigegeben oder zurückgegeben (an den Übungsleiter). Am 1. des
+Monats: Erinnerung an den Vormonat und an den Monat, dessen Frist am 5. endet.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from portal.notifications import services as notifications
 if TYPE_CHECKING:
     from .models import Claim
 
-REMIND_DAY = 3
+REMIND_DAY = 1
 REMIND_HOUR = 9
 
 
@@ -64,7 +64,7 @@ def decided(claim: Claim) -> None:
 
 
 def remind(today: date | None = None) -> None:
-    """Am 3.: Vormonat einreichen; dazu letzte Erinnerung für den Monat, dessen Frist am 10. endet."""
+    """Am 1.: Vormonat einreichen; dazu letzte Erinnerung für den Monat, dessen Frist am 5. endet."""
     from . import services
 
     today = today or timezone.localdate()
