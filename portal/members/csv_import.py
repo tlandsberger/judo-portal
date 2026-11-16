@@ -22,6 +22,7 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
+from django.utils import timezone
 
 from .models import Gender, Grade, Interest, Member
 
@@ -79,7 +80,9 @@ class Row:
         if self.errors:
             return "error"
         if self.member is None:
-            return "new"
+            left_on = self.values.get("left_on")
+            # Ausgetretene legt der Import nie neu an (ADR 0015); nur ein Austritt in der Zukunft ist erlaubt.
+            return "left" if left_on and left_on <= timezone.localdate() else "new"
         return "changed" if self.changes else "unchanged"
 
     @property
@@ -96,7 +99,7 @@ class Preview:
 
     @property
     def counts(self) -> dict[str, int]:
-        return {status: self.count(status) for status in ("new", "changed", "unchanged", "error")}
+        return {status: self.count(status) for status in ("new", "changed", "unchanged", "left", "error")}
 
     @property
     def has_changes(self) -> bool:
@@ -137,13 +140,16 @@ def preview(text: str) -> Preview:
 
 
 @transaction.atomic
-def apply(text: str) -> Preview:
+def apply(text: str, by: Any = None) -> Preview:
     """Übernimmt alle fehlerfreien Zeilen. Wird neu aus dem Text berechnet, nicht aus einer alten Vorschau."""
+    from . import services
+
     result = preview(text)
     for row in result.rows:
         if row.status not in ("new", "changed"):
             continue
         member = row.member or Member()
+        before = services.member_snapshot(row.member)
         interests = row.values.get("interests")
         for key, value in row.values.items():
             if key != "interests":
@@ -152,6 +158,7 @@ def apply(text: str) -> Preview:
         member.save()
         if interests is not None:
             member.interests.set(interests)
+        services.record_change(member, before, by, "CSV-Import")
     return result
 
 

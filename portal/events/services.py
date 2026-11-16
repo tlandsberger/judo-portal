@@ -18,6 +18,7 @@ from django.db.models import Q, QuerySet
 from django.utils import timezone
 
 from portal.accounts.models import Role, User
+from portal.core import audit
 from portal.members import services as members
 from portal.members.models import LinkKind, Member, MemberLink, grade_rank
 
@@ -55,6 +56,23 @@ class RegistrationError(Exception):
 # Teilnahme schon eingereicht ist. So kennt diese App die Abrechnung nicht.
 LockCheck = Callable[["Participation"], str | None]
 _locks: list[LockCheck] = []
+
+
+def _when(occurrence: Occurrence) -> str:
+    return f"{occurrence.event.title} am {timezone.localtime(occurrence.starts_at):%d.%m.%Y %H:%M}"
+
+
+def _audit(by: Any, action: str, summary: str, participation: Participation | None = None, **changes: Any) -> None:
+    """Protokolleintrag für Termine (ADR 0015); Bezug ist das Mitglied bzw. der Gast der Teilnahme."""
+    audit.log(
+        by,
+        audit.Area.EVENTS,
+        action,
+        summary,
+        member=participation.member_id if participation else None,
+        guest=participation.guest_id if participation else None,
+        changes=changes or None,
+    )
 
 
 def register_lock(check: LockCheck) -> None:
@@ -375,6 +393,9 @@ def update_occurrence(occurrence: Occurrence, fields: Iterable[str], by: User | 
     if moved or changed & {"registration_opens_at", "registration_closes_at"}:
         occurrence.is_modified = True
     occurrence.save()
+    if changed:
+        labels = audit.labels_for(Occurrence, changed)
+        _audit(by, "occurrence_update", f"{_when(occurrence)} geändert: {', '.join(sorted(labels.values()))}")
     if moved:
         notices.changed(occurrence, by)
 
@@ -389,6 +410,7 @@ def cancel(occurrence: Occurrence, by: User | None = None) -> None:
     occurrence.cancelled_at = timezone.now()
     occurrence.save(update_fields=["cancelled_at"])
     log.info("Termin %s abgesagt", occurrence.pk)
+    _audit(by, "cancel", f"{_when(occurrence)} abgesagt")
     notices.cancelled(occurrence, by)
 
 
@@ -406,9 +428,10 @@ def cancel_range(event: Event, first: date, last: date, by: User | None = None) 
     return count
 
 
-def uncancel(occurrence: Occurrence) -> None:
+def uncancel(occurrence: Occurrence, by: User | None = None) -> None:
     occurrence.cancelled_at = None
     occurrence.save(update_fields=["cancelled_at"])
+    _audit(by, "uncancel", f"Absage von {_when(occurrence)} zurückgenommen")
 
 
 # Anmeldung
@@ -496,6 +519,13 @@ def register(
         },
     )
     log.info("Mitglied %s für Termin %s: %s", member.pk, occurrence.pk, status)
+    state = "auf der Warteliste" if status == ParticipationStatus.WAITLIST else "angemeldet"
+    _audit(
+        by,
+        "register",
+        f"{member.display_name} für {_when(occurrence)} {state}{' (Ausnahme)' if exception else ''}",
+        participation,
+    )
     return participation
 
 
@@ -510,6 +540,12 @@ def unregister(participation: Participation, by: User, *, force: bool = False) -
     participation.status = ParticipationStatus.CANCELLED
     participation.registered_by = by
     participation.save(update_fields=["status", "registered_by", "updated_at"])
+    _audit(
+        by,
+        "unregister",
+        f"{participation.person.display_name} von {_when(participation.occurrence)} abgemeldet",
+        participation,
+    )
     if was_registered:
         promote(participation.occurrence)
 
@@ -526,6 +562,12 @@ def promote(occurrence: Occurrence) -> list[Participation]:
         participation.status = ParticipationStatus.REGISTERED
         participation.save(update_fields=["status", "updated_at"])
         promoted.append(participation)
+        _audit(
+            None,
+            "promote",
+            f"{participation.person.display_name} für {_when(occurrence)} von der Warteliste nachgerückt",
+            participation,
+        )
         notices.promoted(participation)
     return promoted
 
@@ -558,18 +600,26 @@ def set_team(occurrence: Occurrence, member: Member, role: ParticipantRole, by: 
             "weight": None,
         },
     )
+    _audit(by, "team", f"{member.display_name} als {role.name} für {_when(occurrence)} eingetragen", participation)
     if freed:
         promote(occurrence)
     return participation
 
 
-def remove_team(participation: Participation) -> None:
+def remove_team(participation: Participation, by: User | None = None) -> None:
     if participation.is_confirmed:
         raise RegistrationError("Bestätigte Stunden bleiben für die Abrechnung erhalten.")
+    _audit(
+        by,
+        "team_remove",
+        f"{participation.person.display_name} als {participation.role.name} von {_when(participation.occurrence)} "
+        "ausgetragen",
+        participation,
+    )
     participation.delete()
 
 
-def confirm(participation: Participation, minutes: int | None = None) -> None:
+def confirm(participation: Participation, minutes: int | None = None, by: User | None = None) -> None:
     """Nach dem Termin: „durchgeführt, ich war als Trainer/Co-Trainer da“ – die Stunden für die Abrechnung.
 
     Bestätigte Stunden lassen sich so auch korrigieren, bis der Monat zur Abrechnung eingereicht ist.
@@ -581,9 +631,23 @@ def confirm(participation: Participation, minutes: int | None = None) -> None:
         raise RegistrationError("Bestätigen kannst du erst, wenn der Termin begonnen hat.")
     if participation.occurrence.is_cancelled:
         raise RegistrationError("Der Termin ist abgesagt.")
+    before = participation.minutes if participation.is_confirmed else None
     participation.confirmed_at = participation.confirmed_at or timezone.now()
     participation.minutes = minutes or participation.occurrence.minutes
     participation.save(update_fields=["confirmed_at", "minutes", "updated_at"])
+    if before is None:
+        summary = f"Stunden für {_when(participation.occurrence)} bestätigt ({participation.minutes} Minuten)"
+        _audit(by, "confirm", summary, participation)
+    elif before != participation.minutes:
+        summary = f"Dauer für {_when(participation.occurrence)} geändert"
+        audit.log(
+            by,
+            audit.Area.EVENTS,
+            "confirm_update",
+            summary,
+            member=participation.member_id,
+            changes={"Minuten": [before, participation.minutes]},
+        )
 
 
 @transaction.atomic

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ member.display_name }} löschen{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <a href="{% url 'member_detail' member.pk %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> {{ member.display_name }}</a>
+  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+    <h1 class="text-2xl font-bold">{{ member.display_name }} löschen</h1>
+    {% if when %}<p class="text-sm text-base-content/70">Ohne dein Zutun wird {{ member.first_name }} am {{ when|date:"d.m.Y" }} gelöscht (drei Monate nach dem Austritt).</p>{% endif %}
+    <div role="alert" class="alert alert-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+      <div>
+        <p class="font-semibold">Das lässt sich nicht rückgängig machen. Gelöscht werden:</p>
+        <ul class="mt-2 list-disc pl-5">
+          <li>die Daten von {{ member.display_name }}{% if member.member_number %} (Nr. {{ member.member_number }}){% endif %}</li>
+          <li>{{ preview.participations }} Teilnahme{{ preview.participations|pluralize:"n" }} an Terminen</li>
+          <li>{{ preview.claims }} Abrechnung{{ preview.claims|pluralize:"en" }} mit Stundensätzen</li>
+          <li>{{ preview.links|length }} Verknüpfung{{ preview.links|length|pluralize:"en" }} mit Benutzern{% for link in preview.links %}{% if forloop.first %}: {% endif %}{{ link.user.display_name }} ({{ link.get_kind_display }}){% if not forloop.last %}, {% endif %}{% endfor %}</li>
+          {% if preview.users_deleted %}<li>die Zugänge von {% for user in preview.users_deleted %}{{ user.display_name }}{% if not forloop.last %}, {% endif %}{% endfor %}, weil sie danach kein Mitglied mehr haben (sie bekommen eine Mail)</li>{% endif %}
+          <li>die Protokolleinträge zu {{ member.first_name }}</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-sm text-base-content/70">Brauchst du die Daten noch? Lade vorher die <a class="link" href="{% url 'member_export' member.pk %}">Auskunft</a> herunter. Im Protokoll bleibt nur „Mitglied Nr. … gelöscht“.</p>
+    <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+      {{ form }}
+      <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-error"><i class="bi bi-trash" aria-hidden="true"></i> Endgültig löschen</button><a class="btn" href="{% url 'member_detail' member.pk %}">Abbrechen</a></div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

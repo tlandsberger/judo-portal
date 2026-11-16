@@ -51,6 +51,9 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
   Termine. Begriffe: „Co-Trainer“, „Stunden bestätigen“.
 - **Abrechnung:** Sätze, Monate, Einreichen und Freigabe nur über `portal/billing/services.py` (ADR 0014). Zeilen
   sind Schnappschüsse; Termine eingereichter Monate sperrt `billing` über `events.services.register_lock`.
+- **Datenschutz:** Wer personenbezogene Daten ändert, protokolliert das mit `portal.core.audit.log` (bei Feldern mit
+  `snapshot`/`diff`; ADR 0015). Auskunft und Löschen nur über `portal/privacy/services.py`; neue Daten zu Mitgliedern
+  oder Benutzern dort in `export_*` aufnehmen und beim Löschen mitnehmen.
 - **Benachrichtigungen:** Tägliches nur über `portal.notifications.services.notify` (Push, sonst Mail; Schlüssel je
   Anlass, damit nichts doppelt rausgeht). Einladung, Anmeldecode, Sicherheit des Zugangs und neue Verknüpfungen
   immer direkt per Mail (ADR 0011). Gäste haben keinen Benutzer: alles an sie per Mail über

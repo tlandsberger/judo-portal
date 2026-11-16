@@ -15,6 +15,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
+from portal.core import audit
+
 from . import devices
 from .models import Invitation, KnownDevice, Role, User
 from .signals import invitation_accepted
@@ -72,18 +74,28 @@ def invite(
     )
     if send:
         transaction.on_commit(lambda: send_invitation(invitation))
+    role_text = ", ".join(Role(r).label for r in invitation.roles)
+    audit.log(
+        invited_by,
+        audit.Area.USERS,
+        "invite",
+        f"Einladung an {email}{f' ({role_text})' if role_text else ''}{'' if send else ', nur Link'}",
+        user=invitation.user,
+    )
     log.info("Einladung für %s erstellt (%s)", email, "per Mail" if send else "nur Link")
     return invitation
 
 
-def resend(invitation: Invitation) -> None:
+def resend(invitation: Invitation, by: User | None = None) -> None:
     invitation.renew()
     send_invitation(invitation)
+    audit.log(by, audit.Area.USERS, "invite_resend", f"Einladung an {invitation.email} erneut verschickt")
 
 
-def new_link(invitation: Invitation) -> str:
+def new_link(invitation: Invitation, by: User | None = None) -> str:
     """Erzeugt einen neuen Link (der alte wird ungültig), ohne Mail-Versand."""
     invitation.renew()
+    audit.log(by, audit.Area.USERS, "invite_link", f"Neuer Einladungslink für {invitation.email}")
     log.info("Neuer Einladungslink für %s erzeugt (ohne Mail)", invitation.email)
     return invitation_url(invitation)
 
@@ -140,6 +152,7 @@ def accept(invitation: Invitation, request: HttpRequest) -> User | None:
     EmailAddress.objects.update_or_create(user=user, email=user.email, defaults={"verified": True, "primary": True})
     invitation.user = user
     invitation.save(update_fields=["user"])
+    audit.log(user, audit.Area.USERS, "invite_accept", f"Einladung angenommen ({user.email})", user=user)
     invitation_accepted.send(sender=Invitation, invitation=invitation, user=user)
 
     if has_login_method(user):
@@ -196,6 +209,7 @@ def check_new_device(request: HttpRequest, user: User) -> None:
         return
     if had_devices:
         log.info("Anmeldung von %s auf neuem Gerät (%s)", user.email, device.description)
+        audit.log(user, audit.Area.LOGIN, "new_device", f"Anmeldung von neuem Gerät: {device.description}", user=user)
         get_adapter(request).send_notification_mail("account/email/new_device", user, {"device": device.description})
 
 

@@ -1,9 +1,11 @@
 """Seiten der Mitgliederverwaltung und „Meine Daten“: Rechte und Abläufe."""
 
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
 from django.urls import reverse
+from django.utils import timezone
 
 from portal.members.models import LinkKind, Member, MemberLink
 
@@ -26,7 +28,8 @@ def test_member_pages_only_for_department_head(client, head, trainer) -> None:
 def test_member_list_filters(client, head) -> None:
     make_member("Ada")
     make_member("Quirin")
-    make_member("Cleo", left_on="2020-01-01")
+    # Gestern ausgetreten: ehemalig, aber noch nicht in der Liste „wird bald gelöscht“
+    make_member("Cleo", left_on=timezone.localdate() - timedelta(days=1))
     client.force_login(head)
     assert "Ada" not in client.get(reverse("member_list"), {"q": "quirin"}).content.decode()
     assert "Cleo" not in client.get(reverse("member_list")).content.decode()

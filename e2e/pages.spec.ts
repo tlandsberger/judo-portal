@@ -22,6 +22,8 @@ const pages = [
   { path: "/veranstaltungsarten/neu/", heading: "Veranstaltungsart anlegen" },
   { path: "/abrechnung/alle/", heading: "Abrechnungen" },
   { path: "/abrechnung/saetze/", heading: "Stundensätze" },
+  { path: "/protokoll/", heading: "Protokoll" },
+  { path: "/meine-daten/auskunft/", heading: "Meine gespeicherten Daten" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {

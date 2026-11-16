@@ -231,7 +231,7 @@ def occurrence_cancel(request: HttpRequest, pk: int) -> HttpResponse:
     if request.POST.get("undo"):
         if not services.can_manage_events(request.user):
             raise PermissionDenied
-        services.uncancel(occurrence)
+        services.uncancel(occurrence, _user(request))
         messages.success(request, "Der Termin findet wieder statt.")
     else:
         services.cancel(occurrence, _user(request))
@@ -280,7 +280,7 @@ def occurrence_team_remove(request: HttpRequest, pk: int, participation_pk: int)
     if not is_self and not services.can_lead(user, participation.occurrence):
         raise PermissionDenied
     try:
-        services.remove_team(participation)
+        services.remove_team(participation, _user(request))
     except RegistrationError as error:
         messages.error(request, str(error))
     else:
@@ -301,7 +301,7 @@ def hours_confirm(request: HttpRequest, pk: int) -> HttpResponse:
         return redirect("occurrence_detail", pk=pk)
     corrected = participation.is_confirmed
     try:
-        services.confirm(participation, form.cleaned_data["minutes"])
+        services.confirm(participation, form.cleaned_data["minutes"], by=_user(request))
     except RegistrationError as error:
         messages.error(request, str(error))
     else:

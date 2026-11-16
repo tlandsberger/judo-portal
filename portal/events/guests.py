@@ -21,6 +21,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from portal.accounts.models import User
+from portal.core import audit
 
 from . import services
 from .models import Event, Guest, Occurrence, Participation, ParticipationStatus
@@ -121,6 +122,10 @@ def register(event: Event, data: dict[str, Any], occurrences: Iterable[Occurrenc
             weight=guest.weight,
         )
     log.info("Gast %s für %s Termine von %s", guest.pk, len(occurrences), "Team" if by else "Link")
+    how = "vom Team eingetragen" if by else "über den Link angemeldet, noch unbestätigt"
+    audit.log(
+        by, audit.Area.EVENTS, "guest_register", f"Gast {guest.display_name} für {event.title} {how}", guest=guest
+    )
     transaction.on_commit(lambda: send_welcome(guest) if by else send_confirm_request(guest))
     return guest
 
@@ -132,6 +137,9 @@ def confirm(guest: Guest) -> None:
         return
     guest.confirmed_at = timezone.now()
     guest.save(update_fields=["confirmed_at"])
+    audit.log(
+        None, audit.Area.EVENTS, "guest_confirm", f"Gast {guest.display_name} hat die Anmeldung bestätigt", guest=guest
+    )
     for participation in guest.participations.filter(status=ParticipationStatus.PENDING).select_related(
         "occurrence__event"
     ):
@@ -158,6 +166,14 @@ def add(guest: Guest, occurrence: Occurrence) -> Participation:
             "created_at": timezone.now(),
         },
     )
+    audit.log(
+        None,
+        audit.Area.EVENTS,
+        "guest_add",
+        f"Gast {guest.display_name} hat sich für {occurrence.event.title} am "
+        f"{timezone.localtime(occurrence.starts_at):%d.%m.%Y} angemeldet",
+        guest=guest,
+    )
     return participation
 
 
@@ -168,14 +184,34 @@ def unregister(participation: Participation) -> None:
     was_registered = participation.status == ParticipationStatus.REGISTERED
     participation.status = ParticipationStatus.CANCELLED
     participation.save(update_fields=["status", "updated_at"])
+    audit.log(
+        None,
+        audit.Area.EVENTS,
+        "guest_unregister",
+        f"Gast {participation.person.display_name} hat sich von {participation.occurrence.event.title} am "
+        f"{timezone.localtime(participation.occurrence.starts_at):%d.%m.%Y} abgemeldet",
+        guest=participation.guest_id,
+    )
     if was_registered:
         services.promote(participation.occurrence)
 
 
 def update(guest: Guest, data: dict[str, Any]) -> None:
+    fields = list(data)
+    before = audit.snapshot(guest, fields)
     for name, value in data.items():
         setattr(guest, name, value)
     guest.save()
+    changes = audit.diff(before, audit.snapshot(guest, fields), audit.labels_for(Guest, fields))
+    if changes:
+        audit.log(
+            None,
+            audit.Area.EVENTS,
+            "guest_update",
+            f"Gast {guest.display_name} hat seine Angaben geändert: {', '.join(changes)}",
+            guest=guest,
+            changes=changes,
+        )
     if "weight" in data:
         guest.participations.filter(occurrence__starts_at__gt=timezone.now()).update(weight=guest.weight)
 
@@ -187,8 +223,19 @@ def expire_pending(now: datetime | None = None) -> int:
     """Unbestätigte Anmeldungen verfallen nach 24 Stunden; der Gast wird mit ihnen gelöscht."""
     now = now or timezone.now()
     stale = Guest.objects.filter(confirmed_at__isnull=True, created_at__lt=now - timedelta(hours=PENDING_HOURS))
-    count, _ = stale.delete()
-    return count
+    return _delete(stale, "unbestätigt nach 24 Stunden")
+
+
+def _delete(guests: Any, reason: str) -> int:
+    """Gäste mit ihren Protokolleinträgen löschen; übrig bleibt nur die Anzahl (ADR 0015)."""
+    ids = list(guests.values_list("pk", flat=True))
+    if not ids:
+        return 0
+    for guest_id in ids:
+        audit.forget_guest(guest_id)
+    Guest.objects.filter(pk__in=ids).delete()
+    audit.log(None, audit.Area.PRIVACY, "guests_deleted", f"{len(ids)} Gäste gelöscht ({reason})")
+    return len(ids)
 
 
 def cleanup(now: datetime | None = None) -> int:
@@ -196,7 +243,7 @@ def cleanup(now: datetime | None = None) -> int:
     now = now or timezone.now()
     cutoff = now - timedelta(days=KEEP_DAYS)
     old = Guest.objects.annotate(last=Max("participations__occurrence__ends_at")).filter(last__lt=cutoff)
-    count, _ = old.delete()
+    count = _delete(old, f"{KEEP_DAYS} Tage nach dem letzten Termin")
     if count:
         log.info("%s Gäste gelöscht (letzter Termin vor mehr als %s Tagen)", count, KEEP_DAYS)
     return count

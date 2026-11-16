@@ -30,11 +30,12 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 
 | App | Inhalt |
 |---|---|
-| `portal.core` | App-Rahmen, Startseite, Bausteine, PWA (Manifest, Service Worker), Healthcheck, Backup, Zeitplaner |
+| `portal.core` | App-Rahmen, Startseite, Bausteine, PWA (Manifest, Service Worker), Healthcheck, Backup, Zeitplaner, Änderungsprotokoll |
 | `portal.accounts` | Benutzer, Rollen, Einladungen, Benutzerverwaltung, Anpassungen an allauth |
 | `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Benutzer ↔ Mitglied (m:n), „Meine Daten“ (ADR 0009) |
 | `portal.events` | Veranstaltungen, Arten, Zeitpläne, Termine, Zielgruppen, Teilnahme mit Rollen und Warteliste, Gäste (ADR 0010, 0012, 0013) |
 | `portal.notifications` | Push-Benachrichtigungen je Gerät mit Mail als Ersatz, Aktionsknöpfe (ADR 0011) |
+| `portal.privacy` | Auskunft, Löschen auf Wunsch und nach Austritt, Seite „Protokoll“ (ADR 0015) |
 | `portal.billing` | Übungsleiterabrechnung: Stundensätze, Monatsabrechnung, Freigabe, PDF und CSV (ADR 0014) |
 
 Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kommen aus eigenen Übersetzungen in
@@ -79,7 +80,8 @@ Geräteeinstellung oder Umschalter.
   verknüpfte Benutzer statt Kontaktdaten am Kind (ADR 0009).
 - Push-Nachrichten sind Ende-zu-Ende-verschlüsselt und knapp gehalten. Sicherheitsrelevantes (Passwort, Passkey, neues
   Gerät) meldet das Portal immer per Mail (ADR 0011).
-- Später: Änderungsprotokoll, Export der eigenen Daten, Löschung nach Austritt.
+- Änderungsprotokoll (1 Jahr), Auskunft der eigenen Daten unter „Meine Daten“, Löschung 3 Monate nach Austritt oder
+  auf Wunsch (ADR 0015).
 
 ## Qualität und Wartung
 
@@ -100,4 +102,4 @@ Geräteeinstellung oder Umschalter.
 | 2 | Mitgliederverwaltung inkl. CSV-Import und Zugängen für Mitglieder/Eltern | ✅ |
 | 3 | Veranstaltungen und Termine mit Zielgruppen, Anmeldung und Teilnahme mit Rollen | ✅ |
 | 4 | Übungsleiterabrechnung | ✅ |
-| 5 | Datenschutz-Funktionen (Änderungsprotokoll, Export, Löschung) | offen |
+| 5 | Datenschutz-Funktionen (Änderungsprotokoll, Export, Löschung) | ✅ |

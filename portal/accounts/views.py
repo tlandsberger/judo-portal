@@ -9,6 +9,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
+from portal.core import audit
+
 from . import services
 from .forms import InvitationForm, PhoneForm, RolesForm
 from .models import Invitation, Role, User
@@ -66,8 +68,18 @@ def setup_login(request: HttpRequest) -> HttpResponse:
 def security(request: HttpRequest) -> HttpResponse:
     """„Meine Anmeldung“: Passkeys, Passwort, angemeldete Geräte und Telefon für Notfälle."""
     form = PhoneForm(request.POST or None, instance=request.user)
+    before = request.user.phone  # type: ignore[union-attr]
     if request.method == "POST" and form.is_valid():
         form.save()
+        if before != request.user.phone:  # type: ignore[union-attr]
+            audit.log(
+                request.user,
+                audit.Area.LOGIN,
+                "phone",
+                "Telefon geändert",
+                user=request.user,
+                changes={"Telefon": [before, request.user.phone]},  # type: ignore[union-attr]
+            )
         messages.success(request, "Telefon gespeichert.")
         return redirect("security")
     context = _login_methods(request.user)  # type: ignore[arg-type]
@@ -116,7 +128,7 @@ def invite(request: HttpRequest) -> HttpResponse:
 @role_required(*MANAGE_USERS)
 def resend_invitation(request: HttpRequest, pk: int) -> HttpResponse:
     invitation = get_object_or_404(Invitation, pk=pk, accepted_at__isnull=True)
-    services.resend(invitation)
+    services.resend(invitation, by=request.user)  # type: ignore[arg-type]
     messages.success(request, f"Einladung an {invitation.email} erneut verschickt.")
     return redirect("user_list")
 
@@ -126,7 +138,7 @@ def resend_invitation(request: HttpRequest, pk: int) -> HttpResponse:
 def invitation_link(request: HttpRequest, pk: int) -> HttpResponse:
     """Neuen Einladungslink erzeugen und anzeigen (zum Kopieren), ohne Mail."""
     invitation = get_object_or_404(Invitation, pk=pk, accepted_at__isnull=True)
-    services.new_link(invitation)
+    services.new_link(invitation, by=request.user)  # type: ignore[arg-type]
     return _show_link(request, invitation)
 
 
@@ -161,6 +173,7 @@ def reinvite_user(request: HttpRequest, pk: int) -> HttpResponse:
 def delete_invitation(request: HttpRequest, pk: int) -> HttpResponse:
     invitation = get_object_or_404(Invitation, pk=pk, accepted_at__isnull=True)
     invitation.delete()
+    audit.log(request.user, audit.Area.USERS, "invite_delete", f"Einladung an {invitation.email} zurückgezogen")
     messages.success(request, f"Einladung an {invitation.email} zurückgezogen.")
     return redirect("user_list")
 
@@ -182,7 +195,17 @@ def edit_user(request: HttpRequest, pk: int) -> HttpResponse:
         if target_user == actor and Role.ADMIN in target_user.roles and Role.ADMIN not in roles:
             messages.error(request, "Du kannst dir die Administrator-Rolle nicht selbst entziehen.")
             return redirect("edit_user", pk=target_user.pk)
+        before = target_user.role_labels
         target_user.set_roles(roles)
+        if before != target_user.role_labels:
+            audit.log(
+                actor,
+                audit.Area.USERS,
+                "roles",
+                f"Rollen von {target_user.display_name} geändert",
+                user=target_user,
+                changes={"Rollen": [", ".join(before), ", ".join(target_user.role_labels)]},
+            )
         messages.success(request, f"Rollen von {target_user.display_name} gespeichert.")
         return redirect("user_list")
     return render(request, "accounts/edit_user.html", {"target_user": target_user, "form": form})
@@ -202,5 +225,6 @@ def toggle_active(request: HttpRequest, pk: int) -> HttpResponse:
         # Deaktivierte Benutzer gelten sofort als abgemeldet: Django lässt inaktive Nutzer nicht mehr durch.
         target_user.save(update_fields=["is_active"])
         state = "aktiviert" if target_user.is_active else "deaktiviert"
+        audit.log(actor, audit.Area.USERS, "active", f"{target_user.display_name} {state}", user=target_user)
         messages.success(request, f"{target_user.display_name} {state}.")
     return redirect("user_list")

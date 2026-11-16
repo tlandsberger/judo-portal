@@ -20,7 +20,7 @@ CSV = (
 
 def test_preview_saves_nothing() -> None:
     result = csv_import.preview(CSV)
-    assert result.counts == {"new": 2, "changed": 0, "unchanged": 0, "error": 0}
+    assert result.counts == {"new": 2, "changed": 0, "unchanged": 0, "left": 0, "error": 0}
     assert not Member.objects.exists()
 
 

@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 
 from portal.accounts import devices
 from portal.accounts.models import User
+from portal.core import audit
 
 from . import services
 from .models import PushSubscription
@@ -31,7 +32,9 @@ def subscribe(request: HttpRequest) -> HttpResponse:
     if not endpoint.startswith("https://"):
         return HttpResponseBadRequest("Ungültiges Abo.")
     user: User = request.user  # type: ignore[assignment]
-    services.subscribe(user, endpoint, p256dh, auth, devices.describe(request.headers.get("User-Agent", "")))
+    device = devices.describe(request.headers.get("User-Agent", ""))
+    services.subscribe(user, endpoint, p256dh, auth, device)
+    audit.log(user, audit.Area.LOGIN, "push_on", f"Push eingeschaltet: {device}", user=user)
     return JsonResponse({"ok": True})
 
 
@@ -43,6 +46,7 @@ def unsubscribe(request: HttpRequest) -> HttpResponse:
     except ValueError, KeyError, TypeError:
         return HttpResponseBadRequest("Ungültiges Abo.")
     services.unsubscribe(request.user, endpoint)  # type: ignore[arg-type]
+    audit.log(request.user, audit.Area.LOGIN, "push_off", "Push auf einem Gerät ausgeschaltet", user=request.user)
     return JsonResponse({"ok": True})
 
 
@@ -51,6 +55,9 @@ def unsubscribe(request: HttpRequest) -> HttpResponse:
 def remove_device(request: HttpRequest, pk: int) -> HttpResponse:
     subscription = get_object_or_404(PushSubscription, pk=pk, user=request.user)
     subscription.delete()
+    audit.log(
+        request.user, audit.Area.LOGIN, "push_off", f"Push-Gerät entfernt: {subscription.device}", user=request.user
+    )
     messages.success(request, f"Push für {subscription.device or 'das Gerät'} ist aus.")
     return redirect("security")
 

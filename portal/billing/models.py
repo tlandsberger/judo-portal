@@ -44,7 +44,8 @@ class ClaimStatus(models.TextChoices):
 class Claim(models.Model):
     """Abrechnung eines Übungsleiters für einen Monat. Ein noch nicht eingereichter Monat hat keinen Datensatz."""
 
-    member = models.ForeignKey(Member, on_delete=models.PROTECT, related_name="claims", verbose_name="Übungsleiter")
+    # Mit dem Mitglied gelöscht (ADR 0015); die Geschäftsstelle bewahrt das PDF auf.
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="claims", verbose_name="Übungsleiter")
     month = models.DateField("Monat", help_text="Erster Tag des Monats.")
     status = models.CharField("Status", max_length=10, choices=ClaimStatus.choices, default=ClaimStatus.SUBMITTED)
     submitted_at = models.DateTimeField("Eingereicht am")
