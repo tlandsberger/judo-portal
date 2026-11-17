@@ -50,7 +50,8 @@
   --noise: 0;
 }
 
-/* Dunkel: Flächen fast schwarz mit Grünstich, Vereinsgrün aufgehellt für ausreichenden Kontrast, Dunkelgrün wie im hellen Theme. */
+/* Dunkel: Flächen fast schwarz mit Grünstich, Leitfarbe Mattengrün aus dem Design System (wie im dunklen Favicon,
+   scripts/make_icons.py; Kontrast auf den Flächen ≥ 6,7:1), Dunkelgrün wie im hellen Theme. */
 @plugin "daisyui/theme" {
   name: "wtsv-dark";
   prefersdark: true;
@@ -59,7 +60,7 @@
   --color-base-200: #111814;
   --color-base-300: #0b100d;
   --color-base-content: #e3ebe6;
-  --color-primary: #4cc27a;
+  --color-primary: #5fb878; /* Mattengrün */
   --color-primary-content: #03200e;
   --color-secondary: #0a3d1c;
   --color-secondary-content: #e3ebe6;
@@ -69,7 +70,7 @@
   --color-neutral-content: #e3ebe6;
   --color-info: oklch(74% 0.16 232.661);
   --color-info-content: oklch(29% 0.066 243.157);
-  --color-success: #4cc27a;
+  --color-success: #5fb878;
   --color-success-content: #03200e;
   --color-warning: oklch(82% 0.189 84.429);
   --color-warning-content: oklch(41% 0.112 45.904);
