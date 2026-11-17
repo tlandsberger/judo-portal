@@ -17,7 +17,6 @@
           <a class="link link-hover font-semibold" href="{% url 'target_group_members' group.pk %}">{{ group.name }}</a>
           <div class="text-sm text-base-content/70">{{ group.summary }} · {{ count }} Mitglied{{ count|pluralize:"er" }}</div>
         </div>
-        <a class="btn btn-ghost btn-sm" href="{% url 'target_group_edit' group.pk %}" aria-label="{{ group.name }} bearbeiten"><i class="bi bi-pencil" aria-hidden="true"></i></a>
       </li>
       {% endfor %}
     </ul>

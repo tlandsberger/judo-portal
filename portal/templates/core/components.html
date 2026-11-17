@@ -9,16 +9,30 @@
 <div class="grid gap-6 lg:grid-cols-2">
   <section class="card bg-base-100 shadow-sm" aria-labelledby="b-buttons"><div class="card-body">
     <h2 class="card-title" id="b-buttons">Schaltflächen</h2>
+    <p class="text-sm text-base-content/70">Normal groß auf Seitenebene (Seitenkopf, Formulare, Filter), klein nur in Zeilen, Abschnittsköpfen und Hinweisleisten (ADR 0017).</p>
+    <h3 class="text-sm font-semibold">Seite</h3>
     <div class="flex flex-wrap gap-2">
       <button type="button" class="btn btn-primary">Speichern</button>
-      <button type="button" class="btn btn-outline btn-primary">Bearbeiten</button>
+      <button type="button" class="btn btn-outline btn-primary"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</button>
       <button type="button" class="btn">Abbrechen</button>
-      <button type="button" class="btn btn-outline btn-error">Löschen</button>
-      <button type="button" class="btn btn-link">Mehr erfahren</button>
+      <button type="button" class="btn btn-ghost">Später</button>
+      <button type="button" class="btn btn-primary" disabled>Deaktiviert</button>
+    </div>
+    <h3 class="text-sm font-semibold">Gefährlich</h3>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn btn-ghost btn-error"><i class="bi bi-trash" aria-hidden="true"></i> Löschen</button>
+      <button type="button" class="btn btn-outline btn-error"><i class="bi bi-x-circle" aria-hidden="true"></i> Absagen</button>
+      <button type="button" class="btn btn-error"><i class="bi bi-trash" aria-hidden="true"></i> Endgültig löschen</button>
+    </div>
+    <h3 class="text-sm font-semibold">Zeile und Abschnitt</h3>
+    <div class="flex flex-wrap items-center gap-2">
+      <button type="button" class="btn btn-primary btn-sm">Anmelden</button>
+      <button type="button" class="btn btn-outline btn-sm">Entfernen</button>
+      <button type="button" class="btn btn-ghost btn-sm">Nicht dabei?</button>
+      <button type="button" class="btn btn-ghost btn-square btn-sm" aria-label="Zurücknehmen" title="Zurücknehmen"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
+      <button type="button" class="btn btn-outline btn-primary btn-sm"><i class="bi bi-plus-lg" aria-hidden="true"></i> Termin</button>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <button type="button" class="btn btn-primary"><i class="bi bi-person-plus" aria-hidden="true"></i> Person einladen</button>
-      <button type="button" class="btn btn-primary" disabled>Deaktiviert</button>
       <span class="badge badge-soft badge-primary">Abteilungsleiter</span>
       <span class="badge badge-soft badge-primary">Übungsleiter</span>
       <span class="badge badge-accent">neu</span>

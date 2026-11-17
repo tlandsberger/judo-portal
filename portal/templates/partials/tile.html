@@ -1,0 +1,7 @@
+{# Kachel mit Icon, Titel und kurzer Beschreibung (Startseite, Hilfe). Parameter: url, icon, title, text #}
+<a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{{ url }}">
+  <div class="card-body flex-row items-start gap-4">
+    <i class="bi {{ icon }} text-3xl text-primary" aria-hidden="true"></i>
+    <div><h3 class="card-title text-lg">{{ title }}</h3><p class="text-sm text-base-content/70">{{ text }}</p></div>
+  </div>
+</a>

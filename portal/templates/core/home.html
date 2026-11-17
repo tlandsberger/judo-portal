@@ -31,12 +31,7 @@
   {% if group.title %}<h2 class="mb-3 text-sm font-semibold text-base-content/70" id="h-kacheln-{{ forloop.counter }}">{{ group.title }}</h2>{% endif %}
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {% for item in group.items %}
-    <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{{ item.url }}">
-      <div class="card-body flex-row items-center gap-4">
-        <span class="grid size-12 flex-none place-items-center rounded-full bg-primary text-primary-content" aria-hidden="true"><i class="bi {{ item.icon }} text-2xl"></i></span>
-        <div><h3 class="card-title text-base">{{ item.label }}</h3><p class="text-sm text-base-content/70">{{ item.description }}</p></div>
-      </div>
-    </a>
+    {% include "partials/tile.html" with url=item.url icon=item.icon title=item.label text=item.description %}
     {% endfor %}
   </div>
 </section>

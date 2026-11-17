@@ -158,6 +158,25 @@ class TestAccountManagement:
         assert invitation.token != old_token
         assert len(mail.outbox) == 1
 
+    def test_user_actions_live_on_the_user_page(self, client) -> None:
+        """Liste: Name öffnet den Benutzer; Einladung erneut senden und Deaktivieren stehen dort (ADR 0017)."""
+        client.force_login(make_user("alex@example.org", Role.DEPARTMENT_HEAD))
+        mia = make_user("mia@example.org", Role.TRAINER)
+        mia.set_unusable_password()
+        mia.save()
+        listing = client.get(reverse("user_list")).content.decode()
+        assert f'href="{reverse("edit_user", args=[mia.pk])}"' in listing
+        assert reverse("toggle_active", args=[mia.pk]) not in listing
+        assert reverse("reinvite_user", args=[mia.pk]) not in listing
+        page = client.get(reverse("edit_user", args=[mia.pk])).content.decode()
+        assert "noch nicht eingerichtet" in page
+        assert reverse("reinvite_user", args=[mia.pk]) in page
+        assert "Benutzer deaktivieren" in page
+        response = client.post(reverse("toggle_active", args=[mia.pk]))
+        assert response.url == reverse("edit_user", args=[mia.pk])
+        mia.refresh_from_db()
+        assert not mia.is_active
+
 
 class TestLogin:
     def test_signup_is_closed(self, client) -> None:

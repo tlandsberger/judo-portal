@@ -189,7 +189,8 @@ Anmeldecodes, Sicherheitshinweise und neue Verknüpfungen gehen immer per Mail. 
 ## Updates und Releases
 
 - Jeden Sonntag 23:00 entsteht automatisch ein Release, wenn es neue Commits gibt (Version, Changelog, Image).
-  Manuell: GitHub → Actions → „Release“ → „Run workflow“.
+  Manuell: GitHub → Actions → „Release“ → „Run workflow“. Ist die CI für den Commit auf `main` schon grün, übernimmt
+  das Release das Ergebnis; sonst läuft sie im Release noch einmal.
 - Renovate aktualisiert danach das Image in der Homecloud; Patch und Minor werden automatisch gemergt, Portainer
   deployt. Datenbank-Migrationen laufen beim Start des Containers.
 - Zurückrollen: Image-Tag in der Homecloud auf die Vorversion setzen. Bei neuen Migrationen vorher aus dem Backup

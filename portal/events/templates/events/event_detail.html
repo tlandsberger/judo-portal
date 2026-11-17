@@ -6,7 +6,7 @@
   <div class="card mb-6 bg-base-100 shadow-sm"><div class="card-body gap-4">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div><p class="text-sm text-base-content/70">{{ event.event_type }}</p><h1 class="text-2xl font-bold">{{ event.title }}</h1></div>
-      {% if can_manage %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'event_edit' event.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>{% endif %}
+      {% if can_manage %}<a class="btn btn-outline btn-primary" href="{% url 'event_edit' event.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>{% endif %}
     </div>
     <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">
       <div><dt class="text-sm text-base-content/70">Ort</dt><dd>{{ event.location|default:"–" }}</dd></div>
@@ -47,13 +47,9 @@
     <div class="rounded-box border border-base-300 p-4">
       <div class="flex flex-wrap items-start gap-2">
         <div class="grow">
-          <h3 class="font-semibold">{{ schedule }}</h3>
+          <h3 class="font-semibold">{% if can_manage %}<a class="link link-hover" href="{% url 'schedule_edit' event.pk schedule.pk %}">{{ schedule }}</a>{% else %}{{ schedule }}{% endif %}</h3>
           <p class="text-sm text-base-content/70">ab {{ schedule.valid_from|date:"d.m.Y" }}{% if schedule.valid_until %} bis {{ schedule.valid_until|date:"d.m.Y" }}{% else %}, bis auf Weiteres{% endif %} · Anmeldung {% if schedule.opens_hours_before is not None %}ab {{ schedule.opens_hours_before }} Std. vorher{% else %}sofort{% endif %} bis {% if schedule.closes_hours_before is not None %}{{ schedule.closes_hours_before }} Std. vorher{% else %}Beginn{% endif %}</p>
         </div>
-        {% if can_manage %}
-        <a class="btn btn-ghost btn-sm" href="{% url 'schedule_edit' event.pk schedule.pk %}" aria-label="Zeitplan {{ schedule }} ändern"><i class="bi bi-pencil" aria-hidden="true"></i></a>
-        <form method="post" action="{% url 'schedule_delete' event.pk schedule.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm" aria-label="Zeitplan {{ schedule }} löschen"><i class="bi bi-trash" aria-hidden="true"></i></button></form>
-        {% endif %}
       </div>
       {% if schedule.team.all %}
       <ul class="list mt-2">
@@ -67,7 +63,7 @@
       {% else %}<p class="mt-2 text-sm text-base-content/70">Noch keine festen Übungsleiter.</p>{% endif %}
       <form method="post" action="{% url 'schedule_team' event.pk schedule.pk %}" class="mt-2 flex flex-col gap-2">{% csrf_token %}
         <div class="grid gap-x-4 sm:grid-cols-2">{{ schedule.team_form }}</div>
-        <div><button class="btn btn-primary btn-sm" type="submit">Fest einteilen</button></div>
+        <div><button class="btn btn-primary" type="submit">Fest einteilen</button></div>
       </form>
     </div>
     {% empty %}<p class="text-base-content/70">Kein Zeitplan – die Veranstaltung hat nur einzelne Termine. Die Übungsleiter trägst du am Termin ein.</p>{% endfor %}
@@ -96,13 +92,13 @@
     <form method="post" action="{% url 'event_cancel_range' event.pk %}" class="flex flex-col gap-2 border-t border-base-300 pt-4">{% csrf_token %}
       <h3 class="font-semibold">Termine absagen (z. B. Ferien)</h3>
       <div class="grid gap-x-4 sm:grid-cols-2">{{ cancel_form }}</div>
-      <div><button class="btn btn-outline btn-error btn-sm" type="submit">Termine in diesem Zeitraum absagen</button></div>
+      <div><button class="btn btn-outline btn-error" type="submit"><i class="bi bi-x-circle" aria-hidden="true"></i> Termine in diesem Zeitraum absagen</button></div>
     </form>
     {% endif %}
   </div></section>
 
   {% if can_manage %}
-  <form method="post" action="{% url 'event_delete' event.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-error btn-sm"><i class="bi bi-trash" aria-hidden="true"></i> Veranstaltung löschen</button></form>
+  <form method="post" action="{% url 'event_delete' event.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-error"><i class="bi bi-trash" aria-hidden="true"></i> Veranstaltung löschen</button></form>
   {% endif %}
 </div>
 {% endblock %}

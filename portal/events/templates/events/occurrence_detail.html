@@ -12,11 +12,11 @@
       </div>
       {% if lead %}
       <div class="flex flex-wrap gap-2">
-        <a class="btn btn-outline btn-primary btn-sm" href="{% url 'occurrence_edit' occurrence.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Termin ändern</a>
+        <a class="btn btn-outline btn-primary" href="{% url 'occurrence_edit' occurrence.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
         {% if not occurrence.is_cancelled %}
-        <form method="post" action="{% url 'occurrence_cancel' occurrence.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm"><i class="bi bi-x-circle" aria-hidden="true"></i> Absagen</button></form>
+        <form method="post" action="{% url 'occurrence_cancel' occurrence.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error"><i class="bi bi-x-circle" aria-hidden="true"></i> Absagen</button></form>
         {% elif can_manage %}
-        <form method="post" action="{% url 'occurrence_cancel' occurrence.pk %}">{% csrf_token %}<input type="hidden" name="undo" value="1"><button class="btn btn-outline btn-sm">Findet doch statt</button></form>
+        <form method="post" action="{% url 'occurrence_cancel' occurrence.pk %}">{% csrf_token %}<input type="hidden" name="undo" value="1"><button class="btn btn-outline"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Findet doch statt</button></form>
         {% endif %}
       </div>
       {% endif %}
@@ -69,11 +69,11 @@
     {% if team_form %}
     <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-col gap-4">{% csrf_token %}
       <div class="grid gap-x-4 sm:grid-cols-2">{{ team_form }}</div>
-      <div><button class="btn btn-primary btn-sm" type="submit">Eintragen oder Rolle ändern</button></div>
+      <div><button class="btn btn-primary" type="submit">Eintragen oder Rolle ändern</button></div>
     </form>
     {% elif self_roles %}
     <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-wrap gap-2">{% csrf_token %}
-      {% for role in self_roles %}<button class="btn btn-outline btn-primary btn-sm" name="role" value="{{ role.pk }}">Mich als {{ role.name }} eintragen</button>{% endfor %}
+      {% for role in self_roles %}<button class="btn btn-outline btn-primary" name="role" value="{{ role.pk }}">Mich als {{ role.name }} eintragen</button>{% endfor %}
     </form>
     {% endif %}
     {% if confirm_form and started and not occurrence.is_cancelled %}
@@ -84,13 +84,13 @@
     <p class="text-sm"><a class="link" href="{% url 'hours_absent' occurrence.pk %}">Nicht dabei? Austragen, Vertretung oder Absage</a></p>
     {% elif can_unconfirm %}
     <form method="post" action="{% url 'hours_unconfirm' occurrence.pk %}">{% csrf_token %}
-      <button class="btn btn-outline btn-sm" type="submit"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Bestätigung zurücknehmen</button>
+      <button class="btn btn-outline" type="submit"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Bestätigung zurücknehmen</button>
     </form>
     {% endif %}
     {% if note_form %}
     <form method="post" action="{% url 'occurrence_note' occurrence.pk %}" class="flex flex-col gap-2">{% csrf_token %}
       {{ note_form }}
-      <div><button class="btn btn-outline btn-primary btn-sm" type="submit">Hinweis speichern</button></div>
+      <div><button class="btn btn-outline btn-primary" type="submit">Hinweis speichern</button></div>
     </form>
     {% endif %}
   </div></section>

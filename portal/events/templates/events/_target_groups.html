@@ -10,15 +10,15 @@
   </div>
   <template data-target-group-empty>{% include "events/_target_group.html" with form=groups.empty_form %}</template>
   <div class="flex flex-wrap items-end justify-between gap-4" data-target-group-actions hidden>
-    <button type="button" class="btn btn-outline btn-primary btn-sm" data-target-group-add><i class="bi bi-plus-lg" aria-hidden="true"></i> Weitere Zielgruppe hinzufügen</button>
+    <button type="button" class="btn btn-outline btn-primary" data-target-group-add><i class="bi bi-plus-lg" aria-hidden="true"></i> Weitere Zielgruppe hinzufügen</button>
     {% if templates %}
     <div class="flex flex-col gap-1">
       <label class="text-sm font-semibold" for="zielgruppen-vorlage">Aus Vorlage übernehmen</label>
       <div class="join">
-        <select class="select select-sm join-item" id="zielgruppen-vorlage" data-target-group-template>
+        <select class="select join-item" id="zielgruppen-vorlage" data-target-group-template>
           {% for pk, template in templates.items %}<option value="{{ pk }}">{{ template.name }}</option>{% endfor %}
         </select>
-        <button type="button" class="btn btn-sm join-item" data-target-group-apply>Übernehmen</button>
+        <button type="button" class="btn join-item" data-target-group-apply>Übernehmen</button>
       </div>
     </div>
     {{ templates|json_script:"zielgruppen-vorlagen" }}

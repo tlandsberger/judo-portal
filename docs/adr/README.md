@@ -21,5 +21,6 @@ Mit dem Neuaufbau im November 2026 beginnt die Nummerierung neu; die ADRs der Vo
 | [0014](0014-uebungsleiterabrechnung.md) | Übungsleiterabrechnung | angenommen |
 | [0015](0015-datenschutz.md) | Datenschutz: Protokoll, Auskunft, Löschfristen | angenommen |
 | [0016](0016-hilfe-im-portal.md) | Hilfe im Portal | angenommen |
+| [0017](0017-einheitliche-bedienung.md) | Einheitliche Bedienung: Listen, Detailseiten und Schaltflächen | angenommen |
 
 Vorlage: Kontext · Entscheidung · Konsequenzen · Verworfene Alternativen.

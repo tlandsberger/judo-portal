@@ -17,9 +17,7 @@ def links(html: str, part: str) -> dict[str, str]:
     """Ziel-URL → Icon in einem Teil der Seite (Seitenleiste bzw. Hauptinhalt)."""
     return dict(re.findall(r'<a href="([^"]+)"[^>]*><i class="bi (bi-[\w-]+)"', part)) | {
         url: icon
-        for url, icon in re.findall(
-            r'href="([^"]+)">\s*<div class="card-body[^>]*>\s*<span[^>]*><i class="bi (bi-[\w-]+)', part
-        )
+        for url, icon in re.findall(r'href="([^"]+)">\s*<div class="card-body[^>]*>\s*<i class="bi (bi-[\w-]+)', part)
     }
 
 

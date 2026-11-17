@@ -3,6 +3,8 @@ name: Release
 # Jeden Sonntag um 23:00 Uhr (Berliner Zeit): Gibt es seit dem letzten Release neue Commits auf main, wird aus den
 # Conventional Commits die nächste Version ermittelt, getaggt, als GitHub-Release mit Changelog veröffentlicht und das
 # Image nach GHCR gepusht. Renovate aktualisiert danach die Homecloud. Manuell startbar über „Run workflow“.
+# Die CI läuft nach jedem Merge auf main; ist sie für den Commit grün, übernimmt das Release das Ergebnis und prüft
+# nur sonst (rot, abgebrochen, noch laufend) selbst noch einmal.
 on:
   schedule:
     # GitHub plant in UTC: 21:00 UTC (Sommerzeit) und 22:00 UTC (Winterzeit); der Job prüft, welcher 23 Uhr ist.
@@ -21,8 +23,13 @@ jobs:
   plan:
     name: Neue Version nötig?
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       version: ${{ steps.version.outputs.version }}
+      sha: ${{ steps.version.outputs.sha }}
+      ci_passed: ${{ steps.ci.outputs.passed }}
     steps:
       - name: Uhrzeit prüfen (nur geplante Läufe)
         id: time
@@ -52,27 +59,48 @@ jobs:
           next=$(uv run --frozen git-cliff --bumped-version)
           echo "Nächste Version: $next (letzte: ${last:-keine})"
           echo "version=$next" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: CI des Commits schon grün?
+        id: ci
+        if: steps.version.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.version.outputs.sha }}
+        run: |
+          url=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&status=success&per_page=1" \
+            --jq '.workflow_runs[0].html_url // empty')
+          if [ -n "$url" ]; then
+            echo "CI für $SHA ist grün: $url" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Kein grüner CI-Lauf für $SHA – die CI läuft im Release noch einmal." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
 
   ci:
     name: CI
     needs: plan
-    if: needs.plan.outputs.version != ''
+    if: needs.plan.outputs.version != '' && needs.plan.outputs.ci_passed != 'true'
     uses: ./.github/workflows/ci.yml
 
   release:
     name: Taggen, Release und Image
     needs: [plan, ci]
+    # Auch wenn die CI übersprungen wurde (schon grün), aber nie nach einer roten oder abgebrochenen CI
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.version != '' && (needs.ci.result == 'success' || needs.ci.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
     env:
       VERSION: ${{ needs.plan.outputs.version }}
+      SHA: ${{ needs.plan.outputs.sha }}
       IMAGE: ghcr.io/${{ github.repository_owner }}/judo-portal
     steps:
+      # Genau der Commit, für den die Version ermittelt und die CI geprüft wurde – auch wenn main inzwischen weiter ist
       - uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ needs.plan.outputs.sha }}
           fetch-depth: 0
 
       - uses: astral-sh/setup-uv@v10.3.3
@@ -84,7 +112,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git tag "$VERSION"
+          git tag "$VERSION" "$SHA"
           git push origin "$VERSION"
           gh release create "$VERSION" --title "$VERSION" --notes-file RELEASE_NOTES.md --verify-tag
 
