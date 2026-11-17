@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type BrowserContextOptions, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
-import { ADMIN_STATE, billingMonthPath, freshNotificationPermission, loginWithPassword } from "./helpers";
+import { ADMIN_STATE, freshNotificationPermission, loginWithPassword } from "./helpers";
 
 /**
  * Screenshots für die Hilfe im Portal (ADR 0016). Läuft als eigenes Projekt nach allen anderen Tests und nutzt deren
@@ -116,13 +116,17 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
     await page.getByRole("link", { name: "Randori-Lehrgang" }).first().click();
     await expect(page.getByRole("heading", { name: /Teilnehmer/ })).toBeVisible();
   });
-  await shoot(browser, clara, "nicht-dabei", async (page) => {
-    await page.goto(billingMonthPath(1));
-    const href = await page.getByRole("link", { name: "Randori-Lehrgang" }).first().getAttribute("href");
-    await page.goto(`${href}nicht-dabei/`);
-    await page.getByLabel("Ich wurde vertreten").check();
-    await expect(page.getByLabel("Vertreten von")).toBeVisible();
-  });
+  await shoot(
+    browser,
+    clara,
+    "vertretung",
+    async (page) => {
+      await page.goto("/termine/");
+      await page.getByRole("link", { name: "Kindertraining" }).first().click();
+      await expect(page.getByRole("link", { name: "Meinen Platz übertragen" })).toBeVisible();
+    },
+    (page) => page.getByRole("region", { name: "Übungsleiter" }),
+  );
   await shoot(browser, dora, "abrechnung-monat", async (page) => {
     await page.goto(lastMonthPath());
     await expect(page.getByRole("heading", { name: "Bestätigte Stunden" })).toBeVisible();

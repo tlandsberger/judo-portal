@@ -11,7 +11,7 @@
         <form method="post" action="{% url 'hours_confirm' p.occurrence_id %}">{% csrf_token %}<input type="hidden" name="minutes" value="{{ p.occurrence.minutes }}"><input type="hidden" name="next" value="{{ request.path }}">
           <button class="btn btn-primary btn-sm" aria-label="{{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }} bestätigen">Bestätigen</button>
         </form>
-        <a class="btn btn-ghost btn-sm" href="{% url 'hours_absent' p.occurrence_id %}" aria-label="Nicht dabei? {{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }}">Nicht dabei?</a>
+        <a class="btn btn-ghost btn-sm" href="{% url 'occurrence_detail' p.occurrence_id %}#h-team" aria-label="Nicht dabei? {{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }}">Nicht dabei?</a>
         </div>
         {% endif %}
       </li>

@@ -6,15 +6,25 @@
   <li>Öffne den Termin (über <a href="{% url 'agenda' %}">Termine</a>).</li>
   <li>Tippe auf <strong>Mich als Trainer eintragen</strong> bzw. <strong>Mich als Co-Trainer eintragen</strong>.</li>
 </ol>
-<p>Bei Trainings mit festem Zeitplan teilt die Abteilungsleitung meist feste Übungsleiter ein; dann stehst du automatisch bei allen kommenden Terminen.</p>
+<p>Bei Trainings mit festem Zeitplan teilt die Abteilungsleitung meist feste Übungsleiter ein; dann stehst du automatisch bei allen kommenden Terminen. Du kannst dich auch <strong>zusätzlich</strong> zu den Eingeteilten eintragen.</p>
+
+<h2 id="vertretung">Vertretung</h2>
+<p>Kannst du einmal nicht, sprecht euch kurz ab. Danach reicht ein Tipp im Abschnitt „Übungsleiter“ des Termins – egal wer von euch beiden ihn macht. Es gilt sofort.</p>
+{% screenshot "vertretung" "Übungsleiter eines Termins mit Übertragen, Austragen und Vertreten" %}
+<ul>
+  <li><strong>Übertragen</strong> (du gibst ab): Tippe in deiner Zeile auf <strong>Übertragen</strong>, wähle, wer übernimmt, und tippe auf <strong>Übertragen</strong>. Die Vertretung bekommt eine Push-Benachrichtigung, sonst eine Mail.</li>
+  <li><strong>Vertreten</strong> (du übernimmst): Öffne den Termin, z. B. über den Link der anderen Person oder über <a href="{% url 'event_list' %}">Veranstaltungen</a>, und tippe in ihrer Zeile auf <strong>Vertreten</strong>. Du übernimmst ihre Rolle, sie bekommt eine Nachricht.</li>
+  <li><strong>Austragen</strong> (ohne Vertretung, z. B. als Co-Trainer): Tippe in deiner Zeile auf <strong>Austragen</strong>. Wäre danach kein Trainer mehr eingeteilt, fragt das Portal nach und gibt der Abteilungsleitung Bescheid; zwei Tage vor dem Termin erinnert es sie noch einmal, falls bis dahin niemand eingesprungen ist.</li>
+</ul>
+<p>Das geht auch nach dem Termin, solange die Stunden nicht eingereicht sind: Wer vertreten hat, bestätigt dann die Stunden (siehe <a href="{% url 'help_chapter' 'stunden' %}#nicht-dabei">Nicht dabei?</a>).</p>
 
 <h2 id="termin">Am Termin</h2>
 {% screenshot "termin-team" "Termin aus Sicht der Übungsleiter" %}
 <ul>
   <li><strong>Teilnehmerliste:</strong> Wer angemeldet ist, mit Hinweisen und Telefon für Notfälle (bis 14 Tage nach dem Termin).</li>
   <li><strong>Hinweis speichern:</strong> Eine kurze Info für alle, z. B. „Bitte Kata-Gürtel mitbringen“.</li>
-  <li><strong>Absagen:</strong> Über <strong><i class="bi bi-three-dots-vertical" aria-hidden="true"></i> Weitere Aktionen</strong> → <strong>Termin absagen</strong>. Der Termin fällt aus, alle Angemeldeten und Übungsleiter bekommen eine Nachricht. Mit <strong>Findet doch statt</strong> (ebenfalls dort) nimmst du die Absage zurück.</li>
+  <li><strong>Absagen:</strong> Über <strong><i class="bi bi-three-dots-vertical" aria-hidden="true"></i> Weitere Aktionen</strong> → <strong>Termin absagen</strong>. Der Termin fällt aus, alle Angemeldeten und Übungsleiter bekommen eine Nachricht. Mit <strong>Findet doch statt</strong> (ebenfalls dort) nimmst du die Absage zurück. Nach dem Termin heißt der Eintrag <strong>Hat nicht stattgefunden</strong>; dann geht keine Nachricht mehr raus.</li>
   <li><strong>Ausnahme eintragen:</strong> Jemanden anmelden, der nicht zur Zielgruppe passt oder nach dem Anmeldeschluss kommt.</li>
   <li><strong>Gast eintragen:</strong> Bei Veranstaltungen mit Gästen trägst du Externe mit Name und Notfallkontakt ein. Sie bekommen eine Mail mit ihrem eigenen Link.</li>
-  <li><strong>Eintragen oder Rolle ändern / Austragen:</strong> Die Übungsleiter des Termins anpassen.</li>
+  <li><strong>Jemanden eintragen oder Rolle ändern:</strong> Weitere Übungsleiter eintragen (aufklappen im Abschnitt „Übungsleiter“).</li>
 </ul>

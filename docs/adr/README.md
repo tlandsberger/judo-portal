@@ -22,5 +22,6 @@ Mit dem Neuaufbau im November 2026 beginnt die Nummerierung neu; die ADRs der Vo
 | [0015](0015-datenschutz.md) | Datenschutz: Protokoll, Auskunft, Löschfristen | angenommen |
 | [0016](0016-hilfe-im-portal.md) | Hilfe im Portal | angenommen |
 | [0017](0017-einheitliche-bedienung.md) | Einheitliche Bedienung: Listen, Detailseiten und Schaltflächen | angenommen |
+| [0018](0018-vertretungen-und-rhythmus.md) | Vertretungen und Rhythmus von Zeitplänen | angenommen |
 
 Vorlage: Kontext · Entscheidung · Konsequenzen · Verworfene Alternativen.

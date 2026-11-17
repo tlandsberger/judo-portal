@@ -129,3 +129,82 @@ def test_registration_window_from_schedule_rule():
     plan.save()
     services.regenerate(plan)
     assert all(o.registration_closes == o.starts_at - timedelta(hours=1) for o in event.occurrences.all())
+
+
+# Rhythmus: alle x Wochen oder jeden n-ten im Monat
+
+
+def _plan(**rhythm: object) -> Schedule:
+    from datetime import date
+
+    return Schedule(
+        event=Event(title="Training"),
+        weekday=1,
+        start_time=time(17),
+        end_time=time(18),
+        valid_from=date(2026, 12, 3),  # ein Donnerstag; erster Dienstag danach: 8.12.
+        **rhythm,
+    )
+
+
+def test_every_two_weeks_counted_from_valid_from_across_new_year():
+    from datetime import date
+
+    days = list(services.schedule_dates(_plan(interval=2), date(2026, 12, 1), date(2027, 2, 1)))
+    assert days == [date(2026, 12, 8), date(2026, 12, 22), date(2027, 1, 5), date(2027, 1, 19)]
+    # Später begonnen: derselbe Takt, nicht ab dem Starttag neu gezählt.
+    assert next(services.schedule_dates(_plan(interval=2), date(2026, 12, 23), date(2027, 2, 1))) == date(2027, 1, 5)
+    assert services.on_schedule(_plan(interval=2), date(2027, 1, 19))
+    assert not services.on_schedule(_plan(interval=2), date(2027, 1, 12))
+
+
+def test_nth_and_last_weekday_of_month():
+    from datetime import date
+
+    first = list(services.schedule_dates(_plan(repeat="month", week_of_month=1), date(2026, 12, 1), date(2027, 3, 1)))
+    assert first == [date(2026, 12, 1), date(2027, 1, 5), date(2027, 2, 2)]
+    last = list(services.schedule_dates(_plan(repeat="month", week_of_month=-1), date(2026, 12, 1), date(2027, 3, 1)))
+    assert last == [date(2026, 12, 29), date(2027, 1, 26), date(2027, 2, 23)]
+    assert services.nth_weekday(2027, 2, 1, 5) is None  # einen 5. Dienstag gibt es im Februar 2027 nicht
+
+
+def test_rhythm_labels():
+    assert str(_plan()) == "Dienstag 17:00–18:00"
+    assert str(_plan(interval=2)) == "Dienstag 17:00–18:00, alle 2 Wochen"
+    assert str(_plan(repeat="month", week_of_month=1)) == "1. Dienstag im Monat 17:00–18:00"
+    assert str(_plan(repeat="month", week_of_month=-1)) == "Letzter Dienstag im Monat 17:00–18:00"
+    assert _plan(repeat="month", week_of_month=3).rhythm_label == "jeden 3. Dienstag im Monat"
+
+
+def test_generate_every_two_weeks_and_regenerate_after_change():
+    event = Event.objects.create(title="Training")
+    plan = schedule(event, (timezone.localdate() + timedelta(days=1)).weekday(), weeks=8)
+    plan.interval = 2
+    plan.save()
+    assert services.generate(plan) == 4
+    plan.repeat, plan.week_of_month, plan.interval = "month", 1, 1
+    plan.save()
+    services.regenerate(plan)
+    starts = [timezone.localtime(o.starts_at).date() for o in event.occurrences.all()]
+    assert starts and all(day.day <= 7 for day in starts)
+
+
+def test_schedule_form_requires_matching_rhythm_field(client, head):
+    from django.urls import reverse
+
+    event = Event.objects.create(title="Training")
+    client.force_login(head)
+    data = {
+        "weekday": 5,
+        "repeat": "month",
+        "interval": "",
+        "week_of_month": "",
+        "start_time": "10:00",
+        "end_time": "12:00",
+        "valid_from": timezone.localdate().isoformat(),
+    }
+    url = reverse("schedule_create", args=[event.pk])
+    assert "der wievielte im Monat" in client.post(url, data).content.decode()
+    client.post(url, data | {"week_of_month": "1", "interval": "3"})
+    saved = Schedule.objects.get(event=event)
+    assert (saved.repeat, saved.week_of_month, saved.interval) == ("month", 1, 1)

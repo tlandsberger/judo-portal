@@ -5,7 +5,7 @@
 {% block heading %}{{ event.title }}{% endblock %}
 {% block heading_extra %}{% if occurrence.is_cancelled %}<span class="badge badge-warning">abgesagt</span>{% endif %}{% endblock %}
 {% block primary %}{% if lead %}<a class="btn btn-primary" href="{% url 'occurrence_edit' occurrence.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>{% endif %}{% endblock %}
-{% block more %}{% if lead %}{% if not occurrence.is_cancelled %}<li><button type="submit" form="termin-absagen" class="text-error"><i class="bi bi-x-circle" aria-hidden="true"></i> Termin absagen</button></li>{% elif can_manage %}<li><button type="submit" form="termin-findet-statt"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Findet doch statt</button></li>{% endif %}{% endif %}{% endblock %}
+{% block more %}{% if lead %}{% if not occurrence.is_cancelled %}<li><button type="submit" form="termin-absagen" class="text-error"><i class="bi bi-x-circle" aria-hidden="true"></i> {% if started %}Hat nicht stattgefunden{% else %}Termin absagen{% endif %}</button></li>{% elif can_manage %}<li><button type="submit" form="termin-findet-statt"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Findet doch statt</button></li>{% endif %}{% endif %}{% endblock %}
 {% block more_forms %}{% if lead %}<form id="termin-absagen" method="post" action="{% url 'occurrence_cancel' occurrence.pk %}" hidden>{% csrf_token %}</form><form id="termin-findet-statt" method="post" action="{% url 'occurrence_cancel' occurrence.pk %}" hidden>{% csrf_token %}<input type="hidden" name="undo" value="1"></form>{% endif %}{% endblock %}
 {% block intro %}{{ event.event_type }}{% endblock %}
 {% block page %}
@@ -44,26 +44,38 @@
 {% if lead or can_join_team %}
 <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-team"><div class="card-body gap-4">
   <h2 class="card-title" id="h-team">Übungsleiter</h2>
-  {% if team %}
+  {% if team_rows %}
   <ul class="list">
-    {% for p in team %}
+    {% for row in team_rows %}{% with p=row.p %}
     <li class="list-row items-center px-0">
-      <div class="list-col-grow"><div class="font-semibold">{{ p.member.display_name }}</div><div class="text-sm text-base-content/70">{{ p.role.name }}{% if p.is_confirmed %} · bestätigt, {{ p.minutes }} Minuten{% endif %}</div></div>
-      {% if not p.is_confirmed %}{% if lead or p == own_team %}
-      <form method="post" action="{% url 'occurrence_team_remove' occurrence.pk p.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ p.member.display_name }} austragen">Austragen</button></form>
-      {% endif %}{% endif %}
+      <div class="list-col-grow"><div class="font-semibold">{{ p.member.display_name }}{% if row.is_self %} <span class="badge badge-ghost badge-sm">du</span>{% endif %}</div><div class="text-sm text-base-content/70">{{ p.role.name }}{% if p.is_confirmed %} · bestätigt, {{ p.minutes }} Minuten{% endif %}</div></div>
+      {% if row.can_change or row.can_take_over %}
+      <div class="flex flex-wrap justify-end gap-2 max-sm:list-col-wrap max-sm:justify-start">
+        {% if row.can_take_over %}<form method="post" action="{% url 'occurrence_take_over' occurrence.pk p.pk %}">{% csrf_token %}<button class="btn btn-outline btn-primary btn-sm" aria-label="{{ p.member.display_name }} vertreten"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Vertreten</button></form>{% endif %}
+        {% if row.can_change %}
+        <a class="btn btn-outline btn-sm" href="{% url 'occurrence_hand_over' occurrence.pk p.pk %}" aria-label="{% if row.is_self %}Meinen Platz übertragen{% else %}Platz von {{ p.member.display_name }} übertragen{% endif %}"><i class="bi bi-person-check" aria-hidden="true"></i> Übertragen</a>
+        <form method="post" action="{% url 'occurrence_team_remove' occurrence.pk p.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" aria-label="{% if row.is_self %}Mich austragen{% else %}{{ p.member.display_name }} austragen{% endif %}">Austragen</button></form>
+        {% endif %}
+      </div>
+      {% endif %}
     </li>
-    {% endfor %}
+    {% endwith %}{% endfor %}
   </ul>
   {% else %}<p class="text-base-content/70">Noch keine Übungsleiter eingeteilt.</p>{% endif %}
+  {% if own_team and not occurrence.is_cancelled %}<p class="text-sm text-base-content/70">{% if started %}Nicht dabei gewesen? Übertrage deinen Platz an die Vertretung oder trag dich aus.{% else %}Du kannst nicht? Übertrage deinen Platz an deine Vertretung – oder trag dich aus, wenn es ohne dich geht.{% endif %}</p>{% endif %}
   {% if team_form %}
-  <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-col gap-4">{% csrf_token %}
-    <div class="grid gap-x-4 sm:grid-cols-2">{{ team_form }}</div>
-    <div><button class="btn btn-primary" type="submit">Eintragen oder Rolle ändern</button></div>
-  </form>
+  <details class="collapse collapse-arrow border border-base-300">
+    <summary class="collapse-title text-sm font-semibold">Jemanden eintragen oder Rolle ändern</summary>
+    <div class="collapse-content">
+      <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-col gap-4">{% csrf_token %}
+        <div class="grid gap-x-4 sm:grid-cols-2">{{ team_form }}</div>
+        <div><button class="btn btn-outline btn-primary btn-sm" type="submit">Eintragen</button></div>
+      </form>
+    </div>
+  </details>
   {% elif self_roles %}
   <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-wrap gap-2">{% csrf_token %}
-    {% for role in self_roles %}<button class="btn btn-outline btn-primary" name="role" value="{{ role.pk }}">Mich als {{ role.name }} eintragen</button>{% endfor %}
+    {% for role in self_roles %}<button class="btn btn-outline btn-primary btn-sm" name="role" value="{{ role.pk }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Mich als {{ role.name }} eintragen</button>{% endfor %}
   </form>
   {% endif %}
   {% if confirm_form and started and not occurrence.is_cancelled %}
@@ -71,7 +83,6 @@
     <div class="w-40">{{ confirm_form }}</div>
     <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Stunden bestätigen</button>
   </form>
-  <p class="text-sm"><a class="link" href="{% url 'hours_absent' occurrence.pk %}">Nicht dabei? Austragen, Vertretung oder Absage</a></p>
   {% elif can_unconfirm %}
   <form method="post" action="{% url 'hours_unconfirm' occurrence.pk %}">{% csrf_token %}
     <button class="btn btn-outline" type="submit"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Bestätigung zurücknehmen</button>

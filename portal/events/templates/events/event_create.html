@@ -22,9 +22,10 @@
       <div class="grid gap-x-4 sm:grid-cols-2">{% for field in form.once_fields %}{{ field.as_field_group }}{% endfor %}</div>
     </div>
     <div class="flex flex-col gap-2" data-dates-for="weekly">
-      <p class="text-sm text-base-content/70">Jede Woche zur selben Zeit, z. B. ein Training. Das Portal legt die Termine bis zu einem Jahr im Voraus an.</p>
+      <p class="text-sm text-base-content/70">Regelmäßig zur selben Zeit, z. B. ein Training jede Woche oder ein Termin am 1. Samstag im Monat. Das Portal legt die Termine bis zu einem Jahr im Voraus an.</p>
       {{ form.weekdays.as_field_group }}
-      <div class="grid gap-x-4 sm:grid-cols-2">{% for field in form.weekly_fields %}{% if field.name != "weekdays" %}{{ field.as_field_group }}{% endif %}{% endfor %}</div>
+      {{ form.repeat.as_field_group }}
+      <div class="grid gap-x-4 sm:grid-cols-2">{% for field in form.weekly_fields %}{% if field.name != "weekdays" and field.name != "repeat" %}{{ field.as_field_group }}{% endif %}{% endfor %}</div>
     </div>
     <p class="text-sm text-base-content/70" data-dates-for="later">Die Termine legst du später auf der Veranstaltung an.</p>
   </div></section>
@@ -37,4 +38,4 @@
   <div class="action-bar"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% url 'event_list' %}">Abbrechen</a></div>
 </form>
 {% endblock %}
-{% block scripts %}<script src="{% static 'js/event-form.js' %}"></script><script src="{% static 'js/target-groups.js' %}"></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/event-form.js' %}"></script><script src="{% static 'js/rhythm.js' %}"></script><script src="{% static 'js/target-groups.js' %}"></script>{% endblock %}

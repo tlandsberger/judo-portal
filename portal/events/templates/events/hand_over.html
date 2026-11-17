@@ -1,0 +1,19 @@
+{% extends "layouts/page.html" %}
+{% load help %}
+{% block title %}Übertragen{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block back_url %}{% url 'occurrence_detail' occurrence.pk %}{% endblock %}
+{% block back_label %}{{ occurrence.event.title }}{% endblock %}
+{% block heading %}Übertragen{% endblock %}
+{% block heading_extra %}{% help_link "team" %}{% endblock %}
+{% block intro %}{% if started %}Du wurdest vertreten? Trag ein, wer übernommen hat; die Vertretung bestätigt dann ihre Stunden.{% else %}Ihr habt euch abgesprochen? Wähle, wer übernimmt. Das gilt sofort.{% endif %}{% endblock %}
+{% block page %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+  <p><a class="link font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a> am {{ occurrence.starts_at|date:"l, d.m.Y" }} um {{ occurrence.starts_at|date:"H:i" }} Uhr – {% if is_self %}du bist{% else %}{{ participation.member.display_name }} ist{% endif %} als <strong>{{ participation.role.name }}</strong> eingeteilt{% if participation.is_confirmed %} und hat {{ participation.minutes }} Minuten bestätigt{% endif %}.</p>
+  <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+    {{ form }}
+    <p class="text-sm text-base-content/70">Die Vertretung bekommt eine Push-Benachrichtigung, sonst eine Mail.{% if participation.is_confirmed %} Deine Bestätigung wird zurückgenommen.{% endif %}</p>
+    <div class="action-bar"><button type="submit" class="btn btn-primary">Übertragen</button><a class="btn" href="{% url 'occurrence_detail' occurrence.pk %}">Abbrechen</a></div>
+  </form>
+</div></div>
+{% endblock %}

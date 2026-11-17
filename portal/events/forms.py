@@ -16,10 +16,12 @@ from .models import (
     Guest,
     Occurrence,
     ParticipantRole,
+    Repeat,
     Schedule,
     TargetGroup,
     TargetGroupTemplate,
     Weekday,
+    WeekOfMonth,
 )
 
 
@@ -157,6 +159,31 @@ class EventForm(forms.ModelForm):
         field.empty_label = None  # type: ignore[attr-defined]
 
 
+RHYTHM_FIELDS = ("repeat", "interval", "week_of_month")
+
+
+def _rhythm_widgets() -> dict[str, forms.Widget]:
+    """Rhythmus: Auswahl als Optionen; welches Feld gilt, zeigt ``rhythm.js`` (ohne JavaScript sind beide sichtbar)."""
+    return {
+        "repeat": forms.RadioSelect(attrs={"data-rhythm": ""}),
+        "interval": forms.NumberInput(attrs={"data-rhythm-for": Repeat.WEEKS, "min": 1, "max": 52}),
+        "week_of_month": forms.Select(attrs={"data-rhythm-for": Repeat.MONTH}),
+    }
+
+
+def _clean_rhythm(form: forms.BaseForm, data: dict[str, Any]) -> None:
+    """Nur das Feld des gewählten Rhythmus zählt; ohne Angabe gilt „alle 1 Woche“."""
+    if data.get("repeat") == Repeat.MONTH:
+        if data.get("week_of_month") in (None, ""):
+            form.add_error("week_of_month", "Wähle bitte, der wievielte im Monat.")
+        data["interval"] = 1
+    else:
+        data["repeat"] = Repeat.WEEKS
+        if "interval" not in form.errors:
+            data["interval"] = data.get("interval") or 1
+        data["week_of_month"] = None
+
+
 class EventCreateForm(EventForm):
     """Veranstaltung anlegen und gleich die Termine festlegen: einmalig, wiederkehrend oder später (ADR 0012)."""
 
@@ -186,6 +213,31 @@ class EventCreateForm(EventForm):
         widget=forms.CheckboxSelectMultiple,
         help_text="Je Wochentag entsteht ein Zeitplan.",
     )
+    repeat = forms.ChoiceField(
+        label="Rhythmus",
+        choices=Repeat.choices,
+        initial=Repeat.WEEKS,
+        required=False,
+        widget=_rhythm_widgets()["repeat"],
+    )
+    interval = forms.IntegerField(
+        label=Schedule._meta.get_field("interval").verbose_name,
+        help_text=Schedule._meta.get_field("interval").help_text,
+        required=False,
+        min_value=1,
+        max_value=52,
+        initial=1,
+        widget=_rhythm_widgets()["interval"],
+    )
+    week_of_month = forms.TypedChoiceField(
+        label=Schedule._meta.get_field("week_of_month").verbose_name,
+        help_text=Schedule._meta.get_field("week_of_month").help_text,
+        choices=[("", "---------"), *WeekOfMonth.choices],
+        coerce=int,
+        empty_value=None,
+        required=False,
+        widget=_rhythm_widgets()["week_of_month"],
+    )
     start_time = forms.TimeField(label="Uhrzeit von", required=False, widget=TimeInput())
     end_time = forms.TimeField(label="Uhrzeit bis", required=False, widget=TimeInput())
     valid_from = forms.DateField(label="Gültig ab", required=False, widget=DateInput())
@@ -204,6 +256,7 @@ class EventCreateForm(EventForm):
     ONCE_FIELDS = ("starts_at", "ends_at", "registration_opens_at", "registration_closes_at")
     WEEKLY_FIELDS = (
         "weekdays",
+        *RHYTHM_FIELDS,
         "start_time",
         "end_time",
         "valid_from",
@@ -262,6 +315,7 @@ class EventCreateForm(EventForm):
                 self.add_error("end_time", "Das Ende muss nach dem Beginn liegen.")
             if data.get("valid_from") and data.get("valid_until") and data["valid_until"] < data["valid_from"]:
                 self.add_error("valid_until", "„Gültig bis“ muss nach „Gültig ab“ liegen.")
+            _clean_rhythm(self, data)
         for name in required:
             if not data.get(name) and name not in self.errors:
                 self.add_error(name, "Bitte ausfüllen.")
@@ -279,6 +333,7 @@ class ScheduleForm(forms.ModelForm):
         model = Schedule
         fields = (
             "weekday",
+            *RHYTHM_FIELDS,
             "start_time",
             "end_time",
             "valid_from",
@@ -291,10 +346,18 @@ class ScheduleForm(forms.ModelForm):
             "end_time": TimeInput(),
             "valid_from": DateInput(),
             "valid_until": DateInput(),
+            **_rhythm_widgets(),
         }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["repeat"].choices = Repeat.choices  # type: ignore[attr-defined]  # ohne leere Auswahl
+        self.fields["interval"].required = False
+        self.fields["repeat"].required = False
 
     def clean(self) -> dict[str, Any]:
         data = super().clean() or {}
+        _clean_rhythm(self, data)
         if data.get("start_time") and data.get("end_time") and data["end_time"] <= data["start_time"]:
             self.add_error("end_time", "Das Ende muss nach dem Beginn liegen.")
         if data.get("valid_from") and data.get("valid_until") and data["valid_until"] < data["valid_from"]:
@@ -414,41 +477,13 @@ class ParticipantRoleForm(forms.ModelForm):
         return data
 
 
-class AbsentForm(forms.Form):
-    """„Nicht dabei?“ – austragen, übertragen an eine Vertretung oder den Termin nachträglich absagen."""
+class HandOverForm(TeamForm):
+    """Übertragen (ADR 0018): wer übernimmt, mit welcher Rolle."""
 
-    WITHDRAW, HAND_OVER, CANCEL = "withdraw", "hand_over", "cancel"
-    what = forms.ChoiceField(
-        label="Was ist passiert?",
-        widget=forms.RadioSelect,
-        choices=[
-            (WITHDRAW, "Ich war nicht dabei – austragen"),
-            (HAND_OVER, "Ich wurde vertreten"),
-            (CANCEL, "Der Termin hat nicht stattgefunden – absagen"),
-        ],
-    )
-    member = forms.ModelChoiceField(label="Vertreten von", queryset=Member.objects.none(), required=False)
-    role = forms.ModelChoiceField(label="Als", queryset=ParticipantRole.objects.none(), required=False)
-
-    def __init__(self, *args: Any, candidates: list[Member], roles: list[ParticipantRole], **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        member = self.fields["member"]
-        member.queryset = Member.objects.filter(pk__in=[m.pk for m in candidates]).order_by(  # type: ignore[attr-defined]
-            "first_name", "last_name"
-        )
-        member.label_from_instance = lambda m: m.display_name  # type: ignore[attr-defined]
-        self.fields["role"].queryset = ParticipantRole.objects.filter(  # type: ignore[attr-defined]
-            pk__in=[r.pk for r in roles]
-        )
-
-    def clean(self) -> dict[str, Any]:
-        data = super().clean() or {}
-        if data.get("what") == self.HAND_OVER:
-            if not data.get("member"):
-                self.add_error("member", "Wähle bitte, wer dich vertreten hat.")
-            if not data.get("role"):
-                self.add_error("role", "Wähle bitte die Rolle der Vertretung.")
-        return data
+        self.fields["member"].label = "Wer übernimmt?"
+        self.fields["role"].label = "Als"
 
 
 class ConfirmForm(forms.Form):

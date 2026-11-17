@@ -5,8 +5,9 @@ Auf Mitglieder greift das Modul nur über ``portal.members.services`` zu (eigene
 
 from __future__ import annotations
 
+import calendar
 import logging
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
@@ -31,6 +32,7 @@ from .models import (
     ParticipantRole,
     Participation,
     ParticipationStatus,
+    Repeat,
     Schedule,
     ScheduleTeam,
     TargetGroupTemplate,
@@ -44,6 +46,8 @@ HORIZON_DAYS = 365
 # So lange nach dem Termin sieht das Team noch die Teilnehmerliste.
 PARTICIPANTS_DAYS_AFTER = 14
 AGENDA_DAYS = 42
+# So lange vor dem Termin erinnert das Portal die Abteilungsleitung, wenn noch kein Trainer eingeteilt ist.
+TRAINER_MISSING_REMIND = timedelta(days=2)
 ACTIVE = (ParticipationStatus.REGISTERED, ParticipationStatus.WAITLIST)
 
 
@@ -327,6 +331,41 @@ def apply_schedule_team(occurrence: Occurrence) -> None:
         )
 
 
+def nth_weekday(year: int, month: int, weekday: int, nth: int) -> date | None:
+    """Der n-te Wochentag eines Monats (``nth=-1``: der letzte); ``None``, wenn es ihn nicht gibt."""
+    if nth < 0:
+        last = date(year, month, calendar.monthrange(year, month)[1])
+        return last - timedelta(days=(last.weekday() - weekday) % 7)
+    first = date(year, month, 1)
+    day = first + timedelta(days=(weekday - first.weekday()) % 7 + 7 * (nth - 1))
+    return day if day.month == month else None
+
+
+def schedule_dates(schedule: Schedule, start: date, end: date) -> Iterator[date]:
+    """Die Tage eines Zeitplans von ``start`` bis ``end``: alle x Wochen ab „Gültig ab“ oder der n-te im Monat."""
+    if schedule.repeat == Repeat.MONTH:
+        year, month = start.year, start.month
+        while date(year, month, 1) <= end:
+            day = nth_weekday(year, month, schedule.weekday, schedule.week_of_month or 1)
+            if day and start <= day <= end:
+                yield day
+            year, month = (year + 1, 1) if month == 12 else (year, month + 1)
+        return
+    anchor = schedule.valid_from + timedelta(days=(schedule.weekday - schedule.valid_from.weekday()) % 7)
+    step = 7 * max(schedule.interval, 1)
+    day = anchor
+    if start > anchor:
+        day = anchor + timedelta(days=-(-(start - anchor).days // step) * step)
+    while day <= end:
+        yield day
+        day += timedelta(days=step)
+
+
+def on_schedule(schedule: Schedule, day: date) -> bool:
+    """Liegt ``day`` im Rhythmus des Zeitplans (Gültigkeit und Uhrzeit nicht geprüft)?"""
+    return next(schedule_dates(schedule, day, day), None) == day
+
+
 @transaction.atomic
 def generate(schedule: Schedule, today: date | None = None) -> int:
     """Erzeugt fehlende Termine eines Zeitplans bis zum Gültigkeitsende, höchstens 12 Monate im Voraus."""
@@ -337,8 +376,7 @@ def generate(schedule: Schedule, today: date | None = None) -> int:
         end = min(end, schedule.valid_until)
     existing = {timezone.localdate(starts) for starts in schedule.occurrences.values_list("starts_at", flat=True)}
     created = 0
-    day = start + timedelta(days=(schedule.weekday - start.weekday()) % 7)
-    while day <= end:
+    for day in schedule_dates(schedule, start, end):
         if day not in existing:
             occurrence = Occurrence(
                 event=schedule.event,
@@ -350,7 +388,6 @@ def generate(schedule: Schedule, today: date | None = None) -> int:
             occurrence.save()
             apply_schedule_team(occurrence)
             created += 1
-        day += timedelta(days=7)
     schedule.generated_until = end
     schedule.save(update_fields=["generated_until"])
     return created
@@ -401,7 +438,7 @@ def _fits(schedule: Schedule, occurrence: Occurrence) -> bool:
     in_range = schedule.valid_from <= starts.date() and (
         not schedule.valid_until or starts.date() <= schedule.valid_until
     )
-    return in_range and starts.weekday() == schedule.weekday and starts.time() == schedule.start_time
+    return in_range and on_schedule(schedule, starts.date()) and starts.time() == schedule.start_time
 
 
 @transaction.atomic
@@ -633,6 +670,9 @@ def set_team(occurrence: Occurrence, member: Member, role: ParticipantRole, by: 
         },
     )
     _audit(by, "team", f"{member.display_name} als {role.name} für {_when(occurrence)} eingetragen", participation)
+    if role.is_billable and occurrence.trainer_missing_since:
+        occurrence.trainer_missing_since = None
+        occurrence.save(update_fields=["trainer_missing_since"])
     if freed:
         promote(occurrence)
     return participation
@@ -699,44 +739,81 @@ def unconfirm(participation: Participation, by: User | None = None) -> None:
     )
 
 
-# Nicht dabei? Nachträglich richtigstellen (ADR 0012)
+# Vertretungen und Austragen (ADR 0018): vor dem Termin wie nachträglich („Nicht dabei?“, ADR 0012)
 
 
-def _check_absent(participation: Participation) -> None:
+def _check_changeable(participation: Participation, by: User | None) -> None:
+    """Austragen und Übertragen: nur Übungsleiter, nicht bei Absage oder Sperre; bestätigte Stunden nur selbst."""
     if not participation.role.is_team:
         raise RegistrationError("Das geht nur für die Übungsleiter eines Termins.")
-    if participation.occurrence.starts_at > timezone.now():
-        raise RegistrationError("Vor dem Termin trägst du dich einfach aus.")
+    if participation.occurrence.is_cancelled:
+        raise RegistrationError("Der Termin ist abgesagt.")
     _check_unlocked(participation)
+    if participation.is_confirmed and (by is None or own_member(by) != participation.member):
+        name = participation.person.display_name
+        raise RegistrationError(f"{name} hat schon Stunden bestätigt – sprecht euch bitte kurz ab.")
+
+
+def has_trainer(occurrence: Occurrence, without: Participation | None = None) -> bool:
+    """Ist mindestens ein Übungsleiter mit abrechnungsrelevanter Rolle eingeteilt (außer ``without``)?"""
+    team = occurrence.participations.filter(role__is_team=True, role__is_billable=True, status__in=ACTIVE)
+    if without is not None:
+        team = team.exclude(pk=without.pk)
+    return team.exists()
+
+
+def leaves_without_trainer(participation: Participation, now: datetime | None = None) -> bool:
+    """Wäre der Termin ohne Trainer, wenn diese Teilnahme wegfällt? Nur vor dem Termin von Belang."""
+    occurrence = participation.occurrence
+    if not participation.role.is_billable or occurrence.is_cancelled or occurrence.starts_at <= (now or timezone.now()):
+        return False
+    return not has_trainer(occurrence, without=participation)
 
 
 @transaction.atomic
 def withdraw(participation: Participation, by: User | None = None) -> None:
-    """Nachträglich austragen: „Ich war nicht dabei.“ Eine eigene Bestätigung wird dabei zurückgenommen."""
-    _check_absent(participation)
+    """Austragen ohne Vertretung. Nach dem Termin heißt das „Ich war nicht dabei“: eine eigene Bestätigung wird
+    zurückgenommen. Ist danach kein Trainer mehr eingeteilt, erfährt es die Abteilungsleitung."""
+    _check_changeable(participation, by)
+    occurrence = participation.occurrence
+    missing = leaves_without_trainer(participation)
     unconfirm(participation, by)
     remove_team(participation, by)
+    if missing:
+        occurrence.trainer_missing_since = timezone.now()
+        occurrence.save(update_fields=["trainer_missing_since"])
+        absent = participation.person.display_name
+        transaction.on_commit(lambda: notices.trainer_missing(occurrence, absent, by))
 
 
 @transaction.atomic
 def hand_over(
-    participation: Participation, member: Member, role: ParticipantRole, by: User | None = None
+    participation: Participation, member: Member, role: ParticipantRole | None = None, by: User | None = None
 ) -> Participation:
-    """Nachträglich übertragen: „Ich wurde vertreten von …“. Die Vertretung bekommt die Stunden zum Bestätigen."""
-    _check_absent(participation)
+    """Übertragen bzw. Vertreten: ``member`` übernimmt den Platz, gilt sofort (die Übungsleiter sprechen sich ab).
+
+    Wer nicht selbst gehandelt hat, bekommt eine Nachricht. Nach dem Termin bestätigt die Vertretung die Stunden.
+    """
+    _check_changeable(participation, by)
     occurrence = participation.occurrence
+    role = role or participation.role
     if member.pk == participation.member_id:
-        raise RegistrationError("Wähle bitte, wer dich vertreten hat.")
+        raise RegistrationError("Wähle bitte, wer übernimmt.")
     existing = occurrence.participations.filter(member=member, role__is_team=True, status__in=ACTIVE).first()
     if existing:
         raise RegistrationError(f"{member.display_name} ist schon als {existing.role.name} eingetragen.")
+    if not can_take_role(member, role, occurrence.event):
+        raise RegistrationError(f"{member.first_name} kann bei {occurrence.event.title} nicht {role.name} sein.")
     unconfirm(participation, by)
-    absent = participation.person.display_name
+    absent = participation.member
     remove_team(participation, by)
     substitute = set_team(occurrence, member, role, by)
-    _audit(by, "hand_over", f"{absent} wurde bei {_when(occurrence)} von {member.display_name} vertreten", substitute)
-    if role.is_billable:
-        transaction.on_commit(lambda: notices.substitute(substitute, absent))
+    started = occurrence.starts_at <= timezone.now()
+    verb = "wurde" if started else "wird"
+    name = absent.display_name if absent else participation.person.display_name
+    _audit(by, "hand_over", f"{name} {verb} bei {_when(occurrence)} von {member.display_name} vertreten", substitute)
+    if absent is not None:
+        transaction.on_commit(lambda: notices.handed_over(substitute, absent, by))
     return substitute
 
 
