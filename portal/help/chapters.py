@@ -112,7 +112,7 @@ CHAPTERS = (
     Chapter(
         "stunden",
         "Stunden und Abrechnung",
-        "bi-clipboard-check",
+        "bi-cash-coin",
         "Als Übungsleiter",
         "Stunden bestätigen und korrigieren, Monat einreichen, Frist und Rückgabe.",
         _team,
@@ -120,7 +120,7 @@ CHAPTERS = (
     Chapter(
         "mitglieder",
         "Mitglieder verwalten",
-        "bi-person-lines-fill",
+        "bi-people",
         "Verwaltung",
         "Anlegen, CSV-Import, Zugänge für Mitglieder und Eltern, Austritt und Löschen.",
         _manage_members,
@@ -144,7 +144,7 @@ CHAPTERS = (
     Chapter(
         "benutzer",
         "Benutzer und Protokoll",
-        "bi-people-fill",
+        "bi-person-badge",
         "Verwaltung",
         "Einladen, Rollen vergeben, deaktivieren; wer hat was geändert.",
         _users,
