@@ -167,6 +167,8 @@ test("Training wiederkehrend anlegen; Elternteil mit zwei Kindern sieht jeden Te
   await admin.getByLabel("Alle x Wochen").check();
   await admin.getByLabel("Uhrzeit von").fill("17:00");
   await admin.getByLabel("Uhrzeit bis").fill("18:30");
+  // Erst ab morgen: ein Termin von heute läge je nach Uhrzeit schon nach dem Anmeldeschluss (2 Std. vorher).
+  await admin.getByLabel("Gültig ab").fill(localDateTime(1, "00:00").slice(0, 10));
   await admin.getByLabel("Gültig bis").fill(localDateTime(27, "00:00").slice(0, 10));
   await admin.getByLabel("Anmeldung schließt (Stunden vorher)").fill("2");
   await admin.getByLabel("Mitglied").selectOption({ label: "Clara Clever" });
