@@ -1,0 +1,12 @@
+<fieldset class="fieldset rounded-box border border-base-300 p-4" data-target-group>
+  <legend class="fieldset-legend">Zielgruppe</legend>
+  {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+  {{ form.non_field_errors }}
+  {{ form.name.as_field_group }}
+  <div class="grid gap-x-4 sm:grid-cols-2">{{ form.min_age.as_field_group }}{{ form.max_age.as_field_group }}</div>
+  {{ form.genders.as_field_group }}
+  <div class="grid gap-x-4 sm:grid-cols-2">{{ form.min_weight.as_field_group }}{{ form.max_weight.as_field_group }}</div>
+  <div class="grid gap-x-4 sm:grid-cols-2">{{ form.min_grade.as_field_group }}{{ form.max_grade.as_field_group }}</div>
+  {{ form.interests.as_field_group }}
+  <div class="flex flex-wrap gap-x-6">{{ form.save_as_template.as_field_group }}{{ form.DELETE.as_field_group }}</div>
+</fieldset>

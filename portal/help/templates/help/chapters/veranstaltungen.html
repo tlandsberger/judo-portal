@@ -1,9 +1,10 @@
 {% load help %}
-<p>Unter <a href="{% url 'event_list' %}">Veranstaltungen</a> planst du Trainings, Wettkämpfe, Lehrgänge und Prüfungen. Übungsleiter sehen die Liste und planen Teams; anlegen und ändern kann die Abteilungsleitung.</p>
+<p>Unter <a href="{% url 'event_list' %}">Veranstaltungen</a> planst du Trainings, Wettkämpfe, Lehrgänge und Prüfungen. Übungsleiter sehen die Liste und teilen sich ein; anlegen und ändern kann die Abteilungsleitung.</p>
 
 <h2 id="anlegen">Veranstaltung anlegen</h2>
 <ol>
-  <li><strong>Veranstaltung anlegen</strong>: Titel, Art, Ort, Zielgruppen, optional Höchstzahl, „Gewicht bei Anmeldung erforderlich“ und „Gäste willkommen“.</li>
+  <li><strong>Veranstaltung anlegen</strong>: Titel, Art, Ort, optional Höchstzahl, „Gewicht bei Anmeldung erforderlich“ und „Gäste willkommen“.</li>
+  <li><strong>Zielgruppen</strong> direkt im Formular: z. B. „U12“ mit „Alter bis 11“ (nach Jahrgang), Geschlecht, Graduierung, Gewicht, Interessen. Leere Felder gelten für alle. Mit <strong>Weitere Zielgruppe hinzufügen</strong> kommt ein Block dazu; wer zu einem davon passt, kann sich anmelden. Ohne Zielgruppe alle.</li>
   <li>Termine gleich mit festlegen:
     <ul>
       <li><strong>Einmalig:</strong> Beginn, Ende und Anmeldezeitraum.</li>
@@ -11,22 +12,22 @@
       <li><strong>Später festlegen:</strong> nur die Veranstaltung, Termine ergänzt du danach.</li>
     </ul>
   </li>
-  <li>Optional gleich das Team: Mitglied und Rolle.</li>
+  <li>Optional gleich einen Übungsleiter: Mitglied und Rolle.</li>
 </ol>
 {% screenshot "veranstaltung-anlegen" "Formular Veranstaltung anlegen mit Terminen" %}
 
-<h2 id="einstellungen">Zielgruppen, Rollen und Arten</h2>
+<h2 id="einstellungen">Vorlagen, Rollen und Arten</h2>
 <ul>
-  <li><strong>Zielgruppen:</strong> z. B. „U12“ mit „Alter bis 11“ (nach Jahrgang), Geschlecht, Graduierung, Gewicht, Interessen. Die Seite zeigt sofort, wer heute passt.</li>
-  <li><strong>Rollen:</strong> Teilnehmer, Trainer, Co-Trainer, Prüfer, Betreuer … – für welche Arten, welche Benutzerrollen, ob Team und ob abrechnungsrelevant.</li>
+  <li><strong>Zielgruppen-Vorlagen:</strong> Zielgruppen, die du öfter brauchst, hakst du im Formular bei „Als Vorlage speichern“ an oder legst sie unter Veranstaltungen → Zielgruppen-Vorlagen an. Bei der nächsten Veranstaltung wählst du sie unter „Aus Vorlage übernehmen“. Die Veranstaltung bekommt eine Kopie: Änderst du die Vorlage später, bleiben bestehende Veranstaltungen, wie sie sind. Auf der Veranstaltung siehst du unter „Passende Mitglieder“, wer heute passt.</li>
+  <li><strong>Rollen:</strong> Teilnehmer, Trainer, Co-Trainer, Prüfer, Betreuer … – für welche Arten, welche Benutzerrollen, ob Übungsleiter-Rolle und ob abrechnungsrelevant.</li>
   <li><strong>Veranstaltungsarten:</strong> Training, Wettkampf, Lehrgang, Prüfung, Sonstiges – erweiterbar.</li>
 </ul>
 
-<h2 id="zeitplaene">Zeitpläne und Standard-Team</h2>
-<p>Je Wochentag gibt es einen Zeitplan mit Standard-Team; kommende Termine übernehmen es. Neue Trainingszeiten: alten Zeitplan mit „Gültig bis“ beenden, neuen anlegen.</p>
+<h2 id="zeitplaene">Zeitpläne und feste Übungsleiter</h2>
+<p>Je Wochentag gibt es einen Zeitplan mit festen Übungsleitern; kommende Termine übernehmen sie. Neue Trainingszeiten: alten Zeitplan mit „Gültig bis“ beenden, neuen anlegen.</p>
 
 <h2 id="gaeste">Gäste</h2>
 <p>Mit „Gäste willkommen“ zeigt die Veranstaltung einen <strong>Anmeldelink</strong> zum Teilen, z. B. an andere Vereine. Gäste bestätigen ihre Anmeldung per Mail und sehen ihre Daten über ihren eigenen Link. Mit <strong>Neuen Link erzeugen</strong> wird der alte ungültig.</p>
 
 <h2 id="absagen">Ferien und Ausfälle</h2>
-<p>Auf der Veranstaltung „Termine absagen“ mit Zeitraum, dann <strong>Termine in diesem Zeitraum absagen</strong>. Angemeldete und Team bekommen eine Nachricht.</p>
+<p>Auf der Veranstaltung „Termine absagen“ mit Zeitraum, dann <strong>Termine in diesem Zeitraum absagen</strong>. Angemeldete und Übungsleiter bekommen eine Nachricht.</p>

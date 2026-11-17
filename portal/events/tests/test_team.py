@@ -125,16 +125,6 @@ def test_participants_without_team_with_emergency_contact(child, parent, trainer
     assert row.age == timezone.localdate().year - child.birth_date.year
 
 
-def test_own_team_for_my_hours(trainer):
-    anna = services.own_member(trainer)
-    services.set_team(make_occurrence(in_days=2), anna, role("Trainer"))
-    services.set_team(make_occurrence(in_days=-2), anna, role("Co-Trainer"))
-    coming, past = services.own_team(trainer)
-    assert [p.role.name for p in coming] == ["Trainer"]
-    assert [p.role.name for p in past] == ["Co-Trainer"]
-    assert services.own_team(make_user("x@example.org")) == ([], [])
-
-
 def test_unconfirm_until_submitted(trainer):
     occurrence = make_occurrence(in_days=-1)
     participation = services.set_team(occurrence, services.own_member(trainer), role("Trainer"))
@@ -159,4 +149,4 @@ def test_open_confirmations_for_start_page(trainer, client):
     assert "1 Termin: Stunden bestätigen" in client.get(reverse("home")).content.decode()
     services.confirm(past)
     assert services.open_confirmations(trainer) == 0
-    assert "Stunden bestätigen" not in client.get(reverse("home")).content.decode()
+    assert ": Stunden bestätigen" not in client.get(reverse("home")).content.decode()

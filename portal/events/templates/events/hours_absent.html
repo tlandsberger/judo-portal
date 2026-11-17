@@ -3,7 +3,7 @@
 {% block title %}Nicht dabei?{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-2xl">
-  <a href="{% url 'my_hours' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Meine Stunden</a>
+  <a href="{% url 'billing_index' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Meine Abrechnung</a>
   <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
     <div class="flex items-center gap-1"><h1 class="text-2xl font-bold">Nicht dabei?</h1>{% help_link "stunden" %}</div>
     <p><a class="link font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a> am {{ occurrence.starts_at|date:"l, d.m.Y" }} um {{ occurrence.starts_at|date:"H:i" }} Uhr – du warst als <strong>{{ participation.role.name }}</strong> eingetragen{% if participation.is_confirmed %} und hast {{ participation.minutes }} Minuten bestätigt{% endif %}.</p>
@@ -24,7 +24,7 @@
         <p class="text-sm text-base-content/70">Die Vertretung bekommt eine Push-Benachrichtigung (sonst Mail) und bestätigt ihre Stunden selbst.</p>
       </fieldset>
       <p class="text-sm text-base-content/70">Absagen: Der Termin gilt als ausgefallen, Teilnehmer bekommen keine Nachricht mehr.</p>
-      <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% url 'my_hours' %}">Abbrechen</a></div>
+      <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% url 'billing_index' %}">Abbrechen</a></div>
     </form>
     {% endif %}
   </div></div>

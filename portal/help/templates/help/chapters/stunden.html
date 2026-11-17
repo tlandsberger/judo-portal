@@ -1,28 +1,28 @@
 {% load help %}
-<p>Unter <a href="{% url 'my_hours' %}">Meine Stunden</a> siehst du deine Termine im Team. Bei Trainer, Co-Trainer und anderen abrechnungsrelevanten Rollen bestätigst du nach dem Termin deine Stunden; daraus entsteht die monatliche Abrechnung.</p>
-{% screenshot "stunden" "Meine Stunden mit bestätigten und offenen Terminen" %}
+<p>Bei Trainer, Co-Trainer und anderen abrechnungsrelevanten Rollen bestätigst du nach dem Termin deine Stunden; daraus entsteht die monatliche Abrechnung. Alles dazu findest du unter <a href="{% url 'billing_index' %}">Meine Abrechnung</a>. Deine kommenden Einteilungen siehst du unter <a href="{% url 'agenda' %}">Termine</a>.</p>
+{% screenshot "stunden" "Meine Abrechnung mit Terminen zum Bestätigen und den Monaten" %}
 
 <h2 id="bestaetigen">Stunden bestätigen</h2>
 <ol>
   <li>Am Abend des Termins kommt eine Erinnerung – mit dem Knopf <strong>Bestätigen</strong> geht es direkt aus der Nachricht.</li>
-  <li>Oder unter <a href="{% url 'my_hours' %}">Meine Stunden</a> beim Termin auf <strong>Bestätigen</strong> tippen. Die Dauer kommt aus dem Termin.</li>
-  <li>Hat es länger oder kürzer gedauert, trag die Minuten ein und tippe auf <strong>Ändern</strong>.</li>
+  <li>Oder unter <a href="{% url 'billing_index' %}">Meine Abrechnung</a> bei „Noch bestätigen“ auf <strong>Bestätigen</strong> tippen. Die Dauer kommt aus dem Termin.</li>
+  <li>Hat es länger oder kürzer gedauert, öffne den Monat, trag die Minuten ein und tippe auf <strong>Ändern</strong>.</li>
   <li>Versehentlich bestätigt? Mit <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> (<strong>Bestätigung zurücknehmen</strong>) machst du es rückgängig.</li>
 </ol>
 <p>Ändern und zurücknehmen geht, bis der Monat zur Abrechnung eingereicht ist.</p>
 
 <h2 id="nicht-dabei">Nicht dabei?</h2>
-<p>Lief es anders als geplant, tippe in der Erinnerung, unter <a href="{% url 'my_hours' %}">Meine Stunden</a> oder am Termin auf <strong>Nicht dabei?</strong> und wähle:</p>
+<p>Lief es anders als geplant, tippe in der Erinnerung, unter <a href="{% url 'billing_index' %}">Meine Abrechnung</a> oder am Termin auf <strong>Nicht dabei?</strong> und wähle:</p>
 <ul>
-  <li><strong>Ich war nicht dabei – austragen:</strong> Du verschwindest aus dem Team des Termins.</li>
+  <li><strong>Ich war nicht dabei – austragen:</strong> Du bist als Übungsleiter des Termins ausgetragen.</li>
   <li><strong>Ich wurde vertreten:</strong> Wähle, wer dich vertreten hat und in welcher Rolle. Die Vertretung wird eingetragen und bekommt eine Push-Benachrichtigung, um ihre Stunden zu bestätigen.</li>
-  <li><strong>Der Termin hat nicht stattgefunden – absagen:</strong> Der Termin gilt als ausgefallen. Teilnehmer bekommen keine Nachricht mehr. Hat schon jemand anderes im Team bestätigt, sprecht euch bitte vorher ab.</li>
+  <li><strong>Der Termin hat nicht stattgefunden – absagen:</strong> Der Termin gilt als ausgefallen. Teilnehmer bekommen keine Nachricht mehr. Hat schon ein anderer Übungsleiter bestätigt, sprecht euch bitte vorher ab.</li>
 </ul>
 {% screenshot "nicht-dabei" "Seite Nicht dabei? mit Austragen, Vertretung und Absage" %}
 
 <h2 id="abrechnung">Abrechnung einreichen</h2>
 <ol>
-  <li>Öffne <a href="{% url 'billing_index' %}">Abrechnung</a> und den Monat.</li>
+  <li>Öffne <a href="{% url 'billing_index' %}">Meine Abrechnung</a> und den Monat.</li>
   <li>Prüfe die Zeilen: Datum, Veranstaltung, Rolle, Minuten, Satz und Betrag. Nicht bestätigte Termine stehen darunter und werden nicht abgerechnet.</li>
   <li>Nach Monatsende auf <strong>… einreichen</strong> tippen.</li>
 </ol>

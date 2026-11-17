@@ -205,6 +205,12 @@ class Month:
         return self.claim is None or self.claim.status == ClaimStatus.RETURNED
 
     @property
+    def pending(self) -> list[Participation]:
+        """Vergangene, noch nicht bestätigte Termine (kommende lassen sich noch nicht bestätigen)."""
+        now = timezone.now()
+        return [p for p in self.unconfirmed if p.occurrence.starts_at <= now] if self.is_open else []
+
+    @property
     def total_minutes(self) -> int:
         return sum(line.minutes for line in self.lines)
 
@@ -260,6 +266,11 @@ def months(member: Member, today: date | None = None) -> list[Month]:
     found.update(first_of_month(timezone.localdate(starts)) for starts in shifts)
     found.add(current)
     return [month_overview(member, month, today) for month in sorted(found, reverse=True)]
+
+
+def pending_confirmations(overviews: list[Month]) -> list[Participation]:
+    """Vergangene, noch nicht bestätigte Termine aller offenen Monate, ältester zuerst."""
+    return sorted((p for m in overviews for p in m.pending), key=lambda p: p.occurrence.starts_at)
 
 
 # Ablauf

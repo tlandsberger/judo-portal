@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   ADMIN_STATE,
   acceptInvitation,
+  billingMonthPath,
   ensureYouthGroup,
   expectNoA11yViolations,
   importMembers,
@@ -15,13 +16,13 @@ const TRAINER = { email: "clara@test.local", password: "Sicher-Trainer-789" };
 const PARENTS = { email: "eltern-zwei@test.local", password: "Sicher-Eltern-321" };
 const GUEST = { email: "lena-gast@test.local" };
 
-test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sieht Teilnehmer und bestätigt Stunden", async ({ browser }) => {
+test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trainerin sieht Teilnehmer und bestätigt Stunden", async ({ browser }) => {
   const admin = await (await browser.newContext({ storageState: ADMIN_STATE })).newPage();
   await importMembers(admin);
   await ensureYouthGroup(admin);
   await expect(admin.getByText("Passen heute: 3")).toBeVisible();
 
-  // Übungsleiterin einladen und mit ihrem Mitgliedsprofil verknüpfen (Voraussetzung für Team-Rollen)
+  // Übungsleiterin einladen und mit ihrem Mitgliedsprofil verknüpfen (Voraussetzung für Übungsleiter-Rollen)
   await admin.goto("/verwaltung/benutzer/einladen/");
   await admin.getByLabel("E-Mail").fill(TRAINER.email);
   await admin.getByLabel("Vorname").fill("Clara");
@@ -43,11 +44,14 @@ test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sie
   await expect(admin.getByRole("link", { name: "Co-Trainer" })).toBeVisible();
   await expectNoA11yViolations(admin);
 
-  // Lehrgang mit Zielgruppe, Pflichtgewicht, Termin und Team in einem Schritt
+  // Lehrgang mit Zielgruppe, Pflichtgewicht, Termin und Übungsleiterin in einem Schritt
   await admin.goto("/veranstaltungen/neu/");
   await admin.getByLabel("Titel").fill("Randori-Lehrgang");
   await admin.getByLabel("Art").selectOption({ label: "Lehrgang" });
-  await admin.getByLabel("Kinder und Jugend").check();
+  await admin.getByLabel("Aus Vorlage übernehmen").selectOption({ label: "Kinder und Jugend" });
+  await admin.getByRole("button", { name: "Übernehmen" }).click();
+  await expect(admin.getByLabel("Bezeichnung")).toHaveValue("Kinder und Jugend");
+  await expect(admin.getByLabel("Alter bis")).toHaveValue("18");
   await admin.getByLabel("Gewicht bei Anmeldung erforderlich").check();
   await admin.getByLabel("Einmalig").check();
   await expect(admin.getByLabel("Wochentage")).toBeHidden();
@@ -60,12 +64,12 @@ test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sie
   await expect(admin.getByText("„Randori-Lehrgang“ angelegt mit 1 Termin.")).toBeVisible();
   await expectNoA11yViolations(admin);
 
-  // Ein weiterer, schon vergangener Termin; das Team kommt am Termin dazu
+  // Ein weiterer, schon vergangener Termin; die Übungsleiterin kommt am Termin dazu
   await admin.getByRole("link", { name: "Termin", exact: true }).click();
   await admin.getByLabel("Beginn", { exact: true }).fill(localDateTime(-1, "10:00"));
   await admin.getByLabel("Ende", { exact: true }).fill(localDateTime(-1, "14:00"));
   await admin.getByRole("button", { name: "Speichern" }).click();
-  await expect(admin.getByText("Termin angelegt. Trag hier das Team ein.")).toBeVisible();
+  await expect(admin.getByText("Termin angelegt. Trag hier die Übungsleiter ein.")).toBeVisible();
   await admin.getByLabel("Mitglied").selectOption({ label: "Clara Clever" });
   await admin.getByLabel("Rolle").selectOption({ label: "Trainer" });
   await admin.getByRole("button", { name: "Eintragen oder Rolle ändern" }).click();
@@ -103,24 +107,27 @@ test("Lehrgang anlegen, Team eintragen, Kind mit Gewicht anmelden, Trainerin sie
   await parentContext.close();
 
   // Trainerin: Teilnehmer mit Notfallkontakt, Stunden des vergangenen Termins bestätigen
-  await trainer.goto("/stunden/");
-  await expectNoA11yViolations(trainer);
-  await trainer.getByRole("region", { name: "Kommende" }).getByRole("link", { name: "Randori-Lehrgang" }).click();
+  await trainer.goto("/termine/");
+  await trainer.getByRole("link", { name: "Randori-Lehrgang" }).first().click();
   await expect(trainer.getByRole("heading", { name: "Teilnehmer (1)" })).toBeVisible();
   await expect(trainer.getByText("„kommt mit dem Bus“")).toBeVisible();
   await expect(trainer.getByRole("link", { name: PARENT.email })).toBeVisible();
   await expectNoA11yViolations(trainer);
   // Mitglieder sieht sie sonst nicht
   expect((await trainer.goto("/mitglieder/"))?.status()).toBe(403);
-  await trainer.goto("/stunden/");
-  await trainer.getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
+  // „Meine Abrechnung“: offene Termine aller Monate oben unter „Noch bestätigen“
+  await trainer.goto("/abrechnung/");
+  await expectNoA11yViolations(trainer);
+  await trainer.getByRole("region", { name: "Noch bestätigen" }).getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
   await expect(trainer.getByText("Danke, deine Stunden sind bestätigt.")).toBeVisible();
-  await expect(trainer.getByText("bestätigt · 240 Min.")).toBeVisible();
-  // Versehentlich bestätigt? Zurücknehmen und erneut bestätigen
+  await expect(trainer.getByRole("region", { name: "Noch bestätigen" })).toHaveCount(0);
+  // Im Monat: Dauer sehen, versehentlich bestätigt? Zurücknehmen und erneut bestätigen
+  await trainer.goto(billingMonthPath(1));
+  await expect(trainer.getByRole("spinbutton", { name: /Minuten für Randori-Lehrgang/ })).toHaveValue("240");
   await trainer.getByRole("button", { name: /Bestätigung für Randori-Lehrgang am .* zurücknehmen/ }).click();
   await expect(trainer.getByText("Die Bestätigung ist zurückgenommen.")).toBeVisible();
   await trainer.getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
-  await expect(trainer.getByText("bestätigt · 240 Min.")).toBeVisible();
+  await expect(trainer.getByRole("spinbutton", { name: /Minuten für Randori-Lehrgang/ })).toHaveValue("240");
   await expectNoA11yViolations(trainer);
   await trainerContext.close();
   await admin.context().close();
@@ -134,7 +141,10 @@ test("Training wiederkehrend anlegen; Elternteil mit zwei Kindern sieht jeden Te
   await admin.goto("/veranstaltungen/neu/");
   await admin.getByLabel("Titel").fill("Kindertraining");
   await admin.getByLabel("Art").selectOption({ label: "Training" });
-  await admin.getByLabel("Kinder und Jugend").check();
+  // Zielgruppe nur für diese Veranstaltung, ohne Vorlage
+  await admin.getByRole("button", { name: "Weitere Zielgruppe hinzufügen" }).click();
+  await admin.getByLabel("Bezeichnung").fill("Kinder");
+  await admin.getByLabel("Alter bis").fill("18");
   await admin.getByLabel("Wiederkehrend").check();
   await expect(admin.getByLabel("Beginn", { exact: true })).toBeHidden();
   await admin.getByLabel("Dienstag").check();

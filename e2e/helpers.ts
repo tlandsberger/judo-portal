@@ -89,15 +89,21 @@ export async function importMembers(page: Page) {
   }
 }
 
-/** Zielgruppe „Kinder und Jugend“ (bis 18) anlegen, falls es sie noch nicht gibt. */
+/** Zielgruppen-Vorlage „Kinder und Jugend“ (bis 18) anlegen, falls es sie noch nicht gibt. */
 export async function ensureYouthGroup(page: Page) {
   await page.goto("/zielgruppen/");
   if (await page.getByRole("link", { name: "Kinder und Jugend" }).count()) return;
-  await page.getByRole("link", { name: "Zielgruppe anlegen" }).click();
+  await page.getByRole("link", { name: "Vorlage anlegen" }).click();
   await page.getByLabel("Name").fill("Kinder und Jugend");
   await page.getByLabel("Alter bis").fill("18");
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Kinder und Jugend" })).toBeVisible();
+}
+
+/** Pfad der eigenen Monatsabrechnung für den Monat, in dem der Tag vor n Tagen liegt. */
+export function billingMonthPath(daysAgo: number): string {
+  const day = new Date(Date.now() - daysAgo * 86_400_000);
+  return `/abrechnung/${day.getFullYear()}/${day.getMonth() + 1}/`;
 }
 
 /** Datum in n Tagen für Felder vom Typ datetime-local, z. B. „2026-11-25T10:00“. */

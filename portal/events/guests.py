@@ -122,7 +122,7 @@ def register(event: Event, data: dict[str, Any], occurrences: Iterable[Occurrenc
             weight=guest.weight,
         )
     log.info("Gast %s für %s Termine von %s", guest.pk, len(occurrences), "Team" if by else "Link")
-    how = "vom Team eingetragen" if by else "über den Link angemeldet, noch unbestätigt"
+    how = "von den Übungsleitern eingetragen" if by else "über den Link angemeldet, noch unbestätigt"
     audit.log(
         by, audit.Area.EVENTS, "guest_register", f"Gast {guest.display_name} für {event.title} {how}", guest=guest
     )

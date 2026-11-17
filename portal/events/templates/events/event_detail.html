@@ -10,12 +10,24 @@
     </div>
     <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">
       <div><dt class="text-sm text-base-content/70">Ort</dt><dd>{{ event.location|default:"–" }}</dd></div>
-      <div><dt class="text-sm text-base-content/70">Zielgruppen</dt><dd>{% for group in event.target_groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}alle{% endfor %}</dd></div>
+      <div><dt class="text-sm text-base-content/70">Zielgruppen</dt><dd>{% for group in event.target_groups.all %}{{ group }}{% if not forloop.last %}; {% endif %}{% empty %}alle{% endfor %}</dd></div>
       <div><dt class="text-sm text-base-content/70">Höchstzahl</dt><dd>{{ event.capacity|default:"unbegrenzt" }}</dd></div>
       <div><dt class="text-sm text-base-content/70">Gewicht bei Anmeldung</dt><dd>{{ event.weight_required|yesno:"erforderlich,nicht nötig" }}</dd></div>
       <div><dt class="text-sm text-base-content/70">Gäste</dt><dd>{{ event.guests_welcome|yesno:"willkommen,nein" }}</dd></div>
     </dl>
     {% if event.description %}<p class="whitespace-pre-line">{{ event.description }}</p>{% endif %}
+    {% if matching is not None %}
+    <details class="collapse collapse-arrow rounded-box bg-base-200">
+      <summary class="collapse-title font-semibold">Passende Mitglieder: {{ matching|length }}</summary>
+      <div class="collapse-content">
+        {% if matching %}
+        <ul class="flex flex-col gap-1 text-sm">
+          {% for member, match in matching %}<li><a class="link link-hover" href="{% url 'member_detail' member.pk %}">{{ member.last_name }}, {{ member.first_name }}</a> <span class="text-base-content/70">· {{ member.birth_date|date:"Y" }}{% if member.grade_short %} · {{ member.grade_short }}{% endif %}</span>{% if match == maybe %} <span class="badge badge-ghost badge-sm">Gewicht fehlt</span>{% endif %}</li>{% endfor %}
+        </ul>
+        {% else %}<p class="text-sm text-base-content/70">Gerade passt niemand.</p>{% endif %}
+      </div>
+    </details>
+    {% endif %}
     {% if guest_link and can_manage %}
     <div class="flex flex-col gap-2 rounded-box bg-base-200 p-4">
       <label class="font-semibold" for="gaestelink">Anmeldelink für Gäste</label>
@@ -28,7 +40,7 @@
 
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zeitplaene"><div class="card-body gap-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <div><h2 class="card-title" id="h-zeitplaene">Zeitpläne</h2><p class="text-sm text-base-content/70">Jeder Zeitplan hat sein Standard-Team; kommende Termine übernehmen es.</p></div>
+      <div><h2 class="card-title" id="h-zeitplaene">Zeitpläne</h2><p class="text-sm text-base-content/70">Jeder Zeitplan hat feste Übungsleiter; kommende Termine übernehmen sie.</p></div>
       {% if can_manage %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'schedule_create' event.pk %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Zeitplan</a>{% endif %}
     </div>
     {% for schedule in schedules %}
@@ -48,17 +60,17 @@
         {% for entry in schedule.team.all %}
         <li class="list-row items-center px-0">
           <div class="list-col-grow"><div class="font-semibold">{{ entry.member.display_name }}</div><div class="text-sm text-base-content/70">{{ entry.role.name }}</div></div>
-          <form method="post" action="{% url 'schedule_team_remove' event.pk schedule.pk entry.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ entry.member.display_name }} aus dem Standard-Team von {{ schedule }} nehmen">Entfernen</button></form>
+          <form method="post" action="{% url 'schedule_team_remove' event.pk schedule.pk entry.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ entry.member.display_name }} bei {{ schedule }} nicht mehr fest einteilen">Entfernen</button></form>
         </li>
         {% endfor %}
       </ul>
-      {% else %}<p class="mt-2 text-sm text-base-content/70">Noch kein Standard-Team.</p>{% endif %}
+      {% else %}<p class="mt-2 text-sm text-base-content/70">Noch keine festen Übungsleiter.</p>{% endif %}
       <form method="post" action="{% url 'schedule_team' event.pk schedule.pk %}" class="mt-2 flex flex-col gap-2">{% csrf_token %}
         <div class="grid gap-x-4 sm:grid-cols-2">{{ schedule.team_form }}</div>
-        <div><button class="btn btn-primary btn-sm" type="submit">Ins Standard-Team</button></div>
+        <div><button class="btn btn-primary btn-sm" type="submit">Fest einteilen</button></div>
       </form>
     </div>
-    {% empty %}<p class="text-base-content/70">Kein Zeitplan – die Veranstaltung hat nur einzelne Termine. Deren Team trägst du am Termin ein.</p>{% endfor %}
+    {% empty %}<p class="text-base-content/70">Kein Zeitplan – die Veranstaltung hat nur einzelne Termine. Die Übungsleiter trägst du am Termin ein.</p>{% endfor %}
   </div></section>
 
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-termine"><div class="card-body gap-4">

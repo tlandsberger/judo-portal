@@ -33,7 +33,7 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | `portal.core` | App-Rahmen, Startseite, Bausteine, PWA (Manifest, Service Worker), Healthcheck, Backup, Zeitplaner, Änderungsprotokoll |
 | `portal.accounts` | Benutzer, Rollen, Einladungen, Benutzerverwaltung, Anpassungen an allauth |
 | `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Benutzer ↔ Mitglied (m:n), „Meine Daten“ (ADR 0009) |
-| `portal.events` | Veranstaltungen, Arten, Zeitpläne, Termine, Zielgruppen, Teilnahme mit Rollen und Warteliste, Gäste (ADR 0010, 0012, 0013) |
+| `portal.events` | Veranstaltungen, Arten, Zeitpläne, Termine, Zielgruppen und Vorlagen, Teilnahme mit Rollen und Warteliste, Gäste (ADR 0010, 0012, 0013) |
 | `portal.notifications` | Push-Benachrichtigungen je Gerät mit Mail als Ersatz, Aktionsknöpfe (ADR 0011) |
 | `portal.privacy` | Auskunft, Löschen auf Wunsch und nach Austritt, Seite „Protokoll“ (ADR 0015) |
 | `portal.help` | Hilfe im Portal: Kapitel je Rolle, Kontexthilfe, Screenshots aus Playwright (ADR 0016) |
@@ -47,8 +47,8 @@ Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kom
 | Rolle | Zweck |
 |---|---|
 | Mitglied (`member`) | Grundrolle für Vereinsmitglieder mit eigenem Zugang |
-| Übungsleiter (`trainer`) | Übernimmt über das eigene Mitgliedsprofil Team-Rollen (Trainer, Co-Trainer, Prüfer, Betreuer), plant Teams; sieht Teilnehmer nur bei eigenen Terminen (ADR 0012) |
-| Abteilungsleiter (`department_head`) | Verwaltet Benutzer (einladen, Rollen außer Administrator), Mitglieder, Zugänge, Veranstaltungen, Zielgruppen, Arten und Rollen |
+| Übungsleiter (`trainer`) | Übernimmt über das eigene Mitgliedsprofil Übungsleiter-Rollen (Trainer, Co-Trainer, Prüfer, Betreuer), teilt sich ein; sieht Teilnehmer nur bei eigenen Terminen (ADR 0012) |
+| Abteilungsleiter (`department_head`) | Verwaltet Benutzer (einladen, Rollen außer Administrator), Mitglieder, Zugänge, Veranstaltungen, Zielgruppen-Vorlagen, Arten und Rollen |
 | Administrator (`admin`) | Technische Rolle: alles, inkl. technischer Verwaltung (Django-Admin unter `/technik/`) |
 
 Eltern sind keine Rolle: Ihr Benutzer wird mit den Kindern verknüpft (bis zu deren 18. Geburtstag). Was ein Benutzer

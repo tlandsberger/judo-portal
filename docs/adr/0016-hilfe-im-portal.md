@@ -20,7 +20,8 @@ Screenshots arbeiten, die nicht veralten.
 - **Kontexthilfe:** `{% help_link "<slug>" %}` setzt ein „?“ neben die Überschrift wichtiger Seiten, nur wenn das
   Kapitel sichtbar ist.
 - **Screenshots aus Playwright:** Das Projekt `hilfe` (`e2e/hilfe.spec.ts`) läuft nach allen anderen E2E-Tests, nutzt
-  deren Daten und fotografiert die beschriebenen Seiten (Desktop und Handy, JPEG). Mit `npm run help:screenshots`
+  deren Daten und fotografiert die beschriebenen Seiten (Desktop und Handy, je hell und dunkel, JPEG). Die Hilfe zeigt
+  per CSS das Bild zum gewählten Theme; ausgeblendete Bilder lädt der Browser dank `loading="lazy"` nicht. Mit `npm run help:screenshots`
   landen die Bilder in `portal/help/static/help/img` und werden committet. In der CI laufen die Abläufe mit, die Bilder
   werden aber nicht verglichen, weil Datumswerte täglich wechseln.
 - Ein pytest-Test prüft, dass jedes in den Kapiteln verwendete Bild existiert – sonst scheitert in Produktion das

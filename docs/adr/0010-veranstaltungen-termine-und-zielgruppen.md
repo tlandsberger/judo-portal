@@ -31,13 +31,21 @@ Trainings, Wettkämpfe, Lehrgänge und Prüfungen sollen ins Portal (`portal.eve
 
 ### Zielgruppen statt Gruppenlisten
 
-- Eine **Zielgruppe** (`TargetGroup`) ist eine benannte Regel. Die Kriterien sind alle optional:
+- Eine **Zielgruppe** (`TargetGroup`) ist eine Regel, die zur Veranstaltung gehört und direkt in deren Formular
+  gepflegt wird; eine Bezeichnung („U11“) ist optional. Die Kriterien sind alle optional:
   - Alter von–bis **nach Jahrgang** wie bei den Judo-Altersklassen: Jahr des Termins minus Geburtsjahr
   - Geschlecht
   - Gewicht von–bis
   - Graduierung von–bis; ohne Graduierung zählt ein Mitglied als Anfänger
   - Interessen: mindestens eines muss passen
 - Innerhalb einer Zielgruppe gilt UND, zwischen den Zielgruppen einer Veranstaltung ODER. Ohne Zielgruppe passt jeder.
+- **Vorlagen** (`TargetGroupTemplate`) für Zielgruppen, die öfter gebraucht werden: im Formular „Als Vorlage
+  speichern“ oder auf der Seite „Zielgruppen-Vorlagen“. „Aus Vorlage übernehmen“ **kopiert** die Kriterien in die
+  Veranstaltung. Änderungen an der Vorlage wirken nur auf künftige Übernahmen.
+  - Begründung (November 2026): Zuerst waren Zielgruppen eigenständige, verknüpfte Objekte. In der Praxis werden sie
+    selten wiederverwendet; der Umweg über eine eigene Seite lohnte sich nicht. Eine Kopie hält jede Veranstaltung
+    unabhängig, sodass eine geänderte Vorlage nicht unbemerkt laufende Anmeldungen anderer Veranstaltungen ändert.
+  - Bestehende Zielgruppen wurden zu Vorlagen; jede Veranstaltung bekam Kopien ihrer bisherigen Zielgruppen.
 - Das Ergebnis wird bei jedem Aufruf berechnet. Wer älter wird, eine Prüfung besteht oder sein Gewicht ändert, passt
   automatisch; gepflegte Listen gibt es nicht.
 - Fehlt das Gewicht, das eine Zielgruppe verlangt, gilt das Mitglied als „vielleicht passend“: Es darf sich anmelden,

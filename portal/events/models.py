@@ -12,11 +12,9 @@ from django.utils import timezone
 from portal.members.models import Gender, Grade, Interest, Member
 
 
-class TargetGroup(models.Model):
-    """Benannte Regel, an wen sich eine Veranstaltung richtet. Leere Kriterien gelten für alle."""
+class Criteria(models.Model):
+    """Kriterien einer Zielgruppe. Leere Kriterien gelten für alle; innerhalb gilt UND."""
 
-    name = models.CharField("Name", max_length=80, unique=True)
-    description = models.CharField("Beschreibung", max_length=200, blank=True)
     min_age = models.PositiveSmallIntegerField(
         "Alter ab", null=True, blank=True, help_text="Nach Jahrgang: Jahr des Termins minus Geburtsjahr."
     )
@@ -34,13 +32,10 @@ class TargetGroup(models.Model):
         Interest, verbose_name="Interessen", blank=True, help_text="Passt, wenn das Mitglied eines davon gewählt hat."
     )
 
-    class Meta:
-        verbose_name = "Zielgruppe"
-        verbose_name_plural = "Zielgruppen"
-        ordering = ("name",)
+    CRITERIA = ("min_age", "max_age", "genders", "min_weight", "max_weight", "min_grade", "max_grade")
 
-    def __str__(self) -> str:
-        return self.name
+    class Meta:
+        abstract = True
 
     def get_genders_display(self) -> str:
         return ", ".join(str(Gender(g).label) for g in self.genders)
@@ -62,6 +57,28 @@ class TargetGroup(models.Model):
         if self.pk and (names := [interest.name for interest in self.interests.all()]):
             parts.append(" oder ".join(names))
         return " · ".join(parts) or "alle Mitglieder"
+
+
+class TargetGroupTemplate(Criteria):
+    """Vorlage für Zielgruppen. Beim Übernehmen wird sie in die Veranstaltung kopiert (ADR 0010)."""
+
+    name = models.CharField("Name", max_length=80, unique=True)
+    description = models.CharField("Beschreibung", max_length=200, blank=True)
+
+    class Meta:
+        verbose_name = "Zielgruppen-Vorlage"
+        verbose_name_plural = "Zielgruppen-Vorlagen"
+        ordering = ("name",)
+
+    def __str__(self) -> str:
+        return self.name
+
+    def apply_to(self, event: Event) -> TargetGroup:
+        group = TargetGroup.objects.create(
+            event=event, name=self.name, **{name: getattr(self, name) for name in self.CRITERIA}
+        )
+        group.interests.set(self.interests.all())
+        return group
 
 
 def _range(label: str, low: object, high: object, unit: str = "") -> str:
@@ -105,13 +122,6 @@ class Event(models.Model):
     )
     description = models.TextField("Beschreibung", blank=True)
     location = models.CharField("Ort", max_length=120, blank=True)
-    target_groups = models.ManyToManyField(
-        TargetGroup,
-        verbose_name="Zielgruppen",
-        blank=True,
-        related_name="events",
-        help_text="Anmelden kann sich, wer zu mindestens einer passt. Ohne Zielgruppe: alle.",
-    )
     capacity = models.PositiveSmallIntegerField(
         "Höchstzahl je Termin",
         null=True,
@@ -124,7 +134,7 @@ class Event(models.Model):
     guests_welcome = models.BooleanField(
         "Gäste willkommen",
         default=False,
-        help_text="Externe Gäste melden sich über einen Link an oder werden vom Team eingetragen.",
+        help_text="Externe Gäste melden sich über einen Link an oder werden von den Übungsleitern eingetragen.",
     )
     guest_token = models.CharField(max_length=40, blank=True, editable=False)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
@@ -136,6 +146,21 @@ class Event(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class TargetGroup(Criteria):
+    """Zielgruppe einer Veranstaltung. Anmelden kann sich, wer zu mindestens einer passt; ohne Zielgruppe alle."""
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="target_groups")
+    name = models.CharField("Bezeichnung", max_length=80, blank=True, help_text="Optional, z. B. „U11“.")
+
+    class Meta:
+        verbose_name = "Zielgruppe"
+        verbose_name_plural = "Zielgruppen"
+        ordering = ("pk",)
+
+    def __str__(self) -> str:
+        return self.name or self.summary
 
 
 class Weekday(models.IntegerChoices):
@@ -245,7 +270,7 @@ class ParticipantRole(models.Model):
         help_text="Wer die Rolle übernehmen darf. Nichts ausgewählt heißt: jedes Mitglied.",
     )
     is_team = models.BooleanField(
-        "Team",
+        "Übungsleiter-Rolle",
         default=False,
         help_text="Zählt nicht zur Höchstzahl, sieht die Teilnehmerliste eigener Termine und darf den Termin leiten.",
     )
@@ -407,8 +432,8 @@ class ScheduleTeam(models.Model):
     role = models.ForeignKey(ParticipantRole, on_delete=models.PROTECT, related_name="+")
 
     class Meta:
-        verbose_name = "Standard-Team"
-        verbose_name_plural = "Standard-Team"
+        verbose_name = "Fester Übungsleiter"
+        verbose_name_plural = "Feste Übungsleiter"
         ordering = ("role__order", "member__first_name")
         constraints = [models.UniqueConstraint(fields=["schedule", "member"], name="schedule_team_unique")]
 

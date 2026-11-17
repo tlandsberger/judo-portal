@@ -48,7 +48,8 @@ Aufstellung, die die Abteilungsleitung freigegeben hat. Ausgezahlt wird weiterhi
 
 - Fehlende Sätze fallen beim Einreichen auf, nicht erst bei der Geschäftsstelle.
 - Abrechnungen bleiben dauerhaft erhalten; Löschfristen folgen mit den Datenschutz-Funktionen (Roadmap 5).
-- „Meine Stunden“ zeigt vergangene Termine bis zur Frist zurück (135 Tage).
+- „Meine Abrechnung“ zeigt oben unter „Noch bestätigen“ alle vergangenen, unbestätigten Termine der offenen Monate;
+  die Seite „Meine Stunden“ gibt es nicht mehr (November 2026), kommende Einteilungen stehen unter „Termine“.
 - PDF und CSV weisen verspätete Abrechnungen aus, damit die Geschäftsstelle die Ausnahme sieht.
 - Neue Python-Abhängigkeit `fpdf2` (reines Python, braucht kein System-Paket im Image).
 

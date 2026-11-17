@@ -9,7 +9,13 @@ from .models import (
     Schedule,
     ScheduleTeam,
     TargetGroup,
+    TargetGroupTemplate,
 )
+
+
+class TargetGroupInline(admin.StackedInline):
+    model = TargetGroup
+    extra = 0
 
 
 class ScheduleInline(admin.TabularInline):
@@ -21,7 +27,7 @@ class ScheduleInline(admin.TabularInline):
 class EventAdmin(admin.ModelAdmin):
     list_display = ("title", "event_type", "location", "capacity")
     list_filter = ("event_type",)
-    inlines = (ScheduleInline,)
+    inlines = (TargetGroupInline, ScheduleInline)
 
 
 @admin.register(EventType)
@@ -46,8 +52,8 @@ class ScheduleAdmin(admin.ModelAdmin):
     inlines = (ScheduleTeamInline,)
 
 
-@admin.register(TargetGroup)
-class TargetGroupAdmin(admin.ModelAdmin):
+@admin.register(TargetGroupTemplate)
+class TargetGroupTemplateAdmin(admin.ModelAdmin):
     list_display = ("name", "min_age", "max_age")
 
 

@@ -10,6 +10,8 @@ from portal.help import chapters
 
 register = template.Library()
 
+THEMES = (("light", ""), ("dark", "-dunkel"))
+
 
 @register.simple_tag(takes_context=True)
 def help_link(context: dict[str, Any], slug: str) -> str:
@@ -29,5 +31,6 @@ def help_link(context: dict[str, Any], slug: str) -> str:
 
 @register.inclusion_tag("help/_figure.html")
 def screenshot(name: str, alt: str, caption: str = "", mobile: bool = True) -> dict[str, Any]:
-    """Screenshot aus ``static/help/img`` (von ``e2e/hilfe.spec.ts``): Desktop, auf dem Handy die Handy-Ansicht."""
-    return {"name": name, "alt": alt, "caption": caption, "mobile": mobile}
+    """Screenshot aus ``static/help/img`` (von ``e2e/hilfe.spec.ts``): Desktop, auf dem Handy die Handy-Ansicht,
+    je im hellen und dunklen Theme; angezeigt wird das zum gewählten Theme passende."""
+    return {"name": name, "alt": alt, "caption": caption, "mobile": mobile, "themes": THEMES}

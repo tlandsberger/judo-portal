@@ -55,11 +55,14 @@ def billing_index(request: HttpRequest) -> HttpResponse:
             return redirect("claim_list")
         raise PermissionDenied
     member = _own_member(request)
+    months = services.months(member)
     return render(
         request,
         "billing/index.html",
         {
-            "months": services.months(member),
+            "months": months,
+            "pending": services.pending_confirmations(months),
+            "now": timezone.now(),
             "can_decide": services.can_decide(request.user),
             "deadline_day": services.DEADLINE_DAY,
         },

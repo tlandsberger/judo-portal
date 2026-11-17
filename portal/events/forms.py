@@ -10,7 +10,17 @@ from portal.accounts.models import Role
 from portal.members.forms import DateInput, WeightInput
 from portal.members.models import Gender, Member
 
-from .models import Event, EventType, Guest, Occurrence, ParticipantRole, Schedule, TargetGroup, Weekday
+from .models import (
+    Event,
+    EventType,
+    Guest,
+    Occurrence,
+    ParticipantRole,
+    Schedule,
+    TargetGroup,
+    TargetGroupTemplate,
+    Weekday,
+)
 
 
 class DateTimeInput(forms.DateTimeInput):
@@ -27,7 +37,26 @@ class TimeInput(forms.TimeInput):
         super().__init__(format="%H:%M", **kwargs)
 
 
-class TargetGroupForm(forms.ModelForm):
+CRITERIA_FIELDS = (
+    "min_age",
+    "max_age",
+    "genders",
+    "min_weight",
+    "max_weight",
+    "min_grade",
+    "max_grade",
+    "interests",
+)
+CRITERIA_WIDGETS = {
+    "min_weight": WeightInput(),
+    "max_weight": WeightInput(),
+    "interests": forms.CheckboxSelectMultiple(),
+}
+
+
+class CriteriaForm(forms.ModelForm):
+    """Kriterien einer Zielgruppe oder Vorlage, mit Prüfung von/bis."""
+
     genders = forms.MultipleChoiceField(
         label="Geschlecht",
         choices=Gender.choices,
@@ -36,33 +65,72 @@ class TargetGroupForm(forms.ModelForm):
         help_text="Nichts ausgewählt heißt: alle.",
     )
 
-    class Meta:
-        model = TargetGroup
-        fields = (
-            "name",
-            "description",
-            "min_age",
-            "max_age",
-            "genders",
-            "min_weight",
-            "max_weight",
-            "min_grade",
-            "max_grade",
-            "interests",
-        )
-        localized_fields = ("min_weight", "max_weight")
-        widgets = {
-            "min_weight": WeightInput(),
-            "max_weight": WeightInput(),
-            "interests": forms.CheckboxSelectMultiple(),
-        }
-
     def clean(self) -> dict[str, Any]:
         data = super().clean() or {}
         for low, high, label in (("min_age", "max_age", "Alter"), ("min_weight", "max_weight", "Gewicht")):
             if data.get(low) is not None and data.get(high) is not None and data[low] > data[high]:
                 self.add_error(high, f"{label} bis muss mindestens {label} ab sein.")
         return data
+
+
+class TargetGroupTemplateForm(CriteriaForm):
+    class Meta:
+        model = TargetGroupTemplate
+        fields = ("name", "description", *CRITERIA_FIELDS)
+        localized_fields = ("min_weight", "max_weight")
+        widgets = CRITERIA_WIDGETS
+
+
+class TargetGroupForm(CriteriaForm):
+    """Ein Zielgruppen-Block im Formular der Veranstaltung; auf Wunsch auch als Vorlage gespeichert."""
+
+    save_as_template = forms.BooleanField(
+        label="Als Vorlage speichern",
+        required=False,
+        help_text="Dann kannst du die Zielgruppe bei weiteren Veranstaltungen übernehmen.",
+    )
+
+    class Meta:
+        model = TargetGroup
+        fields = ("name", *CRITERIA_FIELDS)
+        localized_fields = ("min_weight", "max_weight")
+        widgets = CRITERIA_WIDGETS
+
+    def clean(self) -> dict[str, Any]:
+        data = super().clean()
+        if data.get("save_as_template") and not data.get("DELETE"):
+            name = (data.get("name") or "").strip()
+            if not name:
+                self.add_error("name", "Für eine Vorlage braucht die Zielgruppe eine Bezeichnung.")
+            elif TargetGroupTemplate.objects.filter(name__iexact=name).exists():
+                self.add_error("name", f"Eine Vorlage „{name}“ gibt es schon.")
+        return data
+
+
+class BaseTargetGroupFormSet(forms.BaseInlineFormSet):
+    def add_fields(self, form: forms.ModelForm, index: int | None) -> None:
+        super().add_fields(form, index)
+        form.fields["DELETE"].label = "Zielgruppe entfernen"
+
+    def clean(self) -> None:
+        super().clean()
+        names = [
+            (form.cleaned_data.get("name") or "").strip().lower()
+            for form in self.forms
+            if form.cleaned_data.get("save_as_template") and not form.cleaned_data.get("DELETE")
+        ]
+        if len(names) != len(set(names)):
+            raise forms.ValidationError("Zwei neue Vorlagen haben dieselbe Bezeichnung.")
+
+
+TargetGroupFormSet = forms.inlineformset_factory(
+    Event,
+    TargetGroup,
+    form=TargetGroupForm,
+    formset=BaseTargetGroupFormSet,
+    extra=0,
+    can_delete=True,
+)
 
 
 class EventForm(forms.ModelForm):
@@ -73,14 +141,12 @@ class EventForm(forms.ModelForm):
             "event_type",
             "description",
             "location",
-            "target_groups",
             "capacity",
             "weight_required",
             "guests_welcome",
         )
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
-            "target_groups": forms.CheckboxSelectMultiple(),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -200,9 +266,11 @@ class EventCreateForm(EventForm):
             if not data.get(name) and name not in self.errors:
                 self.add_error(name, "Bitte ausfüllen.")
         if bool(data.get("team_member")) != bool(data.get("team_role")):
-            self.add_error("team_role", "Für das Team bitte Mitglied und Rolle wählen – oder beides leer lassen.")
+            self.add_error(
+                "team_role", "Für die Übungsleiter bitte Mitglied und Rolle wählen – oder beides leer lassen."
+            )
         if mode == self.LATER and data.get("team_member"):
-            self.add_error("team_member", "Das Team trägst du ein, sobald es Termine gibt.")
+            self.add_error("team_member", "Die Übungsleiter trägst du ein, sobald es Termine gibt.")
         return data
 
 

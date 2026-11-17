@@ -13,6 +13,7 @@ from portal.events.models import (
     Participation,
     ParticipationStatus,
     TargetGroup,
+    TargetGroupTemplate,
 )
 from portal.members.models import Interest
 
@@ -24,6 +25,14 @@ pytestmark = pytest.mark.django_db
 def login(client, user):
     assert client.login(email=user.email, password=PASSWORD)
     return client
+
+
+def groups(*blocks: dict, initial: int = 0) -> dict:
+    """Formset-Daten für die Zielgruppen im Formular der Veranstaltung."""
+    data = {"zg-TOTAL_FORMS": str(len(blocks)), "zg-INITIAL_FORMS": str(initial)}
+    for index, block in enumerate(blocks):
+        data.update({f"zg-{index}-{name}": value for name, value in block.items()})
+    return data
 
 
 def test_agenda_quick_registration(client, parent, child):
@@ -76,7 +85,7 @@ def test_participants_only_for_own_team(client, trainer, parent, child):
 
 def test_trainer_adds_self_and_exception(client, trainer, child):
     occurrence = make_occurrence(Event.objects.create(title="Kader"))
-    occurrence.event.target_groups.set([TargetGroup.objects.create(name="Erwachsene", min_age=18)])
+    TargetGroup.objects.create(event=occurrence.event, name="Erwachsene", min_age=18)
     login(client, trainer)
     page = client.get(reverse("occurrence_detail", args=[occurrence.pk])).content.decode()
     assert "Mich als Trainer eintragen" in page and "Mich als Prüfer" not in page
@@ -102,13 +111,23 @@ def test_trainer_changes_role_of_others(client, trainer):
     assert roles == {"Anna": "Trainer", "Tom": "Co-Trainer"}
 
 
-def test_confirm_from_my_hours(client, trainer):
-    occurrence = make_occurrence(in_days=-1)
-    services.set_team(occurrence, services.own_member(trainer), role("Trainer"))
+def test_confirm_from_billing_index(client, trainer):
+    past = make_occurrence(in_days=-1)
+    coming = make_occurrence(in_days=2)
+    anna = services.own_member(trainer)
+    services.set_team(past, anna, role("Trainer"))
+    services.set_team(coming, anna, role("Trainer"))
     login(client, trainer)
-    assert "noch bestätigen" in client.get(reverse("my_hours")).content.decode()
-    client.post(reverse("hours_confirm", args=[occurrence.pk]), {"minutes": "75"})
-    assert Participation.objects.get().minutes == 75
+    page = client.get(reverse("billing_index")).content.decode()
+    assert "Noch bestätigen" in page
+    assert reverse("hours_absent", args=[past.pk]) in page
+    assert reverse("hours_absent", args=[coming.pk]) not in page
+    response = client.post(
+        reverse("hours_confirm", args=[past.pk]), {"minutes": "75", "next": reverse("billing_index")}
+    )
+    assert response.url == reverse("billing_index")
+    assert Participation.objects.get(occurrence=past).minutes == 75
+    assert "Noch bestätigen" not in client.get(reverse("billing_index")).content.decode()
 
 
 def test_event_management_only_for_head(client, head, trainer):
@@ -120,7 +139,7 @@ def test_event_management_only_for_head(client, head, trainer):
     login(client, head)
     response = client.post(
         reverse("event_create"),
-        {"title": "Training U12", "event_type": event_type("Training").pk, "dates": "later"},
+        {"title": "Training U12", "event_type": event_type("Training").pk, "dates": "later", **groups()},
     )
     event = Event.objects.get()
     assert response.url == reverse("event_detail", args=[event.pk])
@@ -143,7 +162,7 @@ def test_target_group_pages(client, head, child):
     Interest.objects.create(name="Kata")
     login(client, head)
     client.post(reverse("target_group_create"), {"name": "U12", "max_age": "11", "genders": ["w"]})
-    group = TargetGroup.objects.get()
+    group = TargetGroupTemplate.objects.get()
     assert group.genders == ["w"]
     page = client.get(reverse("target_group_members", args=[group.pk])).content.decode()
     assert "Passen heute: 1" in page
@@ -155,7 +174,7 @@ def test_parent_without_trainer_role_sees_no_management(client, parent, child):
     assert reverse("agenda") in page
     assert reverse("event_list") not in page
     assert client.get(reverse("event_list")).status_code == 403
-    assert client.get(reverse("my_hours")).status_code == 403
+    assert client.get(reverse("billing_index")).status_code == 403
 
 
 def test_phone_on_security_page(client, parent):
@@ -215,6 +234,7 @@ def test_create_event_weekly_with_team(client, head, trainer):
             "closes_hours_before": "2",
             "team_member": anna.pk,
             "team_role": role("Trainer").pk,
+            **groups(),
         },
     )
     event = Event.objects.get()
@@ -227,7 +247,7 @@ def test_create_event_weekly_with_team(client, head, trainer):
 
 def test_create_event_once_and_validation(client, head, trainer):
     login(client, head)
-    base = {"title": "Turnier", "event_type": event_type("Wettkampf").pk, "dates": "once"}
+    base = {"title": "Turnier", "event_type": event_type("Wettkampf").pk, "dates": "once", **groups()}
     page = client.post(reverse("event_create"), base)
     assert "Bitte ausfüllen." in page.content.decode()
     # Trainer gibt es bei Wettkämpfen nicht: nichts wird angelegt

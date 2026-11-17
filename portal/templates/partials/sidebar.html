@@ -1,4 +1,4 @@
-{% load static %}{% with url_name=request.resolver_match.url_name %}
+{% load static navigation %}{% with url_name=request.resolver_match.url_name %}
 {# Seitenleiste in Dunkelgrün (neutral), aktive Seite in Vereinsgrün (primary); base-content = helle Schrift für DaisyUIs Hover/Fokus. #}
 <aside class="flex min-h-full w-72 flex-col bg-neutral text-neutral-content [--color-base-content:var(--color-neutral-content)]">
   <a class="flex items-center gap-3 px-6 py-6 text-lg font-bold" href="{% url 'home' %}">
@@ -8,34 +8,13 @@
   {% if user.is_authenticated %}
   <nav class="flex-1" aria-label="Hauptnavigation">
     <ul class="menu w-full gap-1 px-4 text-base [--menu-active-bg:var(--color-primary)] [--menu-active-fg:var(--color-primary-content)]">
-      <li><a href="{% url 'home' %}"{% if url_name == 'home' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-house" aria-hidden="true"></i> Start</a></li>
-      <li><a href="{% url 'agenda' %}"{% if url_name in 'agenda occurrence_detail register occurrence_edit participant_add' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-calendar-week" aria-hidden="true"></i> Termine</a></li>
-      {% if can_join_team %}
-      <li><a href="{% url 'my_hours' %}"{% if url_name == 'my_hours' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-clipboard-check" aria-hidden="true"></i> Meine Stunden</a></li>
-      {% endif %}
-      {% if can_join_team or can_decide_claims %}
-      <li><a href="{% url 'billing_index' %}"{% if url_name in 'billing_index billing_month claim_list claim_detail rate_list rate_member' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-cash-coin" aria-hidden="true"></i> Abrechnung</a></li>
-      {% endif %}
-      {% if has_own_members %}
-      <li><a href="{% url 'my_data' %}"{% if url_name in 'my_data my_member my_member_edit my_privacy' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-vcard" aria-hidden="true"></i> Meine Daten</a></li>
-      {% endif %}
-      {% if can_manage_members %}
-      <li><a href="{% url 'member_list' %}"{% if url_name in 'member_list member_detail member_edit member_create member_import interest_list interest_edit member_delete' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-person-lines-fill" aria-hidden="true"></i> Mitglieder</a></li>
-      {% endif %}
-      {% if can_plan_events %}
-      <li><a href="{% url 'event_list' %}"{% if url_name in 'event_list event_detail event_edit event_create schedule_edit schedule_create occurrence_create target_group_list target_group_edit target_group_create target_group_members role_list role_edit role_create event_type_list event_type_edit event_type_create' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a></li>
-      {% endif %}
-      {% if can_manage_members %}
-      <li><a href="{% url 'audit_list' %}"{% if url_name == 'audit_list' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i> Protokoll</a></li>
-      {% endif %}
-      {% if can_manage_users %}
-      <li><a href="{% url 'user_list' %}"{% if url_name in 'user_list invite edit_user invitation_link' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-people" aria-hidden="true"></i> Benutzer</a></li>
-      {% endif %}
-      {% if user.is_staff %}
-      <li class="menu-title mt-4 text-neutral-content/70">Technik</li>
-      <li><a href="{% url 'components' %}"{% if url_name == 'components' %} class="menu-active" aria-current="page"{% endif %}><i class="bi bi-grid-1x2" aria-hidden="true"></i> Bausteine</a></li>
-      <li><a href="{% url 'admin:index' %}"><i class="bi bi-wrench-adjustable" aria-hidden="true"></i> Technische Verwaltung</a></li>
-      {% endif %}
+      {% menu "sidebar" as groups %}
+      {% for group in groups %}
+      {% if group.title %}<li class="menu-title mt-4 text-neutral-content/70">{{ group.title }}</li>{% endif %}
+      {% for item in group.items %}
+      <li><a href="{{ item.url }}"{% if item|active_for:url_name %} class="menu-active" aria-current="page"{% endif %}><i class="bi {{ item.icon }}" aria-hidden="true"></i> {{ item.label }}</a></li>
+      {% endfor %}
+      {% endfor %}
     </ul>
   </nav>
   <div class="border-t border-neutral-content/15 p-4">

@@ -15,7 +15,7 @@ from typing import Any
 
 from django.db import transaction
 from django.db.models import Q, QuerySet
-from django.utils import timezone
+from django.utils import formats, timezone
 
 from portal.accounts.models import Role, User
 from portal.core import audit
@@ -24,6 +24,7 @@ from portal.members.models import LinkKind, Member, MemberLink, grade_rank
 
 from . import notices
 from .models import (
+    Criteria,
     Event,
     Guest,
     Occurrence,
@@ -32,7 +33,7 @@ from .models import (
     ParticipationStatus,
     Schedule,
     ScheduleTeam,
-    TargetGroup,
+    TargetGroupTemplate,
 )
 
 log = logging.getLogger(__name__)
@@ -43,8 +44,6 @@ HORIZON_DAYS = 365
 # So lange nach dem Termin sieht das Team noch die Teilnehmerliste.
 PARTICIPANTS_DAYS_AFTER = 14
 AGENDA_DAYS = 42
-# „Meine Stunden“ zeigt so weit zurück wie die Frist der Abrechnung (5. des dritten Folgemonats).
-PAST_TEAM_DAYS = 135
 ACTIVE = (ParticipationStatus.REGISTERED, ParticipationStatus.WAITLIST)
 
 
@@ -223,7 +222,7 @@ def age_in_year(member: Member | Guest, on: date) -> int:
 
 
 def match_group(
-    group: TargetGroup,
+    group: Criteria,
     member: Member | Guest,
     on: date,
     interest_ids: set[int] | None = None,
@@ -265,16 +264,48 @@ def match_event(event: Event, member: Member | Guest, on: date, interest_ids: se
     return max(match_group(group, member, on, interest_ids) for group in groups)
 
 
-def matching_members(group: TargetGroup, on: date | None = None) -> list[tuple[Member, Match]]:
+def matching_members(target: Criteria | Event, on: date | None = None) -> list[tuple[Member, Match]]:
+    """Aktive Mitglieder, die zu einer Vorlage oder Veranstaltung passen (auch „vielleicht“)."""
     on = on or timezone.localdate()
     result: list[tuple[Member, Match]] = []
     for member in Member.objects.prefetch_related("interests"):
         if not member.is_active:
             continue
-        match = match_group(group, member, on)
+        match = match_event(target, member, on) if isinstance(target, Event) else match_group(target, member, on)
         if match != Match.NO:
             result.append((member, match))
     return result
+
+
+def save_target_groups(formset: Any) -> list[TargetGroupTemplate]:
+    """Zielgruppen einer Veranstaltung speichern; angehakte zusätzlich als Vorlage anlegen (Kopie)."""
+    formset.save()
+    templates = []
+    for form in formset.forms:
+        data = getattr(form, "cleaned_data", {})
+        if not data.get("save_as_template") or data.get("DELETE") or form.instance.pk is None:
+            continue
+        group = form.instance
+        template = TargetGroupTemplate.objects.create(
+            name=group.name.strip(), **{name: getattr(group, name) for name in group.CRITERIA}
+        )
+        template.interests.set(group.interests.all())
+        templates.append(template)
+    return templates
+
+
+def template_data() -> dict[str, dict[str, Any]]:
+    """Vorlagen für die Übernahme im Formular (als JSON ins Template)."""
+    data: dict[str, dict[str, Any]] = {}
+    for template in TargetGroupTemplate.objects.prefetch_related("interests"):
+        values: dict[str, Any] = {name: getattr(template, name) for name in template.CRITERIA}
+        for name in ("min_weight", "max_weight"):
+            if values[name] is not None:
+                values[name] = formats.number_format(values[name], 1)
+        values["name"] = template.name
+        values["interests"] = [interest.pk for interest in template.interests.all()]
+        data[str(template.pk)] = values
+    return data
 
 
 # Termine aus Zeitplänen
@@ -581,7 +612,7 @@ def set_team(occurrence: Occurrence, member: Member, role: ParticipantRole, by: 
     """Mitglied mit einer Team-Rolle eintragen oder die Rolle wechseln. War es als Teilnehmer angemeldet, wird die
     Teilnahme umgestellt; ein frei gewordener Platz geht an die Warteliste."""
     if not role.is_team:
-        raise RegistrationError(f"{role.name} ist keine Team-Rolle.")
+        raise RegistrationError(f"{role.name} ist keine Übungsleiter-Rolle.")
     if not can_take_role(member, role, occurrence.event):
         raise RegistrationError(f"{member.first_name} kann bei {occurrence.event.title} nicht {role.name} sein.")
     existing = Participation.objects.filter(occurrence=occurrence, member=member).select_related("role").first()
@@ -673,7 +704,7 @@ def unconfirm(participation: Participation, by: User | None = None) -> None:
 
 def _check_absent(participation: Participation) -> None:
     if not participation.role.is_team:
-        raise RegistrationError("Das geht nur für das Team eines Termins.")
+        raise RegistrationError("Das geht nur für die Übungsleiter eines Termins.")
     if participation.occurrence.starts_at > timezone.now():
         raise RegistrationError("Vor dem Termin trägst du dich einfach aus.")
     _check_unlocked(participation)
@@ -953,24 +984,6 @@ def team(occurrence: Occurrence) -> list[Participation]:
         .select_related("member", "role")
         .order_by("role__order", "member__first_name")
     )
-
-
-def own_team(user: User) -> tuple[list[Participation], list[Participation]]:
-    """„Meine Stunden“: kommende Termine mit eigener Team-Rolle und vergangene bis zur Frist der Abrechnung."""
-    member = own_member(user)
-    if member is None:
-        return [], []
-    now = timezone.now()
-    rows = Participation.objects.filter(member=member, role__is_team=True, status__in=ACTIVE).select_related(
-        "occurrence__event", "role"
-    )
-    coming = list(rows.filter(occurrence__ends_at__gte=now).order_by("occurrence__starts_at")[:50])
-    past = list(
-        rows.filter(
-            occurrence__ends_at__lt=now, occurrence__starts_at__gte=now - timedelta(days=PAST_TEAM_DAYS)
-        ).order_by("-occurrence__starts_at")
-    )
-    return coming, past
 
 
 def open_confirmations(user: Any, now: datetime | None = None) -> int:

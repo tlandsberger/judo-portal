@@ -55,6 +55,12 @@ def test_help_link_only_for_visible_chapter(client, parent, child):
     assert 'aria-label="Hilfe: Termine und Anmeldung"' in client.get(reverse("agenda")).content.decode()
 
 
+def test_screenshots_in_both_themes(client):
+    page = client.get(reverse("help_chapter", args=["erste-schritte"])).content.decode()
+    assert 'class="help-shot-light"' in page and "login-desktop.jpg" in page
+    assert 'class="help-shot-dark"' in page and "login-desktop-dunkel.jpg" in page
+
+
 def test_all_screenshots_exist():
     """Fehlt ein Bild, scheitert in Produktion das Rendern (Manifest der statischen Dateien)."""
     names = set()
@@ -63,6 +69,10 @@ def test_all_screenshots_exist():
     assert names
     images = HELP_DIR / "static" / "help" / "img"
     missing = [
-        f"{n}-{v}.jpg" for n in sorted(names) for v in ("desktop", "handy") if not (images / f"{n}-{v}.jpg").exists()
+        f"{n}-{v}{t}.jpg"
+        for n in sorted(names)
+        for v in ("desktop", "handy")
+        for t in ("", "-dunkel")
+        if not (images / f"{n}-{v}{t}.jpg").exists()
     ]
     assert not missing, f"Screenshots fehlen, bitte `npm run help:screenshots`: {missing}"

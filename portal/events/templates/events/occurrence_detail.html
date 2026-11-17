@@ -26,8 +26,8 @@
       <div><dt class="text-sm text-base-content/70">Wo</dt><dd>{{ occurrence.place|default:"–" }}</dd></div>
       <div><dt class="text-sm text-base-content/70">Anmeldung</dt><dd>{% if window == "before" %}ab {{ occurrence.registration_opens|date:"d.m.Y H:i" }} Uhr{% elif window == "open" %}offen bis {{ occurrence.registration_closes|date:"d.m.Y H:i" }} Uhr{% else %}geschlossen{% endif %}</dd></div>
       <div><dt class="text-sm text-base-content/70">Plätze</dt><dd>{{ registered }}{% if event.capacity %} von {{ event.capacity }}{% endif %} angemeldet</dd></div>
-      {% if event.target_groups.all %}<div><dt class="text-sm text-base-content/70">Für</dt><dd>{% for group in event.target_groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd></div>{% endif %}
-      <div><dt class="text-sm text-base-content/70">Team</dt><dd>{% for p in team %}{{ p.member.display_name }} ({{ p.role.name }}){% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</dd></div>
+      {% if event.target_groups.all %}<div><dt class="text-sm text-base-content/70">Für</dt><dd>{% for group in event.target_groups.all %}{{ group }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd></div>{% endif %}
+      <div><dt class="text-sm text-base-content/70">Übungsleiter</dt><dd>{% for p in team %}{{ p.member.display_name }} ({{ p.role.name }}){% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</dd></div>
     </dl>
     {% if event.description %}<p class="whitespace-pre-line">{{ event.description }}</p>{% endif %}
     {% if occurrence.note %}<div role="note" class="alert"><i class="bi bi-info-circle" aria-hidden="true"></i><span>{{ occurrence.note }}</span></div>{% endif %}
@@ -41,7 +41,7 @@
       <li class="list-row items-center px-0">
         <div class="list-col-grow">
           <div class="font-semibold">{{ member_link.member.display_name }}</div>
-          <div class="text-sm text-base-content/70">{% if item.team_role %}im Team als {{ item.team_role.name }}{% elif item.status == "registered" %}angemeldet{% if item.participation.weight %} · {{ item.participation.weight|floatformat:1 }} kg{% endif %}{% elif item.status == "waitlist" %}auf der Warteliste{% elif item.status == "cancelled" %}abgemeldet{% elif item.match == 0 %}passt nicht zur Zielgruppe{% else %}nicht angemeldet{% endif %}</div>
+          <div class="text-sm text-base-content/70">{% if item.team_role %}als {{ item.team_role.name }} eingeteilt{% elif item.status == "registered" %}angemeldet{% if item.participation.weight %} · {{ item.participation.weight|floatformat:1 }} kg{% endif %}{% elif item.status == "waitlist" %}auf der Warteliste{% elif item.status == "cancelled" %}abgemeldet{% elif item.match == 0 %}passt nicht zur Zielgruppe{% else %}nicht angemeldet{% endif %}</div>
         </div>
         {% if item.can_register %}<a class="btn btn-primary btn-sm" href="{% url 'register' occurrence.pk member_link.member.pk %}" aria-label="{{ member_link.member.first_name }} anmelden">Anmelden</a>
         {% elif item.can_unregister %}<form method="post" action="{% url 'unregister' occurrence.pk member_link.member.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ member_link.member.first_name }} abmelden">Abmelden</button></form>{% endif %}
@@ -53,7 +53,7 @@
 
   {% if lead or can_join_team %}
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-team"><div class="card-body gap-4">
-    <h2 class="card-title" id="h-team">Team</h2>
+    <h2 class="card-title" id="h-team">Übungsleiter</h2>
     {% if team %}
     <ul class="list">
       {% for p in team %}
@@ -65,7 +65,7 @@
       </li>
       {% endfor %}
     </ul>
-    {% else %}<p class="text-base-content/70">Noch niemand im Team.</p>{% endif %}
+    {% else %}<p class="text-base-content/70">Noch keine Übungsleiter eingeteilt.</p>{% endif %}
     {% if team_form %}
     <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-col gap-4">{% csrf_token %}
       <div class="grid gap-x-4 sm:grid-cols-2">{{ team_form }}</div>

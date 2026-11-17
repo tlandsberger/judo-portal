@@ -256,7 +256,7 @@ def notify_confirm_hours(now: datetime | None = None) -> None:
             title="Stunden bestätigen",
             body=f"Warst du bei {occurrence.event.title} am {_when(occurrence)} als {participation.role.name} dabei? "
             "Bitte bestätige deine Stunden.",
-            url=reverse("my_hours"),
+            url=reverse("billing_index"),
             actions=[
                 Action("confirm", "Bestätigen", {"p": participation.pk}),
                 Action("absent", "Nicht dabei?", url=reverse("hours_absent", args=[occurrence.pk])),
@@ -277,7 +277,7 @@ def substitute(participation: Participation, absent: str) -> None:
         title="Stunden bestätigen",
         body=f"Du hast {absent} bei {occurrence.event.title} am {_when(occurrence)} als {participation.role.name} "
         "vertreten. Bitte bestätige deine Stunden.",
-        url=reverse("my_hours"),
+        url=reverse("billing_index"),
         actions=[Action("confirm", "Bestätigen", {"p": participation.pk})],
     )
 
@@ -334,13 +334,13 @@ def action_confirm(user: User, data: dict[str, Any]) -> ActionResult:
     rows = Participation.objects.select_related("occurrence__event", "role")
     participation = rows.filter(pk=data.get("p", 0), member=member).first() if member else None
     if participation is None:
-        return _failed("Das hat nicht geklappt. Öffne bitte das Portal.", reverse("my_hours"))
+        return _failed("Das hat nicht geklappt. Öffne bitte das Portal.", reverse("billing_index"))
     if participation.is_confirmed:
         return ActionResult(True, "Deine Stunden sind schon bestätigt.")
     try:
         services.confirm(participation, by=user)
     except services.RegistrationError as error:
-        return _failed(str(error), reverse("my_hours"))
+        return _failed(str(error), reverse("billing_index"))
     return ActionResult(
         True, f"Danke, {participation.occurrence.event.title} ist bestätigt ({participation.minutes} Minuten)."
     )
