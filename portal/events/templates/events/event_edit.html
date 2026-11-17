@@ -1,7 +1,7 @@
 {% extends "layouts/page.html" %}
 {% load static %}
 {% block title %}{{ event.title }} bearbeiten{% endblock %}
-{% block width %}max-w-2xl{% endblock %}
+{% block width %}narrow{% endblock %}
 {% block back_url %}{% url 'event_detail' event.pk %}{% endblock %}
 {% block back_label %}{{ event.title }}{% endblock %}
 {% block heading %}{{ event.title }} bearbeiten{% endblock %}

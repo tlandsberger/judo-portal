@@ -1,6 +1,6 @@
 {% extends "layouts/page.html" %}
 {% block title %}{{ member.display_name }} bearbeiten{% endblock %}
-{% block width %}max-w-2xl{% endblock %}
+{% block width %}narrow{% endblock %}
 {% block back_url %}{% url 'my_member' member.pk %}{% endblock %}
 {% block back_label %}{{ member.display_name }}{% endblock %}
 {% block heading %}{{ member.display_name }} bearbeiten{% endblock %}

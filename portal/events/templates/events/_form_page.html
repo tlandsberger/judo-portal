@@ -1,7 +1,7 @@
 {% extends "layouts/page.html" %}
 {# Einfache Formularseite: Kopf aus layouts/page.html, Speichern/Abbrechen in der Aktionsleiste (ADR 0017). #}
 {% block title %}{% block heading %}{% endblock %}{% endblock %}
-{% block width %}max-w-2xl{% endblock %}
+{% block width %}narrow{% endblock %}
 {% block page %}
 <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
   <form method="post" class="flex flex-col gap-4">{% csrf_token %}

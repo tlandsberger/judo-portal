@@ -42,6 +42,10 @@ Karte: Zurück-Link, Titel mit Hilfe oder Badges, rechts die Aktionen, darunter 
   „Abbrechen“ links, die Hauptaktion rechts. Kleinere Formulare in Abschnitten (Telefon, Hinweis, Satz eintragen)
   bleiben normale Buttons im Abschnitt.
 - **Abschnitts- und Zeilenaktionen** bleiben klein im Abschnitt bzw. in der Zeile (siehe unten).
+- **Drei Breiten** über den Block `width`: `wide` (volle Inhaltsbreite) für Seiten mit mehrspaltigen Tabellen oder
+  Rastern (Veranstaltungen, Mitglieder, Benutzer, Abrechnungen, Protokoll, Monat), `normal` (Standard,
+  `max-w-3xl`) für Detailseiten, Listen aus einfachen Zeilen und Text, `narrow` (`max-w-2xl`) für Formularseiten.
+  Keine freien `max-w-*` je Seite.
 
 ### Schaltflächen
 

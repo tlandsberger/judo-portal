@@ -1,6 +1,5 @@
 {% extends "layouts/page.html" %}
 {% block title %}{{ event.title }} am {{ occurrence.starts_at|date:"d.m.Y" }}{% endblock %}
-{% block width %}max-w-3xl{% endblock %}
 {% block back_url %}{% url 'agenda' %}{% endblock %}
 {% block back_label %}Termine{% endblock %}
 {% block heading %}{{ event.title }}{% endblock %}

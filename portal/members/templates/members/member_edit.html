@@ -1,6 +1,6 @@
 {% extends "layouts/page.html" %}
 {% block title %}{% if member %}{{ member.display_name }} bearbeiten{% else %}Mitglied anlegen{% endif %}{% endblock %}
-{% block width %}max-w-2xl{% endblock %}
+{% block width %}narrow{% endblock %}
 {% block back_url %}{% if member %}{% url 'member_detail' member.pk %}{% else %}{% url 'member_list' %}{% endif %}{% endblock %}
 {% block back_label %}{% if member %}{{ member.display_name }}{% else %}Mitglieder{% endif %}{% endblock %}
 {% block heading %}{% if member %}{{ member.display_name }} bearbeiten{% else %}Mitglied anlegen{% endif %}{% endblock %}

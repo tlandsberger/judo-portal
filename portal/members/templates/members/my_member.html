@@ -1,6 +1,5 @@
 {% extends "layouts/page.html" %}
 {% block title %}{{ member.display_name }}{% endblock %}
-{% block width %}max-w-3xl{% endblock %}
 {% block back_url %}{% if several %}{% url 'my_data' %}{% endif %}{% endblock %}
 {% block back_label %}Meine Daten{% endblock %}
 {% block heading %}{{ member.display_name }}{% endblock %}

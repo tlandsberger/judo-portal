@@ -1,6 +1,6 @@
 {% extends "layouts/page.html" %}
 {% block title %}Abrechnung {{ claim.member.display_name }} {{ claim.month_label }}{% endblock %}
-{% block width %}max-w-4xl{% endblock %}
+{% block width %}wide{% endblock %}
 {% block back_url %}{% if can_decide %}{% url 'claim_list' %}{% else %}{% url 'billing_index' %}{% endif %}{% endblock %}
 {% block back_label %}{% if can_decide %}Abrechnungen{% else %}Meine Abrechnung{% endif %}{% endblock %}
 {% block heading %}{{ claim.member.display_name }}{% endblock %}

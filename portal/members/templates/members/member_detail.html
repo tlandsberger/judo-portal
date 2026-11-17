@@ -1,7 +1,6 @@
 {% extends "layouts/page.html" %}
 {% load privacy %}
 {% block title %}{{ member.display_name }}{% endblock %}
-{% block width %}max-w-3xl{% endblock %}
 {% block back_url %}{% url 'member_list' %}{% endblock %}
 {% block back_label %}Mitglieder{% endblock %}
 {% block heading %}{{ member.display_name }}{% endblock %}

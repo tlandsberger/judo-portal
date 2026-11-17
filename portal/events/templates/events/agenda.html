@@ -1,7 +1,6 @@
 {% extends "layouts/page.html" %}
 {% load help %}
 {% block title %}Termine{% endblock %}
-{% block width %}max-w-3xl{% endblock %}
 {% block heading %}Termine{% endblock %}
 {% block heading_extra %}{% help_link "termine" %}{% endblock %}
 {% block more %}{% if can_plan_events %}<li><a href="{% url 'event_list' %}"><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a></li>{% endif %}{% endblock %}

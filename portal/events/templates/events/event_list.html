@@ -1,7 +1,7 @@
 {% extends "layouts/page.html" %}
 {% load help %}
 {% block title %}Veranstaltungen{% endblock %}
-{% block width %}{% endblock %}
+{% block width %}wide{% endblock %}
 {% block heading %}Veranstaltungen{% endblock %}
 {% block heading_extra %}{% help_link "veranstaltungen" %}{% endblock %}
 {% block primary %}{% if can_manage %}<a class="btn btn-primary" href="{% url 'event_create' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Veranstaltung anlegen</a>{% endif %}{% endblock %}
