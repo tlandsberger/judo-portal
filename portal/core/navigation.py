@@ -61,23 +61,20 @@ def groups(context: Any) -> list[Group]:
                 ("my_member", "my_member_edit", "my_privacy"),
             )
         )
-    own.items.append(
-        Item("Meine Anmeldung", "bi-person-circle", "security", "Passkeys, Passwort und Geräte", sidebar=False)
-    )
-
-    training = Group("Training")
     if can("can_join_team"):
         decider = bool(can("can_decide_claims"))
-        training.items += [
-            Item("Meine Stunden", "bi-clipboard-check", "my_hours", "Termine als Übungsleiter und bestätigte Stunden"),
+        own.items.append(
             Item(
                 "Meine Abrechnung",
                 "bi-wallet2",
                 "billing_index",
-                "Monate einreichen und Stand sehen",
+                "Stunden bestätigen und Monate einreichen",
                 ("billing_month",) if decider else ("billing_month", "claim_detail"),
-            ),
-        ]
+            )
+        )
+    own.items.append(
+        Item("Meine Anmeldung", "bi-person-circle", "security", "Passkeys, Passwort und Geräte", sidebar=False)
+    )
 
     admin = Group("Verwaltung")
     if can("can_manage_members"):
@@ -155,4 +152,4 @@ def groups(context: Any) -> list[Group]:
             Item("Bausteine", "bi-grid-1x2", "components", tile=False),
             Item("Technische Verwaltung", "bi-wrench-adjustable", "admin:index", tile=False),
         ]
-    return [group for group in (own, training, admin, tech) if group.items]
+    return [group for group in (own, admin, tech) if group.items]

@@ -32,9 +32,19 @@ def test_tiles_match_sidebar(client):
     main, rest = html.split("<aside", 1)
     sidebar = rest.split("</aside>", 1)[0]
     side, tiles = links(html, sidebar), links(html, main)
-    assert {"Training", "Verwaltung"} <= set(re.findall(r"menu-title[^>]*>(\w+)<", sidebar))
-    for url in (reverse("my_hours"), reverse("billing_index"), reverse("claim_list"), reverse("event_list")):
+    titles = set(re.findall(r"menu-title[^>]*>(\w+)<", sidebar))
+    assert "Verwaltung" in titles
+    assert "Training" not in titles
+    for url in (reverse("billing_index"), reverse("claim_list"), reverse("event_list")):
         assert tiles[url] == side[url]
+
+
+def test_old_hours_urls_redirect_to_billing(client):
+    """Altlast: Weiterleitungen von „Meine Stunden“ für ältere Links (beim nächsten Aufräumen entfernen)."""
+    for path in ("/stunden/", "/einsaetze/"):
+        response = client.get(path)
+        assert response.status_code == 301
+        assert response.url == reverse("billing_index")
 
 
 def test_parent_sees_no_groups(client):
