@@ -1,21 +1,16 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% block title %}{{ member.display_name }}{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-3xl">
-  {% if several %}<a href="{% url 'my_data' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Meine Daten</a>{% endif %}
-  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        {% if not several %}<p class="text-sm text-base-content/70">Meine Daten</p>{% endif %}
-        <h1 class="text-2xl font-bold">{{ member.display_name }}</h1>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <a class="btn btn-outline btn-primary" href="{% url 'my_member_edit' member.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
-        <a class="btn btn-outline btn-primary" href="{% url 'my_privacy' %}"><i class="bi bi-shield-check" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a>
-      </div>
-    </div>
-    {% include "members/_facts.html" with all=False %}
-    <p class="text-sm text-base-content/70">Kontakt- und Judo-Daten kannst du selbst ändern. Stimmt etwas anderes nicht, schreib an <a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a>.</p>
-  </div></div>
-</div>
+{% block width %}max-w-3xl{% endblock %}
+{% block back_url %}{% if several %}{% url 'my_data' %}{% endif %}{% endblock %}
+{% block back_label %}Meine Daten{% endblock %}
+{% block heading %}{{ member.display_name }}{% endblock %}
+{% block primary %}<a class="btn btn-primary" href="{% url 'my_member_edit' member.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>{% endblock %}
+{% block more %}<li><a href="{% url 'my_privacy' %}"><i class="bi bi-shield-check" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a></li>{% endblock %}
+{% block intro %}{% if not several %}Meine Daten{% endif %}{% endblock %}
+{% block page %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+
+  {% include "members/_facts.html" with all=False %}
+  <p class="text-sm text-base-content/70">Kontakt- und Judo-Daten kannst du selbst ändern. Stimmt etwas anderes nicht, schreib an <a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a>.</p>
+</div></div>
 {% endblock %}

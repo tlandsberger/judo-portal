@@ -1,7 +1,6 @@
 {% extends "events/_form_page.html" %}
 {% block heading %}{% if group %}{{ group.name }} bearbeiten{% else %}Vorlage anlegen{% endif %}{% endblock %}
-{% block heading2 %}{% if group %}{{ group.name }} bearbeiten{% else %}Vorlage anlegen{% endif %}{% endblock %}
 {% block back_url %}{% url 'target_group_list' %}{% endblock %}
 {% block cancel_url %}{% url 'target_group_list' %}{% endblock %}
 {% block back_label %}Zielgruppen-Vorlagen{% endblock %}
-{% block intro %}<p class="text-sm text-base-content/70">Leere Felder gelten für alle. Das Alter zählt nach Jahrgang wie bei den Judo-Altersklassen: U13 heißt zum Beispiel „Alter bis 12“.</p>{% endblock %}
+{% block intro %}Leere Felder gelten für alle. Das Alter zählt nach Jahrgang wie bei den Judo-Altersklassen: U13 heißt zum Beispiel „Alter bis 12“.{% endblock %}

@@ -68,9 +68,9 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
 - **Oberfläche:** Tailwind CSS mit DaisyUI (ADR 0008). DaisyUI-Komponenten so verwenden, wie sie dokumentiert sind,
   nichts umbiegen; Tailwind-Klassen für Layout. Farben nur über die DaisyUI-Farbrollen (`primary`, `neutral`,
   `base-*` …) der Themes `wtsv-light`/`wtsv-dark` in `portal/assets/app.css`, beide prüfen. Nach neuen Klassen
-  `npm run css` (oder `npm run watch`). Listen, Detail- und Bearbeiten-Seiten nach ADR 0017: Titel öffnet den
-  Eintrag, Löschen nur am Eintrag, Schnellaktionen in der Zeile nur für Häufiges; Größe und Aussehen von
-  Schaltflächen ebenfalls nach ADR 0017. Vereins-Piktogramme als `.pikto .pikto-<name>`,
+  `npm run css` (oder `npm run watch`). Seiten erweitern `layouts/page.html` (ADR 0017): einheitlicher
+  Seitenkopf, eine Hauptaktion (am Handy unten in der `.action-bar`), alles Weitere und Löschen im Menü „Weitere
+  Aktionen“; Titel öffnet den Eintrag, Schnellaktionen in der Zeile nur für Häufiges. Vereins-Piktogramme als `.pikto .pikto-<name>`,
   Bedien-Icons aus Bootstrap Icons. App-Icon und Favicons nur über `scripts/make_icons.py` erzeugen
   (`uv run --with pillow python scripts/make_icons.py`). Keine Inline-Skripte oder -Styles (CSP); JavaScript als Datei unter `static/js/`.
   Keine externen CDNs oder Schriften.

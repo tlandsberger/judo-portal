@@ -124,3 +124,28 @@
 :root:not([data-theme="wtsv-dark"]) .help-shot-dark {
   display: none;
 }
+
+/* Aktionsleiste (ADR 0017): ab md normal im Seitenkopf bzw. am Formularende, auf dem Handy fest unten über die
+   ganze Breite, damit die Hauptaktion immer an derselben Stelle und mit dem Daumen erreichbar ist. Die geöffnete
+   Seitenleiste (drawer-side, z-40) liegt darüber. */
+@layer components {
+  .action-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  @media (width < 48rem) {
+    .action-bar {
+      position: fixed;
+      inset-inline: 0;
+      bottom: 0;
+      z-index: 30;
+      padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--color-base-300);
+      background: var(--color-base-100);
+    }
+    .action-bar > * { flex: 1 1 auto; }
+    .action-bar > :is(.btn-primary, .btn-error) { flex-grow: 2; order: 2; } /* Hauptaktion rechts, „Abbrechen“ links */
+    main:has(.action-bar) { padding-bottom: 6rem; }
+  }
+}

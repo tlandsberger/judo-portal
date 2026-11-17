@@ -1,10 +1,11 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% block title %}Vorschau des Imports{% endblock %}
-{% block content %}
-<a href="{% url 'member_import' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Andere Datei wählen</a>
-<h1 class="mb-2 text-3xl font-bold">Vorschau des Imports</h1>
-<p class="mb-6 text-base-content/70">Noch ist nichts gespeichert. Prüfe die Zeilen und übernimm sie dann.</p>
-
+{% block width %}{% endblock %}
+{% block back_url %}{% url 'member_import' %}{% endblock %}
+{% block back_label %}Andere Datei wählen{% endblock %}
+{% block heading %}Vorschau des Imports{% endblock %}
+{% block intro %}Noch ist nichts gespeichert. Prüfe die Zeilen und übernimm sie dann.{% endblock %}
+{% block page %}
 <div class="mb-6 flex flex-wrap gap-2">
   <span class="badge badge-success">{{ preview.counts.new }} neu</span>
   <span class="badge badge-info">{{ preview.counts.changed }} geändert</span>

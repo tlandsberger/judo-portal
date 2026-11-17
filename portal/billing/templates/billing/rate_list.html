@@ -1,29 +1,29 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% block title %}Stundensätze{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-4xl">
-  <a href="{% url 'claim_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Abrechnungen</a>
-  <h1 class="text-3xl font-bold">Stundensätze</h1>
-  <p class="mt-1 mb-6 text-base-content/70">Je Übungsleiter ein Satz pro abrechnungsrelevanter Rolle. Ohne Satz lässt sich eine Rolle nicht abrechnen.</p>
-  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-saetze"><div class="card-body">
-    <h2 class="card-title" id="h-saetze">{{ rows|length }} Übungsleiter</h2>
-    {% if rows %}
-    <ul class="list">
-      {% for row in rows %}
-      <li class="list-row items-center px-0">
-        <div class="list-col-grow">
-          <a class="link link-hover font-semibold" href="{% url 'rate_member' row.member.pk %}">{{ row.member.display_name }}</a>
-          <div class="mt-1 flex flex-wrap gap-1">
-            {% for role, rate in row.rates %}
-            {% if rate %}<span class="badge badge-soft badge-primary badge-sm">{{ role.name }} {{ rate.hourly_rate|floatformat:"2g" }} €</span>
-            {% else %}<span class="badge badge-warning badge-sm">{{ role.name }}: kein Satz</span>{% endif %}
-            {% endfor %}
-          </div>
+{% block width %}max-w-4xl{% endblock %}
+{% block back_url %}{% url 'claim_list' %}{% endblock %}
+{% block back_label %}Abrechnungen{% endblock %}
+{% block heading %}Stundensätze{% endblock %}
+{% block intro %}Je Übungsleiter ein Satz pro abrechnungsrelevanter Rolle. Ohne Satz lässt sich eine Rolle nicht abrechnen.{% endblock %}
+{% block page %}
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-saetze"><div class="card-body">
+  <h2 class="card-title" id="h-saetze">{{ rows|length }} Übungsleiter</h2>
+  {% if rows %}
+  <ul class="list">
+    {% for row in rows %}
+    <li class="list-row items-center px-0">
+      <div class="list-col-grow">
+        <a class="link link-hover font-semibold" href="{% url 'rate_member' row.member.pk %}">{{ row.member.display_name }}</a>
+        <div class="mt-1 flex flex-wrap gap-1">
+          {% for role, rate in row.rates %}
+          {% if rate %}<span class="badge badge-soft badge-primary badge-sm">{{ role.name }} {{ rate.hourly_rate|floatformat:"2g" }} €</span>
+          {% else %}<span class="badge badge-warning badge-sm">{{ role.name }}: kein Satz</span>{% endif %}
+          {% endfor %}
         </div>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}<p class="text-base-content/70">Noch niemand kann abrechnungsrelevante Rollen übernehmen. Übungsleiter brauchen ein eigenes Mitgliedsprofil.</p>{% endif %}
-  </div></section>
-</div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="text-base-content/70">Noch niemand kann abrechnungsrelevante Rollen übernehmen. Übungsleiter brauchen ein eigenes Mitgliedsprofil.</p>{% endif %}
+</div></section>
 {% endblock %}

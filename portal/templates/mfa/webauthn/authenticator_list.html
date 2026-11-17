@@ -2,9 +2,9 @@
 {% load humanize %}
 {% block head_title %}Passkeys{% endblock head_title %}
 {% block content %}
-<div class="flex flex-wrap items-center justify-between gap-3">
-  <h1 class="text-2xl font-bold">Meine Passkeys</h1>
-  <a class="btn btn-primary" href="{% url 'mfa_add_webauthn' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Passkey hinzufügen</a>
+<div class="flex items-center gap-2">
+  <h1 class="min-w-0 flex-1 text-2xl font-bold">Meine Passkeys</h1>
+  <div class="action-bar"><a class="btn btn-primary" href="{% url 'mfa_add_webauthn' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Passkey hinzufügen</a></div>
 </div>
 {% if not authenticators %}
 <p class="text-base-content/70">Noch kein Passkey eingerichtet.</p>

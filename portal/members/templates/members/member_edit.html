@@ -1,14 +1,14 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% block title %}{% if member %}{{ member.display_name }} bearbeiten{% else %}Mitglied anlegen{% endif %}{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-2xl">
-  <a href="{% if member %}{% url 'member_detail' member.pk %}{% else %}{% url 'member_list' %}{% endif %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> {% if member %}{{ member.display_name }}{% else %}Mitglieder{% endif %}</a>
-  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
-    <h1 class="text-2xl font-bold">{% if member %}{{ member.display_name }} bearbeiten{% else %}Mitglied anlegen{% endif %}</h1>
-    <form method="post" class="flex flex-col gap-4">{% csrf_token %}
-      {{ form }}
-      <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% if member %}{% url 'member_detail' member.pk %}{% else %}{% url 'member_list' %}{% endif %}">Abbrechen</a></div>
-    </form>
-  </div></div>
-</div>
+{% block width %}max-w-2xl{% endblock %}
+{% block back_url %}{% if member %}{% url 'member_detail' member.pk %}{% else %}{% url 'member_list' %}{% endif %}{% endblock %}
+{% block back_label %}{% if member %}{{ member.display_name }}{% else %}Mitglieder{% endif %}{% endblock %}
+{% block heading %}{% if member %}{{ member.display_name }} bearbeiten{% else %}Mitglied anlegen{% endif %}{% endblock %}
+{% block page %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+  <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+    {{ form }}
+    <div class="action-bar"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% if member %}{% url 'member_detail' member.pk %}{% else %}{% url 'member_list' %}{% endif %}">Abbrechen</a></div>
+  </form>
+</div></div>
 {% endblock %}

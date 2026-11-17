@@ -1,16 +1,16 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% block title %}{{ member.first_name }} anmelden{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-2xl">
-  <a href="{% url 'occurrence_detail' occurrence.pk %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> {{ occurrence.event.title }}</a>
-  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
-    <h1 class="text-2xl font-bold">{{ member.first_name }} anmelden</h1>
-    <p>{{ occurrence.event.title }} am {{ occurrence.starts_at|date:"l, d.m.Y" }} um {{ occurrence.starts_at|date:"H:i" }} Uhr</p>
-    {% if maybe %}<div role="note" class="alert"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Ob {{ member.first_name }} passt, hängt vom Gewicht ab. Trag es am besten in „Meine Daten“ ein.</span></div>{% endif %}
-    <form method="post" class="flex flex-col gap-4">{% csrf_token %}<input type="hidden" name="form" value="1"><input type="hidden" name="next" value="{{ request.GET.next }}">
-      {{ form }}
-      <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Anmelden</button><a class="btn" href="{% url 'occurrence_detail' occurrence.pk %}">Abbrechen</a></div>
-    </form>
-  </div></div>
-</div>
+{% block width %}max-w-2xl{% endblock %}
+{% block back_url %}{% url 'occurrence_detail' occurrence.pk %}{% endblock %}
+{% block back_label %}{{ occurrence.event.title }}{% endblock %}
+{% block heading %}{{ member.first_name }} anmelden{% endblock %}
+{% block page %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+  <p>{{ occurrence.event.title }} am {{ occurrence.starts_at|date:"l, d.m.Y" }} um {{ occurrence.starts_at|date:"H:i" }} Uhr</p>
+  {% if maybe %}<div role="note" class="alert"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Ob {{ member.first_name }} passt, hängt vom Gewicht ab. Trag es am besten in „Meine Daten“ ein.</span></div>{% endif %}
+  <form method="post" class="flex flex-col gap-4">{% csrf_token %}<input type="hidden" name="form" value="1"><input type="hidden" name="next" value="{{ request.GET.next }}">
+    {{ form }}
+    <div class="action-bar"><button type="submit" class="btn btn-primary">Anmelden</button><a class="btn" href="{% url 'occurrence_detail' occurrence.pk %}">Abbrechen</a></div>
+  </form>
+</div></div>
 {% endblock %}

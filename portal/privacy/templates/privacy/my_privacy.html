@@ -1,38 +1,34 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% load privacy %}
 {% block title %}Datenauskunft (Art. 15 DSGVO){% endblock %}
-{% block content %}
-<div class="mx-auto max-w-3xl">
-  <a href="{% url 'my_data' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Meine Daten</a>
-  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-    <div><h1 class="text-3xl font-bold">Datenauskunft (Art. 15 DSGVO)</h1>
-      <p class="mt-1 text-base-content/70">Alles, was das Portal zu deinem Zugang{% if data.Mitglieder %} und zu {% for name in data.Mitglieder %}{{ name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %} speichert. Fragen oder Korrekturen an <a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a>.</p></div>
-    <div class="flex flex-col items-start gap-1">
-      <a class="btn btn-primary" href="?format=pdf"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Als PDF herunterladen</a>
-      <a class="link text-sm" href="?format=json">maschinenlesbar als JSON</a>
-    </div>
-  </div>
-  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zugang"><div class="card-body">
-    <h2 class="card-title" id="h-zugang">Dein Zugang</h2>
-    {% include "privacy/_data.html" with data=data.Benutzer %}
-    <h3 class="mt-4 font-semibold">Anmeldewege</h3>
-    {% include "privacy/_data.html" with data=data.Anmeldewege %}
-  </div></section>
-  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-geraete"><div class="card-body">
-    <h2 class="card-title" id="h-geraete">Geräte und Benachrichtigungen</h2>
-    <h3 class="font-semibold">Bekannte Geräte</h3>{% include "privacy/_data.html" with data=data|get_item:"Bekannte Geräte" %}
-    <h3 class="mt-4 font-semibold">Geräte für Push-Benachrichtigungen</h3>{% include "privacy/_data.html" with data=data|get_item:"Geräte für Push-Benachrichtigungen" %}
-    <h3 class="mt-4 font-semibold">Versandte Benachrichtigungen</h3>{% include "privacy/_data.html" with data=data.Benachrichtigungen %}
-  </div></section>
-  {% for name, member in data.Mitglieder.items %}
-  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-m{{ forloop.counter }}"><div class="card-body">
-    <h2 class="card-title" id="h-m{{ forloop.counter }}">{{ name }}</h2>
-    {% include "privacy/_data.html" with data=member %}
-  </div></section>
-  {% endfor %}
-  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-protokoll"><div class="card-body">
-    <h2 class="card-title" id="h-protokoll">Protokoll zu deinem Zugang</h2>
-    {% include "privacy/_data.html" with data=data.Protokoll %}
-  </div></section>
-</div>
+{% block width %}max-w-3xl{% endblock %}
+{% block back_url %}{% url 'my_data' %}{% endblock %}
+{% block back_label %}Meine Daten{% endblock %}
+{% block heading %}Datenauskunft (Art. 15 DSGVO){% endblock %}
+{% block primary %}<a class="btn btn-primary" href="?format=pdf"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Als PDF herunterladen</a>{% endblock %}
+{% block more %}<li><a href="?format=json"><i class="bi bi-filetype-json" aria-hidden="true"></i> Maschinenlesbar als JSON</a></li>{% endblock %}
+{% block intro %}Alles, was das Portal zu deinem Zugang{% if data.Mitglieder %} und zu {% for name in data.Mitglieder %}{{ name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %} speichert. Fragen oder Korrekturen an <a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a>.{% endblock %}
+{% block page %}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zugang"><div class="card-body">
+  <h2 class="card-title" id="h-zugang">Dein Zugang</h2>
+  {% include "privacy/_data.html" with data=data.Benutzer %}
+  <h3 class="mt-4 font-semibold">Anmeldewege</h3>
+  {% include "privacy/_data.html" with data=data.Anmeldewege %}
+</div></section>
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-geraete"><div class="card-body">
+  <h2 class="card-title" id="h-geraete">Geräte und Benachrichtigungen</h2>
+  <h3 class="font-semibold">Bekannte Geräte</h3>{% include "privacy/_data.html" with data=data|get_item:"Bekannte Geräte" %}
+  <h3 class="mt-4 font-semibold">Geräte für Push-Benachrichtigungen</h3>{% include "privacy/_data.html" with data=data|get_item:"Geräte für Push-Benachrichtigungen" %}
+  <h3 class="mt-4 font-semibold">Versandte Benachrichtigungen</h3>{% include "privacy/_data.html" with data=data.Benachrichtigungen %}
+</div></section>
+{% for name, member in data.Mitglieder.items %}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-m{{ forloop.counter }}"><div class="card-body">
+  <h2 class="card-title" id="h-m{{ forloop.counter }}">{{ name }}</h2>
+  {% include "privacy/_data.html" with data=member %}
+</div></section>
+{% endfor %}
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-protokoll"><div class="card-body">
+  <h2 class="card-title" id="h-protokoll">Protokoll zu deinem Zugang</h2>
+  {% include "privacy/_data.html" with data=data.Protokoll %}
+</div></section>
 {% endblock %}

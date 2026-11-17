@@ -1,13 +1,12 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% load help %}
 {% block title %}Benutzer{% endblock %}
-{% block content %}
-<div class="flex flex-wrap items-center justify-between gap-3">
-  <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Benutzer</h1>{% help_link "benutzer" %}</div>
-  <a class="btn btn-primary" href="{% url 'invite' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Benutzer anlegen</a>
-</div>
-<p class="mt-1 mb-6 text-base-content/70">Zugänge zum Portal und ihre Rollen.</p>
-
+{% block width %}{% endblock %}
+{% block heading %}Benutzer{% endblock %}
+{% block heading_extra %}{% help_link "benutzer" %}{% endblock %}
+{% block primary %}<a class="btn btn-primary" href="{% url 'invite' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Benutzer anlegen</a>{% endblock %}
+{% block intro %}Zugänge zum Portal und ihre Rollen.{% endblock %}
+{% block page %}
 {% if invitations %}
 <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-einladungen">
   <div class="card-body">

@@ -1,27 +1,27 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% block title %}Ausnahme eintragen{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-2xl">
-  <a href="{% url 'occurrence_detail' occurrence.pk %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> {{ occurrence.event.title }}</a>
-  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
-    <h1 class="text-2xl font-bold">Ausnahme eintragen</h1>
-    <p class="text-base-content/70">Melde ein Mitglied an, auch wenn es nicht zur Zielgruppe passt, der Termin voll ist oder die Anmeldung schon geschlossen ist.</p>
-    <form method="get" class="flex flex-wrap items-end gap-3" role="search">
-      <div class="fieldset min-w-56 flex-1"><label class="fieldset-legend text-sm" for="suche">Name</label><input class="input w-full" type="search" id="suche" name="q" value="{{ query }}" minlength="2" required></div>
-      <button class="btn btn-primary" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Suchen</button>
-    </form>
-    {% if query %}
-    {% if results %}
-    <ul class="list">
-      {% for member in results %}
-      <li class="list-row items-center px-0">
-        <div class="list-col-grow"><div class="font-semibold">{{ member.display_name }}</div><div class="text-sm text-base-content/70">Jahrgang {{ member.birth_date|date:"Y" }}</div></div>
-        <form method="post">{% csrf_token %}<input type="hidden" name="member" value="{{ member.pk }}"><button class="btn btn-primary btn-sm" aria-label="{{ member.display_name }} anmelden">Anmelden</button></form>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}<p class="text-base-content/70">Niemand gefunden.</p>{% endif %}
-    {% endif %}
-  </div></div>
-</div>
+{% block width %}max-w-2xl{% endblock %}
+{% block back_url %}{% url 'occurrence_detail' occurrence.pk %}{% endblock %}
+{% block back_label %}{{ occurrence.event.title }}{% endblock %}
+{% block heading %}Ausnahme eintragen{% endblock %}
+{% block intro %}Melde ein Mitglied an, auch wenn es nicht zur Zielgruppe passt, der Termin voll ist oder die Anmeldung schon geschlossen ist.{% endblock %}
+{% block page %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+  <form method="get" class="flex flex-wrap items-end gap-3" role="search">
+    <div class="fieldset min-w-56 flex-1"><label class="fieldset-legend text-sm" for="suche">Name</label><input class="input w-full" type="search" id="suche" name="q" value="{{ query }}" minlength="2" required></div>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Suchen</button>
+  </form>
+  {% if query %}
+  {% if results %}
+  <ul class="list">
+    {% for member in results %}
+    <li class="list-row items-center px-0">
+      <div class="list-col-grow"><div class="font-semibold">{{ member.display_name }}</div><div class="text-sm text-base-content/70">Jahrgang {{ member.birth_date|date:"Y" }}</div></div>
+      <form method="post">{% csrf_token %}<input type="hidden" name="member" value="{{ member.pk }}"><button class="btn btn-primary btn-sm" aria-label="{{ member.display_name }} anmelden">Anmelden</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="text-base-content/70">Niemand gefunden.</p>{% endif %}
+  {% endif %}
+</div></div>
 {% endblock %}

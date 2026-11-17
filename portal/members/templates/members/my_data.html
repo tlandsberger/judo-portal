@@ -1,13 +1,13 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% load help %}
 {% block title %}Meine Daten{% endblock %}
-{% block content %}
-<div class="mb-2 flex flex-wrap items-center justify-between gap-3">
-  <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Meine Daten</h1>{% help_link "meine-daten" %}</div>
-  <a class="btn btn-outline btn-primary" href="{% url 'my_privacy' %}"><i class="bi bi-shield-check" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a>
-</div>
+{% block width %}{% endblock %}
+{% block heading %}Meine Daten{% endblock %}
+{% block heading_extra %}{% help_link "meine-daten" %}{% endblock %}
+{% block more %}<li><a href="{% url 'my_privacy' %}"><i class="bi bi-shield-check" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a></li>{% endblock %}
+{% block intro %}{% if links %}Wähle aus, wessen Daten du sehen oder ändern möchtest.{% endif %}{% endblock %}
+{% block page %}
 {% if links %}
-<p class="mb-6 text-base-content/70">Wähle aus, wessen Daten du sehen oder ändern möchtest.</p>
 <div class="grid gap-4 sm:grid-cols-2">
   {% for member_link in links %}
   <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'my_member' member_link.member.pk %}">
