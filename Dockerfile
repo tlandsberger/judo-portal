@@ -11,7 +11,7 @@ COPY portal portal
 RUN npm run vendor
 
 FROM python:3.15.2-slim AS app
-COPY --from=ghcr.io/astral-sh/uv:0.13.8 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.9 /uv /usr/local/bin/uv
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
