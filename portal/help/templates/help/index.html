@@ -9,12 +9,8 @@
     <h2 class="mb-3 text-xl font-semibold" id="h-{{ forloop.counter }}">{{ group }}</h2>
     <div class="grid gap-4 sm:grid-cols-2">
       {% for chapter in items %}
-      <a class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md" href="{% url 'help_chapter' chapter.slug %}">
-        <div class="card-body flex-row items-start gap-4">
-          <i class="bi {{ chapter.icon }} text-3xl text-primary" aria-hidden="true"></i>
-          <div><h3 class="card-title text-lg">{{ chapter.title }}</h3><p class="text-sm text-base-content/70">{{ chapter.summary }}</p></div>
-        </div>
-      </a>
+      {% url 'help_chapter' chapter.slug as chapter_url %}
+      {% include "partials/tile.html" with url=chapter_url icon=chapter.icon title=chapter.title text=chapter.summary %}
       {% endfor %}
     </div>
   </section>
