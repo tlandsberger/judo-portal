@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type BrowserContextOptions, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
-import { ADMIN_STATE, freshNotificationPermission, loginWithPassword } from "./helpers";
+import { ADMIN_STATE, billingMonthPath, freshNotificationPermission, loginWithPassword } from "./helpers";
 
 /**
  * Screenshots für die Hilfe im Portal (ADR 0016). Läuft als eigenes Projekt nach allen anderen Tests und nutzt deren
@@ -108,17 +108,17 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
 
   // Trainerin
   await shoot(browser, clara, "stunden", async (page) => {
-    await page.goto("/stunden/");
-    await expect(page.getByRole("heading", { level: 1, name: "Meine Stunden" })).toBeVisible();
+    await page.goto("/abrechnung/");
+    await expect(page.getByRole("heading", { level: 1, name: "Meine Abrechnung" })).toBeVisible();
   });
   await shoot(browser, clara, "termin-team", async (page) => {
-    await page.goto("/stunden/");
-    await page.getByRole("region", { name: "Kommende" }).getByRole("link", { name: "Randori-Lehrgang" }).click();
+    await page.goto("/termine/");
+    await page.getByRole("link", { name: "Randori-Lehrgang" }).first().click();
     await expect(page.getByRole("heading", { name: /Teilnehmer/ })).toBeVisible();
   });
   await shoot(browser, clara, "nicht-dabei", async (page) => {
-    await page.goto("/stunden/");
-    const href = await page.getByRole("region", { name: "Vergangen" }).getByRole("link", { name: "Randori-Lehrgang" }).first().getAttribute("href");
+    await page.goto(billingMonthPath(1));
+    const href = await page.getByRole("link", { name: "Randori-Lehrgang" }).first().getAttribute("href");
     await page.goto(`${href}nicht-dabei/`);
     await page.getByLabel("Ich wurde vertreten").check();
     await expect(page.getByLabel("Vertreten von")).toBeVisible();

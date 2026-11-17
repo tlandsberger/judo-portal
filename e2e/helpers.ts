@@ -100,6 +100,12 @@ export async function ensureYouthGroup(page: Page) {
   await expect(page.getByRole("heading", { level: 1, name: "Kinder und Jugend" })).toBeVisible();
 }
 
+/** Pfad der eigenen Monatsabrechnung für den Monat, in dem der Tag vor n Tagen liegt. */
+export function billingMonthPath(daysAgo: number): string {
+  const day = new Date(Date.now() - daysAgo * 86_400_000);
+  return `/abrechnung/${day.getFullYear()}/${day.getMonth() + 1}/`;
+}
+
 /** Datum in n Tagen für Felder vom Typ datetime-local, z. B. „2026-11-25T10:00“. */
 export function localDateTime(days: number, time: string): string {
   const day = new Date(Date.now() + days * 86_400_000);

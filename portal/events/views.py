@@ -346,7 +346,7 @@ def hours_absent(request: HttpRequest, pk: int) -> HttpResponse:
         except RegistrationError as error:
             messages.error(request, str(error))
         else:
-            return redirect("my_hours")
+            return redirect("billing_index")
     return render(
         request,
         "events/hours_absent.html",
@@ -412,20 +412,6 @@ def participant_remove(request: HttpRequest, pk: int, participation_pk: int) -> 
     services.unregister(participation, _user(request), force=True)
     messages.success(request, f"{participation.person.display_name} ist abgemeldet.")
     return redirect("occurrence_detail", pk=pk)
-
-
-# Meine Stunden (Team)
-
-
-@login_required
-def my_hours(request: HttpRequest) -> HttpResponse:
-    if not services.can_join_team(request.user):
-        raise PermissionDenied
-    services.ensure_generated()
-    coming, past = services.own_team(_user(request))
-    for participation in past:
-        participation.locked = bool(services.locked_reason(participation))  # type: ignore[attr-defined]
-    return render(request, "events/my_hours.html", {"coming": coming, "past": past, "now": timezone.now()})
 
 
 # Veranstaltungen verwalten

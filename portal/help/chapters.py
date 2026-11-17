@@ -111,7 +111,7 @@ CHAPTERS = (
     ),
     Chapter(
         "stunden",
-        "Meine Stunden und Abrechnung",
+        "Stunden und Abrechnung",
         "bi-clipboard-check",
         "Als Übungsleiter",
         "Stunden bestätigen und korrigieren, Monat einreichen, Frist und Rückgabe.",

@@ -8,7 +8,7 @@ from . import services
 
 
 def events(request: HttpRequest) -> dict[str, Any]:
-    """Navigation: „Meine Stunden“ und „Veranstaltungen“ für alle, die Team sein können, und die Abteilungsleitung."""
+    """Navigation: „Meine Abrechnung“ und „Veranstaltungen“ für Übungsleiter und die Abteilungsleitung."""
     user = getattr(request, "user", None)
     if user is None or not user.is_authenticated:
         return {}

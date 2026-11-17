@@ -2,7 +2,7 @@
 {% block title %}Abrechnung {{ claim.member.display_name }} {{ claim.month_label }}{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-4xl">
-  <a href="{% if can_decide %}{% url 'claim_list' %}{% else %}{% url 'billing_index' %}{% endif %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> {% if can_decide %}Abrechnungen{% else %}Abrechnung{% endif %}</a>
+  <a href="{% if can_decide %}{% url 'claim_list' %}{% else %}{% url 'billing_index' %}{% endif %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> {% if can_decide %}Abrechnungen{% else %}Meine Abrechnung{% endif %}</a>
   <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
     <div><h1 class="text-3xl font-bold">{{ claim.member.display_name }}</h1><p class="mt-1 text-base-content/70">{{ claim.month_label }}{% if claim.member.member_number %} · Mitgliedsnummer {{ claim.member.member_number }}{% endif %}</p></div>
     <div class="flex flex-wrap gap-1">{% if claim.is_late %}<span class="badge badge-warning badge-sm">verspätet</span>{% endif %}{% include "billing/_badge.html" with label=claim.get_status_display %}</div>

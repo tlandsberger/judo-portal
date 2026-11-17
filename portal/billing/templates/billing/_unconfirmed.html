@@ -1,0 +1,19 @@
+{# Nicht bestätigte Termine mit „Bestätigen“ und „Nicht dabei?“ (Monat und Übersicht „Meine Abrechnung“). #}
+    <ul class="list">
+      {% for p in rows %}
+      <li class="list-row items-center px-0">
+        <div class="list-col-grow">
+          <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' p.occurrence_id %}">{{ p.occurrence.event.title }}</a>
+          <div class="text-sm text-base-content/70">{{ p.occurrence.starts_at|date:"D d.m. H:i" }} Uhr · {{ p.role.name }} · {{ p.occurrence.minutes }} Min.</div>
+        </div>
+        {% if editable and p.occurrence.starts_at <= now %}
+        <div class="flex flex-wrap items-center justify-end gap-1">
+        <form method="post" action="{% url 'hours_confirm' p.occurrence_id %}">{% csrf_token %}<input type="hidden" name="minutes" value="{{ p.occurrence.minutes }}"><input type="hidden" name="next" value="{{ request.path }}">
+          <button class="btn btn-primary btn-sm" aria-label="{{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }} bestätigen">Bestätigen</button>
+        </form>
+        <a class="btn btn-ghost btn-sm" href="{% url 'hours_absent' p.occurrence_id %}" aria-label="Nicht dabei? {{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }}">Nicht dabei?</a>
+        </div>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>

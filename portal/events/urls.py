@@ -4,6 +4,10 @@ from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
+    # Altlast: „Meine Stunden“ ist in „Meine Abrechnung“ aufgegangen; Weiterleitungen für ältere Links und
+    # Push-Benachrichtigungen. Beim nächsten Aufräumen entfernen.
+    path("stunden/", RedirectView.as_view(pattern_name="billing_index", permanent=True)),
+    path("einsaetze/", RedirectView.as_view(pattern_name="billing_index", permanent=True)),
     path("termine/", views.agenda, name="agenda"),
     path("termine/<int:pk>/", views.occurrence_detail, name="occurrence_detail"),
     path("termine/<int:pk>/anmelden/<int:member_pk>/", views.register, name="register"),
@@ -29,8 +33,6 @@ urlpatterns = [
     path("termine/<int:pk>/gast/", views.guest_add, name="guest_add"),
     path("gaeste/anmelden/<str:token>/", views.guest_register, name="guest_register"),
     path("gast/<str:token>/", views.guest_page, name="guest_page"),
-    path("stunden/", views.my_hours, name="my_hours"),
-    path("einsaetze/", RedirectView.as_view(pattern_name="my_hours", permanent=True)),
     path("veranstaltungen/", views.event_list, name="event_list"),
     path("veranstaltungen/neu/", views.event_create, name="event_create"),
     path("veranstaltungen/<int:pk>/", views.event_detail, name="event_detail"),

@@ -2,7 +2,7 @@
 {% block title %}Abrechnung {{ overview.label }}{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-4xl">
-  <a href="{% url 'billing_index' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Abrechnung</a>
+  <a href="{% url 'billing_index' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Meine Abrechnung</a>
   <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
     <h1 class="text-3xl font-bold">{{ overview.label }}</h1>
     {% include "billing/_badge.html" with label=overview.status %}
@@ -47,24 +47,7 @@
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-offen"><div class="card-body">
     <h2 class="card-title" id="h-offen">Nicht bestätigt</h2>
     <p class="text-sm text-base-content/70">Diese Termine werden nicht abgerechnet, solange du sie nicht bestätigst.</p>
-    <ul class="list">
-      {% for p in overview.unconfirmed %}
-      <li class="list-row items-center px-0">
-        <div class="list-col-grow">
-          <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' p.occurrence_id %}">{{ p.occurrence.event.title }}</a>
-          <div class="text-sm text-base-content/70">{{ p.occurrence.starts_at|date:"D d.m. H:i" }} Uhr · {{ p.role.name }} · {{ p.occurrence.minutes }} Min.</div>
-        </div>
-        {% if overview.is_open and p.occurrence.starts_at <= now %}
-        <div class="flex flex-wrap items-center justify-end gap-1">
-        <form method="post" action="{% url 'hours_confirm' p.occurrence_id %}">{% csrf_token %}<input type="hidden" name="minutes" value="{{ p.occurrence.minutes }}"><input type="hidden" name="next" value="{{ request.path }}">
-          <button class="btn btn-primary btn-sm" aria-label="{{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }} bestätigen">Bestätigen</button>
-        </form>
-        <a class="btn btn-ghost btn-sm" href="{% url 'hours_absent' p.occurrence_id %}" aria-label="Nicht dabei? {{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }}">Nicht dabei?</a>
-        </div>
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
+    {% include "billing/_unconfirmed.html" with rows=overview.unconfirmed editable=overview.is_open %}
   </div></section>
   {% endif %}
 </div>

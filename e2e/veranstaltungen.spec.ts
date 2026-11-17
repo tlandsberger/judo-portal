@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   ADMIN_STATE,
   acceptInvitation,
+  billingMonthPath,
   ensureYouthGroup,
   expectNoA11yViolations,
   importMembers,
@@ -106,24 +107,27 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await parentContext.close();
 
   // Trainerin: Teilnehmer mit Notfallkontakt, Stunden des vergangenen Termins bestätigen
-  await trainer.goto("/stunden/");
-  await expectNoA11yViolations(trainer);
-  await trainer.getByRole("region", { name: "Kommende" }).getByRole("link", { name: "Randori-Lehrgang" }).click();
+  await trainer.goto("/termine/");
+  await trainer.getByRole("link", { name: "Randori-Lehrgang" }).first().click();
   await expect(trainer.getByRole("heading", { name: "Teilnehmer (1)" })).toBeVisible();
   await expect(trainer.getByText("„kommt mit dem Bus“")).toBeVisible();
   await expect(trainer.getByRole("link", { name: PARENT.email })).toBeVisible();
   await expectNoA11yViolations(trainer);
   // Mitglieder sieht sie sonst nicht
   expect((await trainer.goto("/mitglieder/"))?.status()).toBe(403);
-  await trainer.goto("/stunden/");
-  await trainer.getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
+  // „Meine Abrechnung“: offene Termine aller Monate oben unter „Noch bestätigen“
+  await trainer.goto("/abrechnung/");
+  await expectNoA11yViolations(trainer);
+  await trainer.getByRole("region", { name: "Noch bestätigen" }).getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
   await expect(trainer.getByText("Danke, deine Stunden sind bestätigt.")).toBeVisible();
-  await expect(trainer.getByText("bestätigt · 240 Min.")).toBeVisible();
-  // Versehentlich bestätigt? Zurücknehmen und erneut bestätigen
+  await expect(trainer.getByRole("region", { name: "Noch bestätigen" })).toHaveCount(0);
+  // Im Monat: Dauer sehen, versehentlich bestätigt? Zurücknehmen und erneut bestätigen
+  await trainer.goto(billingMonthPath(1));
+  await expect(trainer.getByRole("spinbutton", { name: /Minuten für Randori-Lehrgang/ })).toHaveValue("240");
   await trainer.getByRole("button", { name: /Bestätigung für Randori-Lehrgang am .* zurücknehmen/ }).click();
   await expect(trainer.getByText("Die Bestätigung ist zurückgenommen.")).toBeVisible();
   await trainer.getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
-  await expect(trainer.getByText("bestätigt · 240 Min.")).toBeVisible();
+  await expect(trainer.getByRole("spinbutton", { name: /Minuten für Randori-Lehrgang/ })).toHaveValue("240");
   await expectNoA11yViolations(trainer);
   await trainerContext.close();
   await admin.context().close();
