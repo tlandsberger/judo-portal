@@ -92,6 +92,7 @@ Nach dem ersten Release der Veranstaltungen (ADR 0010) zeigten sich drei Schwäc
   übertragen (die Vertretung wird eingetragen und bekommt die Erinnerung zum Bestätigen) oder den Termin nachträglich
   absagen (ohne Nachrichten an Teilnehmer; nicht, wenn jemand anderes schon bestätigt hat). Die Erinnerung „Stunden
   bestätigen“ hat dafür einen zweiten Knopf, der die Seite öffnet. Alles respektiert die Sperre durch die Abrechnung.
+  Seit ADR 0018 steht das direkt am Termin (Übertragen, Vertreten, Austragen), vor und nach Beginn.
 
 ## Konsequenzen
 

@@ -66,7 +66,7 @@ def groups(context: Any) -> list[Group]:
         own.items.append(
             Item(
                 "Meine Abrechnung",
-                "bi-wallet2",
+                "bi-cash-coin",
                 "billing_index",
                 "Stunden bestätigen und Monate einreichen",
                 ("billing_month",) if decider else ("billing_month", "claim_detail"),
@@ -81,7 +81,7 @@ def groups(context: Any) -> list[Group]:
         admin.items.append(
             Item(
                 "Mitglieder",
-                "bi-person-lines-fill",
+                "bi-people",
                 "member_list",
                 "Mitglieder, Import und Zugänge",
                 (
@@ -136,7 +136,7 @@ def groups(context: Any) -> list[Group]:
         admin.items.append(
             Item(
                 "Benutzer",
-                "bi-people",
+                "bi-person-badge",
                 "user_list",
                 "Zugänge einladen und Rollen vergeben",
                 ("invite", "edit_user", "invitation_link"),

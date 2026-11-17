@@ -86,15 +86,14 @@ test("Übungsleiterin bestätigt und reicht den Vormonat ein, die Abteilungsleit
   await expect(trainer.getByRole("cell", { name: "22,50 €" }).first()).toBeVisible();
   await expectNoA11yViolations(trainer);
   // Beim Zusatztraining war Dora nicht dabei: austragen
+  // „Nicht dabei?“ führt zum Termin; dort Übertragen oder Austragen (ADR 0018)
   await trainer.getByRole("link", { name: /Nicht dabei\? Zusatztraining/ }).click();
-  await expect(trainer.getByRole("heading", { level: 1, name: "Nicht dabei?" })).toBeVisible();
-  await expect(trainer.getByLabel("Vertreten von")).toBeHidden();
-  await trainer.getByLabel("Ich wurde vertreten").check();
-  await expect(trainer.getByLabel("Vertreten von")).toBeVisible();
+  await expect(trainer.getByRole("heading", { level: 1, name: "Zusatztraining" })).toBeVisible();
+  await expect(trainer.getByRole("link", { name: "Meinen Platz übertragen" })).toBeVisible();
+  await expect(trainer.getByRole("button", { name: "Hat nicht stattgefunden" })).toBeHidden(); // im Menü
   await expectNoA11yViolations(trainer);
-  await trainer.getByLabel("Ich war nicht dabei – austragen").check();
-  await trainer.getByRole("button", { name: "Speichern" }).click();
-  await expect(trainer.getByText("Du bist als Übungsleiter des Termins ausgetragen.")).toBeVisible();
+  await trainer.getByRole("button", { name: "Mich austragen" }).click();
+  await expect(trainer.getByText("Du bist als Trainer ausgetragen.")).toBeVisible();
   await trainer.goto("/abrechnung/");
   await trainer.getByRole("link", { name: month }).click();
   await expect(trainer.getByRole("heading", { name: "Nicht bestätigt" })).toHaveCount(0);

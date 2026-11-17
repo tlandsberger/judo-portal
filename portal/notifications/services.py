@@ -36,7 +36,7 @@ KEEP_DAYS = 90
 PUSH_NOTIFICATION_TTL = 24 * 60 * 60
 # Zeitkritisches weckt Android sofort (Urgency „high“); der Rest kommt im nächsten Wartungsfenster des Ruhemodus.
 # Bewusst sparsam: Android drosselt Absender, deren dringende Nachrichten oft nicht angesehen werden.
-URGENT_KINDS = frozenset({"cancelled", "changed", "promoted", "deadline"})
+URGENT_KINDS = frozenset({"cancelled", "changed", "promoted", "deadline", "trainer_missing"})
 
 
 def push_notifications_enabled() -> bool:

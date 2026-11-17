@@ -10,8 +10,8 @@
   <span class="badge badge-success">{{ preview.counts.new }} neu</span>
   <span class="badge badge-info">{{ preview.counts.changed }} geändert</span>
   <span class="badge badge-ghost">{{ preview.counts.unchanged }} unverändert</span>
-  {% if preview.counts.left %}<span class="badge badge-warning">{{ preview.counts.left }} ausgetreten, wird nicht angelegt</span>{% endif %}
-  <span class="badge badge-error">{{ preview.counts.error }} mit Fehlern</span>
+  {% if preview.counts.left %}<span class="badge badge-ghost">{{ preview.counts.left }} ausgetreten, wird nicht angelegt</span>{% endif %}
+  <span class="badge badge-soft badge-error">{{ preview.counts.error }} mit Fehlern</span>
 </div>
 
 <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-zeilen">
@@ -25,7 +25,7 @@
           <tr>
             <td>{{ row.line }}</td>
             <td>{{ row.name|default:"–" }}</td>
-            <td>{% if row.status == "new" %}<span class="badge badge-success badge-sm">neu</span>{% elif row.status == "changed" %}<span class="badge badge-info badge-sm">geändert</span>{% elif row.status == "error" %}<span class="badge badge-error badge-sm">Fehler</span>{% elif row.status == "left" %}<span class="badge badge-warning badge-sm">ausgetreten, wird nicht angelegt</span>{% else %}<span class="badge badge-ghost badge-sm">unverändert</span>{% endif %}</td>
+            <td>{% if row.status == "new" %}<span class="badge badge-success badge-sm">neu</span>{% elif row.status == "changed" %}<span class="badge badge-info badge-sm">geändert</span>{% elif row.status == "error" %}<span class="badge badge-soft badge-error badge-sm">Fehler</span>{% elif row.status == "left" %}<span class="badge badge-ghost badge-sm">ausgetreten, wird nicht angelegt</span>{% else %}<span class="badge badge-ghost badge-sm">unverändert</span>{% endif %}</td>
             <td class="text-sm">{% if row.errors %}{{ row.errors|join:" " }}{% elif row.changes %}{{ row.changes|join:", " }}{% endif %}</td>
           </tr>
         {% endfor %}

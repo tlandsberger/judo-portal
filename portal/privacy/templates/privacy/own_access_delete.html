@@ -7,7 +7,7 @@
 {% block page %}
 <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
   {% if blocked %}
-  <div role="alert" class="alert alert-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><span>{{ blocked }}</span></div>
+  <div role="alert" class="alert alert-soft alert-error"><i class="bi bi-exclamation-triangle text-lg" aria-hidden="true"></i><span>{{ blocked }}</span></div>
   {% else %}
   <p>Gelöscht werden dein Benutzer {{ user.email }} mit Passwort, Passkeys, Geräten und Benachrichtigungen. Danach kannst du dich nicht mehr anmelden.</p>
   {% if links %}

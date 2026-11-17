@@ -173,11 +173,41 @@ class Weekday(models.IntegerChoices):
     SUNDAY = 6, "Sonntag"
 
 
+class Repeat(models.TextChoices):
+    WEEKS = "weeks", "Alle x Wochen"
+    MONTH = "month", "Jeden n-ten im Monat"
+
+
+class WeekOfMonth(models.IntegerChoices):
+    FIRST = 1, "1."
+    SECOND = 2, "2."
+    THIRD = 3, "3."
+    FOURTH = 4, "4."
+    LAST = -1, "letzten"
+
+
 class Schedule(models.Model):
-    """Zeitplan einer wiederkehrenden Veranstaltung, z. B. „Dienstag 17:00–18:30“ für einen Zeitraum."""
+    """Zeitplan einer wiederkehrenden Veranstaltung, z. B. „Dienstag 17:00–18:30“ für einen Zeitraum.
+
+    Rhythmus: alle x Wochen (gezählt ab „Gültig ab“) oder jeden n-ten Wochentag im Monat (z. B. 1. Samstag).
+    """
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="schedules")
     weekday = models.PositiveSmallIntegerField("Wochentag", choices=Weekday.choices)
+    repeat = models.CharField("Rhythmus", max_length=5, choices=Repeat.choices, default=Repeat.WEEKS)
+    interval = models.PositiveSmallIntegerField(
+        "Alle … Wochen",
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(52)],
+        help_text="1 heißt jede Woche, 2 alle zwei Wochen. Gezählt ab „Gültig ab“.",
+    )
+    week_of_month = models.SmallIntegerField(
+        "Welcher im Monat",
+        choices=WeekOfMonth.choices,
+        null=True,
+        blank=True,
+        help_text="Zum Beispiel 1. für den ersten Dienstag im Monat.",
+    )
     start_time = models.TimeField("Beginn")
     end_time = models.TimeField("Ende")
     valid_from = models.DateField("Gültig ab")
@@ -196,7 +226,21 @@ class Schedule(models.Model):
         ordering = ("valid_from", "weekday", "start_time")
 
     def __str__(self) -> str:
-        return f"{self.get_weekday_display()} {self.start_time:%H:%M}–{self.end_time:%H:%M}"
+        times = f"{self.start_time:%H:%M}–{self.end_time:%H:%M}"
+        if self.repeat == Repeat.MONTH:
+            nth = "Letzter" if self.week_of_month == WeekOfMonth.LAST else WeekOfMonth(self.week_of_month or 1).label
+            return f"{nth} {self.get_weekday_display()} im Monat {times}"  # „1. Dienstag im Monat 17:00–18:30“
+        if self.interval > 1:
+            return f"{self.get_weekday_display()} {times}, {self.rhythm_label}"
+        return f"{self.get_weekday_display()} {times}"
+
+    @property
+    def rhythm_label(self) -> str:
+        """„jede Woche“, „alle 2 Wochen“, „jeden 1. Dienstag im Monat“, „jeden letzten Samstag im Monat“."""
+        if self.repeat == Repeat.MONTH:
+            nth = WeekOfMonth(self.week_of_month or 1).label
+            return f"jeden {nth} {self.get_weekday_display()} im Monat"
+        return "jede Woche" if self.interval == 1 else f"alle {self.interval} Wochen"
 
 
 class Occurrence(models.Model):
@@ -214,6 +258,9 @@ class Occurrence(models.Model):
     )
     is_modified = models.BooleanField(default=False, editable=False)
     cancelled_at = models.DateTimeField(null=True, blank=True)
+    trainer_missing_since = models.DateTimeField(
+        null=True, blank=True, editable=False, help_text="Der letzte Trainer hat sich ausgetragen (ADR 0018)."
+    )
 
     class Meta:
         verbose_name = "Termin"
@@ -425,7 +472,7 @@ class Participation(models.Model):
 
 
 class ScheduleTeam(models.Model):
-    """Standard-Team eines Zeitplans; seine Termine übernehmen es."""
+    """Fest eingeteilte Übungsleiter eines Zeitplans; seine Termine übernehmen sie."""
 
     schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE, related_name="team")
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="schedule_teams")

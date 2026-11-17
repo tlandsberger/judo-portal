@@ -1,7 +1,7 @@
 {# Status einer Abrechnung: läuft, offen, überfällig, eingereicht, zurückgegeben, freigegeben #}
 {% if label == "freigegeben" %}<span class="badge badge-soft badge-primary badge-sm">freigegeben</span>
 {% elif label == "eingereicht" %}<span class="badge badge-neutral badge-sm">eingereicht</span>
-{% elif label == "zurückgegeben" %}<span class="badge badge-warning badge-sm">zurückgegeben</span>
-{% elif label == "überfällig" %}<span class="badge badge-warning badge-sm">überfällig</span>
+{% elif label == "zurückgegeben" %}<span class="badge badge-soft badge-error badge-sm">zurückgegeben</span>
+{% elif label == "überfällig" %}<span class="badge badge-soft badge-error badge-sm">überfällig</span>
 {% elif label == "läuft" %}<span class="badge badge-ghost badge-sm">läuft</span>
 {% else %}<span class="badge badge-outline badge-sm">{{ label }}</span>{% endif %}

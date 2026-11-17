@@ -4,7 +4,7 @@
 {% block back_url %}{% url 'user_list' %}{% endblock %}
 {% block back_label %}Benutzer{% endblock %}
 {% block heading %}{{ target_user.display_name }}{% endblock %}
-{% block heading_extra %}{% if not target_user.is_active %}<span class="badge badge-ghost">deaktiviert</span>{% elif not set_up %}<span class="badge badge-warning">noch nicht eingerichtet</span>{% endif %}{% endblock %}
+{% block heading_extra %}{% if not target_user.is_active %}<span class="badge badge-soft badge-error">deaktiviert</span>{% elif not set_up %}<span class="badge badge-soft badge-error">noch nicht eingerichtet</span>{% endif %}{% endblock %}
 {% block more %}{% if target_user != user %}{% if target_user.is_active %}<li><button type="submit" form="benutzer-aktiv" class="text-error"><i class="bi bi-pause-circle" aria-hidden="true"></i> Benutzer deaktivieren</button></li>{% else %}<li><button type="submit" form="benutzer-aktiv"><i class="bi bi-play-circle" aria-hidden="true"></i> Benutzer wieder aktivieren</button></li>{% endif %}{% endif %}{% endblock %}
 {% block more_forms %}{% if target_user != user %}<form id="benutzer-aktiv" method="post" action="{% url 'toggle_active' target_user.pk %}" hidden>{% csrf_token %}</form>{% endif %}{% endblock %}
 {% block intro %}{{ target_user.email }}{% endblock %}

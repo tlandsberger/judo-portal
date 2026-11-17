@@ -40,3 +40,17 @@ def test_event_list_puts_subpages_in_menu(client):
     client.login(username=head.email, password=PASSWORD)
     events = client.get(reverse("event_list")).content.decode()
     assert "Weitere Aktionen" in events and reverse("role_list") in events
+
+
+def test_warnings_use_the_red_alert() -> None:
+    """Warnungen und Fehler im roten Hinweis, alles andere grün (Bausteine, ADR 0017)."""
+    from django.contrib.messages import constants
+    from django.contrib.messages.storage.base import Message
+    from django.template.loader import render_to_string
+
+    html = render_to_string(
+        "partials/messages.html",
+        {"messages": [Message(constants.WARNING, "Achtung"), Message(constants.SUCCESS, "Gespeichert")]},
+    )
+    warning, success = html.split("Achtung")
+    assert "alert-error" in warning and "alert-success" in success and "alert-warning" not in html

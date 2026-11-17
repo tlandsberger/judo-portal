@@ -21,7 +21,6 @@ from portal.members.models import Member
 
 from . import guests, services
 from .forms import (
-    AbsentForm,
     CancelRangeForm,
     ConfirmForm,
     EventCreateForm,
@@ -29,6 +28,7 @@ from .forms import (
     EventTypeForm,
     GuestForm,
     GuestRegisterForm,
+    HandOverForm,
     NoteForm,
     OccurrenceForm,
     ParticipantRoleForm,
@@ -87,6 +87,32 @@ def _team_form(event: Event, data: Any = None, prefix: str | None = None) -> Tea
     return TeamForm(data, prefix=prefix, candidates=services.team_candidates(event), roles=services.team_roles(event))
 
 
+def _team_rows(
+    user: User,
+    occurrence: Occurrence,
+    team: list[Participation],
+    member: Member | None,
+    own_team: Participation | None,
+    lead: bool,
+) -> list[dict[str, Any]]:
+    """Übungsleiter mit ihren Aktionen (ADR 0018): Übertragen und Austragen für sich selbst und wer den Termin leitet,
+    Vertreten für andere, die die Rolle übernehmen dürfen."""
+    rows = []
+    for p in team:
+        is_self = p == own_team
+        open_ = not occurrence.is_cancelled and not services.locked_reason(p)
+        can_change = open_ and (is_self or lead) and (is_self or not p.is_confirmed)
+        can_take_over = (
+            open_
+            and member is not None
+            and own_team is None
+            and not p.is_confirmed
+            and services.can_take_role(member, p.role, occurrence.event)
+        )
+        rows.append({"p": p, "is_self": is_self, "can_change": can_change, "can_take_over": can_take_over})
+    return rows
+
+
 @login_required
 def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
     occurrence = get_object_or_404(Occurrence.objects.select_related("event", "schedule"), pk=pk)
@@ -128,6 +154,7 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
             for role in services.team_roles(occurrence.event)
             if services.can_take_role(member, role, occurrence.event)
         ]
+    context["team_rows"] = _team_rows(user, occurrence, team, member, own_team, lead)
     if own_team and own_team.role.is_billable and not own_team.is_confirmed:
         context["confirm_form"] = ConfirmForm(initial={"minutes": occurrence.minutes})
     if own_team and own_team.is_confirmed and not services.locked_reason(own_team):
@@ -237,6 +264,13 @@ def occurrence_cancel(request: HttpRequest, pk: int) -> HttpResponse:
             raise PermissionDenied
         services.uncancel(occurrence, _user(request))
         messages.success(request, "Der Termin findet wieder statt.")
+    elif occurrence.starts_at <= timezone.now():
+        try:
+            services.cancel_after(occurrence, _user(request))
+        except RegistrationError as error:
+            messages.error(request, str(error))
+        else:
+            messages.success(request, "Der Termin ist nachträglich abgesagt.")
     else:
         services.cancel(occurrence, _user(request))
         messages.success(request, "Termin abgesagt. Angemeldete und Übungsleiter bekommen eine Mail.")
@@ -269,26 +303,102 @@ def occurrence_team(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("occurrence_detail", pk=pk)
 
 
-@require_POST
-@login_required
-def occurrence_team_remove(request: HttpRequest, pk: int, participation_pk: int) -> HttpResponse:
+def _team_participation(request: HttpRequest, pk: int, participation_pk: int) -> tuple[Participation, bool]:
+    """Übungsleiter-Teilnahme, die der Benutzer ändern darf: die eigene oder als Leitung des Termins."""
     participation = get_object_or_404(
-        Participation.objects.select_related("occurrence", "member", "role"),
+        Participation.objects.select_related("occurrence__event", "member", "role"),
         pk=participation_pk,
         occurrence_id=pk,
         role__is_team=True,
+        status__in=services.ACTIVE,
     )
-    user = _user(request)
-    member = services.own_member(user)
+    member = services.own_member(request.user)
     is_self = member is not None and participation.member_id == member.pk
-    if not is_self and not services.can_lead(user, participation.occurrence):
+    if not is_self and not services.can_lead(request.user, participation.occurrence):
         raise PermissionDenied
+    return participation, is_self
+
+
+@require_POST
+@login_required
+def occurrence_team_remove(request: HttpRequest, pk: int, participation_pk: int) -> HttpResponse:
+    """Austragen ohne Vertretung. Wäre danach kein Trainer mehr da, fragt das Portal erst nach (ADR 0018)."""
+    participation, is_self = _team_participation(request, pk, participation_pk)
+    if services.leaves_without_trainer(participation) and not request.POST.get("confirmed"):
+        return render(
+            request,
+            "events/team_remove.html",
+            {"participation": participation, "occurrence": participation.occurrence, "is_self": is_self},
+        )
     try:
-        services.remove_team(participation, _user(request))
+        services.withdraw(participation, _user(request))
     except RegistrationError as error:
         messages.error(request, str(error))
     else:
-        messages.success(request, f"{participation.person.display_name} ist ausgetragen.")
+        name = "Du bist" if is_self else f"{participation.person.display_name} ist"
+        messages.success(request, f"{name} als {participation.role.name} ausgetragen.")
+    return redirect("occurrence_detail", pk=pk)
+
+
+@login_required
+def occurrence_hand_over(request: HttpRequest, pk: int, participation_pk: int) -> HttpResponse:
+    """Übertragen: wer abgibt, wählt die Vertretung; gilt sofort, die Vertretung bekommt eine Nachricht."""
+    participation, is_self = _team_participation(request, pk, participation_pk)
+    occurrence = participation.occurrence
+    taken = set(
+        occurrence.participations.filter(role__is_team=True, status__in=services.ACTIVE).values_list(
+            "member_id", flat=True
+        )
+    )
+    candidates = [m for m in services.team_candidates(occurrence.event) if m.pk not in taken]
+    form = HandOverForm(
+        request.POST or None,
+        candidates=candidates,
+        roles=services.team_roles(occurrence.event),
+        initial={"role": participation.role_id},
+    )
+    if request.method == "POST" and form.is_valid():
+        substitute = form.cleaned_data["member"]
+        try:
+            services.hand_over(participation, substitute, form.cleaned_data["role"], _user(request))
+        except RegistrationError as error:
+            form.add_error("member", str(error))
+        else:
+            messages.success(request, f"Übertragen: {substitute.display_name} übernimmt und bekommt eine Nachricht.")
+            return redirect("occurrence_detail", pk=pk)
+    return render(
+        request,
+        "events/hand_over.html",
+        {
+            "participation": participation,
+            "occurrence": occurrence,
+            "form": form,
+            "is_self": is_self,
+            "started": occurrence.starts_at <= timezone.now(),
+        },
+    )
+
+
+@require_POST
+@login_required
+def occurrence_take_over(request: HttpRequest, pk: int, participation_pk: int) -> HttpResponse:
+    """Vertreten: ein anderer Übungsleiter übernimmt den Platz; der Vertretene bekommt eine Nachricht."""
+    participation = get_object_or_404(
+        Participation.objects.select_related("occurrence__event", "member", "role"),
+        pk=participation_pk,
+        occurrence_id=pk,
+        role__is_team=True,
+        status__in=services.ACTIVE,
+    )
+    member = services.own_member(request.user)
+    if member is None:
+        raise PermissionDenied
+    try:
+        services.hand_over(participation, member, None, _user(request))
+    except RegistrationError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, f"Du vertrittst {participation.person.display_name} als {participation.role.name}.")
     return redirect("occurrence_detail", pk=pk)
 
 
@@ -313,51 +423,9 @@ def hours_confirm(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect(_next(request, participation.occurrence))
 
 
-@login_required
 def hours_absent(request: HttpRequest, pk: int) -> HttpResponse:
-    """„Nicht dabei?“: Team-Teilnahme nachträglich austragen, an eine Vertretung übertragen oder Termin absagen."""
-    member = services.own_member(request.user)
-    participation = get_object_or_404(
-        Participation.objects.select_related("occurrence__event", "role"),
-        occurrence_id=pk,
-        member=member,
-        role__is_team=True,
-        status__in=services.ACTIVE,
-    )
-    occurrence = participation.occurrence
-    roles = services.team_roles(occurrence.event)
-    candidates = [m for m in services.team_candidates(occurrence.event) if m != member]
-    form = AbsentForm(request.POST or None, candidates=candidates, roles=roles, initial={"role": participation.role_id})
-    locked = services.locked_reason(participation)
-    if request.method == "POST" and not locked and form.is_valid():
-        user = _user(request)
-        what = form.cleaned_data["what"]
-        try:
-            if what == AbsentForm.HAND_OVER:
-                substitute = form.cleaned_data["member"]
-                services.hand_over(participation, substitute, form.cleaned_data["role"], user)
-                messages.success(request, f"Übertragen: {substitute.display_name} bekommt die Stunden zum Bestätigen.")
-            elif what == AbsentForm.CANCEL:
-                services.cancel_after(occurrence, user)
-                messages.success(request, "Der Termin ist nachträglich abgesagt.")
-            else:
-                services.withdraw(participation, user)
-                messages.success(request, "Du bist als Übungsleiter des Termins ausgetragen.")
-        except RegistrationError as error:
-            messages.error(request, str(error))
-        else:
-            return redirect("billing_index")
-    return render(
-        request,
-        "events/hours_absent.html",
-        {
-            "participation": participation,
-            "occurrence": occurrence,
-            "form": form,
-            "locked": locked,
-            "started": occurrence.starts_at <= timezone.now(),
-        },
-    )
+    """Altlast: „Nicht dabei?“ steht jetzt direkt am Termin (ADR 0018); ältere Links führen dorthin."""
+    return redirect(reverse("occurrence_detail", args=[pk]) + "#h-team", permanent=True)
 
 
 @require_POST

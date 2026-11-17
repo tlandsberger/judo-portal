@@ -1,8 +1,10 @@
 {% extends "events/_form_page.html" %}
+{% load static %}
 {% block heading %}{% if schedule %}Zeitplan ändern{% else %}Zeitplan hinzufügen{% endif %}{% endblock %}
 {% block back_url %}{% url 'event_detail' event.pk %}{% endblock %}
 {% block cancel_url %}{% url 'event_detail' event.pk %}{% endblock %}
 {% block back_label %}{{ event.title }}{% endblock %}
-{% block intro %}Das Portal legt die Termine bis „Gültig bis“ an, höchstens ein Jahr im Voraus. Ändern sich die Trainingszeiten, setz hier „Gültig bis“ und leg einen neuen Zeitplan an.{% endblock %}
+{% block intro %}Das Portal legt die Termine im gewählten Rhythmus bis „Gültig bis“ an, höchstens ein Jahr im Voraus. Ändern sich die Trainingszeiten, setz hier „Gültig bis“ und leg einen neuen Zeitplan an.{% endblock %}
 {% block more %}{% if schedule %}<li><button type="submit" form="loeschen" class="text-error"><i class="bi bi-trash" aria-hidden="true"></i> Zeitplan löschen</button></li>{% endif %}{% endblock %}
 {% block more_forms %}{% if schedule %}<form id="loeschen" method="post" action="{% url 'schedule_delete' event.pk schedule.pk %}" hidden>{% csrf_token %}</form>{% endif %}{% endblock %}
+{% block scripts %}<script src="{% static 'js/rhythm.js' %}"></script>{% endblock %}

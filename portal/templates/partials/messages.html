@@ -1,10 +1,11 @@
 {% if messages %}
 <div class="mb-6 flex flex-col gap-2" role="status">
   {% for message in messages %}
-  <div class="alert alert-soft {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
-    <i class="bi {% if message.tags == 'error' %}bi-exclamation-triangle{% else %}bi-check-circle{% endif %} text-lg" aria-hidden="true"></i>
-    <span>{{ message }}</span>
-  </div>
+  {% if message.level_tag == "error" or message.level_tag == "warning" %}
+  <div class="alert alert-soft alert-error"><i class="bi bi-exclamation-triangle text-lg" aria-hidden="true"></i><span>{{ message }}</span></div>
+  {% else %}
+  <div class="alert alert-soft alert-success"><i class="bi bi-check-circle text-lg" aria-hidden="true"></i><span>{{ message }}</span></div>
+  {% endif %}
   {% endfor %}
 </div>
 {% endif %}

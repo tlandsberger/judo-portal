@@ -44,7 +44,7 @@
           <tr>
             <td><a class="link link-hover font-semibold" href="{% url 'edit_user' target_user.pk %}">{{ target_user.display_name }}</a><div class="text-sm text-base-content/70">{{ target_user.email }}</div></td>
             <td><div class="flex flex-wrap gap-1">{% for label in target_user.role_labels %}<span class="badge badge-soft badge-primary">{{ label }}</span>{% empty %}<span class="text-sm text-base-content/70">–</span>{% endfor %}</div></td>
-            <td>{% if not target_user.is_active %}<span class="text-sm text-error">deaktiviert</span>{% elif not set_up %}<span class="badge badge-warning">noch nicht eingerichtet</span>{% else %}<span class="text-sm">aktiv</span>{% endif %}</td>
+            <td>{% if not target_user.is_active %}<span class="badge badge-soft badge-error badge-sm">deaktiviert</span>{% elif not set_up %}<span class="badge badge-soft badge-error">noch nicht eingerichtet</span>{% else %}<span class="text-sm">aktiv</span>{% endif %}</td>
           </tr>
         {% endfor %}
         </tbody>

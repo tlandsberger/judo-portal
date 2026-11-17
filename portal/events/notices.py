@@ -1,7 +1,8 @@
 """Benachrichtigungen rund um Termine: Push-Benachrichtigung, sonst Mail (über ``portal.notifications``, ADR 0011).
 
-Sofort: Absage, Änderung, Nachrücken. Über den Zeitplaner (alle 5 Minuten): Anmeldung offen, Erinnerung an den
-Anmeldeschluss, Stunden bestätigen. Jede Nachricht geht je Benutzer und Anlass nur einmal raus.
+Sofort: Absage, Änderung, Nachrücken, Vertretung, kein Trainer mehr. Über den Zeitplaner (alle 5 Minuten): Anmeldung
+offen, Erinnerung an den Anmeldeschluss, Stunden bestätigen, noch kein Trainer zwei Tage vorher. Jede Nachricht geht
+je Benutzer und Anlass nur einmal raus.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import formats, timezone
 
-from portal.accounts.models import User
+from portal.accounts.models import Role, User
 from portal.members import services as members
 from portal.members.models import Member, MemberLink
 from portal.notifications import services as notifications
@@ -259,27 +260,98 @@ def notify_confirm_hours(now: datetime | None = None) -> None:
             url=reverse("billing_index"),
             actions=[
                 Action("confirm", "Bestätigen", {"p": participation.pk}),
-                Action("absent", "Nicht dabei?", url=reverse("hours_absent", args=[occurrence.pk])),
+                Action("absent", "Nicht dabei?", url=f"{_url(occurrence)}#h-team"),
             ],
         )
 
 
-def substitute(participation: Participation, absent: str) -> None:
-    """Die Vertretung soll ihre Stunden bestätigen; gleicher Schlüssel wie die Abend-Erinnerung, also nur einmal."""
-    occurrence = participation.occurrence
-    user = services.member_user(participation.member) if participation.member else None
-    if user is None:
-        return
-    notifications.notify(
-        user,
-        key=f"confirm:{participation.pk}",
-        kind="confirm",
-        title="Stunden bestätigen",
-        body=f"Du hast {absent} bei {occurrence.event.title} am {_when(occurrence)} als {participation.role.name} "
-        "vertreten. Bitte bestätige deine Stunden.",
-        url=reverse("billing_index"),
-        actions=[Action("confirm", "Bestätigen", {"p": participation.pk})],
-    )
+def handed_over(substitute: Participation, absent: Member, by: User | None) -> None:
+    """Übertragen oder Vertreten (ADR 0018): wer nicht selbst gehandelt hat, erfährt es sofort.
+
+    Nach dem Termin bekommt die Vertretung stattdessen die Bitte, ihre Stunden zu bestätigen (gleicher Schlüssel wie
+    die Abend-Erinnerung, also nur einmal).
+    """
+    occurrence = substitute.occurrence
+    what = f"{occurrence.event.title} am {_when(occurrence)} als {substitute.role.name}"
+    stamp = _stamp()
+    new = services.member_user(substitute.member) if substitute.member else None
+    if new is not None and new != by:
+        if occurrence.starts_at <= timezone.now() and substitute.role.is_billable:
+            notifications.notify(
+                new,
+                key=f"confirm:{substitute.pk}",
+                kind="confirm",
+                title="Stunden bestätigen",
+                body=f"Du hast {absent.display_name} bei {what} vertreten. Bitte bestätige deine Stunden.",
+                url=reverse("billing_index"),
+                actions=[Action("confirm", "Bestätigen", {"p": substitute.pk})],
+            )
+        else:
+            notifications.notify(
+                new,
+                key=f"hand-over:{occurrence.pk}:{new.pk}:{stamp}",
+                kind="hand_over",
+                title="Vertretung",
+                body=f"Du vertrittst {absent.display_name} bei {what}.",
+                url=_url(occurrence),
+            )
+    old = services.member_user(absent)
+    if old is not None and old != by:
+        name = substitute.member.display_name if substitute.member else substitute.person.display_name
+        notifications.notify(
+            old,
+            key=f"handed-over:{occurrence.pk}:{old.pk}:{stamp}",
+            kind="hand_over",
+            title="Vertretung",
+            body=f"{name} vertritt dich bei {what}.",
+            url=_url(occurrence),
+        )
+
+
+def _heads() -> list[User]:
+    users = User.objects.filter(is_active=True).order_by("pk")
+    heads = [user for user in users if user.has_role(Role.DEPARTMENT_HEAD)]
+    return heads or [user for user in users if user.has_role(Role.ADMIN)]
+
+
+def trainer_missing(occurrence: Occurrence, absent: str, by: User | None) -> None:
+    """Der letzte Trainer hat sich ohne Vertretung ausgetragen: die Abteilungsleitung erfährt es sofort."""
+    stamp = _stamp()
+    for user in _heads():
+        if user == by:
+            continue
+        notifications.notify(
+            user,
+            key=f"trainer-missing:{occurrence.pk}:{user.pk}:{stamp}",
+            kind="trainer_missing",
+            title="Kein Trainer eingeteilt",
+            body=f"{absent} hat sich bei {occurrence.event.title} am {_when(occurrence)} ausgetragen. "
+            "Jetzt ist kein Trainer mehr eingeteilt.",
+            url=_url(occurrence),
+        )
+
+
+def notify_trainer_missing(now: datetime | None = None) -> None:
+    """Zwei Tage vorher erinnern, wenn ein Termin nach dem Austragen noch immer ohne Trainer ist (je Termin einmal)."""
+    now = now or timezone.now()
+    due = Occurrence.objects.filter(
+        trainer_missing_since__isnull=False,
+        cancelled_at__isnull=True,
+        starts_at__gt=now,
+        starts_at__lte=now + services.TRAINER_MISSING_REMIND,
+    ).select_related("event")
+    for occurrence in due:
+        if services.has_trainer(occurrence):
+            continue
+        for user in _heads():
+            notifications.notify(
+                user,
+                key=f"trainer-missing-reminder:{occurrence.pk}:{user.pk}",
+                kind="trainer_missing",
+                title="Noch kein Trainer eingeteilt",
+                body=f"Für {occurrence.event.title} am {_when(occurrence)} ist noch kein Trainer eingeteilt.",
+                url=_url(occurrence),
+            )
 
 
 def run_jobs() -> None:
@@ -287,6 +359,7 @@ def run_jobs() -> None:
     notify_registration_open(now)
     notify_deadlines(now)
     notify_confirm_hours(now)
+    notify_trainer_missing(now)
 
 
 # Knöpfe an Push-Benachrichtigungen

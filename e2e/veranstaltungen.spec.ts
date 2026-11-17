@@ -70,9 +70,10 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await admin.getByLabel("Ende", { exact: true }).fill(localDateTime(-1, "14:00"));
   await admin.getByRole("button", { name: "Speichern" }).click();
   await expect(admin.getByText("Termin angelegt. Trag hier die Übungsleiter ein.")).toBeVisible();
+  await admin.getByText("Jemanden eintragen oder Rolle ändern").click();
   await admin.getByLabel("Mitglied").selectOption({ label: "Clara Clever" });
   await admin.getByLabel("Rolle").selectOption({ label: "Trainer" });
-  await admin.getByRole("button", { name: "Eintragen oder Rolle ändern" }).click();
+  await admin.getByRole("button", { name: "Eintragen", exact: true }).click();
   await expect(admin.getByText("Clara Clever ist als Trainer eingetragen.")).toBeVisible();
   await expectNoA11yViolations(admin);
 
@@ -113,6 +114,13 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await expect(trainer.getByText("„kommt mit dem Bus“")).toBeVisible();
   await expect(trainer.getByRole("link", { name: PARENT.email })).toBeVisible();
   await expectNoA11yViolations(trainer);
+  // Vertretung: Übertragen öffnet die Auswahl, wer übernimmt (ADR 0018)
+  await trainer.getByRole("link", { name: "Meinen Platz übertragen" }).click();
+  await expect(trainer.getByRole("heading", { level: 1, name: "Übertragen" })).toBeVisible();
+  await expect(trainer.getByLabel("Als", { exact: true })).toHaveValue(/\d+/);
+  await expectNoA11yViolations(trainer);
+  await trainer.getByRole("link", { name: "Abbrechen" }).click();
+  await expect(trainer.getByRole("heading", { name: "Teilnehmer (1)" })).toBeVisible();
   // Mitglieder sieht sie sonst nicht
   expect((await trainer.goto("/mitglieder/"))?.status()).toBe(403);
   // „Meine Abrechnung“: offene Termine aller Monate oben unter „Noch bestätigen“
@@ -149,8 +157,18 @@ test("Training wiederkehrend anlegen; Elternteil mit zwei Kindern sieht jeden Te
   await expect(admin.getByLabel("Beginn", { exact: true })).toBeHidden();
   await admin.getByLabel("Dienstag").check();
   await admin.getByLabel("Donnerstag").check();
+  // Rhythmus: „Alle x Wochen“ (Standard 1) oder „Jeden n-ten im Monat“, je mit eigenem Feld
+  await expect(admin.getByLabel("Alle … Wochen")).toHaveValue("1");
+  await expect(admin.getByLabel("Welcher im Monat")).toBeHidden();
+  await admin.getByLabel("Jeden n-ten im Monat").check();
+  await expect(admin.getByLabel("Welcher im Monat")).toBeVisible();
+  await expect(admin.getByLabel("Alle … Wochen")).toBeHidden();
+  await expectNoA11yViolations(admin);
+  await admin.getByLabel("Alle x Wochen").check();
   await admin.getByLabel("Uhrzeit von").fill("17:00");
   await admin.getByLabel("Uhrzeit bis").fill("18:30");
+  // Erst ab morgen: ein Termin von heute läge je nach Uhrzeit schon nach dem Anmeldeschluss (2 Std. vorher).
+  await admin.getByLabel("Gültig ab").fill(localDateTime(1, "00:00").slice(0, 10));
   await admin.getByLabel("Gültig bis").fill(localDateTime(27, "00:00").slice(0, 10));
   await admin.getByLabel("Anmeldung schließt (Stunden vorher)").fill("2");
   await admin.getByLabel("Mitglied").selectOption({ label: "Clara Clever" });
