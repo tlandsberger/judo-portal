@@ -16,7 +16,7 @@
         {% if authenticator.last_used_at %}zuletzt benutzt {{ authenticator.last_used_at|naturaltime }}{% else %}noch nicht benutzt{% endif %}</div>
     </div>
     <div class="list-col-wrap flex gap-2">
-      <a class="btn btn-outline btn-primary btn-sm" href="{% url 'mfa_edit_webauthn' pk=authenticator.pk %}">Umbenennen</a>
+      <a class="btn btn-outline btn-sm" href="{% url 'mfa_edit_webauthn' pk=authenticator.pk %}">Umbenennen</a>
       <a class="btn btn-outline btn-sm" href="{% url 'mfa_remove_webauthn' pk=authenticator.pk %}">Entfernen</a>
     </div>
   </li>

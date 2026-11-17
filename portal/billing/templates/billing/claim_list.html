@@ -16,10 +16,10 @@
     <h2 class="card-title" id="h-alle">{% if pending %}Weitere Abrechnungen{% else %}Abrechnungen{% endif %}</h2>
     <form method="get" class="flex flex-wrap items-end gap-3">
       <div class="fieldset"><label class="fieldset-legend text-sm" for="f-month">Monat</label>
-        <select id="f-month" name="month" class="select select-sm">{% for value, label in form.fields.month.choices %}<option value="{{ value }}"{% if form.month.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <select id="f-month" name="month" class="select">{% for value, label in form.fields.month.choices %}<option value="{{ value }}"{% if form.month.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
       <div class="fieldset"><label class="fieldset-legend text-sm" for="f-status">Status</label>
-        <select id="f-status" name="status" class="select select-sm">{% for value, label in form.fields.status.choices %}<option value="{{ value }}"{% if form.status.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-      <button class="btn btn-sm mb-1">Anzeigen</button>
+        <select id="f-status" name="status" class="select">{% for value, label in form.fields.status.choices %}<option value="{{ value }}"{% if form.status.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <button class="btn mb-1">Anzeigen</button>
     </form>
     {% if claims %}
     <ul class="list">{% for claim in claims %}{% include "billing/_claim_row.html" %}{% endfor %}</ul>

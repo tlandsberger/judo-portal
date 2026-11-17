@@ -22,7 +22,7 @@
             <button class="btn btn-sm join-item">Ändern</button>
           </form>
           <form method="post" action="{% url 'hours_unconfirm' line.participation.occurrence_id %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
-            <button class="btn btn-ghost btn-sm" aria-label="Bestätigung für {{ line.event_title }} am {{ line.day|date:'d.m.' }} zurücknehmen" title="Bestätigung zurücknehmen"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
+            <button class="btn btn-ghost btn-square btn-sm" aria-label="Bestätigung für {{ line.event_title }} am {{ line.day|date:'d.m.' }} zurücknehmen" title="Bestätigung zurücknehmen"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
           </form>
         </div></td>{% endif %}
       </tr>
@@ -35,7 +35,7 @@
             <button class="btn btn-sm join-item">Ändern</button>
           </form>
           <form method="post" action="{% url 'hours_unconfirm' line.participation.occurrence_id %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
-            <button class="btn btn-ghost btn-sm" aria-label="Bestätigung für {{ line.event_title }} am {{ line.day|date:'d.m.' }} zurücknehmen" title="Bestätigung zurücknehmen"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
+            <button class="btn btn-ghost btn-square btn-sm" aria-label="Bestätigung für {{ line.event_title }} am {{ line.day|date:'d.m.' }} zurücknehmen" title="Bestätigung zurücknehmen"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
           </form>
         </div></td>
       </tr>

@@ -10,7 +10,7 @@
     </div>
     <div class="flex flex-col gap-1">
       <a class="btn btn-primary btn-sm whitespace-nowrap" href="{% url 'mfa_add_webauthn' %}?next={{ request.path|urlencode }}">Passkey hinzufügen</a>
-      {% if passkeys %}<a class="btn btn-sm whitespace-nowrap" href="{% url 'mfa_list_webauthn' %}">Verwalten</a>{% endif %}
+      {% if passkeys %}<a class="btn btn-outline btn-sm whitespace-nowrap" href="{% url 'mfa_list_webauthn' %}">Verwalten</a>{% endif %}
     </div>
   </li>
   <li class="list-row items-center">
@@ -20,9 +20,9 @@
       <p class="text-sm text-base-content/70">{% if has_password %}Ein Passwort ist gesetzt.{% else %}Noch kein Passwort gesetzt.{% endif %} Mindestens 10 Zeichen.</p>
     </div>
     {% if has_password %}
-    <a class="btn btn-outline btn-primary btn-sm whitespace-nowrap" href="{% url 'account_change_password' %}">Ändern</a>
+    <a class="btn btn-outline btn-sm whitespace-nowrap" href="{% url 'account_change_password' %}">Ändern</a>
     {% else %}
-    <a class="btn btn-outline btn-primary btn-sm whitespace-nowrap" href="{% url 'account_set_password' %}">Festlegen</a>
+    <a class="btn btn-outline btn-sm whitespace-nowrap" href="{% url 'account_set_password' %}">Festlegen</a>
     {% endif %}
   </li>
   <li class="list-row items-center">

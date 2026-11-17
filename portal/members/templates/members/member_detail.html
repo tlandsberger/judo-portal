@@ -12,8 +12,8 @@
         {% deletion_date member as deletes_on %}{% if deletes_on %}<p class="mt-1 text-sm text-base-content/70">Wird am {{ deletes_on|date:"d.m.Y" }} gelöscht (drei Monate nach dem Austritt).</p>{% endif %}
       </div>
       <div class="flex flex-wrap gap-2">
-        <a class="btn btn-outline btn-primary btn-sm" href="{% url 'member_edit' member.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
-        <a class="btn btn-outline btn-primary btn-sm" href="{% url 'member_export' member.pk %}"><i class="bi bi-download" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a>
+        <a class="btn btn-outline btn-primary" href="{% url 'member_edit' member.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
+        <a class="btn btn-outline btn-primary" href="{% url 'member_export' member.pk %}"><i class="bi bi-download" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a>
       </div>
     </div>
     {% include "members/_facts.html" with all=True %}
@@ -68,6 +68,6 @@
     {% if changes %}<ul class="list">{% for entry in changes %}{% include "privacy/_entry.html" %}{% endfor %}</ul>
     {% else %}<p class="text-base-content/70">Noch keine Einträge.</p>{% endif %}
   </div></section>
-<a class="btn btn-ghost btn-error btn-sm mt-4" href="{% url 'member_delete' member.pk %}"><i class="bi bi-trash" aria-hidden="true"></i> Mitglied löschen</a>
+<a class="btn btn-ghost btn-error mt-4" href="{% url 'member_delete' member.pk %}"><i class="bi bi-trash" aria-hidden="true"></i> Mitglied löschen</a>
 </div>
 {% endblock %}

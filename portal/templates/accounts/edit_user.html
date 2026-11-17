@@ -21,15 +21,15 @@
       <p class="text-sm text-base-content/70">{{ target_user.display_name }} hat den Zugang noch nicht eingerichtet. Eine neue Einladung ersetzt die alte.</p>
     </div>
     <form method="post" action="{% url 'reinvite_user' target_user.pk %}" class="flex flex-wrap gap-2">{% csrf_token %}
-      <button class="btn btn-outline btn-primary btn-sm" name="action" value="send"><i class="bi bi-envelope" aria-hidden="true"></i> Einladung erneut senden</button>
-      <button class="btn btn-outline btn-primary btn-sm" name="action" value="link"><i class="bi bi-link-45deg" aria-hidden="true"></i> Einladungslink erstellen</button>
+      <button class="btn btn-outline btn-primary" name="action" value="send"><i class="bi bi-envelope" aria-hidden="true"></i> Einladung erneut senden</button>
+      <button class="btn btn-outline btn-primary" name="action" value="link"><i class="bi bi-link-45deg" aria-hidden="true"></i> Einladungslink erstellen</button>
     </form>
   </div></section>
   {% endif %}
   {% if target_user != user %}
   <form method="post" action="{% url 'toggle_active' target_user.pk %}" class="mt-4">{% csrf_token %}
-    {% if target_user.is_active %}<button class="btn btn-ghost btn-error btn-sm"><i class="bi bi-pause-circle" aria-hidden="true"></i> Benutzer deaktivieren</button>
-    {% else %}<button class="btn btn-ghost btn-sm"><i class="bi bi-play-circle" aria-hidden="true"></i> Benutzer wieder aktivieren</button>{% endif %}
+    {% if target_user.is_active %}<button class="btn btn-ghost btn-error"><i class="bi bi-pause-circle" aria-hidden="true"></i> Benutzer deaktivieren</button>
+    {% else %}<button class="btn btn-ghost"><i class="bi bi-play-circle" aria-hidden="true"></i> Benutzer wieder aktivieren</button>{% endif %}
   </form>
   {% endif %}
 </div>

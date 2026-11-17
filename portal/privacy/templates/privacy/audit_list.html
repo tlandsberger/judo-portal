@@ -9,12 +9,12 @@
     <h2 class="card-title" id="h-eintraege">{{ page.paginator.count }} Eintr{{ page.paginator.count|pluralize:"ag,äge" }}</h2>
     <form method="get" class="flex flex-wrap items-end gap-3">
       <div class="fieldset"><label class="fieldset-legend text-sm" for="f-area">Bereich</label>
-        <select id="f-area" name="area" class="select select-sm">{% for value, label in form.fields.area.choices %}<option value="{{ value }}"{% if form.area.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-q">Suche</label><input id="f-q" class="input input-sm" type="search" name="q" value="{{ form.q.value|default:'' }}"></div>
-      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-since">Von</label><input id="f-since" class="input input-sm" type="date" name="since" value="{{ form.since.value|default:'' }}"></div>
-      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-until">Bis</label><input id="f-until" class="input input-sm" type="date" name="until" value="{{ form.until.value|default:'' }}"></div>
+        <select id="f-area" name="area" class="select">{% for value, label in form.fields.area.choices %}<option value="{{ value }}"{% if form.area.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-q">Suche</label><input id="f-q" class="input" type="search" name="q" value="{{ form.q.value|default:'' }}"></div>
+      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-since">Von</label><input id="f-since" class="input" type="date" name="since" value="{{ form.since.value|default:'' }}"></div>
+      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-until">Bis</label><input id="f-until" class="input" type="date" name="until" value="{{ form.until.value|default:'' }}"></div>
       {% if request.GET.mitglied %}<input type="hidden" name="mitglied" value="{{ request.GET.mitglied }}">{% endif %}
-      <button class="btn btn-sm mb-1">Anzeigen</button>
+      <button class="btn mb-1">Anzeigen</button>
     </form>
     {% if page.object_list %}
     <ul class="list">

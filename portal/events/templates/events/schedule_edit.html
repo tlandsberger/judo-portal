@@ -6,5 +6,5 @@
 {% block back_label %}{{ event.title }}{% endblock %}
 {% block intro %}<p class="text-sm text-base-content/70">Das Portal legt die Termine bis „Gültig bis“ an, höchstens ein Jahr im Voraus. Ändern sich die Trainingszeiten, setz hier „Gültig bis“ und leg einen neuen Zeitplan an.</p>{% endblock %}
 {% block after %}{% if schedule %}
-<form method="post" action="{% url 'schedule_delete' event.pk schedule.pk %}" class="mt-4">{% csrf_token %}<button class="btn btn-ghost btn-error btn-sm"><i class="bi bi-trash" aria-hidden="true"></i> Zeitplan löschen</button></form>
+<form method="post" action="{% url 'schedule_delete' event.pk schedule.pk %}" class="mt-4">{% csrf_token %}<button class="btn btn-ghost btn-error"><i class="bi bi-trash" aria-hidden="true"></i> Zeitplan löschen</button></form>
 {% endif %}{% endblock %}
