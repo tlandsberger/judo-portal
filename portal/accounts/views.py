@@ -159,13 +159,13 @@ def reinvite_user(request: HttpRequest, pk: int) -> HttpResponse:
     target_user = get_object_or_404(User, pk=pk, is_active=True)
     if services.has_login_method(target_user):
         messages.info(request, f"{target_user.display_name} hat den Zugang bereits eingerichtet.")
-        return redirect("user_list")
+        return redirect("edit_user", pk=target_user.pk)
     link_only = request.POST.get("action") == "link"
     invitation = services.reinvite(target_user, invited_by=request.user, send=not link_only)  # type: ignore[arg-type]
     if link_only:
         return _show_link(request, invitation)
     messages.success(request, f"Einladung an {target_user.email} erneut verschickt.")
-    return redirect("user_list")
+    return redirect("edit_user", pk=target_user.pk)
 
 
 @require_POST
@@ -208,7 +208,11 @@ def edit_user(request: HttpRequest, pk: int) -> HttpResponse:
             )
         messages.success(request, f"Rollen von {target_user.display_name} gespeichert.")
         return redirect("user_list")
-    return render(request, "accounts/edit_user.html", {"target_user": target_user, "form": form})
+    return render(
+        request,
+        "accounts/edit_user.html",
+        {"target_user": target_user, "form": form, "set_up": services.has_login_method(target_user)},
+    )
 
 
 @require_POST
@@ -227,4 +231,4 @@ def toggle_active(request: HttpRequest, pk: int) -> HttpResponse:
         state = "aktiviert" if target_user.is_active else "deaktiviert"
         audit.log(actor, audit.Area.USERS, "active", f"{target_user.display_name} {state}", user=target_user)
         messages.success(request, f"{target_user.display_name} {state}.")
-    return redirect("user_list")
+    return redirect("edit_user", pk=target_user.pk)

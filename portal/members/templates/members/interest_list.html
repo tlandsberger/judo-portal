@@ -11,9 +11,7 @@
     <ul class="list">
       {% for item in interests %}
       <li class="list-row items-center px-0">
-        <div class="list-col-grow"><div class="font-semibold">{{ item.name }}</div><div class="text-sm text-base-content/70">{{ item.members.count }} Mitglied{{ item.members.count|pluralize:"er" }}</div></div>
-        <a class="btn btn-ghost btn-sm" href="{% url 'interest_edit' item.pk %}" aria-label="{{ item.name }} bearbeiten"><i class="bi bi-pencil" aria-hidden="true"></i></a>
-        <form method="post" action="{% url 'interest_delete' item.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm" aria-label="{{ item.name }} löschen"><i class="bi bi-trash" aria-hidden="true"></i></button></form>
+        <div class="list-col-grow"><a class="link link-hover font-semibold" href="{% url 'interest_edit' item.pk %}">{{ item.name }}</a><div class="text-sm text-base-content/70">{{ item.members.count }} Mitglied{{ item.members.count|pluralize:"er" }}</div></div>
       </li>
       {% endfor %}
     </ul>
@@ -26,5 +24,8 @@
       <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Speichern</button>{% if interest %}<a class="btn" href="{% url 'interest_list' %}">Abbrechen</a>{% endif %}</div>
     </form>
   </div></section>
+  {% if interest %}
+  <form method="post" action="{% url 'interest_delete' interest.pk %}" class="mt-4">{% csrf_token %}<button class="btn btn-ghost btn-error btn-sm"><i class="bi bi-trash" aria-hidden="true"></i> Interesse löschen</button></form>
+  {% endif %}
 </div>
 {% endblock %}

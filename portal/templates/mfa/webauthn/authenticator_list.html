@@ -17,7 +17,7 @@
     </div>
     <div class="list-col-wrap flex gap-2">
       <a class="btn btn-outline btn-primary btn-sm" href="{% url 'mfa_edit_webauthn' pk=authenticator.pk %}">Umbenennen</a>
-      <a class="btn btn-outline btn-error btn-sm" href="{% url 'mfa_remove_webauthn' pk=authenticator.pk %}">Entfernen</a>
+      <a class="btn btn-outline btn-sm" href="{% url 'mfa_remove_webauthn' pk=authenticator.pk %}">Entfernen</a>
     </div>
   </li>
   {% endfor %}

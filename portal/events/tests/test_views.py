@@ -266,3 +266,27 @@ def test_create_event_once_and_validation(client, head, trainer):
     occurrence = Event.objects.get().occurrences.get()
     assert occurrence.registration_closes_at is not None
     assert occurrence.participations.get().role.name == "Betreuer"
+
+
+def test_open_and_delete_from_the_entry(client, head):
+    """Titel öffnet Zeitplan bzw. Interesse; gelöscht wird erst dort, nicht in der Liste (ADR 0017)."""
+    from .test_schedules import schedule
+
+    event = Event.objects.create(title="Training U12")
+    plan = schedule(event, weekday=0)
+    interest = Interest.objects.create(name="Kata")
+    login(client, head)
+    detail = client.get(reverse("event_detail", args=[event.pk])).content.decode()
+    assert f'href="{reverse("schedule_edit", args=[event.pk, plan.pk])}"' in detail
+    assert reverse("schedule_delete", args=[event.pk, plan.pk]) not in detail
+    assert (
+        reverse("schedule_delete", args=[event.pk, plan.pk])
+        in client.get(reverse("schedule_edit", args=[event.pk, plan.pk])).content.decode()
+    )
+    listing = client.get(reverse("interest_list")).content.decode()
+    assert f'href="{reverse("interest_edit", args=[interest.pk])}"' in listing
+    assert reverse("interest_delete", args=[interest.pk]) not in listing
+    assert (
+        reverse("interest_delete", args=[interest.pk])
+        in client.get(reverse("interest_edit", args=[interest.pk])).content.decode()
+    )

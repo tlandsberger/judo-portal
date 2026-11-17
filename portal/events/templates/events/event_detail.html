@@ -47,13 +47,9 @@
     <div class="rounded-box border border-base-300 p-4">
       <div class="flex flex-wrap items-start gap-2">
         <div class="grow">
-          <h3 class="font-semibold">{{ schedule }}</h3>
+          <h3 class="font-semibold">{% if can_manage %}<a class="link link-hover" href="{% url 'schedule_edit' event.pk schedule.pk %}">{{ schedule }}</a>{% else %}{{ schedule }}{% endif %}</h3>
           <p class="text-sm text-base-content/70">ab {{ schedule.valid_from|date:"d.m.Y" }}{% if schedule.valid_until %} bis {{ schedule.valid_until|date:"d.m.Y" }}{% else %}, bis auf Weiteres{% endif %} · Anmeldung {% if schedule.opens_hours_before is not None %}ab {{ schedule.opens_hours_before }} Std. vorher{% else %}sofort{% endif %} bis {% if schedule.closes_hours_before is not None %}{{ schedule.closes_hours_before }} Std. vorher{% else %}Beginn{% endif %}</p>
         </div>
-        {% if can_manage %}
-        <a class="btn btn-ghost btn-sm" href="{% url 'schedule_edit' event.pk schedule.pk %}" aria-label="Zeitplan {{ schedule }} ändern"><i class="bi bi-pencil" aria-hidden="true"></i></a>
-        <form method="post" action="{% url 'schedule_delete' event.pk schedule.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm" aria-label="Zeitplan {{ schedule }} löschen"><i class="bi bi-trash" aria-hidden="true"></i></button></form>
-        {% endif %}
       </div>
       {% if schedule.team.all %}
       <ul class="list mt-2">

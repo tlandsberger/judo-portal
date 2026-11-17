@@ -12,7 +12,7 @@
       </div>
       {% if lead %}
       <div class="flex flex-wrap gap-2">
-        <a class="btn btn-outline btn-primary btn-sm" href="{% url 'occurrence_edit' occurrence.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Termin ändern</a>
+        <a class="btn btn-outline btn-primary btn-sm" href="{% url 'occurrence_edit' occurrence.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
         {% if not occurrence.is_cancelled %}
         <form method="post" action="{% url 'occurrence_cancel' occurrence.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm"><i class="bi bi-x-circle" aria-hidden="true"></i> Absagen</button></form>
         {% elif can_manage %}

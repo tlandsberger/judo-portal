@@ -5,10 +5,7 @@
   <a href="{% url 'target_group_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Zielgruppen-Vorlagen</a>
   <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
     <div><h1 class="text-3xl font-bold">{{ group.name }}</h1><p class="mt-1 text-base-content/70">{{ group.summary }}</p></div>
-    <div class="flex flex-wrap gap-2">
-      <a class="btn btn-outline btn-primary btn-sm" href="{% url 'target_group_edit' group.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
-      <form method="post" action="{% url 'target_group_delete' group.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm"><i class="bi bi-trash" aria-hidden="true"></i> Löschen</button></form>
-    </div>
+    <a class="btn btn-outline btn-primary btn-sm" href="{% url 'target_group_edit' group.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
   </div>
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-passend"><div class="card-body">
     <h2 class="card-title" id="h-passend">Passen heute: {{ rows|length }}</h2>
@@ -30,5 +27,6 @@
     </div>
     {% else %}<p class="text-base-content/70">Gerade passt niemand.</p>{% endif %}
   </div></section>
+<form method="post" action="{% url 'target_group_delete' group.pk %}" class="mt-4">{% csrf_token %}<button class="btn btn-ghost btn-error btn-sm"><i class="bi bi-trash" aria-hidden="true"></i> Vorlage löschen</button></form>
 </div>
 {% endblock %}
