@@ -1,7 +1,6 @@
 {% extends "events/_form_page.html" %}
 {% block heading %}{% if occurrence %}Termin ändern{% else %}Termin anlegen{% endif %}{% endblock %}
-{% block heading2 %}{% if occurrence %}Termin ändern{% else %}Termin anlegen{% endif %}{% endblock %}
 {% block back_url %}{% if occurrence %}{% url 'occurrence_detail' occurrence.pk %}{% else %}{% url 'event_detail' event.pk %}{% endif %}{% endblock %}
 {% block cancel_url %}{% if occurrence %}{% url 'occurrence_detail' occurrence.pk %}{% else %}{% url 'event_detail' event.pk %}{% endif %}{% endblock %}
 {% block back_label %}{% if occurrence %}{{ occurrence.event.title }}{% else %}{{ event.title }}{% endif %}{% endblock %}
-{% block intro %}{% if occurrence.schedule %}<p class="text-sm text-base-content/70">Änderungen gelten nur für diesen Termin; ändert sich der Zeitplan, bleibt er, wie er ist.</p>{% elif not occurrence %}<p class="text-sm text-base-content/70">Für einmalige Veranstaltungen oder zusätzlich zu den Zeitplänen.</p>{% endif %}{% endblock %}
+{% block intro %}{% if occurrence.schedule %}Änderungen gelten nur für diesen Termin; ändert sich der Zeitplan, bleibt er, wie er ist.{% elif not occurrence %}Für einmalige Veranstaltungen oder zusätzlich zu den Zeitplänen.{% endif %}{% endblock %}

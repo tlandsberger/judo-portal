@@ -1,7 +1,6 @@
 {% extends "events/_form_page.html" %}
 {% block heading %}Gast eintragen{% endblock %}
-{% block heading2 %}Gast eintragen{% endblock %}
 {% block back_url %}{% url 'occurrence_detail' occurrence.pk %}{% endblock %}
 {% block cancel_url %}{% url 'occurrence_detail' occurrence.pk %}{% endblock %}
 {% block back_label %}{{ occurrence.event.title }} am {{ occurrence.starts_at|date:"d.m." }}{% endblock %}
-{% block intro %}<p class="text-sm text-base-content/70">Der Gast ist sofort angemeldet und bekommt eine Mail mit einem Link, über den er seine Anmeldung und seine Daten sieht.</p>{% endblock %}
+{% block intro %}Der Gast ist sofort angemeldet und bekommt eine Mail mit einem Link, über den er seine Anmeldung und seine Daten sieht.{% endblock %}

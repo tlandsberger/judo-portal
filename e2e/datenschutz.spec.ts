@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_STATE, acceptInvitation, expectNoA11yViolations, setPassword } from "./helpers";
+import { ADMIN_STATE, acceptInvitation, expectNoA11yViolations, moreAction, openMoreActions, setPassword } from "./helpers";
 
 const PARENT = { email: "paula@test.local", password: "Sicher-Eltern-864" };
 
@@ -32,7 +32,7 @@ test("Protokoll, Auskunft für Eltern und Löschen eines Mitglieds mit Bestätig
 
   // Auskunft unter „Meine Daten“
   await parent.goto("/meine-daten/");
-  await parent.getByRole("link", { name: "Datenauskunft (Art. 15 DSGVO)" }).click();
+  await moreAction(parent, "link", "Datenauskunft (Art. 15 DSGVO)");
   await expect(parent.getByRole("heading", { level: 1, name: "Datenauskunft (Art. 15 DSGVO)" })).toBeVisible();
   await expect(parent.getByRole("heading", { name: "Paul Protokoll" })).toBeVisible();
   await expectNoA11yViolations(parent);
@@ -42,6 +42,8 @@ test("Protokoll, Auskunft für Eltern und Löschen eines Mitglieds mit Bestätig
 
   // Den eigenen Zugang löschen: Paul bleibt erhalten
   await parent.goto("/zugang/anmeldung/");
+  await openMoreActions(parent);
+  await expectNoA11yViolations(parent); // mit geöffnetem Menü
   await parent.getByRole("link", { name: "Meinen Zugang löschen" }).click();
   await expect(parent.getByText("Paul Protokoll (Erziehungsberechtigt)")).toBeVisible();
   await expectNoA11yViolations(parent);
@@ -59,7 +61,7 @@ test("Protokoll, Auskunft für Eltern und Löschen eines Mitglieds mit Bestätig
 
   // Löschen mit Bestätigung: der Elternteil hat danach kein Mitglied mehr und wird mitgelöscht
   await admin.goto(memberUrl);
-  await admin.getByRole("link", { name: "Löschen" }).click();
+  await moreAction(admin, "link", "Mitglied löschen");
   await expectNoA11yViolations(admin);
   await admin.getByRole("button", { name: "Endgültig löschen" }).click();
   await expect(admin.getByLabel("Ich habe verstanden, dass die Daten endgültig gelöscht werden.")).toBeVisible();

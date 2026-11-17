@@ -50,9 +50,9 @@ export async function loginWithPassword(page: Page, email: string, password: str
 }
 
 export async function logout(page: Page) {
-  // Abmelden steht auf „Meine Anmeldung“
+  // Abmelden steht auf „Meine Anmeldung“ im Menü „Weitere Aktionen“
   await page.goto("/zugang/anmeldung/");
-  await page.getByRole("button", { name: "Abmelden" }).click();
+  await moreAction(page, "button", "Abmelden");
   await expect(page.getByRole("button", { name: "Mit Passkey anmelden" })).toBeVisible();
   // Erst wenn alle Skripte geladen sind, hängt der Passkey-Button an der Anmeldung per WebAuthn
   await page.waitForLoadState("networkidle");
@@ -118,4 +118,19 @@ export async function freshNotificationPermission(context: BrowserContext) {
   await context.addInitScript(() => {
     Object.defineProperty(Notification, "permission", { get: () => "default" });
   });
+}
+
+/** Aktion aus dem Menü „Weitere Aktionen“ (⋯) im Seitenkopf wählen (ADR 0017). */
+export async function openMoreActions(page: Page) {
+  await page.getByLabel("Weitere Aktionen", { exact: true }).click();
+  // Das Menü blendet kurz ein; erst danach stimmen Sichtbarkeit und Kontrast (axe)
+  await page.waitForFunction(() => {
+    const menu = document.querySelector("details.dropdown[open] .dropdown-content");
+    return menu !== null && getComputedStyle(menu).opacity === "1";
+  });
+}
+
+export async function moreAction(page: Page, role: "link" | "button", name: string) {
+  await openMoreActions(page);
+  await page.getByRole(role, { name, exact: true }).click();
 }

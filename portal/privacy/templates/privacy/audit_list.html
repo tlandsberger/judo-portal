@@ -1,33 +1,33 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% load help %}
 {% block title %}Protokoll{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-4xl">
-  <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Protokoll</h1>{% help_link "benutzer" %}</div>
-  <p class="mt-1 mb-6 text-base-content/70">Wer hat wann was geändert. Einträge werden nach einem Jahr gelöscht, mit einem Mitglied auch seine Einträge.</p>
-  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-eintraege"><div class="card-body">
-    <h2 class="card-title" id="h-eintraege">{{ page.paginator.count }} Eintr{{ page.paginator.count|pluralize:"ag,äge" }}</h2>
-    <form method="get" class="flex flex-wrap items-end gap-3">
-      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-area">Bereich</label>
-        <select id="f-area" name="area" class="select">{% for value, label in form.fields.area.choices %}<option value="{{ value }}"{% if form.area.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-q">Suche</label><input id="f-q" class="input" type="search" name="q" value="{{ form.q.value|default:'' }}"></div>
-      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-since">Von</label><input id="f-since" class="input" type="date" name="since" value="{{ form.since.value|default:'' }}"></div>
-      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-until">Bis</label><input id="f-until" class="input" type="date" name="until" value="{{ form.until.value|default:'' }}"></div>
-      {% if request.GET.mitglied %}<input type="hidden" name="mitglied" value="{{ request.GET.mitglied }}">{% endif %}
-      <button class="btn mb-1">Anzeigen</button>
-    </form>
-    {% if page.object_list %}
-    <ul class="list">
-      {% for entry in page.object_list %}{% include "privacy/_entry.html" %}{% endfor %}
-    </ul>
-    {% if page.has_other_pages %}
-    <nav class="join mt-4" aria-label="Seiten">
-      {% if page.has_previous %}<a class="btn btn-sm join-item" href="?{{ query }}&seite={{ page.previous_page_number }}">Neuere</a>{% endif %}
-      <span class="btn btn-sm join-item pointer-events-none">Seite {{ page.number }} von {{ page.paginator.num_pages }}</span>
-      {% if page.has_next %}<a class="btn btn-sm join-item" href="?{{ query }}&seite={{ page.next_page_number }}">Ältere</a>{% endif %}
-    </nav>
-    {% endif %}
-    {% else %}<p class="text-base-content/70">Keine Einträge.</p>{% endif %}
-  </div></section>
-</div>
+{% block width %}wide{% endblock %}
+{% block heading %}Protokoll{% endblock %}
+{% block heading_extra %}{% help_link "benutzer" %}{% endblock %}
+{% block intro %}Wer hat wann was geändert. Einträge werden nach einem Jahr gelöscht, mit einem Mitglied auch seine Einträge.{% endblock %}
+{% block page %}
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-eintraege"><div class="card-body">
+  <h2 class="card-title" id="h-eintraege">{{ page.paginator.count }} Eintr{{ page.paginator.count|pluralize:"ag,äge" }}</h2>
+  <form method="get" class="flex flex-wrap items-end gap-3">
+    <div class="fieldset"><label class="fieldset-legend text-sm" for="f-area">Bereich</label>
+      <select id="f-area" name="area" class="select">{% for value, label in form.fields.area.choices %}<option value="{{ value }}"{% if form.area.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="fieldset"><label class="fieldset-legend text-sm" for="f-q">Suche</label><input id="f-q" class="input" type="search" name="q" value="{{ form.q.value|default:'' }}"></div>
+    <div class="fieldset"><label class="fieldset-legend text-sm" for="f-since">Von</label><input id="f-since" class="input" type="date" name="since" value="{{ form.since.value|default:'' }}"></div>
+    <div class="fieldset"><label class="fieldset-legend text-sm" for="f-until">Bis</label><input id="f-until" class="input" type="date" name="until" value="{{ form.until.value|default:'' }}"></div>
+    {% if request.GET.mitglied %}<input type="hidden" name="mitglied" value="{{ request.GET.mitglied }}">{% endif %}
+    <button class="btn mb-1">Anzeigen</button>
+  </form>
+  {% if page.object_list %}
+  <ul class="list">
+    {% for entry in page.object_list %}{% include "privacy/_entry.html" %}{% endfor %}
+  </ul>
+  {% if page.has_other_pages %}
+  <nav class="join mt-4" aria-label="Seiten">
+    {% if page.has_previous %}<a class="btn btn-sm join-item" href="?{{ query }}&seite={{ page.previous_page_number }}">Neuere</a>{% endif %}
+    <span class="btn btn-sm join-item pointer-events-none">Seite {{ page.number }} von {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a class="btn btn-sm join-item" href="?{{ query }}&seite={{ page.next_page_number }}">Ältere</a>{% endif %}
+  </nav>
+  {% endif %}
+  {% else %}<p class="text-base-content/70">Keine Einträge.</p>{% endif %}
+</div></section>
 {% endblock %}

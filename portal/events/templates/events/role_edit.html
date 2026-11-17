@@ -1,10 +1,8 @@
 {% extends "events/_form_page.html" %}
 {% block heading %}{% if role %}{{ role.name }} bearbeiten{% else %}Rolle anlegen{% endif %}{% endblock %}
-{% block heading2 %}{% if role %}{{ role.name }} bearbeiten{% else %}Rolle anlegen{% endif %}{% endblock %}
 {% block back_url %}{% url 'role_list' %}{% endblock %}
 {% block cancel_url %}{% url 'role_list' %}{% endblock %}
 {% block back_label %}Rollen{% endblock %}
-{% block intro %}<p class="text-sm text-base-content/70">Jede Person hat an einem Termin genau eine Rolle. Übungsleiter-Rollen übernimmt ein Mitglied über seinen eigenen Zugang, wenn dieser eine der gewählten Benutzerrollen hat.</p>{% endblock %}
-{% block after %}{% if role and not role.is_default %}
-<form method="post" action="{% url 'role_delete' role.pk %}" class="mt-4">{% csrf_token %}<button class="btn btn-ghost btn-error"><i class="bi bi-trash" aria-hidden="true"></i> Rolle löschen</button></form>
-{% endif %}{% endblock %}
+{% block intro %}Jede Person hat an einem Termin genau eine Rolle. Übungsleiter-Rollen übernimmt ein Mitglied über seinen eigenen Zugang, wenn dieser eine der gewählten Benutzerrollen hat.{% endblock %}
+{% block more %}{% if role and not role.is_default %}<li><button type="submit" form="loeschen" class="text-error"><i class="bi bi-trash" aria-hidden="true"></i> Rolle löschen</button></li>{% endif %}{% endblock %}
+{% block more_forms %}{% if role and not role.is_default %}<form id="loeschen" method="post" action="{% url 'role_delete' role.pk %}" hidden>{% csrf_token %}</form>{% endif %}{% endblock %}

@@ -1,31 +1,29 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% load help %}
 {% block title %}Meine Abrechnung{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-3xl">
-  <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Meine Abrechnung</h1>{% help_link "stunden" %}</div>
-  <p class="mt-1 mb-6 text-base-content/70">Hier bestätigst du nach dem Termin deine Stunden. Nach Monatsende reichst du den Monat ein, die Abteilungsleitung gibt ihn frei. Frist ist der {{ deadline_day }}. des dritten Folgemonats, zum Beispiel für Januar der {{ deadline_day }}. April. Später geht es nur als Ausnahme, über die die Abteilungsleitung entscheidet.</p>
-  {% if can_decide %}{% include "billing/_tabs.html" with active="own" is_trainer=True %}{% endif %}
-  {% if pending %}
-  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-bestaetigen"><div class="card-body">
-    <h2 class="card-title" id="h-bestaetigen">Noch bestätigen</h2>
-    <p class="text-sm text-base-content/70">Termine, bei denen du als Übungsleiter eingeteilt warst. Abgerechnet wird nur, was du bestätigst; die Dauer änderst du danach im Monat.</p>
-    {% include "billing/_unconfirmed.html" with rows=pending editable=True %}
-  </div></section>
-  {% endif %}
-  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-monate"><div class="card-body">
-    <h2 class="card-title" id="h-monate">Monate</h2>
-    <ul class="list">
-      {% for m in months %}
-      <li class="list-row items-center px-0">
-        <div class="list-col-grow">
-          <a class="link link-hover font-semibold" href="{% url 'billing_month' m.month.year m.month.month %}">{{ m.label }}</a>
-          <div class="text-sm text-base-content/70">{{ m.hours|floatformat:"2g" }} Stunden{% if m.lines %} · {{ m.total_amount|floatformat:"2g" }} €{% endif %}{% if m.pending %} · {{ m.pending|length }} noch zu bestätigen{% endif %}</div>
-        </div>
-        {% include "billing/_badge.html" with label=m.status %}
-      </li>
-      {% endfor %}
-    </ul>
-  </div></section>
-</div>
+{% block heading %}Meine Abrechnung{% endblock %}
+{% block heading_extra %}{% help_link "stunden" %}{% endblock %}
+{% block intro %}Hier bestätigst du nach dem Termin deine Stunden. Nach Monatsende reichst du den Monat ein, die Abteilungsleitung gibt ihn frei. Frist ist der {{ deadline_day }}. des dritten Folgemonats, zum Beispiel für Januar der {{ deadline_day }}. April. Später geht es nur als Ausnahme, über die die Abteilungsleitung entscheidet.{% endblock %}
+{% block page %}
+{% if pending %}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-bestaetigen"><div class="card-body">
+  <h2 class="card-title" id="h-bestaetigen">Noch bestätigen</h2>
+  <p class="text-sm text-base-content/70">Termine, bei denen du als Übungsleiter eingeteilt warst. Abgerechnet wird nur, was du bestätigst; die Dauer änderst du danach im Monat.</p>
+  {% include "billing/_unconfirmed.html" with rows=pending editable=True %}
+</div></section>
+{% endif %}
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-monate"><div class="card-body">
+  <h2 class="card-title" id="h-monate">Monate</h2>
+  <ul class="list">
+    {% for m in months %}
+    <li class="list-row items-center px-0">
+      <div class="list-col-grow">
+        <a class="link link-hover font-semibold" href="{% url 'billing_month' m.month.year m.month.month %}">{{ m.label }}</a>
+        <div class="text-sm text-base-content/70">{{ m.hours|floatformat:"2g" }} Stunden{% if m.lines %} · {{ m.total_amount|floatformat:"2g" }} €{% endif %}{% if m.pending %} · {{ m.pending|length }} noch zu bestätigen{% endif %}</div>
+      </div>
+      {% include "billing/_badge.html" with label=m.status %}
+    </li>
+    {% endfor %}
+  </ul>
+</div></section>
 {% endblock %}

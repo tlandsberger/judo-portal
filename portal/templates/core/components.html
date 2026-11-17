@@ -1,11 +1,16 @@
-{% extends "base.html" %}{% load static %}
+{% extends "layouts/page.html" %}
+{% load static %}
 {% block title %}Bausteine{% endblock %}
-{% block content %}
-<div class="mb-6">
-  <h1 class="text-3xl font-bold">Bausteine</h1>
-  <p class="mt-1 text-base-content/70">Referenz für das Erscheinungsbild des Portals (DaisyUI, hell und dunkel).</p>
-</div>
-
+{% block width %}wide{% endblock %}
+{% block heading %}Bausteine{% endblock %}
+{% block primary %}<a class="btn btn-primary" href="#b-buttons"><i class="bi bi-plus-lg" aria-hidden="true"></i> Hauptaktion</a>{% endblock %}
+{% block more %}
+<li><a href="#b-hinweise"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Unterseite</a></li>
+<li><a href="#b-hinweise"><i class="bi bi-download" aria-hidden="true"></i> Export</a></li>
+<li><a class="text-error" href="#b-hinweise"><i class="bi bi-trash" aria-hidden="true"></i> Eintrag löschen</a></li>
+{% endblock %}
+{% block intro %}Referenz für das Erscheinungsbild des Portals (DaisyUI, hell und dunkel). Der Seitenkopf zeigt Hauptaktion und Menü „Weitere Aktionen“ (ADR 0017).{% endblock %}
+{% block page %}
 <div class="grid gap-6 lg:grid-cols-2">
   <section class="card bg-base-100 shadow-sm" aria-labelledby="b-buttons"><div class="card-body">
     <h2 class="card-title" id="b-buttons">Schaltflächen</h2>

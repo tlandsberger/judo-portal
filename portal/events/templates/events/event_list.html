@@ -1,18 +1,13 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% load help %}
 {% block title %}Veranstaltungen{% endblock %}
-{% block content %}
-<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-  <div><div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Veranstaltungen</h1>{% help_link "veranstaltungen" %}</div><p class="mt-1 text-base-content/70">Trainings, Wettkämpfe, Lehrgänge und Prüfungen mit ihren Terminen und Übungsleitern.</p></div>
-  {% if can_manage %}
-  <div class="flex flex-wrap gap-2">
-    <a class="btn btn-primary" href="{% url 'event_create' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Veranstaltung anlegen</a>
-    <a class="btn btn-outline btn-primary" href="{% url 'target_group_list' %}"><i class="bi bi-bullseye" aria-hidden="true"></i> Zielgruppen-Vorlagen</a>
-    <a class="btn btn-outline btn-primary" href="{% url 'role_list' %}"><i class="bi bi-person-badge" aria-hidden="true"></i> Rollen</a>
-    <a class="btn btn-outline btn-primary" href="{% url 'event_type_list' %}"><i class="bi bi-tags" aria-hidden="true"></i> Veranstaltungsarten</a>
-  </div>
-  {% endif %}
-</div>
+{% block width %}wide{% endblock %}
+{% block heading %}Veranstaltungen{% endblock %}
+{% block heading_extra %}{% help_link "veranstaltungen" %}{% endblock %}
+{% block primary %}{% if can_manage %}<a class="btn btn-primary" href="{% url 'event_create' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Veranstaltung anlegen</a>{% endif %}{% endblock %}
+{% block more %}{% if can_manage %}<li><a href="{% url 'target_group_list' %}"><i class="bi bi-bullseye" aria-hidden="true"></i> Zielgruppen-Vorlagen</a></li><li><a href="{% url 'role_list' %}"><i class="bi bi-person-badge" aria-hidden="true"></i> Rollen</a></li><li><a href="{% url 'event_type_list' %}"><i class="bi bi-tags" aria-hidden="true"></i> Veranstaltungsarten</a></li>{% endif %}{% endblock %}
+{% block intro %}Trainings, Wettkämpfe, Lehrgänge und Prüfungen mit ihren Terminen und Übungsleitern.{% endblock %}
+{% block page %}
 <section class="card bg-base-100 shadow-sm" aria-labelledby="h-veranstaltungen"><div class="card-body">
   <h2 class="card-title" id="h-veranstaltungen">{{ rows|length }} Veranstaltung{{ rows|length|pluralize:"en" }}</h2>
   {% if rows %}

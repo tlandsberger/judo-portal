@@ -1,5 +1,5 @@
 {% extends "allauth/layouts/base.html" %}
-{% block before_content %}<div class="mx-auto max-w-2xl">
+{% block before_content %}<div class="mx-auto {% block manage_width %}max-w-2xl{% endblock %}">
   <a href="{% url 'security' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Meine Anmeldung</a>
   <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">{% endblock %}
 {% block after_content %}</div></div></div>{% endblock %}

@@ -1,23 +1,23 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% block title %}CSV-Import{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-2xl">
-  <a href="{% url 'member_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Mitglieder</a>
-  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
-    <div>
-      <h1 class="text-2xl font-bold">CSV-Import</h1>
-      <p class="mt-1 text-base-content/70">Importiere Mitglieder aus einer Liste, z. B. einem Export der Vereinsverwaltung. Du siehst vorher, was sich ändert.</p>
-    </div>
-    <ul class="list-inside list-disc text-sm text-base-content/80">
-      <li>Pflichtspalten: Mitgliedsnummer, Vorname, Nachname, Geburtsdatum. Weitere Spalten wie in der Vorlage.</li>
-      <li>Bekannte Mitgliedsnummern werden aktualisiert, neue angelegt. Leere Zellen überschreiben nichts.</li>
-      <li>Wer nicht in der Datei steht, bleibt unverändert. Der Import löscht nie.</li>
-    </ul>
-    <p><a class="link" href="{% url 'member_import_template' %}"><i class="bi bi-download" aria-hidden="true"></i> Vorlage herunterladen</a></p>
-    <form method="post" enctype="multipart/form-data" class="flex flex-col gap-4">{% csrf_token %}
-      {{ form }}
-      <div class="flex flex-wrap gap-2"><button type="submit" class="btn btn-primary"><i class="bi bi-eye" aria-hidden="true"></i> Vorschau anzeigen</button><a class="btn" href="{% url 'member_list' %}">Abbrechen</a></div>
-    </form>
-  </div></div>
-</div>
+{% block width %}narrow{% endblock %}
+{% block back_url %}{% url 'member_list' %}{% endblock %}
+{% block back_label %}Mitglieder{% endblock %}
+{% block heading %}CSV-Import{% endblock %}
+{% block page %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+  <div>
+    <p class="mt-1 text-base-content/70">Importiere Mitglieder aus einer Liste, z. B. einem Export der Vereinsverwaltung. Du siehst vorher, was sich ändert.</p>
+  </div>
+  <ul class="list-inside list-disc text-sm text-base-content/80">
+    <li>Pflichtspalten: Mitgliedsnummer, Vorname, Nachname, Geburtsdatum. Weitere Spalten wie in der Vorlage.</li>
+    <li>Bekannte Mitgliedsnummern werden aktualisiert, neue angelegt. Leere Zellen überschreiben nichts.</li>
+    <li>Wer nicht in der Datei steht, bleibt unverändert. Der Import löscht nie.</li>
+  </ul>
+  <p><a class="link" href="{% url 'member_import_template' %}"><i class="bi bi-download" aria-hidden="true"></i> Vorlage herunterladen</a></p>
+  <form method="post" enctype="multipart/form-data" class="flex flex-col gap-4">{% csrf_token %}
+    {{ form }}
+    <div class="action-bar"><button type="submit" class="btn btn-primary"><i class="bi bi-eye" aria-hidden="true"></i> Vorschau anzeigen</button><a class="btn" href="{% url 'member_list' %}">Abbrechen</a></div>
+  </form>
+</div></div>
 {% endblock %}

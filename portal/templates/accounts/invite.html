@@ -1,21 +1,19 @@
-{% extends "base.html" %}
-{% block title %}Person einladen{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-2xl">
-  <a href="{% url 'user_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Benutzer</a>
-  <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
-    <div>
-      <h1 class="text-2xl font-bold">Person einladen</h1>
-      <p class="mt-1 text-base-content/70">Die Person bekommt eine E-Mail mit einem Link, der 7 Tage gültig ist. Alternativ erstellst du nur den Link und gibst ihn selbst weiter, z. B. per Messenger.</p>
+{% extends "layouts/page.html" %}
+{% block title %}Benutzer anlegen{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block back_url %}{% url 'user_list' %}{% endblock %}
+{% block back_label %}Benutzer{% endblock %}
+{% block heading %}Benutzer anlegen{% endblock %}
+{% block intro %}Die Person bekommt eine E-Mail mit einem Link, der 7 Tage gültig ist. Alternativ erstellst du nur den Link und gibst ihn selbst weiter, z. B. per Messenger.{% endblock %}
+{% block page %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+  <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+    {{ form }}
+    <div class="action-bar">
+      <button type="submit" name="action" value="send" class="btn btn-primary"><i class="bi bi-envelope" aria-hidden="true"></i> Einladung senden</button>
+      <button type="submit" name="action" value="link" class="btn btn-outline btn-primary"><i class="bi bi-link-45deg" aria-hidden="true"></i> Nur Link erstellen</button>
+      <a class="btn" href="{% url 'user_list' %}">Abbrechen</a>
     </div>
-    <form method="post" class="flex flex-col gap-4">{% csrf_token %}
-      {{ form }}
-      <div class="flex flex-wrap gap-2">
-        <button type="submit" name="action" value="send" class="btn btn-primary"><i class="bi bi-envelope" aria-hidden="true"></i> Einladung senden</button>
-        <button type="submit" name="action" value="link" class="btn btn-outline btn-primary"><i class="bi bi-link-45deg" aria-hidden="true"></i> Nur Link erstellen</button>
-        <a class="btn" href="{% url 'user_list' %}">Abbrechen</a>
-      </div>
-    </form>
-  </div></div>
-</div>
+  </form>
+</div></div>
 {% endblock %}

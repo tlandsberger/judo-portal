@@ -63,7 +63,6 @@ def billing_index(request: HttpRequest) -> HttpResponse:
             "months": months,
             "pending": services.pending_confirmations(months),
             "now": timezone.now(),
-            "can_decide": services.can_decide(request.user),
             "deadline_day": services.DEADLINE_DAY,
         },
     )
@@ -119,7 +118,6 @@ def claim_list(request: HttpRequest) -> HttpResponse:
             "pending": pending,
             "claims": rows[:200],
             "month": month,
-            "is_trainer": events.can_join_team(request.user),
             "csv_months": [m for m in months if services.approved_for_month(m).exists()][:6],
         },
     )

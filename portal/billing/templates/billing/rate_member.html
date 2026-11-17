@@ -1,30 +1,29 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% block title %}Stundensätze {{ row.member.display_name }}{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-2xl">
-  <a href="{% url 'rate_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Stundensätze</a>
-  <h1 class="mb-6 text-3xl font-bold">{{ row.member.display_name }}</h1>
-  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-neu"><div class="card-body gap-4">
-    <h2 class="card-title" id="h-neu">Satz eintragen</h2>
-    <p class="text-sm text-base-content/70">Für eine Erhöhung trägst du einen neuen Satz mit „gültig ab“ ein. Es gilt der Satz, der am Tag des Termins gültig ist; eingereichte Abrechnungen ändern sich nicht.</p>
-    <form method="post" class="flex flex-col gap-4">{% csrf_token %}
-      {{ form }}
-      <div><button type="submit" class="btn btn-primary">Speichern</button></div>
-    </form>
-  </div></section>
-  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-verlauf"><div class="card-body">
-    <h2 class="card-title" id="h-verlauf">Alle Sätze</h2>
-    {% if history %}
-    <ul class="list">
-      {% for rate in history %}
-      <li class="list-row items-center px-0">
-        <div class="list-col-grow"><span class="font-semibold">{{ rate.role.name }}</span> · {{ rate.hourly_rate|floatformat:"2g" }} € pro Stunde
-          <div class="text-sm text-base-content/70">gültig ab {{ rate.valid_from|date:"d.m.Y" }}</div></div>
-        <form method="post" action="{% url 'rate_delete' rate.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="Satz {{ rate.role.name }} ab {{ rate.valid_from|date:'d.m.Y' }} entfernen">Entfernen</button></form>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}<p class="text-base-content/70">Noch keine Sätze.</p>{% endif %}
-  </div></section>
-</div>
+{% block back_url %}{% url 'rate_list' %}{% endblock %}
+{% block back_label %}Stundensätze{% endblock %}
+{% block heading %}{{ row.member.display_name }}{% endblock %}
+{% block page %}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-neu"><div class="card-body gap-4">
+  <h2 class="card-title" id="h-neu">Satz eintragen</h2>
+  <p class="text-sm text-base-content/70">Für eine Erhöhung trägst du einen neuen Satz mit „gültig ab“ ein. Es gilt der Satz, der am Tag des Termins gültig ist; eingereichte Abrechnungen ändern sich nicht.</p>
+  <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+    {{ form }}
+    <div><button type="submit" class="btn btn-primary">Speichern</button></div>
+  </form>
+</div></section>
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-verlauf"><div class="card-body">
+  <h2 class="card-title" id="h-verlauf">Alle Sätze</h2>
+  {% if history %}
+  <ul class="list">
+    {% for rate in history %}
+    <li class="list-row items-center px-0">
+      <div class="list-col-grow"><span class="font-semibold">{{ rate.role.name }}</span> · {{ rate.hourly_rate|floatformat:"2g" }} € pro Stunde
+        <div class="text-sm text-base-content/70">gültig ab {{ rate.valid_from|date:"d.m.Y" }}</div></div>
+      <form method="post" action="{% url 'rate_delete' rate.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="Satz {{ rate.role.name }} ab {{ rate.valid_from|date:'d.m.Y' }} entfernen">Entfernen</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="text-base-content/70">Noch keine Sätze.</p>{% endif %}
+</div></section>
 {% endblock %}

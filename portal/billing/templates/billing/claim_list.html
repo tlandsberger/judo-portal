@@ -1,36 +1,36 @@
-{% extends "base.html" %}
+{% extends "layouts/page.html" %}
 {% load help %}
 {% block title %}Abrechnungen{% endblock %}
-{% block content %}
-<div class="mx-auto max-w-4xl">
-  <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Abrechnungen</h1>{% help_link "abrechnungen" %}</div>
-  <p class="mt-1 mb-6 text-base-content/70">Monatsabrechnungen der Übungsleiter: prüfen, freigeben und für die Geschäftsstelle herunterladen.</p>
-  {% include "billing/_tabs.html" with active="all" %}
-  {% if pending %}
-  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-pruefen"><div class="card-body">
-    <h2 class="card-title" id="h-pruefen">Zu prüfen</h2>
-    <ul class="list">{% for claim in pending %}{% include "billing/_claim_row.html" %}{% endfor %}</ul>
-  </div></section>
-  {% endif %}
-  <section class="card bg-base-100 shadow-sm" aria-labelledby="h-alle"><div class="card-body">
-    <h2 class="card-title" id="h-alle">{% if pending %}Weitere Abrechnungen{% else %}Abrechnungen{% endif %}</h2>
-    <form method="get" class="flex flex-wrap items-end gap-3">
-      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-month">Monat</label>
-        <select id="f-month" name="month" class="select">{% for value, label in form.fields.month.choices %}<option value="{{ value }}"{% if form.month.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-      <div class="fieldset"><label class="fieldset-legend text-sm" for="f-status">Status</label>
-        <select id="f-status" name="status" class="select">{% for value, label in form.fields.status.choices %}<option value="{{ value }}"{% if form.status.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-      <button class="btn mb-1">Anzeigen</button>
-    </form>
-    {% if claims %}
-    <ul class="list">{% for claim in claims %}{% include "billing/_claim_row.html" %}{% endfor %}</ul>
-    {% else %}<p class="text-base-content/70">Keine Abrechnungen.</p>{% endif %}
-  </div></section>
-  {% if csv_months %}
-  <section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-export"><div class="card-body">
-    <h2 class="card-title" id="h-export">Für die Geschäftsstelle</h2>
-    <p class="text-sm text-base-content/70">Alle freigegebenen Abrechnungen eines Monats als CSV, eine Zeile je Übungsleiter.</p>
-    <div class="flex flex-wrap gap-2">{% for m in csv_months %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'claim_csv' m.year m.month %}"><i class="bi bi-filetype-csv" aria-hidden="true"></i> {{ m|date:"F Y" }}</a>{% endfor %}</div>
-  </div></section>
-  {% endif %}
-</div>
+{% block width %}wide{% endblock %}
+{% block heading %}Abrechnungen{% endblock %}
+{% block heading_extra %}{% help_link "abrechnungen" %}{% endblock %}
+{% block more %}<li><a href="{% url 'rate_list' %}"><i class="bi bi-cash-stack" aria-hidden="true"></i> Stundensätze</a></li>{% endblock %}
+{% block intro %}Monatsabrechnungen der Übungsleiter: prüfen, freigeben und für die Geschäftsstelle herunterladen.{% endblock %}
+{% block page %}
+{% if pending %}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-pruefen"><div class="card-body">
+  <h2 class="card-title" id="h-pruefen">Zu prüfen</h2>
+  <ul class="list">{% for claim in pending %}{% include "billing/_claim_row.html" %}{% endfor %}</ul>
+</div></section>
+{% endif %}
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-alle"><div class="card-body">
+  <h2 class="card-title" id="h-alle">{% if pending %}Weitere Abrechnungen{% else %}Abrechnungen{% endif %}</h2>
+  <form method="get" class="flex flex-wrap items-end gap-3">
+    <div class="fieldset"><label class="fieldset-legend text-sm" for="f-month">Monat</label>
+      <select id="f-month" name="month" class="select">{% for value, label in form.fields.month.choices %}<option value="{{ value }}"{% if form.month.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="fieldset"><label class="fieldset-legend text-sm" for="f-status">Status</label>
+      <select id="f-status" name="status" class="select">{% for value, label in form.fields.status.choices %}<option value="{{ value }}"{% if form.status.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <button class="btn mb-1">Anzeigen</button>
+  </form>
+  {% if claims %}
+  <ul class="list">{% for claim in claims %}{% include "billing/_claim_row.html" %}{% endfor %}</ul>
+  {% else %}<p class="text-base-content/70">Keine Abrechnungen.</p>{% endif %}
+</div></section>
+{% if csv_months %}
+<section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-export"><div class="card-body">
+  <h2 class="card-title" id="h-export">Für die Geschäftsstelle</h2>
+  <p class="text-sm text-base-content/70">Alle freigegebenen Abrechnungen eines Monats als CSV, eine Zeile je Übungsleiter.</p>
+  <div class="flex flex-wrap gap-2">{% for m in csv_months %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'claim_csv' m.year m.month %}"><i class="bi bi-filetype-csv" aria-hidden="true"></i> {{ m|date:"F Y" }}</a>{% endfor %}</div>
+</div></section>
+{% endif %}
 {% endblock %}

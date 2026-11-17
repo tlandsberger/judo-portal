@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load page %}
+{% comment %}
+Seitenlayout (ADR 0017): gleicher Kopf auf jeder Seite – Zurück-Link, Titel, rechts die eine Hauptaktion und das Menü
+„Weitere Aktionen“, darunter die Beschreibung. Auf dem Handy steht die Hauptaktion als Leiste unten (.action-bar).
+Blöcke: title, width („wide“ | „normal“ | „narrow“), back_url, back_label, heading, heading_extra, primary, more (<li>-Einträge), more_forms, intro,
+page. POST-Aktionen im Menü: <li><button form="…"> mit dem Formular (hidden) in more_forms – so bleibt der Button
+ein echter Menüeintrag.
+{% endcomment %}
+{% block content %}
+{% capture as back_url %}{% block back_url %}{% endblock %}{% endcapture %}
+{% capture as primary %}{% block primary %}{% endblock %}{% endcapture %}
+{% capture as more %}{% block more %}{% endblock %}{% endcapture %}
+{% capture as intro %}{% block intro %}{% endblock %}{% endcapture %}
+{% capture as width %}{% block width %}normal{% endblock %}{% endcapture %}
+{# Drei Breiten (ADR 0017): breit für Tabellen und Raster, normal für Details und einfache Listen, schmal für Formulare #}
+<div class="mx-auto {% if width == 'wide' %}w-full{% elif width == 'narrow' %}max-w-2xl{% else %}max-w-3xl{% endif %}">
+  <header class="mb-6">
+    {% if back_url %}<a href="{{ back_url }}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> {% block back_label %}{% endblock %}</a>{% endif %}
+    <div class="flex items-center gap-2">
+      <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+        <h1 class="text-3xl font-bold">{% block heading %}{% endblock %}</h1>
+        {% block heading_extra %}{% endblock %}
+      </div>
+      {% if primary %}<div class="action-bar">{{ primary }}</div>{% endif %}
+      {% if more %}
+      <details class="dropdown dropdown-end">
+        <summary class="btn btn-ghost btn-square" aria-label="Weitere Aktionen" title="Weitere Aktionen"><i class="bi bi-three-dots-vertical text-lg" aria-hidden="true"></i></summary>
+        <ul class="menu dropdown-content z-20 mt-1 w-72 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">{{ more }}</ul>
+      </details>
+      {% block more_forms %}{% endblock %}
+      {% endif %}
+    </div>
+    {% if intro %}<div class="mt-1 text-base-content/70">{{ intro }}</div>{% endif %}
+  </header>
+  {% block page %}{% endblock %}
+</div>
+{% endblock %}
