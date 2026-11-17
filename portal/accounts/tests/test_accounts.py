@@ -207,3 +207,16 @@ class TestLogin:
         session.save()
         client.get(reverse("home"))
         assert client.session.get_expiry_age() > settings.SESSION_COOKIE_AGE - 60
+
+
+def test_security_page_offers_add_or_manage_passkey(client) -> None:
+    """Ohne Passkey: „Passkey hinzufügen“; mit Passkey nur „Verwalten“."""
+    from allauth.mfa.models import Authenticator
+
+    user = make_user("mia@example.org", Role.MEMBER)
+    client.force_login(user)
+    page = client.get(reverse("security")).content.decode()
+    assert ">Passkey hinzufügen<" in page and ">Verwalten<" not in page
+    Authenticator.objects.create(user=user, type=Authenticator.Type.WEBAUTHN, data={"name": "Handy"})
+    page = client.get(reverse("security")).content.decode()
+    assert ">Verwalten<" in page and ">Passkey hinzufügen<" not in page

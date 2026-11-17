@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Person einladen{% endblock %}
+{% block title %}Benutzer anlegen{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-2xl">
   <a href="{% url 'user_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Benutzer</a>
   <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
     <div>
-      <h1 class="text-2xl font-bold">Person einladen</h1>
+      <h1 class="text-2xl font-bold">Benutzer anlegen</h1>
       <p class="mt-1 text-base-content/70">Die Person bekommt eine E-Mail mit einem Link, der 7 Tage gültig ist. Alternativ erstellst du nur den Link und gibst ihn selbst weiter, z. B. per Messenger.</p>
     </div>
     <form method="post" class="flex flex-col gap-4">{% csrf_token %}

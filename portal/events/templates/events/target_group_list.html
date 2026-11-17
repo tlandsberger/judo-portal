@@ -3,10 +3,11 @@
 {% block content %}
 <div class="mx-auto max-w-3xl">
   <a href="{% url 'event_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Veranstaltungen</a>
-  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-    <div><h1 class="text-3xl font-bold">Zielgruppen-Vorlagen</h1><p class="mt-1 text-base-content/70">Zielgruppen, die du öfter brauchst. Beim Anlegen einer Veranstaltung übernimmst du sie als Kopie; spätere Änderungen hier betreffen bestehende Veranstaltungen nicht.</p></div>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-3xl font-bold">Zielgruppen-Vorlagen</h1>
     <a class="btn btn-primary" href="{% url 'target_group_create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Vorlage anlegen</a>
   </div>
+  <p class="mt-1 mb-6 text-base-content/70">Zielgruppen, die du öfter brauchst. Beim Anlegen einer Veranstaltung übernimmst du sie als Kopie; spätere Änderungen hier betreffen bestehende Veranstaltungen nicht.</p>
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-zielgruppen"><div class="card-body">
     <h2 class="card-title" id="h-zielgruppen">{{ groups|length }} Vorlage{{ groups|length|pluralize:"n" }}</h2>
     {% if groups %}

@@ -3,10 +3,11 @@
 {% block title %}Termine{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-3xl">
-  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-    <div><div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Termine</h1>{% help_link "termine" %}</div><p class="mt-1 text-base-content/70">Die nächsten sechs Wochen.</p></div>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Termine</h1>{% help_link "termine" %}</div>
     {% if can_plan_events %}<a class="btn btn-outline btn-primary" href="{% url 'event_list' %}"><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a>{% endif %}
   </div>
+  <p class="mt-1 mb-6 text-base-content/70">Die nächsten sechs Wochen.</p>
   {% if agenda %}
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-fuer-dich"><div class="card-body">
     <h2 class="card-title" id="h-fuer-dich">{% if agenda.several %}Für euch{% else %}Für dich{% endif %}</h2>

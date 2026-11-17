@@ -5,7 +5,6 @@
 <div class="mx-auto max-w-4xl">
   <div class="flex items-center gap-1"><h1 class="text-3xl font-bold">Abrechnungen</h1>{% help_link "abrechnungen" %}</div>
   <p class="mt-1 mb-6 text-base-content/70">Monatsabrechnungen der Übungsleiter: prüfen, freigeben und für die Geschäftsstelle herunterladen.</p>
-  {% include "billing/_tabs.html" with active="all" %}
   {% if pending %}
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-pruefen"><div class="card-body">
     <h2 class="card-title" id="h-pruefen">Zu prüfen</h2>
@@ -32,5 +31,6 @@
     <div class="flex flex-wrap gap-2">{% for m in csv_months %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'claim_csv' m.year m.month %}"><i class="bi bi-filetype-csv" aria-hidden="true"></i> {{ m|date:"F Y" }}</a>{% endfor %}</div>
   </div></section>
   {% endif %}
+  <div class="mt-6"><a class="btn btn-outline btn-primary" href="{% url 'rate_list' %}"><i class="bi bi-cash-stack" aria-hidden="true"></i> Stundensätze</a></div>
 </div>
 {% endblock %}

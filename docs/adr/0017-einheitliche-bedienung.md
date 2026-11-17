@@ -46,7 +46,10 @@ Reihe von Icon-Buttons für Aktionen, die selten gebraucht werden.
 | Absagen (umkehrbar, wichtig) | `btn-outline btn-error` | Absagen, Termine im Zeitraum absagen |
 | Endgültig auf der Bestätigungsseite | `btn-error` | Endgültig löschen |
 
-**Position:** Im Seitenkopf rechts neben dem Titel (auf dem Handy darunter), Hauptaktion zuerst. In Formularen
+**Position:** Im Seitenkopf rechts neben dem Titel (auf dem Handy darunter), Hauptaktion zuerst. Titel und
+Aktionen stehen in einer Zeile, die Beschreibung darunter in voller Breite – sonst schiebt ein langer Text den
+Button aus der Kopfzeile. In den Kopf gehören nur die Hauptaktionen der Seite (z. B. „… anlegen“); Links zu
+Unterseiten wie Rollen oder Veranstaltungsarten stehen unter dem Inhalt. In Formularen
 unten links: Hauptaktion, dann „Abbrechen“. Löschen allein am Seitenende. In Zeilen rechts.
 
 **Icons:** Seitenkopf- und Abschnittsaktionen mit Icon und Text; „Speichern“/„Abbrechen“ ohne Icon. In Zeilen nur

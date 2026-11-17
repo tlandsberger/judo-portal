@@ -8,10 +8,8 @@
         Passkeys werden über iCloud, Google oder Microsoft auf deine Geräte übertragen; an fremden Geräten meldest du dich per QR-Code mit dem Handy an.
       </p>
     </div>
-    <div class="flex flex-col gap-1">
-      <a class="btn btn-primary btn-sm whitespace-nowrap" href="{% url 'mfa_add_webauthn' %}?next={{ request.path|urlencode }}">Passkey hinzufügen</a>
-      {% if passkeys %}<a class="btn btn-outline btn-sm whitespace-nowrap" href="{% url 'mfa_list_webauthn' %}">Verwalten</a>{% endif %}
-    </div>
+    {% if passkeys %}<a class="btn btn-outline btn-sm whitespace-nowrap" href="{% url 'mfa_list_webauthn' %}">Verwalten</a>
+    {% else %}<a class="btn btn-primary btn-sm whitespace-nowrap" href="{% url 'mfa_add_webauthn' %}?next={{ request.path|urlencode }}">Passkey hinzufügen</a>{% endif %}
   </li>
   <li class="list-row items-center">
     <i class="bi bi-key text-3xl text-primary" aria-hidden="true"></i>

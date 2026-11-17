@@ -2,9 +2,9 @@
 {% block title %}Stundensätze{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-4xl">
+  <a href="{% url 'claim_list' %}" class="link link-hover mb-3 inline-flex items-center gap-1 text-sm"><i class="bi bi-arrow-left" aria-hidden="true"></i> Abrechnungen</a>
   <h1 class="text-3xl font-bold">Stundensätze</h1>
   <p class="mt-1 mb-6 text-base-content/70">Je Übungsleiter ein Satz pro abrechnungsrelevanter Rolle. Ohne Satz lässt sich eine Rolle nicht abrechnen.</p>
-  {% include "billing/_tabs.html" with active="rates" is_trainer=can_join_team %}
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-saetze"><div class="card-body">
     <h2 class="card-title" id="h-saetze">{{ rows|length }} Übungsleiter</h2>
     {% if rows %}

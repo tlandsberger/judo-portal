@@ -124,3 +124,17 @@ def test_start_page_shows_pending_claims_for_head(client, trainer, head):
     assert "1 Abrechnung zu prüfen" in client.get(reverse("home")).content.decode()
     login(client, trainer)
     assert "zu prüfen" not in client.get(reverse("home")).content.decode()
+
+
+def test_own_billing_has_no_link_to_claim_list(client, trainer):
+    """„Meine Abrechnung“ und die Verwaltung „Abrechnungen“ sind getrennt – auch für Übungsleiter mit Leitungsrolle."""
+    from portal.accounts.models import Role
+
+    trainer.set_roles([Role.TRAINER, Role.DEPARTMENT_HEAD])
+    trainer.save()
+    login(client, trainer)
+    main = client.get(reverse("billing_index")).content.decode().split("<aside", 1)[0]
+    assert f'href="{reverse("claim_list")}"' not in main
+    claims = client.get(reverse("claim_list")).content.decode().split("<aside", 1)[0]
+    assert f'href="{reverse("billing_index")}"' not in claims
+    assert reverse("rate_list") in claims

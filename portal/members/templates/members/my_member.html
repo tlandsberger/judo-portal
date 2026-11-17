@@ -9,11 +9,13 @@
         {% if not several %}<p class="text-sm text-base-content/70">Meine Daten</p>{% endif %}
         <h1 class="text-2xl font-bold">{{ member.display_name }}</h1>
       </div>
-      <a class="btn btn-outline btn-primary" href="{% url 'my_member_edit' member.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
+      <div class="flex flex-wrap gap-2">
+        <a class="btn btn-outline btn-primary" href="{% url 'my_member_edit' member.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>
+        <a class="btn btn-outline btn-primary" href="{% url 'my_privacy' %}"><i class="bi bi-shield-check" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a>
+      </div>
     </div>
     {% include "members/_facts.html" with all=False %}
     <p class="text-sm text-base-content/70">Kontakt- und Judo-Daten kannst du selbst ändern. Stimmt etwas anderes nicht, schreib an <a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a>.</p>
   </div></div>
-  <p class="mt-6"><a class="btn btn-outline btn-primary" href="{% url 'my_privacy' %}"><i class="bi bi-shield-check" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a></p>
 </div>
 {% endblock %}
