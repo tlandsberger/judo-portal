@@ -7,7 +7,7 @@
 {% block page %}
 <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
   {% if when %}<p class="text-sm text-base-content/70">Ohne dein Zutun wird {{ member.first_name }} am {{ when|date:"d.m.Y" }} gelöscht (drei Monate nach dem Austritt).</p>{% endif %}
-  <div role="alert" class="alert alert-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+  <div role="alert" class="alert alert-soft alert-error"><i class="bi bi-exclamation-triangle text-lg" aria-hidden="true"></i>
     <div>
       <p class="font-semibold">Das lässt sich nicht rückgängig machen. Gelöscht werden:</p>
       <ul class="mt-2 list-disc pl-5">

@@ -47,6 +47,17 @@ Karte: Zurück-Link, Titel mit Hilfe oder Badges, rechts die Aktionen, darunter 
   `max-w-3xl`) für Detailseiten, Listen aus einfachen Zeilen und Text, `narrow` (`max-w-2xl`) für Formularseiten.
   Keine freien `max-w-*` je Seite.
 
+### Hinweise
+
+- **Warnungen und Fehler** (Löschen, Sperren, Fristen, „Danach ist kein Trainer mehr eingeteilt“, Meldungen der
+  Stufe `warning` und `error`) stehen in der roten Box `alert alert-soft alert-error` mit Icon `text-lg`, wie auf der
+  Bausteine-Seite.
+- **Status-Badges** dezent: was Aufmerksamkeit braucht („abgesagt“, „verspätet“, „zurückgegeben“, „überfällig“,
+  „kein Satz“, „noch nicht eingerichtet“, „Fehler“, „deaktiviert“) in `badge badge-soft badge-error`, reine
+  Information in `badge-ghost`, Rollen und Positives in `badge-soft badge-primary`.
+- Gelb (`*-warning`) und Gold (`*-accent`) gibt es für Hinweise und Badges nicht; das Design System sieht sie dafür
+  nicht vor. Neutrale Infos in `alert`, Erfolgsmeldungen grün.
+
 ### Schaltflächen
 
 **Größe nach Ebene:**

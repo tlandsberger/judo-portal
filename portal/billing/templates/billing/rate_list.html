@@ -16,7 +16,7 @@
         <div class="mt-1 flex flex-wrap gap-1">
           {% for role, rate in row.rates %}
           {% if rate %}<span class="badge badge-soft badge-primary badge-sm">{{ role.name }} {{ rate.hourly_rate|floatformat:"2g" }} €</span>
-          {% else %}<span class="badge badge-warning badge-sm">{{ role.name }}: kein Satz</span>{% endif %}
+          {% else %}<span class="badge badge-soft badge-error badge-sm">{{ role.name }}: kein Satz</span>{% endif %}
           {% endfor %}
         </div>
       </div>

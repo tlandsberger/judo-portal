@@ -7,7 +7,7 @@
 {% block intro %}Mit welcher Rolle jemand an einem Termin dabei ist: Teilnehmer, Trainer, Co-Trainer … je Person und Termin genau eine.{% endblock %}
 {% block page %}
 {% if without_member %}
-<div role="alert" class="alert alert-warning mb-6"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+<div role="alert" class="alert alert-soft alert-error mb-6"><i class="bi bi-exclamation-triangle text-lg" aria-hidden="true"></i>
   <span>Ohne eigenes Mitgliedsprofil können diese Benutzer keine Übungsleiter-Rolle übernehmen: {% for user in without_member %}{{ user.display_name }}{% if not forloop.last %}, {% endif %}{% endfor %}. Verknüpfe sie unter „Mitglieder“ als „eigenes Profil“.</span>
 </div>
 {% endif %}

@@ -24,7 +24,7 @@
           <div class="list-col-grow">
             <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a>
             <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %} · {{ occurrence.event.event_type }}</div>
-            {% if occurrence.is_cancelled %}<span class="badge badge-warning badge-sm mt-1">abgesagt</span>{% endif %}
+            {% if occurrence.is_cancelled %}<span class="badge badge-soft badge-error badge-sm mt-1">abgesagt</span>{% endif %}
           </div>
         </li>
         {% endfor %}
@@ -45,7 +45,7 @@
       <div class="list-col-grow">
         <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a>
         <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %}{% for p in occurrence.participations.all %}{% if p.role.is_team and p.is_active %} · {{ p.member.first_name }} ({{ p.role.name }}){% endif %}{% endfor %}</div>
-        {% if occurrence.is_cancelled %}<span class="badge badge-warning badge-sm mt-1">abgesagt</span>{% endif %}
+        {% if occurrence.is_cancelled %}<span class="badge badge-soft badge-error badge-sm mt-1">abgesagt</span>{% endif %}
       </div>
     </li>
     {% endfor %}

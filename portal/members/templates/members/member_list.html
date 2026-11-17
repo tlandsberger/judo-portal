@@ -14,7 +14,7 @@
 {% block page %}
 {% deleted_soon as soon %}
 {% if soon %}
-<div role="alert" class="alert alert-warning mb-6"><i class="bi bi-hourglass-split" aria-hidden="true"></i>
+<div role="alert" class="alert alert-soft alert-error mb-6"><i class="bi bi-hourglass-split text-lg" aria-hidden="true"></i>
   <div><p class="font-semibold">Wird in den nächsten 30 Tagen gelöscht (drei Monate nach dem Austritt)</p>
     <ul class="mt-1">{% for member, when in soon %}<li><a class="link" href="{% url 'member_detail' member.pk %}">{{ member.display_name }}</a> am {{ when|date:"d.m.Y" }}</li>{% endfor %}</ul>
     <p class="mt-1 text-sm">Bleibt jemand doch? Dann entferne das Austrittsdatum.</p></div>
