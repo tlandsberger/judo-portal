@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.15.2, <3.16"
 
 [[package]]
@@ -593,7 +593,7 @@ requires-dist = [
     { name = "django-htmx", specifier = ">=1.29.0" },
     { name = "fpdf2", specifier = ">=2.9.0" },
     { name = "gunicorn", specifier = ">=27.0.1" },
-    { name = "openpyxl", specifier = ">=3.1" },
+    { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pywebpush", specifier = ">=2.5.0" },
     { name = "segno", specifier = ">=1.6.6" },
     { name = "whitenoise", specifier = ">=6.12.0" },
