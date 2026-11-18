@@ -8,6 +8,7 @@ import {
   importMembers,
   lastMailTo,
   localDateTime,
+  moreAction,
   setPassword,
 } from "./helpers";
 
@@ -257,13 +258,31 @@ test("Gast meldet sich über den Link an, bestätigt per Mail und sieht seine An
   await admin.getByLabel("Ende", { exact: true }).fill(localDateTime(7, "15:00"));
   await admin.getByRole("button", { name: "Speichern" }).click();
   const link = await admin.getByLabel("Anmeldelink für externe Teilnehmer").inputValue();
+  // Anhänge: die Ausschreibung extern sichtbar, die Zimmerliste nur für Mitglieder
+  const pdf = (name: string) => ({ name, mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 Test") });
+  await admin.getByLabel("Datei").setInputFiles(pdf("Ausschreibung.pdf"));
+  await admin.getByLabel("Für externe Teilnehmer sichtbar").check();
+  await admin.getByRole("button", { name: "Hochladen" }).click();
+  await expect(admin.getByText("„Ausschreibung“ hochgeladen.")).toBeVisible();
+  await admin.getByLabel("Datei").setInputFiles(pdf("Zimmerliste.pdf"));
+  await admin.getByRole("button", { name: "Hochladen" }).click();
+  await expect(admin.getByRole("link", { name: "Zimmerliste" })).toBeVisible();
   await expectNoA11yViolations(admin);
+  // Export der Teilnahmen
+  await moreAction(admin, "link", "Teilnahmen exportieren");
+  await expect(admin.getByRole("heading", { level: 1, name: "Teilnahmen exportieren" })).toBeVisible();
+  await expectNoA11yViolations(admin);
+  const download = admin.waitForEvent("download");
+  await admin.getByRole("button", { name: "Excel herunterladen" }).click();
+  expect((await download).suggestedFilename()).toBe("teilnahmen-offener-lehrgang.xlsx");
   await admin.context().close();
 
   const guestContext = await browser.newContext();
   const guest = await guestContext.newPage();
   await guest.goto(new URL(link).pathname);
   await expect(guest.getByRole("heading", { level: 1, name: "Offener Lehrgang" })).toBeVisible();
+  await expect(guest.getByRole("link", { name: "Ausschreibung" })).toBeVisible();
+  await expect(guest.getByRole("link", { name: "Zimmerliste" })).toHaveCount(0);
   await guest.getByLabel("Vorname").fill("Lena");
   await guest.getByLabel("Nachname").fill("Gast");
   await guest.getByLabel("Jahrgang").fill("1995");

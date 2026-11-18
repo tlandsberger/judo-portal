@@ -206,6 +206,9 @@ FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "portal" / "static"]
+# Hochgeladene Dateien (Anhänge an Veranstaltungen) im Datenverzeichnis. Bewusst ohne MEDIA_URL: Ausgeliefert wird
+# nur über Views mit Rechteprüfung (ADR 0021).
+MEDIA_ROOT = DATA_DIR / "uploads"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {

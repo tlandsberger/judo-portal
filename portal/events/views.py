@@ -10,24 +10,29 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404, HttpRequest, HttpResponse
+from django.http.response import HttpResponseBase
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
 from portal.accounts.models import User
 from portal.accounts.permissions import role_required
+from portal.core import audit
 from portal.members import services as members
 from portal.members.models import Member
 
-from . import guests, quicklinks, services
+from . import attachments, export, guests, quicklinks, services
 from .forms import (
     AgendaFilterForm,
+    AttachmentForm,
     CancelRangeForm,
     ConfirmForm,
     EventCreateForm,
     EventForm,
     EventTypeForm,
+    ExportForm,
     GuestForm,
     GuestRegisterForm,
     HandOverForm,
@@ -43,6 +48,7 @@ from .forms import (
 )
 from .models import (
     Event,
+    EventAttachment,
     EventType,
     Guest,
     Occurrence,
@@ -156,6 +162,7 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "target_groups": services.target_groups(occurrence),
         "quick": _quick(occurrence) if lead else None,
         "recommendation": services.is_recommendation(occurrence),
+        "attachments": list(occurrence.event.attachments.all()),
     }
     if lead:
         context["note_form"] = NoteForm(instance=occurrence)
@@ -573,6 +580,8 @@ def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "can_manage": can_manage,
         "cancel_form": CancelRangeForm(),
         "quick": _quick(event) if can_manage else None,
+        "attachments": list(event.attachments.all()),
+        "attachment_form": AttachmentForm(event=event) if can_manage else None,
         "guest_link": request.build_absolute_uri(reverse("guest_register", args=[guests.enable_link(event)]))
         if event.guests_welcome
         else None,
@@ -819,7 +828,14 @@ def guest_register(request: HttpRequest, token: str) -> HttpResponse:
                 form.add_error(None, str(error))
             else:
                 return render(request, "events/guest_register_done.html", {"event": event, "guest": guest})
-    return render(request, "events/guest_register.html", {"event": event, "form": form, "occurrences": occurrences})
+    context = {
+        "event": event,
+        "form": form,
+        "occurrences": occurrences,
+        "attachments": attachments.external(event),
+        "token": token,
+    }
+    return render(request, "events/guest_register.html", context)
 
 
 def guest_page(request: HttpRequest, token: str) -> HttpResponse:
@@ -864,7 +880,15 @@ def _guest_page(request: HttpRequest, guest: Guest, form: GuestForm) -> HttpResp
     return render(
         request,
         "events/guest_page.html",
-        {"guest": guest, "event": guest.event, "rows": rows, "more": more, "form": form},
+        {
+            "guest": guest,
+            "event": guest.event,
+            "rows": rows,
+            "more": more,
+            "form": form,
+            "attachments": attachments.external(guest.event),
+            "token": guest.token,
+        },
     )
 
 
@@ -1007,3 +1031,114 @@ def target_group_delete(request: HttpRequest, pk: int) -> HttpResponse:
     group.delete()
     messages.success(request, f"Vorlage „{group.name}“ gelöscht. Veranstaltungen behalten ihre Zielgruppen.")
     return redirect("target_group_list")
+
+
+# Anhänge (ADR 0021)
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def attachment_add(request: HttpRequest, pk: int) -> HttpResponse:
+    event = get_object_or_404(Event, pk=pk)
+    form = AttachmentForm(request.POST, request.FILES, event=event)
+    if form.is_valid():
+        try:
+            attachment = attachments.add(
+                event,
+                form.cleaned_data["file"],
+                title=form.cleaned_data["title"],
+                public=form.cleaned_data.get("public", False),
+                by=request.user,
+            )
+        except attachments.AttachmentError as error:
+            messages.error(request, str(error))
+        else:
+            messages.success(request, f"„{attachment.title}“ hochgeladen.")
+    else:
+        _errors(request, form)
+    return redirect(reverse("event_detail", args=[event.pk]) + "#h-anhaenge")
+
+
+def _attachment(pk: int, attachment_pk: int) -> EventAttachment:
+    return get_object_or_404(EventAttachment.objects.select_related("event"), pk=attachment_pk, event_id=pk)
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def attachment_public(request: HttpRequest, pk: int, attachment_pk: int) -> HttpResponse:
+    attachment = _attachment(pk, attachment_pk)
+    attachments.set_public(attachment, request.POST.get("public") == "1", by=request.user)
+    return redirect(reverse("event_detail", args=[pk]) + "#h-anhaenge")
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def attachment_delete(request: HttpRequest, pk: int, attachment_pk: int) -> HttpResponse:
+    attachment = _attachment(pk, attachment_pk)
+    attachments.delete(attachment, by=request.user)
+    messages.success(request, f"„{attachment.title}“ gelöscht.")
+    return redirect(reverse("event_detail", args=[pk]) + "#h-anhaenge")
+
+
+@login_required
+def attachment_download(request: HttpRequest, pk: int, attachment_pk: int) -> HttpResponseBase:
+    return attachments.response(_attachment(pk, attachment_pk))
+
+
+def guest_attachment(request: HttpRequest, token: str, attachment_pk: int) -> HttpResponseBase:
+    """Freigegebene Anhänge für externe Teilnehmer, über den Anmeldelink oder die persönliche Seite des Gastes."""
+    event = guests.event_for_link(token)
+    if event is None:
+        guest = Guest.objects.select_related("event").filter(token=token).first()
+        event = guest.event if guest else None
+    if event is None:
+        raise Http404
+    attachment = next((a for a in attachments.external(event) if a.pk == attachment_pk), None)
+    if attachment is None:
+        raise Http404
+    return attachments.response(attachment)
+
+
+# Excel-Export (ADR 0021)
+
+
+def _xlsx(content: bytes, filename: str) -> HttpResponse:
+    response = HttpResponse(content, content_type=export.CONTENT_TYPE)
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+def _slug(text: str) -> str:
+    return slugify(text) or "veranstaltung"
+
+
+@login_required
+def occurrence_export(request: HttpRequest, pk: int) -> HttpResponse:
+    occurrence = get_object_or_404(Occurrence.objects.select_related("event"), pk=pk)
+    if not services.can_see_participants(request.user, occurrence):
+        raise PermissionDenied
+    when = timezone.localtime(occurrence.starts_at)
+    audit.log(
+        request.user,
+        audit.Area.EVENTS,
+        "export",
+        f"Teilnehmerliste {occurrence.event.title} am {when:%d.%m.%Y} exportiert",
+    )
+    return _xlsx(
+        export.occurrence_workbook(occurrence), f"teilnehmer-{_slug(occurrence.event.title)}-{when:%Y-%m-%d}.xlsx"
+    )
+
+
+@role_required(*MANAGE_EVENTS)
+def event_export(request: HttpRequest, pk: int) -> HttpResponse:
+    event = get_object_or_404(Event, pk=pk)
+    today = timezone.localdate()
+    form = ExportForm(request.GET or None, initial={"start": today.replace(month=1, day=1), "end": today})
+    if request.GET and form.is_valid():
+        start, end = form.cleaned_data["start"], form.cleaned_data["end"]
+        period = f"{start:%d.%m.%Y}" if start else "Anfang"
+        period += f" bis {end:%d.%m.%Y}" if end else " bis Ende"
+        audit.log(request.user, audit.Area.EVENTS, "export", f"Teilnahmen {event.title} ({period}) exportiert")
+        return _xlsx(export.event_workbook(event, start, end), f"teilnahmen-{_slug(event.title)}.xlsx")
+    return render(request, "events/event_export.html", {"event": event, "form": form})

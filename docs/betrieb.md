@@ -17,7 +17,7 @@ Produktiv in der Homecloud (Repo `tlandsberger/homecloud`, Stack `application/ju
 | `PORTAL_EMAIL_USE_TLS` | – | `true` | STARTTLS |
 | `PORTAL_EMAIL_FROM` | ja | `Wedeler TSV Judo <portal@tlandsberger.de>` | Absender |
 | `PORTAL_VAPID_PUBLIC_KEY` / `PORTAL_VAPID_PRIVATE_KEY` | – | `manage.py generate_vapid_keys` | Schlüssel für Push-Benachrichtigungen; ohne sie geht alles per Mail (siehe unten) |
-| `PORTAL_DATA_DIR` | – | `/data` | Datenbank und Backups |
+| `PORTAL_DATA_DIR` | – | `/data` | Datenbank, Backups und Anhänge (`uploads/`) |
 | `PORTAL_BACKUP_HOUR` / `PORTAL_BACKUP_KEEP_DAYS` | – | `2` / `14` | nächtliches Backup |
 | `PORTAL_SECURE_COOKIES` | – | `true` | nur für lokale Tests ohne HTTPS auf `false` |
 | `PORTAL_TRUSTED_PROXIES` | – | private Netze | Proxys (Traefik), deren `X-Forwarded-For` als echte Client-IP gilt |
@@ -178,6 +178,9 @@ Anmeldecodes, Sicherheitshinweise und neue Verknüpfungen gehen immer per Mail. 
 
 - Täglich um 02:00 schreibt die App `portal-JJJJ-MM-TT.sqlite3` nach `/data/backups/` (14 Tage). Das restic-Backup
   der Homecloud sichert das Volume um 02:30. Sofort-Backup: `docker exec judo_portal python manage.py backup_db`.
+- Anhänge an Veranstaltungen liegen unter `/data/uploads/` (ADR 0021). Das restic-Backup sichert sie mit, das
+  nächtliche SQLite-Backup nicht. Beim Wiederherstellen der Datenbank bleiben die Dateien, wie sie sind; Anhänge, die
+  nach dem Backup hochgeladen wurden, liegen dann ohne Eintrag im Ordner und stören nicht.
 - Wiederherstellen:
   ```bash
   docker stop judo_portal

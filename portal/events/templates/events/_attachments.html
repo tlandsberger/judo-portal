@@ -1,0 +1,18 @@
+{# Liste der Anhänge. Mit token: Links für externe Teilnehmer; mit manage: Freigabe und Löschen (ADR 0021). #}
+<ul class="list">
+  {% for attachment in attachments %}
+  <li class="list-row items-center px-0">
+    <i class="bi {% if attachment.extension == 'pdf' %}bi-file-earmark-pdf{% elif attachment.extension in 'jpg jpeg png' %}bi-file-earmark-image{% elif attachment.extension == 'xlsx' %}bi-file-earmark-spreadsheet{% else %}bi-file-earmark-text{% endif %} text-2xl text-primary" aria-hidden="true"></i>
+    <div class="list-col-grow">
+      <a class="link link-hover font-semibold" href="{% if token %}{% url 'guest_attachment' token attachment.pk %}{% else %}{% url 'attachment_download' attachment.event_id attachment.pk %}{% endif %}">{{ attachment.title }}</a>
+      <div class="text-sm text-base-content/70">{{ attachment.extension|upper }} · {{ attachment.size|filesizeformat }}{% if manage and attachment.public and event.guests_welcome %} · <span class="badge badge-ghost badge-sm">extern sichtbar</span>{% endif %}</div>
+    </div>
+    {% if manage %}
+    <div class="flex flex-wrap justify-end gap-2">
+      {% if event.guests_welcome %}<form method="post" action="{% url 'attachment_public' event.pk attachment.pk %}">{% csrf_token %}<input type="hidden" name="public" value="{% if attachment.public %}0{% else %}1{% endif %}"><button class="btn btn-ghost btn-sm" aria-label="{{ attachment.title }}: {% if attachment.public %}nur für Mitglieder{% else %}für externe Teilnehmer sichtbar machen{% endif %}">{% if attachment.public %}Nur Mitglieder{% else %}Extern sichtbar{% endif %}</button></form>{% endif %}
+      <form method="post" action="{% url 'attachment_delete' event.pk attachment.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm" aria-label="{{ attachment.title }} löschen">Löschen</button></form>
+    </div>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
