@@ -10,6 +10,7 @@ urlpatterns = [
     path("mitglieder/<int:pk>/zugang/", views.member_access, name="member_access"),
     path("mitglieder/<int:pk>/verknuepfung/<int:link_pk>/loesen/", views.member_unlink, name="member_unlink"),
     path("mitglieder/interessen/", views.interest_list, name="interest_list"),
+    path("mitglieder/interessen/reihenfolge/", views.interest_reorder, name="interest_reorder"),
     path("mitglieder/interessen/<int:pk>/", views.interest_list, name="interest_edit"),
     path("mitglieder/interessen/<int:pk>/loeschen/", views.interest_delete, name="interest_delete"),
     path("mitglieder/import/", views.member_import, name="member_import"),

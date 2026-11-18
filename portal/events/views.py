@@ -19,7 +19,7 @@ from django.views.decorators.http import require_POST
 
 from portal.accounts.models import User
 from portal.accounts.permissions import role_required
-from portal.core import audit
+from portal.core import audit, ordering
 from portal.members import services as members
 from portal.members.models import Member
 
@@ -925,8 +925,14 @@ def event_guest_link(request: HttpRequest, pk: int) -> HttpResponse:
 
 @role_required(*MANAGE_EVENTS)
 def event_type_list(request: HttpRequest) -> HttpResponse:
-    types = EventType.objects.annotate(count=Count("events"))
+    types = EventType.objects.annotate(count=Count("events")).order_by("order", "name")
     return render(request, "events/event_type_list.html", {"types": types})
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def event_type_reorder(request: HttpRequest) -> HttpResponse:
+    return ordering.handle(request, EventType, "order", "event_type_list")
 
 
 @role_required(*MANAGE_EVENTS)
@@ -961,6 +967,12 @@ def role_list(request: HttpRequest) -> HttpResponse:
         "events/role_list.html",
         {"roles": roles, "without_member": services.users_without_member(restricted)},
     )
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def role_reorder(request: HttpRequest) -> HttpResponse:
+    return ordering.handle(request, ParticipantRole, "order", "role_list")
 
 
 @role_required(*MANAGE_EVENTS)

@@ -5,12 +5,14 @@ from __future__ import annotations
 import secrets
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from portal.core import ordering
 from portal.members.models import Gender, Grade, Interest, Member
 
 
@@ -108,6 +110,10 @@ class EventType(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        ordering.append(self, "order")
+        super().save(*args, **kwargs)
 
 
 def default_event_type() -> int | None:
@@ -416,6 +422,10 @@ class ParticipantRole(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        ordering.append(self, "order")
+        super().save(*args, **kwargs)
 
     def get_user_roles_display(self) -> str:
         from portal.accounts.models import Role

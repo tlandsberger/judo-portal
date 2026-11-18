@@ -482,7 +482,7 @@ class TeamForm(forms.Form):
 class EventTypeForm(forms.ModelForm):
     class Meta:
         model = EventType
-        fields = ("name", "order", "is_active")
+        fields = ("name", "is_active")
 
 
 class ParticipantRoleForm(forms.ModelForm):
@@ -497,7 +497,7 @@ class ParticipantRoleForm(forms.ModelForm):
 
     class Meta:
         model = ParticipantRole
-        fields = ("name", "order", "event_types", "user_roles", "is_team", "is_billable", "is_default", "is_active")
+        fields = ("name", "event_types", "user_roles", "is_team", "is_billable", "is_default", "is_active")
         widgets = {"event_types": forms.CheckboxSelectMultiple()}
 
     def _get_validation_exclusions(self) -> set[str]:

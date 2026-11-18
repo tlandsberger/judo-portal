@@ -13,9 +13,11 @@
 {% endif %}
 <section class="card bg-base-100 shadow-sm" aria-labelledby="h-rollen"><div class="card-body">
   <h2 class="card-title" id="h-rollen">{{ roles|length }} Rolle{{ roles|length|pluralize:"n" }}</h2>
+  {% if roles|length > 1 %}<p class="text-sm text-base-content/70">In dieser Reihenfolge stehen die Rollen zur Auswahl und in Teilnehmerlisten. Mit den Pfeilen änderst du sie.</p>{% endif %}
+  <form id="reihenfolge" method="post" action="{% url 'role_reorder' %}" hidden>{% csrf_token %}</form>
   <ul class="list">
     {% for role in roles %}
-    <li class="list-row items-center px-0">
+    <li class="list-row items-center px-0" id="sort-{{ role.pk }}">
       <div class="list-col-grow">
         <a class="link link-hover font-semibold" href="{% url 'role_edit' role.pk %}">{{ role.name }}</a>
         <div class="text-sm text-base-content/70">{% for event_type in role.event_types.all %}{{ event_type.name }}{% if not forloop.last %}, {% endif %}{% empty %}alle Arten{% endfor %} · {{ role.get_user_roles_display }}</div>
@@ -26,6 +28,7 @@
           {% if not role.is_active %}<span class="badge badge-ghost badge-sm">inaktiv</span>{% endif %}
         </div>
       </div>
+      {% include "partials/sort_buttons.html" with pk=role.pk name=role.name %}
     </li>
     {% endfor %}
   </ul>

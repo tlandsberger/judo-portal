@@ -1,0 +1,5 @@
+{# Pfeile zum Verschieben einer Zeile. Erwartet pk, name und das Formular mit id="reihenfolge" auf der Seite. #}
+<div class="join">
+  <button type="submit" form="reihenfolge" name="up" value="{{ pk }}" class="btn btn-ghost btn-sm btn-square join-item" aria-label="„{{ name }}“ nach oben" title="Nach oben"{% if forloop.first %} disabled{% endif %}><i class="bi bi-arrow-up" aria-hidden="true"></i></button>
+  <button type="submit" form="reihenfolge" name="down" value="{{ pk }}" class="btn btn-ghost btn-sm btn-square join-item" aria-label="„{{ name }}“ nach unten" title="Nach unten"{% if forloop.last %} disabled{% endif %}><i class="bi bi-arrow-down" aria-hidden="true"></i></button>
+</div>
