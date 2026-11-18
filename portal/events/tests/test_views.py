@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import timedelta
 
 import pytest
@@ -45,6 +46,25 @@ def test_agenda_quick_registration(client, parent, child):
     assert Participation.objects.get().status == ParticipationStatus.REGISTERED
     client.post(reverse("unregister", args=[occurrence.pk, child.pk]))
     assert Participation.objects.get().status == ParticipationStatus.CANCELLED
+
+
+def test_agenda_filter_form(client, parent, child):
+    adults = Event.objects.create(title="Erwachsenentraining")
+    TargetGroup.objects.create(event=adults, min_age=18)
+    make_occurrence(adults)
+    for in_days in range(1, 35):
+        make_occurrence(in_days=in_days)
+    login(client, parent)
+    response = client.get(reverse("agenda"))
+    page = response.content.decode()
+    assert "34 Termine" in page and "Weitere Termine" in page
+    assert all(e.occurrence.event != adults for e in response.context["page"].object_list)
+    assert re.search(r'name="passend"[^>]*checked', page)  # „Nur passende“ ist vorausgewählt
+    page = client.get(reverse("agenda"), {"f": "1"}).content.decode()
+    assert "35 Termine" in page and "passt nicht zur Zielgruppe" in page
+    assert "Frühere" in client.get(reverse("agenda"), {"f": "1", "seite": "2"}).content.decode()
+    page = client.get(reverse("agenda"), {"f": "1", "passend": "on", "von": "2030-02-01", "bis": "2030-01-01"})
+    assert "„Bis“ muss nach „Von“ liegen." in page.content.decode()
 
 
 def test_register_form_with_weight(client, parent, child):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from django import forms
 from django.db import models
@@ -23,6 +23,7 @@ from .models import (
     Weekday,
     WeekOfMonth,
 )
+from .services import AgendaFilter
 
 
 class DateTimeInput(forms.DateTimeInput):
@@ -553,3 +554,61 @@ class GuestRegisterForm(GuestForm):
         if self.cleaned_data.get("website"):
             raise forms.ValidationError("Bitte lass dieses Feld leer.")
         return ""
+
+
+class AgendaFilterForm(forms.Form):
+    """Filter der Seite „Termine“. Das versteckte Feld „f“ markiert ein abgeschicktes Formular; ohne gelten die
+    Standardwerte (für eigene Mitglieder: nur passende Termine)."""
+
+    passend = forms.BooleanField(label="Nur passende Termine", required=False, initial=True)
+    mitglied = forms.TypedChoiceField(label="Mitglied", required=False, coerce=int, empty_value=None)
+    art = forms.ModelChoiceField(label="Art", queryset=EventType.objects.all(), required=False, empty_label="alle")
+    veranstaltung = forms.ModelChoiceField(
+        label="Veranstaltung", queryset=Event.objects.order_by("title"), required=False, empty_label="alle"
+    )
+    von = forms.DateField(label="Von", required=False, widget=DateInput())
+    bis = forms.DateField(label="Bis", required=False, widget=DateInput())
+    meine = forms.BooleanField(label="Nur meine Anmeldungen", required=False)
+    offen = forms.BooleanField(label="Nur mit offener Anmeldung", required=False)
+    ohne_abgesagte = forms.BooleanField(label="Abgesagte ausblenden", required=False)
+
+    def __init__(self, data: Any, *, links: list[Any]) -> None:
+        super().__init__(data if data is not None and "f" in data else None)
+        self.has_members = bool(links)
+        if len(links) > 1:
+            field = cast(forms.TypedChoiceField, self.fields["mitglied"])
+            field.choices = [("", "alle"), *((link.member.pk, link.member.first_name) for link in links)]
+        else:
+            del self.fields["mitglied"]
+        if not links:
+            del self.fields["passend"], self.fields["meine"]
+
+    def clean(self) -> dict[str, Any]:
+        data = super().clean() or {}
+        if data.get("von") and data.get("bis") and data["bis"] < data["von"]:
+            self.add_error("bis", "„Bis“ muss nach „Von“ liegen.")
+        return data
+
+    def to_filter(self) -> AgendaFilter:
+        if not self.is_bound or not self.is_valid():
+            return AgendaFilter(matching=self.has_members)
+        data = self.cleaned_data
+        return AgendaFilter(
+            matching=bool(data.get("passend")),
+            member=data.get("mitglied"),
+            event_type=data["art"].pk if data.get("art") else None,
+            event=data["veranstaltung"].pk if data.get("veranstaltung") else None,
+            start=data.get("von"),
+            end=data.get("bis"),
+            mine=bool(data.get("meine")),
+            open=bool(data.get("offen")),
+            hide_cancelled=bool(data.get("ohne_abgesagte")),
+        )
+
+    @property
+    def changed_count(self) -> int:
+        """Wie viele Filter vom Standard abweichen (für die Zusammenfassung)."""
+        if not self.is_bound or not self.is_valid():
+            return 0
+        default = {"passend": self.has_members}
+        return sum(1 for name in self.fields if bool(self.cleaned_data.get(name)) != default.get(name, False))

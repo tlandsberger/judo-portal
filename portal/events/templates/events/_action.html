@@ -2,14 +2,14 @@
 {% with occurrence=item.occurrence event=item.occurrence.event %}
 {% if item.can_register %}
   {% if item.quick %}
-  <form method="post" action="{% url 'register' occurrence.pk member.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+  <form method="post" action="{% url 'register' occurrence.pk member.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
     <button class="btn btn-primary btn-sm" aria-label="{{ member.first_name }} für {{ event.title }} am {{ occurrence.starts_at|date:'d.m.' }} anmelden">Anmelden</button>
   </form>
   {% else %}
-  <a class="btn btn-primary btn-sm" href="{% url 'register' occurrence.pk member.pk %}?next={{ request.path|urlencode }}" aria-label="{{ member.first_name }} für {{ event.title }} am {{ occurrence.starts_at|date:'d.m.' }} anmelden">Anmelden</a>
+  <a class="btn btn-primary btn-sm" href="{% url 'register' occurrence.pk member.pk %}?next={{ request.get_full_path|urlencode }}" aria-label="{{ member.first_name }} für {{ event.title }} am {{ occurrence.starts_at|date:'d.m.' }} anmelden">Anmelden</a>
   {% endif %}
 {% elif item.can_unregister %}
-<form method="post" action="{% url 'unregister' occurrence.pk member.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+<form method="post" action="{% url 'unregister' occurrence.pk member.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
   <button class="btn btn-outline btn-sm" aria-label="{{ member.first_name }} von {{ event.title }} am {{ occurrence.starts_at|date:'d.m.' }} abmelden">Abmelden</button>
 </form>
 {% endif %}

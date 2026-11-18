@@ -93,6 +93,13 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await expect(parent.getByRole("heading", { name: "Nächste Termine" })).toBeVisible();
   await parent.goto("/termine/");
   await expectNoA11yViolations(parent);
+  // Filter: standardmäßig nur passende Termine
+  await parent.locator("summary", { hasText: "Filter" }).click();
+  await expect(parent.getByLabel("Nur passende Termine")).toBeChecked();
+  await expectNoA11yViolations(parent);
+  await parent.getByLabel("Abgesagte ausblenden").check();
+  await parent.getByRole("button", { name: "Anzeigen" }).click();
+  await expect(parent.getByText("1 aktiv")).toBeVisible();
   await parent.getByRole("link", { name: /Mia für Randori-Lehrgang am .* anmelden/ }).click();
   await expect(parent.getByLabel("Gewicht (kg)")).not.toHaveValue("");
   await parent.getByLabel("Gewicht (kg)").fill("26,1");
@@ -219,11 +226,11 @@ test("Gast meldet sich über den Link an, bestätigt per Mail und sieht seine An
   await admin.goto("/veranstaltungen/neu/");
   await admin.getByLabel("Titel").fill("Offener Lehrgang");
   await admin.getByLabel("Art").selectOption({ label: "Lehrgang" });
-  await admin.getByLabel("Gäste willkommen").check();
+  await admin.getByLabel("Externe Teilnehmer zulassen").check();
   await admin.getByLabel("Beginn", { exact: true }).fill(localDateTime(7, "10:00"));
   await admin.getByLabel("Ende", { exact: true }).fill(localDateTime(7, "15:00"));
   await admin.getByRole("button", { name: "Speichern" }).click();
-  const link = await admin.getByLabel("Anmeldelink für Gäste").inputValue();
+  const link = await admin.getByLabel("Anmeldelink für externe Teilnehmer").inputValue();
   await expectNoA11yViolations(admin);
   await admin.context().close();
 

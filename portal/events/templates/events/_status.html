@@ -8,5 +8,6 @@
   {% if item.window == "before" %}<span class="badge badge-ghost badge-sm">Anmeldung ab {{ occurrence.registration_opens|date:"d.m. H:i" }}</span>
   {% elif item.window == "closed" %}<span class="badge badge-ghost badge-sm">Anmeldung geschlossen</span>{% endif %}
 {% endif %}
+{% if item.match == 0 and not item.participation.is_active %}<span class="badge badge-ghost badge-sm">passt nicht zur Zielgruppe</span>{% endif %}
 {% if item.match == 1 and not item.participation.is_active %}<span class="badge badge-ghost badge-sm">Gewicht fehlt</span>{% endif %}
 {% endwith %}
