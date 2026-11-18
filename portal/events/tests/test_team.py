@@ -144,9 +144,26 @@ def test_open_confirmations_for_start_page(trainer, client):
     services.set_team(make_occurrence(in_days=2), member, role("Trainer"))  # Zukunft zählt nicht
     exam = Event.objects.create(title="Prüfung", event_type=event_type("Prüfung"))
     services.set_team(make_occurrence(exam, in_days=-1), member, role("Prüfer"))  # nicht abrechnungsrelevant
-    assert services.open_confirmations(trainer) == 1
+    assert services.open_confirmations(trainer) == [past]
     client.force_login(trainer)
-    assert "1 Termin: Stunden bestätigen" in client.get(reverse("home")).content.decode()
-    services.confirm(past)
-    assert services.open_confirmations(trainer) == 0
-    assert ": Stunden bestätigen" not in client.get(reverse("home")).content.decode()
+    page = client.get(reverse("home")).content.decode()
+    assert 'id="h-stunden"' in page and reverse("hours_confirm", args=[past.occurrence_id]) in page
+    # Bestätigen auf der Startseite führt dorthin zurück.
+    response = client.post(reverse("hours_confirm", args=[past.occurrence_id]), {"minutes": 60, "next": "/"})
+    assert response.status_code == 302 and response.url == "/"
+    assert services.open_confirmations(trainer) == []
+    assert 'id="h-stunden"' not in client.get(reverse("home")).content.decode()
+
+
+def test_open_confirmations_skip_locked(trainer):
+    member = services.own_member(trainer)
+    past = services.set_team(make_occurrence(in_days=-1), member, role("Trainer"))
+
+    def lock(participation):
+        return "eingereicht" if participation.pk == past.pk else None
+
+    services.register_lock(lock)
+    try:
+        assert services.open_confirmations(trainer) == []
+    finally:
+        services._locks.remove(lock)
