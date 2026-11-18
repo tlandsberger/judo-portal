@@ -70,6 +70,21 @@ def can_self_edit(user: Any, member: Member) -> bool:
     return any(own.pk == member.pk for own in own_members(user))
 
 
+def parents_greeting(*, user: User | None = None, invitation: Invitation | None = None) -> str:
+    """„Liebe Eltern von Mia und Ben“ für Erziehungsberechtigte (auch erst eingeladene); sonst ""."""
+    if user is not None and user.pk:
+        names = Member.objects.filter(links__user=user, links__kind=LinkKind.GUARDIAN)
+    elif invitation is not None and invitation.pk:
+        names = Member.objects.filter(pending_links__invitation=invitation, pending_links__kind=LinkKind.GUARDIAN)
+    else:
+        return ""
+    first_names = list(names.order_by("birth_date", "first_name").values_list("first_name", flat=True).distinct())
+    if not first_names:
+        return ""
+    joined = first_names[0] if len(first_names) == 1 else f"{', '.join(first_names[:-1])} und {first_names[-1]}"
+    return f"Liebe Eltern von {joined}"
+
+
 def link_kinds_for(member: Member) -> list[LinkKind]:
     """Welche Zugänge für ein Mitglied möglich sind: eigener ab 14, Eltern bis 18."""
     age = member.age()

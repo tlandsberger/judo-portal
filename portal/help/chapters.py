@@ -82,7 +82,7 @@ CHAPTERS = (
         "Mein Zugang",
         "bi-person-circle",
         "Für alle",
-        "Anmeldewege verwalten, Telefon für Notfälle, abmelden, Zugang löschen.",
+        "Anmeldewege verwalten, Name und Telefon für Notfälle, abmelden, Zugang löschen.",
         _signed_in,
     ),
     Chapter(

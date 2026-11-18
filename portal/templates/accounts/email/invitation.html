@@ -3,7 +3,7 @@
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;">
     <tr><td style="background:#0a3d1c;color:#ffffff;padding:20px 28px;border-radius:14px 14px 0 0;font-size:20px;font-weight:700;">Wedeler TSV Judo</td></tr>
     <tr><td style="padding:28px;">
-      <p style="margin:0 0 16px;font-size:16px;">Hallo{% if invitation.first_name %} {{ invitation.first_name }}{% endif %},</p>
+      <p style="margin:0 0 16px;font-size:16px;">{{ greeting }},</p>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">du wurdest ins Vereinsportal der Judo-Abteilung im Wedeler TSV eingeladen.</p>
       <p style="margin:24px 0;"><a href="{{ url }}" style="background:#027d31;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;display:inline-block;">Zugang einrichten</a></p>
       <p style="margin:0 0 16px;font-size:14px;color:#5c5c5c;line-height:1.5;">Der Link ist {{ days }} Tage gültig. Nach der Einrichtung meldest du dich auf <a href="{{ base_url }}" style="color:#027d31;">{{ base_url }}</a> mit Passkey, Passwort oder einem Code per E-Mail an. Ist der Link abgelaufen oder funktioniert nicht, schreib an <a href="mailto:judo@wedeler-tsv.de" style="color:#027d31;">judo@wedeler-tsv.de</a>, dann bekommst du einen neuen.</p>

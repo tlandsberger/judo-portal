@@ -19,7 +19,7 @@ from portal.core import audit
 
 from . import devices
 from .models import Invitation, KnownDevice, Role, User
-from .signals import invitation_accepted
+from .signals import greeting_requested, invitation_accepted
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +30,20 @@ def invitation_url(invitation: Invitation) -> str:
     return settings.BASE_URL + reverse("accept_invitation", args=[invitation.token])
 
 
+def greeting(*, user: User | None = None, invitation: Invitation | None = None) -> str:
+    """Anrede ohne Satzzeichen: „Hallo Anna“; ohne Vornamen fragen wir andere Apps (z. B. „Liebe Eltern von Mia“)."""
+    first_name = user.first_name if user is not None else invitation.first_name if invitation is not None else ""
+    if first_name:
+        return f"Hallo {first_name}"
+    for _receiver, answer in greeting_requested.send(sender=User, user=user, invitation=invitation):
+        if answer:
+            return str(answer)
+    return "Hallo"
+
+
 def send_invitation(invitation: Invitation) -> None:
     context = {
+        "greeting": greeting(invitation=invitation),
         "invitation": invitation,
         "url": invitation_url(invitation),
         "days": settings.INVITATION_DAYS,

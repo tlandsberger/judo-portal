@@ -1,4 +1,4 @@
-{% autoescape off %}Hallo {{ user.get_short_name }},
+{% autoescape off %}{{ user.greeting }},
 
 dein Benutzer im Vereinsportal von Wedeler TSV Judo ist jetzt mit {{ member.display_name }} verknüpft{% if kind == "guardian" %} (als Elternteil){% endif %}.
 

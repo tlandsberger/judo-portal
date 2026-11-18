@@ -38,14 +38,26 @@ class InvitationForm(forms.Form):
         return email
 
 
-class RolesForm(forms.Form):
-    def __init__(self, *args: Any, allow_admin: bool, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.fields["roles"] = RolesField(allow_admin=allow_admin)
+class UserForm(forms.ModelForm):
+    """Name und Rollen eines Benutzers (Benutzerverwaltung)."""
 
-
-class PhoneForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("phone",)
-        widgets = {"phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "tel"})}
+        fields = ("first_name", "last_name")
+
+    def __init__(self, *args: Any, allow_admin: bool, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["roles"] = RolesField(allow_admin=allow_admin, initial=self.instance.roles)
+
+
+class ProfileForm(forms.ModelForm):
+    """„Meine Daten“: Name und Telefon, die jeder Benutzer selbst pflegt."""
+
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "phone")
+        widgets = {
+            "first_name": forms.TextInput(attrs={"autocomplete": "given-name"}),
+            "last_name": forms.TextInput(attrs={"autocomplete": "family-name"}),
+            "phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "tel"}),
+        }

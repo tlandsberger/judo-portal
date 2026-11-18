@@ -1,4 +1,4 @@
-{% autoescape off %}Hallo{% if invitation.first_name %} {{ invitation.first_name }}{% endif %},
+{% autoescape off %}{{ greeting }},
 
 du wurdest ins Vereinsportal der Judo-Abteilung im Wedeler TSV eingeladen.
 

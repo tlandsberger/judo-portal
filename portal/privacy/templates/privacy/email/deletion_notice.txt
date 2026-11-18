@@ -1,4 +1,4 @@
-{% autoescape off %}Hallo {{ user.get_short_name }},
+{% autoescape off %}{{ user.greeting }},
 
 {% if own %}dein Austritt aus der Judo-Abteilung ist eingetragen{% else %}der Austritt von {{ member.display_name }} aus der Judo-Abteilung ist eingetragen{% endif %} ({{ member.left_on|date:"d.m.Y" }}).
 

@@ -68,7 +68,7 @@ def test_login_and_settings_are_logged(client, parent):
     )
     client.post(reverse("security"), {"phone": "0170 1"})
     actions = set(AuditEntry.objects.filter(user_id=parent.pk).values_list("action", flat=True))
-    assert {"password_changed", "phone"} <= actions
+    assert {"password_changed", "profile"} <= actions
 
 
 def test_events_and_billing_are_logged(trainer, head):

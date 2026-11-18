@@ -8,6 +8,7 @@ from django.utils import timezone
 from portal.accounts import services
 from portal.accounts.adapter import PortalAccountAdapter
 from portal.accounts.models import Invitation, Role, User
+from portal.core.models import AuditEntry
 
 pytestmark = pytest.mark.django_db
 
@@ -220,3 +221,29 @@ def test_security_page_offers_add_or_manage_passkey(client) -> None:
     Authenticator.objects.create(user=user, type=Authenticator.Type.WEBAUTHN, data={"name": "Handy"})
     page = client.get(reverse("security")).content.decode()
     assert ">Verwalten<" in page and ">Passkey hinzufügen<" not in page
+
+
+class TestName:
+    def test_users_change_their_own_name(self, client) -> None:
+        user = make_user("mia@example.org", Role.MEMBER)
+        client.force_login(user)
+        response = client.post(
+            reverse("security"), {"first_name": " Mia ", "last_name": "Muster", "phone": "0170 1"}, follow=True
+        )
+        assert "Deine Daten sind gespeichert." in response.content.decode()
+        user.refresh_from_db()
+        assert (user.first_name, user.last_name, user.phone) == ("Mia", "Muster", "0170 1")
+        entry = AuditEntry.objects.get(action="profile")
+        assert entry.changes["Vorname"] == ["", "Mia"] and "Telefon" in entry.changes
+
+    def test_user_management_changes_name_and_roles(self, client) -> None:
+        client.force_login(make_user("alex@example.org", Role.DEPARTMENT_HEAD))
+        mia = make_user("mia@example.org", Role.MEMBER)
+        page = client.get(reverse("edit_user", args=[mia.pk])).content.decode()
+        assert 'name="first_name"' in page and 'name="last_name"' in page
+        client.post(
+            reverse("edit_user", args=[mia.pk]), {"first_name": "Mia", "last_name": "Muster", "roles": ["trainer"]}
+        )
+        mia.refresh_from_db()
+        assert (mia.first_name, mia.last_name, mia.roles) == ("Mia", "Muster", ["trainer"])
+        assert AuditEntry.objects.get(action="name").changes == {"Vorname": ["", "Mia"], "Nachname": ["", "Muster"]}

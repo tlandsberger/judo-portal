@@ -125,3 +125,31 @@ def test_unlink(client, head) -> None:
     client.force_login(head)
     client.post(reverse("member_unlink", args=[member.pk, member_link.pk]))
     assert not MemberLink.objects.exists()
+
+
+def test_parents_are_greeted_with_their_children(client, head, django_capture_on_commit_callbacks) -> None:
+    """Eltern laden wir ohne Namen ein; Anrede „Liebe Eltern von …“, bis sie ihren Namen ergänzen."""
+    kim, lea = make_member("Kim", age=8), make_member("Lea", age=6)
+    with django_capture_on_commit_callbacks(execute=True):
+        _, invitation = services.give_access(kim, "eltern@example.org", LinkKind.GUARDIAN, invited_by=head)
+    assert invitation is not None and (invitation.first_name, invitation.last_name) == ("", "")
+    assert mail.outbox[0].body.startswith("Liebe Eltern von Kim,")
+
+    client.post(reverse("accept_invitation", args=[invitation.token]))
+    parent = User.objects.get(email="eltern@example.org")
+    services.link(lea, parent, LinkKind.GUARDIAN)
+    assert parent.greeting == "Liebe Eltern von Kim und Lea"
+    client.logout()
+    client.force_login(parent)
+    home = client.get(reverse("home")).content.decode()
+    assert "Liebe Eltern von Kim und Lea" in home and "Wir kennen deinen Namen noch nicht" in home
+
+    parent.first_name = "Sam"
+    parent.save()
+    assert parent.greeting == "Hallo Sam"
+    assert "Wir kennen deinen Namen noch nicht" not in client.get(reverse("home")).content.decode()
+
+
+def test_greeting_without_name_or_children() -> None:
+    assert User.objects.create_user("x@example.org").greeting == "Hallo"
+    assert accounts.greeting(invitation=accounts.invite("y@example.org", send=False)) == "Hallo"
