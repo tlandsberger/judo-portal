@@ -103,6 +103,20 @@ test("Seitenleiste am Handy: öffnet über das Menü und schließt mit Escape", 
   await context.close();
 });
 
+test("Hauptaktion am Handy verdeckt den Footer nicht", async ({ browser }) => {
+  const context = await browser.newContext({ storageState: ADMIN_STATE, viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto("/verwaltung/benutzer/einladen/");
+  const footer = page.locator("footer");
+  await footer.scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const footerBox = await footer.boundingBox();
+  const barBox = await page.locator(".action-bar").boundingBox();
+  expect(footerBox && barBox).toBeTruthy();
+  expect(footerBox!.y + footerBox!.height).toBeLessThanOrEqual(barBox!.y + 1);
+  await context.close();
+});
+
 test("Portal ist als App installierbar (Manifest und Service Worker)", async ({ page, request }) => {
   const manifest = await (await request.get("/manifest.webmanifest")).json();
   expect(manifest.name).toBe("Wedeler TSV Judo");

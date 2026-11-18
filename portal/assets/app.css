@@ -147,6 +147,7 @@
     }
     .action-bar > * { flex: 1 1 auto; }
     .action-bar > :is(.btn-primary, .btn-error) { flex-grow: 2; order: 2; } /* Hauptaktion rechts, „Abbrechen“ links */
-    main:has(.action-bar) { padding-bottom: 6rem; }
+    /* Platz unter Inhalt und Footer; app.js setzt die echte Höhe der Leiste, die zweizeilig werden kann. */
+    .drawer-content:has(.action-bar) { padding-bottom: var(--action-bar-space, calc(8rem + env(safe-area-inset-bottom))); }
   }
 }
