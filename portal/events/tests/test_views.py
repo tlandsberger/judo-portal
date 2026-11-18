@@ -103,6 +103,16 @@ def test_participants_only_for_own_team(client, trainer, parent, child):
     assert client.get(reverse("member_list")).status_code == 403
 
 
+def test_link_from_occurrence_to_event_for_staff_only(client, trainer, parent, child):
+    occurrence = make_occurrence()
+    link = reverse("event_detail", args=[occurrence.event.pk])
+    page = login(client, trainer).get(reverse("occurrence_detail", args=[occurrence.pk])).content.decode()
+    assert link in page and "Zur Veranstaltung" in page
+    client.logout()
+    page = login(client, parent).get(reverse("occurrence_detail", args=[occurrence.pk])).content.decode()
+    assert link not in page  # Mitglieder dürfen die Veranstaltungsseite nicht öffnen
+
+
 def test_trainer_adds_self_and_exception(client, trainer, child):
     occurrence = make_occurrence(Event.objects.create(title="Kader"))
     TargetGroup.objects.create(event=occurrence.event, name="Erwachsene", min_age=18)
