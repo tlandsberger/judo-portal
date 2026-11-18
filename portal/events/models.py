@@ -526,3 +526,29 @@ class ScheduleTeam(models.Model):
 
     def __str__(self) -> str:
         return f"{self.member} – {self.schedule} ({self.role})"
+
+
+class QuickLink(models.Model):
+    """Kurzer Code für einen Termin oder eine Veranstaltung, als Quick-Link und QR-Code für Ausschreibungen
+    (ADR 0020). Der Code entsteht beim ersten Anzeigen."""
+
+    code = models.CharField("Code", max_length=12, unique=True)
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, null=True, blank=True, related_name="quick_link")
+    occurrence = models.OneToOneField(
+        Occurrence, on_delete=models.CASCADE, null=True, blank=True, related_name="quick_link"
+    )
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        verbose_name = "Quick-Link"
+        verbose_name_plural = "Quick-Links"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(event__isnull=False, occurrence__isnull=True)
+                | models.Q(event__isnull=True, occurrence__isnull=False),
+                name="quick_link_event_or_occurrence",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.code} → {self.event or self.occurrence}"

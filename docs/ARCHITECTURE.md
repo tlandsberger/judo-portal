@@ -33,7 +33,7 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | `portal.core` | App-Rahmen, Startseite, Bausteine, PWA (Manifest, Service Worker), Healthcheck, Backup, Zeitplaner, Änderungsprotokoll |
 | `portal.accounts` | Benutzer, Rollen, Einladungen, Benutzerverwaltung, Anpassungen an allauth |
 | `portal.members` | Mitglieder, CSV-Import, Verknüpfungen Benutzer ↔ Mitglied (m:n), „Meine Daten“ (ADR 0009) |
-| `portal.events` | Veranstaltungen, Arten, Zeitpläne, Termine, Zielgruppen und Vorlagen, Teilnahme mit Rollen und Warteliste, Gäste (ADR 0010, 0012, 0013, 0019) |
+| `portal.events` | Veranstaltungen, Arten, Zeitpläne, Termine, Zielgruppen und Vorlagen, Teilnahme mit Rollen und Warteliste, Gäste, Schnellzugang per Code (ADR 0010, 0012, 0013, 0019, 0020) |
 | `portal.notifications` | Push-Benachrichtigungen je Gerät mit Mail als Ersatz, Aktionsknöpfe (ADR 0011) |
 | `portal.privacy` | Auskunft, Löschen auf Wunsch und nach Austritt, Seite „Protokoll“ (ADR 0015) |
 | `portal.help` | Hilfe im Portal: Kapitel je Rolle, Kontexthilfe, Screenshots aus Playwright (ADR 0016) |

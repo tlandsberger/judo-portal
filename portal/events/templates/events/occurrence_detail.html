@@ -128,4 +128,5 @@
   {% else %}<p class="text-base-content/70">Noch niemand angemeldet.</p>{% endif %}
 </div></section>
 {% endif %}
+{% if quick %}{% url 'occurrence_qr' occurrence.pk 'svg' as qr_svg %}{% include "events/_quick_link.html" with qr=qr_svg|slice:":-4" what="zu diesem Termin" %}{% endif %}
 {% endblock %}

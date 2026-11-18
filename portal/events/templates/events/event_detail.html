@@ -98,4 +98,5 @@
   </form>
   {% endif %}
 </div></section>
+{% if quick %}{% url 'event_qr' event.pk 'svg' as qr_svg %}{% include "events/_quick_link.html" with qr=qr_svg|slice:":-4" what="zu den Terminen dieser Veranstaltung" %}{% endif %}
 {% endblock %}

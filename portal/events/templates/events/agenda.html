@@ -6,6 +6,10 @@
 {% block more %}{% if can_plan_events %}<li><a href="{% url 'event_list' %}"><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a></li>{% endif %}{% endblock %}
 {% block intro %}{% if agenda.has_members %}Alle Termine. Standardmäßig siehst du nur die, die zu {% if agenda.several %}euch{% else %}dir{% endif %} passen.{% else %}Alle Termine.{% endif %}{% endblock %}
 {% block page %}
+<form method="get" action="{% url 'quick_link_form' %}" class="mb-4 flex flex-wrap items-end gap-2" role="search" aria-label="Termin per Code öffnen">
+  <div class="fieldset"><label class="fieldset-legend text-sm" for="code">Code von der Ausschreibung</label><input class="input w-40 font-mono" id="code" name="code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="z. B. K7M4PX" required></div>
+  <button class="btn mb-1" type="submit">Öffnen</button>
+</form>
 <details class="collapse collapse-arrow mb-6 bg-base-100 shadow-sm"{% if form.errors %} open{% endif %}>
   <summary class="collapse-title font-semibold"><i class="bi bi-funnel" aria-hidden="true"></i> Filter{% if form.changed_count %} <span class="badge badge-soft badge-primary badge-sm">{{ form.changed_count }} aktiv</span>{% endif %}</summary>
   <div class="collapse-content">
