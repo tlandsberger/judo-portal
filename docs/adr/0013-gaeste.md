@@ -16,7 +16,7 @@ Teilnehmerliste stehen und ihre eigenen Angaben jederzeit sehen können.
     Minderjährigen Erziehungsberechtigte, Zeitpunkt der Zustimmung zum Datenschutzhinweis.
   - Die Teilnahme je Termin steht wie bei Mitgliedern in `Participation` (genau eins von Mitglied oder Gast), immer
     mit der „Rolle bei Anmeldung“.
-- **Nur bei „Gäste willkommen“** an der Veranstaltung.
+- **Nur bei „Gäste willkommen“** an der Veranstaltung (heute „Externe Teilnehmer zulassen“).
   - Zielgruppen gelten nach Jahrgang, Geschlecht, Graduierung und Gewicht; Interessen werden bei Gästen nicht geprüft.
   - Gäste zählen zur Höchstzahl und kommen sonst auf die Warteliste.
 - **Zwei Wege:**
