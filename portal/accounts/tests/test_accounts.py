@@ -211,16 +211,16 @@ class TestLogin:
 
 
 def test_security_page_offers_add_or_manage_passkey(client) -> None:
-    """Ohne Passkey: „Passkey hinzufügen“; mit Passkey nur „Verwalten“."""
+    """Ohne Passkey: „Hinzufügen“; mit Passkey nur „Verwalten“."""
     from allauth.mfa.models import Authenticator
 
     user = make_user("mia@example.org", Role.MEMBER)
     client.force_login(user)
     page = client.get(reverse("security")).content.decode()
-    assert ">Passkey hinzufügen<" in page and ">Verwalten<" not in page
+    assert ">Hinzufügen<" in page and ">Verwalten<" not in page
     Authenticator.objects.create(user=user, type=Authenticator.Type.WEBAUTHN, data={"name": "Handy"})
     page = client.get(reverse("security")).content.decode()
-    assert ">Verwalten<" in page and ">Passkey hinzufügen<" not in page
+    assert ">Verwalten<" in page and ">Hinzufügen<" not in page
 
 
 class TestName:
