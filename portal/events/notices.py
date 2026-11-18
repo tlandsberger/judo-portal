@@ -1,8 +1,8 @@
 """Benachrichtigungen rund um Termine: Push-Benachrichtigung, sonst Mail (über ``portal.notifications``, ADR 0011).
 
-Sofort: Absage, Änderung, Nachrücken, Vertretung, kein Trainer mehr. Über den Zeitplaner (alle 5 Minuten): Anmeldung
-offen, Erinnerung an den Anmeldeschluss, Stunden bestätigen, noch kein Trainer zwei Tage vorher. Jede Nachricht geht
-je Benutzer und Anlass nur einmal raus.
+Sofort: Absage, Änderung, Nachrücken, Vertretung, kein Trainer mehr, Anmeldung außerhalb der Zielgruppe. Über den
+Zeitplaner (alle 5 Minuten): Anmeldung offen, Erinnerung an den Anmeldeschluss, Stunden bestätigen, noch kein Trainer
+zwei Tage vorher. Jede Nachricht geht je Benutzer und Anlass nur einmal raus.
 """
 
 from __future__ import annotations
@@ -130,14 +130,13 @@ def promoted(participation: Participation) -> None:
 
 def _audience(occurrence: Occurrence, links: list[MemberLink]) -> dict[User, list[tuple[Member, services.Match]]]:
     """Wer zu einem Termin passt und noch nicht angemeldet ist, gruppiert nach Benutzer (Eltern, Mitglied selbst)."""
-    on = timezone.localdate(occurrence.starts_at)
     taken = set(occurrence.participations.filter(status__in=services.ACTIVE).values_list("member_id", flat=True))
     audience: dict[User, list[tuple[Member, services.Match]]] = defaultdict(list)
     for link in links:
         member = link.member
         if member.pk in taken or not member.is_active or not link.is_effective():
             continue
-        match = services.match_event(occurrence.event, member, on)
+        match = services.match_occurrence(occurrence, member)
         if match != services.Match.NO:
             audience[link.user].append((member, match))
     return audience
@@ -157,7 +156,7 @@ def _one_off_candidates(now: datetime) -> list[Occurrence]:
     return list(
         Occurrence.objects.filter(cancelled_at__isnull=True, starts_at__gt=now, schedule__isnull=True)
         .select_related("event")
-        .prefetch_related("event__target_groups__interests")
+        .prefetch_related("event__target_groups__interests", "target_groups__interests")
     )
 
 
@@ -327,6 +326,30 @@ def trainer_missing(occurrence: Occurrence, absent: str, by: User | None) -> Non
             title="Kein Trainer eingeteilt",
             body=f"{absent} hat sich bei {occurrence.event.title} am {_when(occurrence)} ausgetragen. "
             "Jetzt ist kein Trainer mehr eingeteilt.",
+            url=_url(occurrence),
+        )
+
+
+def off_target(participation: Participation, by: User | None = None) -> None:
+    """Anmeldung außerhalb einer empfohlenen Zielgruppe (ADR 0019): die Übungsleiter des Termins erfahren es sofort,
+    ohne Übungsleiter die Abteilungsleitung."""
+    occurrence = participation.occurrence
+    recipients = {
+        user
+        for team in services.team(occurrence)
+        if team.member and (user := services.member_user(team.member)) is not None
+    } or set(_heads())
+    recipients.discard(by)
+    person = participation.person
+    stamp = _stamp(participation.created_at)
+    for user in sorted(recipients, key=lambda u: u.pk):
+        notifications.notify(
+            user,
+            key=f"off-target:{participation.pk}:{user.pk}:{stamp}",
+            kind="off_target",
+            title="Anmeldung außerhalb der Zielgruppe",
+            body=f"{person.display_name} hat sich für {occurrence.event.title} am {_when(occurrence)} angemeldet, "
+            "gehört aber nicht zur Zielgruppe.",
             url=_url(occurrence),
         )
 

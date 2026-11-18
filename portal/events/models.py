@@ -113,6 +113,11 @@ def default_event_type() -> int | None:
     return first.pk if first else None
 
 
+class TargetMode(models.TextChoices):
+    REQUIRED = "required", "Vorgabe"
+    RECOMMENDED = "recommended", "Empfehlung"
+
+
 class Event(models.Model):
     """Das „Was“: Training, Wettkampf … Termine entstehen aus Zeitplänen oder werden von Hand ergänzt."""
 
@@ -138,6 +143,14 @@ class Event(models.Model):
         "eingetragen.",
     )
     guest_token = models.CharField(max_length=40, blank=True, editable=False)
+    target_mode = models.CharField(
+        "Zielgruppen gelten als",
+        max_length=12,
+        choices=TargetMode.choices,
+        default=TargetMode.REQUIRED,
+        help_text="Vorgabe: Wer nicht passt, kann nur von den Übungsleitern oder der Abteilungsleitung angemeldet "
+        "werden. Empfehlung: Jeder kann sich anmelden; die Übungsleiter erfahren, wenn jemand nicht passt.",
+    )
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
@@ -262,6 +275,12 @@ class Occurrence(models.Model):
     trainer_missing_since = models.DateTimeField(
         null=True, blank=True, editable=False, help_text="Der letzte Trainer hat sich ausgetragen (ADR 0018)."
     )
+    custom_target_groups = models.BooleanField(
+        "Zielgruppen weichen ab",
+        default=False,
+        editable=False,
+        help_text="Der Termin hat eigene Zielgruppen statt der Zielgruppen der Veranstaltung (ADR 0019).",
+    )
 
     class Meta:
         verbose_name = "Termin"
@@ -296,6 +315,21 @@ class Occurrence(models.Model):
         opens, closes = schedule.opens_hours_before, schedule.closes_hours_before
         self.registration_opens_at = self.starts_at - timedelta(hours=opens) if opens is not None else None
         self.registration_closes_at = self.starts_at - timedelta(hours=closes) if closes is not None else None
+
+
+class OccurrenceTargetGroup(Criteria):
+    """Zielgruppe eines einzelnen Termins; gilt statt der Zielgruppen der Veranstaltung (ADR 0019)."""
+
+    occurrence = models.ForeignKey(Occurrence, on_delete=models.CASCADE, related_name="target_groups")
+    name = models.CharField("Bezeichnung", max_length=80, blank=True, help_text="Optional, z. B. „U11“.")
+
+    class Meta:
+        verbose_name = "Zielgruppe des Termins"
+        verbose_name_plural = "Zielgruppen des Termins"
+        ordering = ("pk",)
+
+    def __str__(self) -> str:
+        return self.name or self.summary
 
 
 class ParticipantRole(models.Model):
@@ -430,6 +464,11 @@ class Participation(models.Model):
         blank=True,
         related_name="+",
         help_text="Ausnahme: angemeldet, obwohl das Mitglied nicht zur Zielgruppe passt.",
+    )
+    off_target = models.BooleanField(
+        "Außerhalb der Zielgruppe",
+        default=False,
+        help_text="Selbst angemeldet, obwohl die Zielgruppe nur eine Empfehlung ist und nicht passt (ADR 0019).",
     )
     weight = models.DecimalField("Gewicht (kg)", max_digits=4, decimal_places=1, null=True, blank=True)
     note = models.CharField("Hinweis", max_length=200, blank=True)

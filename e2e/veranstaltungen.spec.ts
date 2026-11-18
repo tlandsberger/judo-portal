@@ -76,6 +76,22 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await admin.getByRole("button", { name: "Eintragen", exact: true }).click();
   await expect(admin.getByText("Clara Clever ist als Trainer eingetragen.")).toBeVisible();
   await expectNoA11yViolations(admin);
+  // Zielgruppen nur für diesen Termin anpassen und wieder zurücknehmen (ADR 0019)
+  const targetGroups = await admin.locator("a", { hasText: "Zielgruppen anpassen" }).getAttribute("href");
+  await admin.goto(targetGroups!);
+  await expect(admin.getByText("Der Termin übernimmt die Zielgruppen der Veranstaltung")).toBeVisible();
+  await expectNoA11yViolations(admin);
+  await admin.getByRole("button", { name: "Für diesen Termin anpassen" }).click();
+  await expect(admin.getByLabel("Bezeichnung")).toHaveValue("Kinder und Jugend");
+  await admin.getByLabel("Alter bis").fill("12");
+  await expectNoA11yViolations(admin);
+  await admin.getByRole("button", { name: "Speichern" }).click();
+  await expect(admin.getByText("Zielgruppen für diesen Termin gespeichert.")).toBeVisible();
+  await expect(admin.getByText("für diesen Termin angepasst")).toBeVisible();
+  await admin.goto(targetGroups!);
+  await admin.getByLabel("Weitere Aktionen").click();
+  await admin.getByRole("button", { name: "Wieder wie die Veranstaltung" }).click();
+  await expect(admin.getByText("Der Termin hat wieder die Zielgruppen der Veranstaltung.")).toBeVisible();
 
   // Elternteil für Mia einladen
   await admin.goto("/mitglieder/");

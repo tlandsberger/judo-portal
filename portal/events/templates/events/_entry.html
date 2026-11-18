@@ -9,14 +9,14 @@
     <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ event.title }}</a>
     <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %} · {{ event.event_type }}{% if not entry.rows %}{% for p in entry.team %} · {{ p.member.first_name }} ({{ p.role.name }}){% endfor %}{% endif %}</div>
     {% if occurrence.is_cancelled %}<div class="mt-1"><span class="badge badge-soft badge-error badge-sm">abgesagt</span></div>
-    {% elif not several and entry.rows %}{% with item=entry.rows.0.item %}<div class="mt-1 flex flex-wrap gap-1">{% include "events/_status.html" %}</div>{% endwith %}{% endif %}
+    {% elif not several and entry.rows %}{% with item=entry.rows.0.item link=entry.rows.0.link %}<div class="mt-1 flex flex-wrap gap-1">{% include "events/_status.html" %}</div>{% endwith %}{% endif %}
     {% if occurrence.note %}<p class="mt-1 text-sm">{{ occurrence.note }}</p>{% endif %}
     {% if several and not occurrence.is_cancelled %}
     <ul class="mt-2 flex flex-col gap-2" aria-label="Eigene Mitglieder">
       {% for row in entry.rows %}
       <li class="flex flex-wrap items-center gap-2">
         <span class="min-w-16 font-semibold">{{ row.member.first_name }}</span>
-        {% include "events/_status.html" with item=row.item %}
+        {% include "events/_status.html" with item=row.item link=row.link %}
         <span class="grow"></span>
         {% include "events/_action.html" with item=row.item member=row.member %}
       </li>

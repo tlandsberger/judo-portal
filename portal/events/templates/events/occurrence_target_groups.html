@@ -1,0 +1,28 @@
+{% extends "layouts/page.html" %}
+{% load static %}
+{% block title %}Zielgruppen für {{ event.title }} am {{ occurrence.starts_at|date:"d.m.Y" }}{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block back_url %}{% url 'occurrence_detail' occurrence.pk %}{% endblock %}
+{% block back_label %}{{ event.title }}{% endblock %}
+{% block heading %}Zielgruppen für diesen Termin{% endblock %}
+{% block intro %}{{ event.title }} am {{ occurrence.starts_at|date:"l, d.m.Y" }} um {{ occurrence.starts_at|date:"H:i" }} Uhr. Die Zielgruppen gelten als {{ event.get_target_mode_display }}; das stellst du an der Veranstaltung ein.{% endblock %}
+{% block more %}{% if groups is not None %}<li><button type="submit" form="wie-veranstaltung"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Wieder wie die Veranstaltung</button></li>{% endif %}{% endblock %}
+{% block more_forms %}{% if groups is not None %}<form id="wie-veranstaltung" method="post" hidden>{% csrf_token %}<input type="hidden" name="action" value="reset"></form>{% endif %}{% endblock %}
+{% block page %}
+{% if groups is None %}
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-veranstaltung"><div class="card-body gap-4">
+  <h2 class="card-title" id="h-veranstaltung">Wie die Veranstaltung</h2>
+  <p>Der Termin übernimmt die Zielgruppen der Veranstaltung: {% for group in event_groups %}{{ group }}{% if not forloop.last %}; {% endif %}{% empty %}alle Mitglieder{% endfor %}.</p>
+  <p class="text-sm text-base-content/70">Passt du sie an, gelten sie nur für diesen Termin. Ändert sich später der Zeitplan, bleibt der Termin, wie er ist.</p>
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="customize">
+    <div class="action-bar"><button type="submit" class="btn btn-primary"><i class="bi bi-pencil" aria-hidden="true"></i> Für diesen Termin anpassen</button><a class="btn" href="{% url 'occurrence_detail' occurrence.pk %}">Abbrechen</a></div>
+  </form>
+</div></section>
+{% else %}
+<form method="post" class="flex flex-col gap-6">{% csrf_token %}<input type="hidden" name="action" value="save">
+  {% include "events/_target_groups.html" %}
+  <div class="action-bar"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% url 'occurrence_detail' occurrence.pk %}">Abbrechen</a></div>
+</form>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if groups is not None %}<script src="{% static 'js/target-groups.js' %}"></script>{% endif %}{% endblock %}

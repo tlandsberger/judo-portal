@@ -15,11 +15,13 @@ from .models import (
     EventType,
     Guest,
     Occurrence,
+    OccurrenceTargetGroup,
     ParticipantRole,
     Repeat,
     Schedule,
     TargetGroup,
     TargetGroupTemplate,
+    TargetMode,
     Weekday,
     WeekOfMonth,
 )
@@ -136,6 +138,32 @@ TargetGroupFormSet = forms.inlineformset_factory(
 )
 
 
+class OccurrenceTargetGroupForm(CriteriaForm):
+    """Ein Zielgruppen-Block für einen einzelnen Termin (ADR 0019)."""
+
+    class Meta:
+        model = OccurrenceTargetGroup
+        fields = ("name", *CRITERIA_FIELDS)
+        localized_fields = ("min_weight", "max_weight")
+        widgets = CRITERIA_WIDGETS
+
+
+class BaseOccurrenceTargetGroupFormSet(forms.BaseInlineFormSet):
+    def add_fields(self, form: forms.ModelForm, index: int | None) -> None:
+        super().add_fields(form, index)
+        form.fields["DELETE"].label = "Zielgruppe entfernen"
+
+
+OccurrenceTargetGroupFormSet = forms.inlineformset_factory(
+    Occurrence,
+    OccurrenceTargetGroup,
+    form=OccurrenceTargetGroupForm,
+    formset=BaseOccurrenceTargetGroupFormSet,
+    extra=0,
+    can_delete=True,
+)
+
+
 class EventForm(forms.ModelForm):
     class Meta:
         model = Event
@@ -147,9 +175,11 @@ class EventForm(forms.ModelForm):
             "capacity",
             "weight_required",
             "guests_welcome",
+            "target_mode",
         )
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
+            "target_mode": forms.RadioSelect,
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -158,6 +188,10 @@ class EventForm(forms.ModelForm):
         field = self.fields["event_type"]
         field.queryset = EventType.objects.filter(models.Q(is_active=True) | models.Q(pk=current))  # type: ignore[attr-defined]
         field.empty_label = None  # type: ignore[attr-defined]
+        self.fields["target_mode"].required = False  # fehlt der Wert, bleibt es bei der bisherigen Einstellung
+
+    def clean_target_mode(self) -> str:
+        return self.cleaned_data.get("target_mode") or self.instance.target_mode or TargetMode.REQUIRED
 
 
 RHYTHM_FIELDS = ("repeat", "interval", "week_of_month")
@@ -284,7 +318,7 @@ class EventCreateForm(EventForm):
 
     @property
     def event_fields(self) -> list[Any]:
-        extra = {"dates", *self.ONCE_FIELDS, *self.WEEKLY_FIELDS, *self.TEAM_FIELDS}
+        extra = {"dates", "target_mode", *self.ONCE_FIELDS, *self.WEEKLY_FIELDS, *self.TEAM_FIELDS}
         return [self[name] for name in self.fields if name not in extra]
 
     @property

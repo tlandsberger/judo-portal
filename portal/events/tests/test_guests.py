@@ -10,12 +10,14 @@ from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
 
+from portal.accounts.models import Role
 from portal.events import guests, services
 from portal.events.models import Event, Guest, ParticipationStatus, TargetGroup
 from portal.events.services import RegistrationError
 from portal.members.models import Interest
+from portal.notifications.models import SentNotification
 
-from .conftest import PASSWORD, make_occurrence, role
+from .conftest import PASSWORD, make_occurrence, make_user, role
 
 pytestmark = pytest.mark.django_db
 
@@ -193,3 +195,17 @@ def test_team_page_and_link(client, head, trainer):
     client.post(reverse("event_guest_link", args=[event.pk]))
     event.refresh_from_db()
     assert event.guest_token != old
+
+
+def test_guest_outside_recommended_group_tells_team_after_confirmation(django_capture_on_commit_callbacks):
+    head = make_user("leitung@example.org", Role.DEPARTMENT_HEAD)
+    event = open_event(target_mode="recommended")
+    TargetGroup.objects.create(event=event, name="Erwachsene", min_age=18)
+    occurrence = make_occurrence(event, in_days=5)
+    with django_capture_on_commit_callbacks(execute=True):
+        guest = guests.register(event, DATA, [occurrence])
+    assert guest.participations.get().off_target
+    assert not SentNotification.objects.filter(kind="off_target").exists()  # erst nach der Bestätigung
+    with django_capture_on_commit_callbacks(execute=True):
+        guests.confirm(guest)
+    assert [n.user for n in SentNotification.objects.filter(kind="off_target")] == [head]

@@ -1,4 +1,4 @@
-{# Status eines eigenen Mitglieds an einem Termin; item = AgendaItem. #}
+{# Status eines eigenen Mitglieds an einem Termin; item = AgendaItem, link = MemberLink. #}
 {% with occurrence=item.occurrence %}
 {% if item.team_role %}<span class="badge badge-soft badge-primary badge-sm">{{ item.team_role.name }}</span>
 {% elif item.status == "registered" %}<span class="badge badge-soft badge-primary badge-sm">angemeldet</span>
@@ -8,6 +8,7 @@
   {% if item.window == "before" %}<span class="badge badge-ghost badge-sm">Anmeldung ab {{ occurrence.registration_opens|date:"d.m. H:i" }}</span>
   {% elif item.window == "closed" %}<span class="badge badge-ghost badge-sm">Anmeldung geschlossen</span>{% endif %}
 {% endif %}
-{% if item.match == 0 and not item.participation.is_active %}<span class="badge badge-ghost badge-sm">passt nicht zur Zielgruppe</span>{% endif %}
+{% if item.blocked_hint %}<p class="basis-full text-sm">{% include "events/_not_in_group.html" with member=link.member %}</p>
+{% elif item.match == 0 and not item.participation.is_active %}<span class="badge badge-ghost badge-sm">passt nicht zur Zielgruppe</span>{% endif %}
 {% if item.match == 1 and not item.participation.is_active %}<span class="badge badge-ghost badge-sm">Gewicht fehlt</span>{% endif %}
 {% endwith %}

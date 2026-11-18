@@ -5,7 +5,7 @@
 {% block heading %}{{ event.title }}{% endblock %}
 {% block heading_extra %}{% if occurrence.is_cancelled %}<span class="badge badge-soft badge-error">abgesagt</span>{% endif %}{% endblock %}
 {% block primary %}{% if lead %}<a class="btn btn-primary" href="{% url 'occurrence_edit' occurrence.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>{% endif %}{% endblock %}
-{% block more %}{% if can_plan_events %}<li><a href="{% url 'event_detail' event.pk %}"><i class="bi bi-calendar3" aria-hidden="true"></i> Zur Veranstaltung</a></li>{% endif %}{% if lead %}{% if not occurrence.is_cancelled %}<li><button type="submit" form="termin-absagen" class="text-error"><i class="bi bi-x-circle" aria-hidden="true"></i> {% if started %}Hat nicht stattgefunden{% else %}Termin absagen{% endif %}</button></li>{% elif can_manage %}<li><button type="submit" form="termin-findet-statt"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Findet doch statt</button></li>{% endif %}{% endif %}{% endblock %}
+{% block more %}{% if can_plan_events %}<li><a href="{% url 'event_detail' event.pk %}"><i class="bi bi-calendar3" aria-hidden="true"></i> Zur Veranstaltung</a></li>{% endif %}{% if can_manage %}<li><a href="{% url 'occurrence_target_groups' occurrence.pk %}"><i class="bi bi-bullseye" aria-hidden="true"></i> Zielgruppen anpassen</a></li>{% endif %}{% if lead %}{% if not occurrence.is_cancelled %}<li><button type="submit" form="termin-absagen" class="text-error"><i class="bi bi-x-circle" aria-hidden="true"></i> {% if started %}Hat nicht stattgefunden{% else %}Termin absagen{% endif %}</button></li>{% elif can_manage %}<li><button type="submit" form="termin-findet-statt"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Findet doch statt</button></li>{% endif %}{% endif %}{% endblock %}
 {% block more_forms %}{% if lead %}<form id="termin-absagen" method="post" action="{% url 'occurrence_cancel' occurrence.pk %}" hidden>{% csrf_token %}</form><form id="termin-findet-statt" method="post" action="{% url 'occurrence_cancel' occurrence.pk %}" hidden>{% csrf_token %}<input type="hidden" name="undo" value="1"></form>{% endif %}{% endblock %}
 {% block intro %}{{ event.event_type }}{% endblock %}
 {% block page %}
@@ -16,7 +16,7 @@
     <div><dt class="text-sm text-base-content/70">Wo</dt><dd>{{ occurrence.place|default:"–" }}</dd></div>
     <div><dt class="text-sm text-base-content/70">Anmeldung</dt><dd>{% if window == "before" %}ab {{ occurrence.registration_opens|date:"d.m.Y H:i" }} Uhr{% elif window == "open" %}offen bis {{ occurrence.registration_closes|date:"d.m.Y H:i" }} Uhr{% else %}geschlossen{% endif %}</dd></div>
     <div><dt class="text-sm text-base-content/70">Plätze</dt><dd>{{ registered }}{% if event.capacity %} von {{ event.capacity }}{% endif %} angemeldet</dd></div>
-    {% if event.target_groups.all %}<div><dt class="text-sm text-base-content/70">Für</dt><dd>{% for group in event.target_groups.all %}{{ group }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd></div>{% endif %}
+    {% if target_groups or occurrence.custom_target_groups %}<div><dt class="text-sm text-base-content/70">Für</dt><dd>{% for group in target_groups %}{{ group }}{% if not forloop.last %}, {% endif %}{% empty %}alle{% endfor %}{% if recommendation %} <span class="badge badge-ghost badge-sm">Empfehlung</span>{% endif %}{% if occurrence.custom_target_groups %} <span class="badge badge-ghost badge-sm">für diesen Termin angepasst</span>{% endif %}</dd></div>{% endif %}
     <div><dt class="text-sm text-base-content/70">Übungsleiter</dt><dd>{% for p in team %}{{ p.member.display_name }} ({{ p.role.name }}){% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</dd></div>
   </dl>
   {% if event.description %}<p class="whitespace-pre-line">{{ event.description }}</p>{% endif %}
@@ -32,6 +32,7 @@
       <div class="list-col-grow">
         <div class="font-semibold">{{ member_link.member.display_name }}</div>
         <div class="text-sm text-base-content/70">{% if item.team_role %}als {{ item.team_role.name }} eingeteilt{% elif item.status == "registered" %}angemeldet{% if item.participation.weight %} · {{ item.participation.weight|floatformat:1 }} kg{% endif %}{% elif item.status == "waitlist" %}auf der Warteliste{% elif item.status == "cancelled" %}abgemeldet{% elif item.match == 0 %}passt nicht zur Zielgruppe{% else %}nicht angemeldet{% endif %}</div>
+        {% if item.blocked_hint %}<p class="mt-1 text-sm">{% include "events/_not_in_group.html" with link=member_link member=member_link.member %}</p>{% endif %}
       </div>
       {% if item.can_register %}<a class="btn btn-primary btn-sm" href="{% url 'register' occurrence.pk member_link.member.pk %}" aria-label="{{ member_link.member.first_name }} anmelden">Anmelden</a>
       {% elif item.can_unregister %}<form method="post" action="{% url 'unregister' occurrence.pk member_link.member.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" aria-label="{{ member_link.member.first_name }} abmelden">Abmelden</button></form>{% endif %}
@@ -111,7 +112,7 @@
     {% for row in participants %}
     <li class="list-row items-start px-0">
       <div class="list-col-grow">
-        <div class="font-semibold">{{ row.person.display_name }}{% if row.guest %} <span class="badge badge-neutral badge-sm">Gast{% if row.guest.club %} · {{ row.guest.club }}{% endif %}</span>{% endif %}{% if row.participation.status == "waitlist" %} <span class="badge badge-neutral badge-sm">Warteliste</span>{% endif %}{% if row.participation.exception_by %} <span class="badge badge-ghost badge-sm">Ausnahme</span>{% endif %}</div>
+        <div class="font-semibold">{{ row.person.display_name }}{% if row.guest %} <span class="badge badge-neutral badge-sm">Gast{% if row.guest.club %} · {{ row.guest.club }}{% endif %}</span>{% endif %}{% if row.participation.status == "waitlist" %} <span class="badge badge-neutral badge-sm">Warteliste</span>{% endif %}{% if row.participation.exception_by %} <span class="badge badge-ghost badge-sm">Ausnahme</span>{% endif %}{% if row.participation.off_target %} <span class="badge badge-ghost badge-sm">außerhalb der Zielgruppe</span>{% endif %}</div>
         <div class="text-sm text-base-content/70">Jahrgang {{ row.person.birth_date|date:"Y" }} ({{ row.age }}) · {{ row.person.grade_short|default:"keine Graduierung" }} · {% if row.weight %}{{ row.weight|floatformat:1 }} kg{% else %}<span class="text-error">Gewicht fehlt</span>{% endif %}</div>
         {% if row.participation.note %}<div class="text-sm">„{{ row.participation.note }}“</div>{% endif %}
         <div class="mt-1 text-sm"><span class="text-base-content/70">Notfall:</span>

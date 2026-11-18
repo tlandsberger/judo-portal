@@ -8,6 +8,7 @@
 <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
   <p>{{ occurrence.event.title }} am {{ occurrence.starts_at|date:"l, d.m.Y" }} um {{ occurrence.starts_at|date:"H:i" }} Uhr</p>
   {% if maybe %}<div role="note" class="alert"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Ob {{ member.first_name }} passt, hängt vom Gewicht ab. Trag es am besten in „Meine Daten“ ein.</span></div>{% endif %}
+  {% if off_target %}<div role="note" class="alert"><i class="bi bi-info-circle" aria-hidden="true"></i><span>{{ member.first_name }} gehört nicht zur Zielgruppe. {{ off_target_note }}</span></div>{% endif %}
   <form method="post" class="flex flex-col gap-4">{% csrf_token %}<input type="hidden" name="form" value="1"><input type="hidden" name="next" value="{{ request.GET.next }}">
     {{ form }}
     <div class="action-bar"><button type="submit" class="btn btn-primary">Anmelden</button><a class="btn" href="{% url 'occurrence_detail' occurrence.pk %}">Abbrechen</a></div>

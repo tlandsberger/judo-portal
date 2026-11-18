@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import time, timedelta
 from decimal import Decimal
 
 import pytest
@@ -8,11 +8,12 @@ from django.core import mail
 from django.utils import timezone
 
 from portal.events import services
-from portal.events.models import Event, ParticipationStatus, TargetGroup
+from portal.events.models import Event, ParticipationStatus, Schedule, TargetGroup, TargetMode
 from portal.events.services import RegistrationError
 from portal.members.models import LinkKind, MemberLink
+from portal.notifications.models import SentNotification
 
-from .conftest import event_type, make_member, make_occurrence, make_user
+from .conftest import event_type, make_member, make_occurrence, make_user, role
 
 pytestmark = pytest.mark.django_db
 
@@ -30,8 +31,92 @@ def test_register_and_unregister(child, parent):
 def test_target_group_blocks_registration(child, parent):
     event = Event.objects.create(title="Erwachsene")
     TargetGroup.objects.create(event=event, name="Erwachsene", min_age=18)
-    with pytest.raises(RegistrationError, match="passt nicht"):
+    with pytest.raises(
+        RegistrationError, match=r"^Mia gehört leider nicht zur Zielgruppe dieses Termins\. Anmeldung nur"
+    ):
         services.register(make_occurrence(event), child, parent)
+
+
+def test_own_profile_gets_du_in_hint(trainer):
+    event = Event.objects.create(title="Kinder")
+    TargetGroup.objects.create(event=event, max_age=12)
+    with pytest.raises(RegistrationError, match=r"^Du gehörst leider nicht"):
+        services.register(make_occurrence(event), services.own_member(trainer), trainer)
+
+
+def test_recommendation_allows_registration_and_tells_team(
+    child, parent, trainer, head, django_capture_on_commit_callbacks
+):
+    event = Event.objects.create(title="Erwachsene", target_mode=TargetMode.RECOMMENDED)
+    TargetGroup.objects.create(event=event, min_age=18)
+    occurrence = make_occurrence(event)
+    services.set_team(occurrence, services.own_member(trainer), role("Trainer"))
+    with django_capture_on_commit_callbacks(execute=True):
+        registration = services.register(occurrence, child, parent)
+    assert registration.status == ParticipationStatus.REGISTERED and registration.off_target
+    sent = SentNotification.objects.filter(kind="off_target")
+    assert [n.user for n in sent] == [trainer]  # nicht die Abteilungsleitung, es gibt Übungsleiter
+    assert sent[0].title == "Anmeldung außerhalb der Zielgruppe"
+    assert any("Mia Muster hat sich für Erwachsene" in m.body for m in mail.outbox)
+
+
+def test_off_target_without_team_goes_to_heads(child, parent, head, django_capture_on_commit_callbacks):
+    event = Event.objects.create(title="Erwachsene", target_mode=TargetMode.RECOMMENDED)
+    TargetGroup.objects.create(event=event, min_age=18)
+    with django_capture_on_commit_callbacks(execute=True):
+        services.register(make_occurrence(event), child, parent)
+    assert [n.user for n in SentNotification.objects.filter(kind="off_target")] == [head]
+
+
+def test_matching_registration_is_not_off_target(child, parent, head, django_capture_on_commit_callbacks):
+    event = Event.objects.create(title="Kinder", target_mode=TargetMode.RECOMMENDED)
+    TargetGroup.objects.create(event=event, max_age=12)
+    with django_capture_on_commit_callbacks(execute=True):
+        assert not services.register(make_occurrence(event), child, parent).off_target
+    assert not SentNotification.objects.filter(kind="off_target").exists()
+
+
+def test_occurrence_target_groups_override_event(child, parent, head):
+    event = Event.objects.create(title="Training")
+    TargetGroup.objects.create(event=event, name="Erwachsene", min_age=18)
+    occurrence = make_occurrence(event)
+    assert services.match_occurrence(occurrence, child) == services.Match.NO
+    services.customize_target_groups(occurrence, head)
+    occurrence.refresh_from_db()
+    assert occurrence.custom_target_groups and occurrence.is_modified
+    [group] = occurrence.target_groups.all()
+    assert group.name == "Erwachsene" and group.min_age == 18  # Kopie der Veranstaltung
+    group.min_age = None
+    group.max_age = 12
+    group.save()
+    assert services.match_occurrence(occurrence, child) == services.Match.YES
+    assert services.register(occurrence, child, parent).status == ParticipationStatus.REGISTERED
+    other = make_occurrence(event, in_days=10)
+    assert services.match_occurrence(other, child) == services.Match.NO  # nur dieser Termin
+    services.reset_target_groups(occurrence, head)
+    occurrence.refresh_from_db()
+    assert not occurrence.custom_target_groups and not occurrence.target_groups.exists()
+    assert services.match_occurrence(occurrence, child) == services.Match.NO
+
+
+def test_custom_target_groups_survive_regenerate(head):
+    event = Event.objects.create(title="Training")
+    today = timezone.localdate()
+    schedule = Schedule.objects.create(
+        event=event,
+        weekday=(today + timedelta(days=2)).weekday(),
+        start_time=time(17),
+        end_time=time(18),
+        valid_from=today,
+    )
+    services.generate(schedule)
+    occurrence = schedule.occurrences.first()
+    services.customize_target_groups(occurrence, head)
+    schedule.start_time = time(16)
+    schedule.save()
+    services.regenerate(schedule)
+    occurrence.refresh_from_db()
+    assert occurrence.custom_target_groups
 
 
 def test_exception_ignores_target_group_window_and_capacity(child, trainer):
