@@ -10,6 +10,7 @@ from portal.accounts.models import Role
 from portal.members.forms import DateInput, WeightInput
 from portal.members.models import Gender, Member
 
+from .attachments import ACCEPT
 from .models import (
     Event,
     EventType,
@@ -646,3 +647,26 @@ class AgendaFilterForm(forms.Form):
             return 0
         default = {"passend": self.has_members}
         return sum(1 for name in self.fields if bool(self.cleaned_data.get(name)) != default.get(name, False))
+
+
+class AttachmentForm(forms.Form):
+    file = forms.FileField(label="Datei", help_text="PDF, JPG, PNG, DOCX, XLSX oder ODT, höchstens 10 MB.")
+    title = forms.CharField(label="Titel", max_length=120, required=False, help_text="Leer heißt: Dateiname.")
+    public = forms.BooleanField(label="Für externe Teilnehmer sichtbar", required=False)
+
+    def __init__(self, *args: Any, event: Event, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["file"].widget.attrs["accept"] = ACCEPT
+        if not event.guests_welcome:
+            del self.fields["public"]
+
+
+class ExportForm(forms.Form):
+    start = forms.DateField(label="Von", required=False, widget=DateInput())
+    end = forms.DateField(label="Bis", required=False, widget=DateInput())
+
+    def clean(self) -> dict[str, Any]:
+        data = super().clean() or {}
+        if data.get("start") and data.get("end") and data["start"] > data["end"]:
+            raise forms.ValidationError("„Von“ liegt nach „Bis“.")
+        return data

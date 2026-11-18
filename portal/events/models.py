@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import secrets
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -160,6 +162,43 @@ class Event(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+def attachment_path(instance: EventAttachment, filename: str) -> str:
+    """Ablage unter anhaenge/<Veranstaltung>/ mit zufälligem Namen; der Originalname steht in ``filename``."""
+    suffix = Path(filename).suffix.lower()
+    return f"anhaenge/{instance.event_id}/{secrets.token_hex(12)}{suffix}"
+
+
+class EventAttachment(models.Model):
+    """Datei zu einer Veranstaltung, z. B. Ausschreibung oder Packliste. Liegt im Datenverzeichnis (ADR 0021)."""
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="attachments")
+    title = models.CharField("Titel", max_length=120)
+    file = models.FileField("Datei", upload_to=attachment_path, max_length=200)
+    filename = models.CharField("Dateiname", max_length=200)
+    size = models.PositiveIntegerField("Größe (Bytes)")
+    public = models.BooleanField(
+        "Für externe Teilnehmer sichtbar",
+        default=False,
+        help_text="Erscheint auch auf der Anmeldeseite für externe Teilnehmer, solange sie zugelassen sind.",
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    uploaded_at = models.DateTimeField("Hochgeladen am", default=timezone.now, editable=False)
+
+    class Meta:
+        verbose_name = "Anhang"
+        verbose_name_plural = "Anhänge"
+        ordering = ("title", "pk")
+
+    def __str__(self) -> str:
+        return self.title
+
+    @property
+    def extension(self) -> str:
+        return Path(self.filename).suffix.lower().lstrip(".")
 
 
 class TargetGroup(Criteria):

@@ -16,6 +16,12 @@
   </div></section>
   {% endif %}
 
+  {% if attachments %}
+  <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-anhaenge"><div class="card-body gap-2">
+    <h2 class="card-title" id="h-anhaenge">Anhänge</h2>
+    {% include "events/_attachments.html" %}
+  </div></section>
+  {% endif %}
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-termine"><div class="card-body gap-2">
     <h2 class="card-title" id="h-termine">Termine</h2>
     <ul class="list">

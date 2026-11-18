@@ -9,6 +9,7 @@
       {% if event.location %}<p class="text-base-content/70">{{ event.location }}</p>{% endif %}
     </div>
     {% if event.description %}<p class="whitespace-pre-line">{{ event.description }}</p>{% endif %}
+    {% if attachments %}<section aria-labelledby="h-anhaenge"><h2 class="font-semibold" id="h-anhaenge">Anhänge</h2>{% include "events/_attachments.html" %}</section>{% endif %}
     {% if occurrences %}
     <form method="post" class="flex flex-col gap-4">{% csrf_token %}
       {{ form.non_field_errors }}

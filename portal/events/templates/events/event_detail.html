@@ -4,7 +4,7 @@
 {% block back_label %}Veranstaltungen{% endblock %}
 {% block heading %}{{ event.title }}{% endblock %}
 {% block primary %}{% if can_manage %}<a class="btn btn-primary" href="{% url 'event_edit' event.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Bearbeiten</a>{% endif %}{% endblock %}
-{% block more %}{% if can_manage %}<li><button type="submit" form="event-loeschen" class="text-error"><i class="bi bi-trash" aria-hidden="true"></i> Veranstaltung löschen</button></li>{% endif %}{% endblock %}
+{% block more %}{% if can_manage %}<li><a href="{% url 'event_export' event.pk %}"><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Teilnahmen exportieren</a></li><li><button type="submit" form="event-loeschen" class="text-error"><i class="bi bi-trash" aria-hidden="true"></i> Veranstaltung löschen</button></li>{% endif %}{% endblock %}
 {% block more_forms %}{% if can_manage %}<form id="event-loeschen" method="post" action="{% url 'event_delete' event.pk %}" hidden>{% csrf_token %}</form>{% endif %}{% endblock %}
 {% block intro %}{{ event.event_type }}{% endblock %}
 {% block page %}
@@ -98,5 +98,19 @@
   </form>
   {% endif %}
 </div></section>
+{% if attachments or can_manage %}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-anhaenge"><div class="card-body gap-4">
+  <div><h2 class="card-title" id="h-anhaenge">Anhänge</h2><p class="text-sm text-base-content/70">Ausschreibung, Packliste … Mitglieder sehen sie an jedem Termin{% if event.guests_welcome %}; als „extern sichtbar“ markierte auch externe Teilnehmer auf ihrer Anmeldeseite{% endif %}.</p></div>
+  {% if attachments %}{% include "events/_attachments.html" with manage=can_manage %}{% else %}<p class="text-base-content/70">Noch keine Anhänge.</p>{% endif %}
+  {% if attachment_form %}
+  <form method="post" action="{% url 'attachment_add' event.pk %}" enctype="multipart/form-data" class="flex flex-col gap-2 border-t border-base-300 pt-4">{% csrf_token %}
+    <h3 class="font-semibold">Anhang hochladen</h3>
+    <div class="grid gap-x-4 sm:grid-cols-2">{{ attachment_form.file.as_field_group }}{{ attachment_form.title.as_field_group }}</div>
+    {% if attachment_form.public %}{{ attachment_form.public.as_field_group }}{% endif %}
+    <div><button class="btn btn-outline btn-primary" type="submit"><i class="bi bi-upload" aria-hidden="true"></i> Hochladen</button></div>
+  </form>
+  {% endif %}
+</div></section>
+{% endif %}
 {% if quick %}{% url 'event_qr' event.pk 'svg' as qr_svg %}{% include "events/_quick_link.html" with qr=qr_svg|slice:":-4" what="zu den Terminen dieser Veranstaltung" %}{% endif %}
 {% endblock %}
