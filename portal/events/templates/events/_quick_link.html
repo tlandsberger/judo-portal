@@ -1,0 +1,18 @@
+{# Schnellzugang (ADR 0020); quick = {code, url}, qr = Adresse des QR-Codes ohne Endung, what = wohin der Code führt. #}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-schnellzugang"><div class="card-body gap-4">
+  <div>
+    <h2 class="card-title" id="h-schnellzugang">Schnellzugang</h2>
+    <p class="text-sm text-base-content/70">Für die Ausschreibung: Mit dem Code, dem Link oder dem QR-Code kommt man nach dem Login direkt {{ what }} und kann sich dort anmelden. Den Code gibt man unter „Termine“ ein.</p>
+  </div>
+  <div class="flex flex-wrap items-start gap-6">
+    <img src="{{ qr }}.svg" alt="QR-Code mit dem Link {{ quick.url }}" width="160" height="160" class="rounded-box">
+    <div class="flex min-w-56 flex-1 flex-col gap-3">
+      <div><div class="text-sm text-base-content/70">Code</div><div class="font-mono text-2xl font-bold tracking-widest">{{ quick.code }}</div></div>
+      <div class="fieldset"><label class="fieldset-legend text-sm" for="quick-link">Link</label><input id="quick-link" class="input w-full" type="text" value="{{ quick.url }}" readonly></div>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a class="btn btn-outline btn-sm" href="{{ qr }}.svg?download"><i class="bi bi-download" aria-hidden="true"></i> QR-Code als SVG</a>
+    <a class="btn btn-outline btn-sm" href="{{ qr }}.png?download"><i class="bi bi-download" aria-hidden="true"></i> QR-Code als PNG</a>
+  </div>
+</div></section>

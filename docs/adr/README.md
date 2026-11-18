@@ -24,5 +24,6 @@ Mit dem Neuaufbau im November 2026 beginnt die Nummerierung neu; die ADRs der Vo
 | [0017](0017-einheitliche-bedienung.md) | Einheitliche Bedienung: Listen, Detailseiten und Schaltflächen | angenommen |
 | [0018](0018-vertretungen-und-rhythmus.md) | Vertretungen und Rhythmus von Zeitplänen | angenommen |
 | [0019](0019-zielgruppen-empfehlung-und-je-termin.md) | Zielgruppen als Empfehlung oder Vorgabe, je Termin | angenommen |
+| [0020](0020-schnellzugang-per-code-und-qr-code.md) | Schnellzugang per Code, Quick-Link und QR-Code | angenommen |
 
 Vorlage: Kontext · Entscheidung · Konsequenzen · Verworfene Alternativen.

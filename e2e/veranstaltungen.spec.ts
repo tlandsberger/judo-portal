@@ -63,6 +63,11 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await admin.getByRole("button", { name: "Speichern" }).click();
   await expect(admin.getByText("„Randori-Lehrgang“ angelegt mit 1 Termin.")).toBeVisible();
   await expectNoA11yViolations(admin);
+  // Schnellzugang für die Ausschreibung (ADR 0020)
+  const quick = admin.getByRole("region", { name: "Schnellzugang" });
+  await expect(quick.getByRole("img", { name: /QR-Code mit dem Link/ })).toBeVisible();
+  const code = (await quick.locator(".font-mono").textContent())!.trim();
+  expect(code).toMatch(/^[2-9A-HJKMNP-Z]{6}$/);
 
   // Ein weiterer, schon vergangener Termin; die Übungsleiterin kommt am Termin dazu
   await admin.getByRole("link", { name: "Termin", exact: true }).click();
@@ -116,6 +121,11 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await parent.getByLabel("Abgesagte ausblenden").check();
   await parent.getByRole("button", { name: "Anzeigen" }).click();
   await expect(parent.getByText("1 aktiv")).toBeVisible();
+  // Code von der Ausschreibung: alle Termine der Veranstaltung
+  await parent.getByLabel("Code von der Ausschreibung").fill(code.toLowerCase());
+  await parent.getByRole("button", { name: "Öffnen" }).click();
+  await expect(parent).toHaveURL(/veranstaltung=\d+/);
+  await expectNoA11yViolations(parent);
   await parent.getByRole("link", { name: /Mia für Randori-Lehrgang am .* anmelden/ }).click();
   await expect(parent.getByLabel("Gewicht (kg)")).not.toHaveValue("");
   await parent.getByLabel("Gewicht (kg)").fill("26,1");

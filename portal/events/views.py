@@ -9,7 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -20,7 +20,7 @@ from portal.accounts.permissions import role_required
 from portal.members import services as members
 from portal.members.models import Member
 
-from . import guests, services
+from . import guests, quicklinks, services
 from .forms import (
     AgendaFilterForm,
     CancelRangeForm,
@@ -154,6 +154,7 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "participants": services.participants(occurrence) if show_participants else None,
         "registered": services.registered_count(occurrence),
         "target_groups": services.target_groups(occurrence),
+        "quick": _quick(occurrence) if lead else None,
         "recommendation": services.is_recommendation(occurrence),
     }
     if lead:
@@ -571,6 +572,7 @@ def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "occurrences": occurrences,
         "can_manage": can_manage,
         "cancel_form": CancelRangeForm(),
+        "quick": _quick(event) if can_manage else None,
         "guest_link": request.build_absolute_uri(reverse("guest_register", args=[guests.enable_link(event)]))
         if event.guests_welcome
         else None,
@@ -741,6 +743,48 @@ def schedule_team_remove(request: HttpRequest, pk: int, schedule_pk: int, entry_
     services.remove_schedule_team(entry)
     messages.success(request, f"{entry.member.display_name} ist nicht mehr fest eingeteilt.")
     return redirect("event_detail", pk=pk)
+
+
+# Schnellzugang per Code, Quick-Link und QR-Code (ADR 0020)
+
+
+@login_required
+def quick_link(request: HttpRequest, code: str = "") -> HttpResponse:
+    """Code aus dem Feld auf „Termine“ (``?code=``) oder aus dem Quick-Link bzw. QR-Code öffnen."""
+    link = quicklinks.resolve(code or request.GET.get("code", ""))
+    if link is None:
+        messages.error(request, "Code nicht gefunden.")
+        return redirect("agenda")
+    return redirect(quicklinks.target_url(link))
+
+
+def _qr_response(code: str, kind: str, filename: str, download: bool) -> HttpResponse:
+    if kind not in ("svg", "png"):
+        raise Http404
+    content_type = "image/svg+xml" if kind == "svg" else "image/png"
+    response = HttpResponse(quicklinks.qr(code, kind), content_type=content_type)
+    if download:
+        response["Content-Disposition"] = f'attachment; filename="{filename}.{kind}"'
+    return response
+
+
+@login_required
+def occurrence_qr(request: HttpRequest, pk: int, kind: str) -> HttpResponse:
+    occurrence = _lead_occurrence(request, pk)
+    code = quicklinks.code_for(occurrence)
+    return _qr_response(code, kind, f"qr-termin-{code}", "download" in request.GET)
+
+
+@role_required(*MANAGE_EVENTS)
+def event_qr(request: HttpRequest, pk: int, kind: str) -> HttpResponse:
+    event = get_object_or_404(Event, pk=pk)
+    code = quicklinks.code_for(event)
+    return _qr_response(code, kind, f"qr-veranstaltung-{code}", "download" in request.GET)
+
+
+def _quick(target: Event | Occurrence) -> dict[str, str]:
+    code = quicklinks.code_for(target)
+    return {"code": code, "url": quicklinks.url(code)}
 
 
 # Gäste (ADR 0013)
