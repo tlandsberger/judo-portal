@@ -104,7 +104,7 @@ und 0012.
 4. **Feste Übungsleiter** je Zeitplan: Mitglied und Rolle (Trainer, Co-Trainer …); kommende Termine übernehmen sie.
    Übungsleiter brauchen dafür ein **eigenes Mitgliedsprofil** (Mitglied → Zugang geben → „… selbst“). Die Seite
    „Rollen“ nennt alle, denen es noch fehlt.
-5. **Gäste:** Mit „Gäste willkommen“ zeigt die Veranstaltung einen **Anmeldelink** zum Teilen (z. B. an andere
+5. **Gäste:** Mit „Externe Teilnehmer zulassen“ zeigt die Veranstaltung einen **Anmeldelink** zum Teilen (z. B. an andere
    Vereine). Gäste bestätigen ihre Anmeldung per Mail; unbestätigte werden nach 24 Stunden gelöscht, alle Gastdaten
    90 Tage nach dem letzten Termin. Die Übungsleiter können Gäste auch direkt am Termin eintragen („Gast eintragen“). Hintergründe
    in ADR 0013.

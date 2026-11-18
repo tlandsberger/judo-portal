@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import HttpRequest, HttpResponse
@@ -21,6 +22,7 @@ from portal.members.models import Member
 
 from . import guests, services
 from .forms import (
+    AgendaFilterForm,
     CancelRangeForm,
     ConfirmForm,
     EventCreateForm,
@@ -51,6 +53,8 @@ from .models import (
 )
 from .services import MANAGE_EVENTS, Match, RegistrationError
 
+AGENDA_PAGE = 30  # Termine je Seite in „Termine“
+
 
 def _user(request: HttpRequest) -> User:
     return request.user  # type: ignore[return-value]
@@ -67,12 +71,14 @@ def _errors(request: HttpRequest, form: Any) -> None:
 
 @login_required
 def agenda(request: HttpRequest) -> HttpResponse:
-    """Die nächsten Termine, jeder einmal, mit den eigenen Mitgliedern. Ohne eigene Mitglieder: alle zur Übersicht."""
-    result = services.agenda(request.user)
-    context: dict[str, Any] = {"agenda": result}
-    if result is None:
-        services.ensure_generated()
-        context["occurrences"] = services.upcoming()
+    """Alle kommenden Termine, jeder einmal, mit den eigenen Mitgliedern; mit Filtern und seitenweise."""
+    links = members.effective_links(request.user)
+    form = AgendaFilterForm(request.GET, links=links)
+    result = services.agenda(request.user, form.to_filter())
+    page = Paginator(result.entries, AGENDA_PAGE).get_page(request.GET.get("seite"))
+    query = request.GET.copy()
+    query.pop("seite", None)
+    context = {"agenda": result, "page": page, "form": form, "query": query.urlencode()}
     return render(request, "events/agenda.html", context)
 
 

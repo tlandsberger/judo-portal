@@ -1,6 +1,16 @@
 {% load help %}
-<p>Auf der <a href="{% url 'home' %}">Startseite</a> stehen die nächsten Termine, unter <a href="{% url 'agenda' %}">Termine</a> die nächsten sechs Wochen. Du siehst nur Termine, die zu dir oder deinen Kindern passen (Alter, Graduierung …). Jeder Termin steht nur einmal da, auch bei mehreren Kindern.</p>
+<p>Auf der <a href="{% url 'home' %}">Startseite</a> stehen die nächsten Termine, unter <a href="{% url 'agenda' %}">Termine</a> alle kommenden, nach Monaten gegliedert. Standardmäßig siehst du nur Termine, die zu dir oder deinen Kindern passen (Alter, Graduierung …). Jeder Termin steht nur einmal da, auch bei mehreren Kindern.</p>
 {% screenshot "termine" "Die Seite Termine mit Anmelde-Knöpfen je Kind" %}
+
+<h2 id="filter">Filter</h2>
+<p>Über <strong>Filter</strong> oben auf der Seite grenzt du die Liste ein und tippst dann auf <strong>Anzeigen</strong>:</p>
+<ul>
+  <li><strong>Nur passende Termine</strong>: Schalte das aus, um auch Termine zu sehen, die gerade nicht zu euch passen. Sie tragen die Markierung „passt nicht zur Zielgruppe“.</li>
+  <li><strong>Mitglied</strong> (bei mehreren Kindern), <strong>Art</strong> und <strong>Veranstaltung</strong>.</li>
+  <li><strong>Von</strong> und <strong>Bis</strong>: ein Zeitraum, auch in der Vergangenheit zum Nachsehen.</li>
+  <li><strong>Nur meine Anmeldungen</strong>, <strong>Nur mit offener Anmeldung</strong> und <strong>Abgesagte ausblenden</strong>.</li>
+</ul>
+<p>Unten auf der Seite geht es mit <strong>Weitere Termine</strong> weiter. <strong>Zurücksetzen</strong> stellt die Filter wieder auf den Standard.</p>
 
 <h2 id="anmelden">Anmelden</h2>
 <ol>

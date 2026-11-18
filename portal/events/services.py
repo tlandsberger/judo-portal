@@ -45,7 +45,6 @@ MANAGE_EVENTS = (Role.DEPARTMENT_HEAD, Role.ADMIN)
 HORIZON_DAYS = 365
 # So lange nach dem Termin sieht das Team noch die Teilnehmerliste.
 PARTICIPANTS_DAYS_AFTER = 14
-AGENDA_DAYS = 42
 # So lange vor dem Termin erinnert das Portal die Abteilungsleitung, wenn noch kein Trainer eingeteilt ist.
 TRAINER_MISSING_REMIND = timedelta(days=2)
 ACTIVE = (ParticipationStatus.REGISTERED, ParticipationStatus.WAITLIST)
@@ -956,65 +955,108 @@ class AgendaEntry:
     occurrence: Occurrence
     rows: list[AgendaRow] = field(default_factory=list)
 
+    @property
+    def month(self) -> date:
+        """Erster Tag des Monats, zum Gliedern der Liste."""
+        return timezone.localdate(self.occurrence.starts_at).replace(day=1)
+
+    @property
+    def team(self) -> list[Participation]:
+        """Eingeteilte Übungsleiter (aus dem Prefetch), für die Liste ohne eigene Mitglieder."""
+        return [p for p in self.occurrence.participations.all() if p.role.is_team and p.is_active]
+
 
 @dataclass
 class Agenda:
     entries: list[AgendaEntry] = field(default_factory=list)
-    others: list[Occurrence] = field(default_factory=list)  # passen zu keinem eigenen Mitglied
     several: bool = False  # mehrere eigene Mitglieder: Namen an jeder Zeile
+    has_members: bool = False  # ohne eigene Mitglieder: alle Termine ohne Anmeldeknöpfe
 
 
-def upcoming(days: int = AGENDA_DAYS) -> QuerySet[Occurrence]:
-    now = timezone.now()
-    return (
-        Occurrence.objects.filter(ends_at__gte=now, starts_at__lte=now + timedelta(days=days))
-        .select_related("event")
-        .prefetch_related("event__target_groups__interests", "participations__role", "participations__member")
+@dataclass
+class AgendaFilter:
+    """Filter der Seite „Termine“. Ohne Zeitraum: alle kommenden Termine, so weit sie erzeugt sind."""
+
+    matching: bool = True  # nur Termine, die zu einem eigenen Mitglied passen oder für die es eingetragen ist
+    member: int | None = None
+    event_type: int | None = None
+    event: int | None = None
+    start: date | None = None
+    end: date | None = None
+    mine: bool = False  # nur eigene Anmeldungen und Einteilungen als Übungsleiter
+    open: bool = False  # nur Termine mit offener Anmeldung
+    hide_cancelled: bool = False
+
+
+def occurrences(flt: AgendaFilter, now: datetime | None = None) -> QuerySet[Occurrence]:
+    """Termine nach Zeitraum, Art, Veranstaltung und Absage; die übrigen Filter brauchen die eigenen Mitglieder."""
+    now = now or timezone.now()
+    rows = Occurrence.objects.select_related("event__event_type").prefetch_related(
+        "event__target_groups__interests", "participations__role", "participations__member"
     )
+    since = Q(starts_at__gte=_aware(flt.start, time.min)) if flt.start else Q(ends_at__gte=now)
+    rows = rows.filter(since)
+    if flt.end:
+        rows = rows.filter(starts_at__lt=_aware(flt.end + timedelta(days=1), time.min))
+    if flt.event_type:
+        rows = rows.filter(event__event_type_id=flt.event_type)
+    if flt.event:
+        rows = rows.filter(event_id=flt.event)
+    if flt.hide_cancelled:
+        rows = rows.filter(cancelled_at__isnull=True)
+    return rows.order_by("starts_at", "pk")
 
 
-def agenda(user: Any, days: int = AGENDA_DAYS) -> Agenda | None:
-    """Die nächsten Termine nach Datum, jeder einmal; darunter die eigenen Mitglieder mit Status und Knopf.
+def agenda(user: Any, flt: AgendaFilter | None = None) -> Agenda:
+    """Termine nach Datum, jeder einmal; darunter die eigenen Mitglieder mit Status und Knopf.
 
-    Ohne eigene Mitglieder: ``None``.
+    Mit „nur passende“ fehlen Termine, die zu keinem eigenen Mitglied passen und für die keines eingetragen ist.
+    Ohne eigene Mitglieder: alle Termine ohne Zeilen.
     """
-    links = members.effective_links(user)
-    if not links:
-        return None
+    flt = flt or AgendaFilter()
     ensure_generated()
-    occurrences = list(upcoming(days))
-    member_ids = [link.member.pk for link in links]
+    links = members.effective_links(user)
+    shown = [link for link in links if flt.member is None or link.member.pk == flt.member] or links
+    rows = list(occurrences(flt))
     participations = {
         (p.occurrence_id, p.member_id): p
-        for p in Participation.objects.filter(member_id__in=member_ids, occurrence__in=occurrences).select_related(
-            "role"
-        )
+        for p in Participation.objects.filter(
+            member_id__in=[link.member.pk for link in shown], occurrence__in=rows
+        ).select_related("role")
     }
-    interests = {link.member.pk: {interest.pk for interest in link.member.interests.all()} for link in links}
-    result = Agenda(several=len(links) > 1)
-    for occurrence in occurrences:
-        on = timezone.localdate(occurrence.starts_at)
+    interests = {link.member.pk: {interest.pk for interest in link.member.interests.all()} for link in shown}
+    result = Agenda(several=len(shown) > 1, has_members=bool(links))
+    for occurrence in rows:
         state = window(occurrence)
+        if flt.open and (occurrence.is_cancelled or state != "open"):
+            continue
         entry = AgendaEntry(occurrence)
-        for link in links:
+        on = timezone.localdate(occurrence.starts_at)
+        for link in shown:
             member = link.member
             match = match_event(occurrence.event, member, on, interests[member.pk])
             participation = participations.get((occurrence.pk, member.pk))
-            if match != Match.NO or (participation and participation.is_active):
+            active = participation is not None and participation.is_active
+            if active or match != Match.NO or not flt.matching:
                 entry.rows.append(AgendaRow(link, AgendaItem(occurrence, match, participation, state)))
-        if entry.rows:
-            result.entries.append(entry)
-        else:
-            result.others.append(occurrence)
+        if links and not entry.rows:
+            continue
+        if (
+            links
+            and flt.mine
+            and not any(row.item.participation and row.item.participation.is_active for row in entry.rows)
+        ):
+            continue
+        result.entries.append(entry)
     return result
 
 
 def next_entries(user: Any, count: int = 3) -> list[AgendaEntry]:
     """Für die Startseite: die nächsten Termine, die zu einem eigenen Mitglied passen – jeder nur einmal."""
-    result = agenda(user, days=21)
-    if result is None:
+    if not members.effective_links(user):
         return []
-    return [entry for entry in result.entries if not entry.occurrence.is_cancelled][:count]
+    flt = AgendaFilter(end=timezone.localdate() + timedelta(days=21), hide_cancelled=True)
+    return agenda(user, flt).entries[:count]
 
 
 @dataclass

@@ -132,9 +132,10 @@ class Event(models.Model):
         "Gewicht bei Anmeldung erforderlich", default=False, help_text="Zum Beispiel für Wettkämpfe."
     )
     guests_welcome = models.BooleanField(
-        "Gäste willkommen",
+        "Externe Teilnehmer zulassen",
         default=False,
-        help_text="Externe Gäste melden sich über einen Link an oder werden von den Übungsleitern eingetragen.",
+        help_text="Externe Teilnehmer ohne Zugang melden sich über einen Link an oder werden von den Übungsleitern "
+        "eingetragen.",
     )
     guest_token = models.CharField(max_length=40, blank=True, editable=False)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
