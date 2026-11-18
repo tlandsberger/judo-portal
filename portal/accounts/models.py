@@ -82,6 +82,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self) -> str:
         return self.first_name or self.email
 
+    @property
+    def greeting(self) -> str:
+        """Anrede für Mails und Startseite, z. B. „Hallo Anna“ oder „Liebe Eltern von Mia“."""
+        from .services import greeting
+
+        return greeting(user=self)
+
     def has_role(self, *roles: Role | str) -> bool:
         return self.is_active and any(str(role) in self.roles for role in roles)
 

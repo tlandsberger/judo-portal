@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from portal.core import audit
 
 from . import services
-from .forms import InvitationForm, PhoneForm, RolesForm
+from .forms import InvitationForm, ProfileForm, UserForm
 from .models import Invitation, Role, User
 from .permissions import MANAGE_USERS, role_required
 
@@ -66,25 +66,28 @@ def setup_login(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def security(request: HttpRequest) -> HttpResponse:
-    """„Meine Anmeldung“: Passkeys, Passwort, angemeldete Geräte und Telefon für Notfälle."""
-    form = PhoneForm(request.POST or None, instance=request.user)
-    before = request.user.phone  # type: ignore[union-attr]
+    """„Meine Anmeldung“: Passkeys, Passwort, angemeldete Geräte und eigene Daten (Name, Telefon für Notfälle)."""
+    user: User = request.user  # type: ignore[assignment]
+    before = _profile(user)
+    form = ProfileForm(request.POST or None, instance=user)
     if request.method == "POST" and form.is_valid():
         form.save()
-        if before != request.user.phone:  # type: ignore[union-attr]
-            audit.log(
-                request.user,
-                audit.Area.LOGIN,
-                "phone",
-                "Telefon geändert",
-                user=request.user,
-                changes={"Telefon": [before, request.user.phone]},  # type: ignore[union-attr]
-            )
-        messages.success(request, "Telefon gespeichert.")
+        changes = _changes(before, _profile(user))
+        if changes:
+            audit.log(user, audit.Area.LOGIN, "profile", "Eigene Daten geändert", user=user, changes=changes)
+        messages.success(request, "Deine Daten sind gespeichert.")
         return redirect("security")
-    context = _login_methods(request.user)  # type: ignore[arg-type]
-    context["phone_form"] = form
+    context = _login_methods(user)
+    context["profile_form"] = form
     return render(request, "accounts/security.html", context)
+
+
+def _profile(user: User) -> dict[str, str]:
+    return {"Vorname": user.first_name, "Nachname": user.last_name, "Telefon": user.phone}
+
+
+def _changes(before: dict[str, str], after: dict[str, str]) -> dict[str, list[str]]:
+    return {label: [before[label], after[label]] for label in before if before[label] != after[label]}
 
 
 def _login_methods(user: User) -> dict[str, object]:
@@ -187,7 +190,9 @@ def edit_user(request: HttpRequest, pk: int) -> HttpResponse:
     if target_user.has_role(Role.ADMIN) and not allow_admin:
         messages.error(request, "Administratoren kann nur ein Administrator ändern.")
         return redirect("user_list")
-    form = RolesForm(request.POST or None, allow_admin=allow_admin, initial={"roles": target_user.roles})
+    before = {"Vorname": target_user.first_name, "Nachname": target_user.last_name}
+    before_name = target_user.display_name
+    form = UserForm(request.POST or None, instance=target_user, allow_admin=allow_admin)
     if request.method == "POST" and form.is_valid():
         roles = list(form.cleaned_data["roles"])
         if not allow_admin and Role.ADMIN in target_user.roles:
@@ -195,18 +200,24 @@ def edit_user(request: HttpRequest, pk: int) -> HttpResponse:
         if target_user == actor and Role.ADMIN in target_user.roles and Role.ADMIN not in roles:
             messages.error(request, "Du kannst dir die Administrator-Rolle nicht selbst entziehen.")
             return redirect("edit_user", pk=target_user.pk)
-        before = target_user.role_labels
+        form.save()
+        changes = _changes(before, {"Vorname": target_user.first_name, "Nachname": target_user.last_name})
+        if changes:
+            audit.log(
+                actor, audit.Area.USERS, "name", f"Name von {before_name} geändert", user=target_user, changes=changes
+            )
+        role_before = target_user.role_labels
         target_user.set_roles(roles)
-        if before != target_user.role_labels:
+        if role_before != target_user.role_labels:
             audit.log(
                 actor,
                 audit.Area.USERS,
                 "roles",
                 f"Rollen von {target_user.display_name} geändert",
                 user=target_user,
-                changes={"Rollen": [", ".join(before), ", ".join(target_user.role_labels)]},
+                changes={"Rollen": [", ".join(role_before), ", ".join(target_user.role_labels)]},
             )
-        messages.success(request, f"Rollen von {target_user.display_name} gespeichert.")
+        messages.success(request, f"{target_user.display_name} gespeichert.")
         return redirect("user_list")
     return render(
         request,

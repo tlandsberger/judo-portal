@@ -22,10 +22,11 @@
   </li>
 </ul>
 {% include "notifications/_settings.html" %}
-<section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-telefon"><div class="card-body gap-4">
-  <h2 class="card-title" id="h-telefon">Telefon für Notfälle</h2>
+<section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-daten" id="meine-daten"><div class="card-body gap-4">
+  <div><h2 class="card-title" id="h-daten">Meine Daten</h2><p class="text-sm text-base-content/70">So erscheinst du im Portal und in Mails.</p></div>
   <form method="post" class="flex flex-col gap-4">{% csrf_token %}
-    {{ phone_form }}
+    <div class="grid gap-x-4 sm:grid-cols-2">{{ profile_form.first_name.as_field_group }}{{ profile_form.last_name.as_field_group }}</div>
+    {{ profile_form.phone.as_field_group }}
     <div><button type="submit" class="btn btn-primary">Speichern</button></div>
   </form>
 </div></section>

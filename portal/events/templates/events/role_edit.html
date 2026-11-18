@@ -1,5 +1,5 @@
 {% extends "events/_form_page.html" %}
-{% block heading %}{% if role %}{{ role.name }} bearbeiten{% else %}Rolle anlegen{% endif %}{% endblock %}
+{% block heading %}{% if role %}Rolle {{ role.name }} bearbeiten{% else %}Rolle anlegen{% endif %}{% endblock %}
 {% block back_url %}{% url 'role_list' %}{% endblock %}
 {% block cancel_url %}{% url 'role_list' %}{% endblock %}
 {% block back_label %}Rollen{% endblock %}

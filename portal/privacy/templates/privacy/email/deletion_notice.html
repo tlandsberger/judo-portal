@@ -3,7 +3,7 @@
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;">
     <tr><td style="background:#0a3d1c;color:#ffffff;padding:20px 28px;border-radius:14px 14px 0 0;font-size:20px;font-weight:700;">Wedeler TSV Judo</td></tr>
     <tr><td style="padding:28px;">
-      <p style="margin:0 0 16px;font-size:16px;">Hallo {{ user.get_short_name }},</p>
+      <p style="margin:0 0 16px;font-size:16px;">{{ user.greeting }},</p>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">{% if own %}dein Austritt aus der Judo-Abteilung ist eingetragen{% else %}der Austritt von <strong>{{ member.display_name }}</strong> aus der Judo-Abteilung ist eingetragen{% endif %} ({{ member.left_on|date:"d.m.Y" }}).</p>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Am <strong>{{ when|date:"d.m.Y" }}</strong> löschen wir {% if own %}deine Daten{% else %}die Daten von {{ member.display_name }}{% endif %} im Vereinsportal: Stammdaten, Teilnahmen an Terminen und Abrechnungen. Hast du dann kein weiteres Mitglied im Portal, wird auch dein Zugang gelöscht.</p>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Bis dahin kannst du unter „Meine Daten“ die Datenauskunft (Art. 15 DSGVO) als PDF herunterladen.</p>

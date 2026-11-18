@@ -1,4 +1,4 @@
-{% autoescape off %}Hallo {{ user.get_short_name }},
+{% autoescape off %}{{ user.greeting }},
 
 {{ body }}
 
