@@ -1,0 +1,10 @@
+{# Knöpfe einer Übungsleiter-Zeile (ADR 0018). Erwartet row (aus _team_rows), occurrence und optional next. #}
+{% with p=row.p %}{% if row.can_change or row.can_take_over %}
+<div class="flex flex-wrap justify-end gap-2 max-sm:list-col-wrap max-sm:justify-start">
+  {% if row.can_take_over %}<form method="post" action="{% url 'occurrence_take_over' occurrence.pk p.pk %}">{% csrf_token %}{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}<button class="btn btn-outline btn-primary btn-sm" aria-label="{{ p.member.display_name }} vertreten"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Vertreten</button></form>{% endif %}
+  {% if row.can_change %}
+  <a class="btn btn-outline btn-sm" href="{% url 'occurrence_hand_over' occurrence.pk p.pk %}{% if next %}?next={{ next|urlencode }}{% endif %}" aria-label="{% if row.is_self %}Meinen Platz übertragen{% else %}Platz von {{ p.member.display_name }} übertragen{% endif %}"><i class="bi bi-person-check" aria-hidden="true"></i> Übertragen</a>
+  <form method="post" action="{% url 'occurrence_team_remove' occurrence.pk p.pk %}">{% csrf_token %}{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}<button class="btn btn-outline btn-error btn-sm" aria-label="{% if row.is_self %}Mich entfernen{% else %}{{ p.member.display_name }} entfernen{% endif %}">Entfernen</button></form>
+  {% endif %}
+</div>
+{% endif %}{% endwith %}

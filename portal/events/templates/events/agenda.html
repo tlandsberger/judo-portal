@@ -5,7 +5,7 @@
 {% block heading_extra %}{% help_link "termine" %}{% endblock %}
 {% block more %}{% if can_plan_events %}<li><a href="{% url 'event_list' %}"><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a></li>{% endif %}{% endblock %}
 {% block intro %}Alle kommenden Termine.{% if agenda.has_members %} Mehrere Filter gelten zusammen.{% endif %}{% endblock %}
-{% block scripts %}<script src="{% static 'js/agenda.js' %}"></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/auto-submit.js' %}"></script>{% endblock %}
 {% block page %}
 <form method="get" action="{% url 'quick_link_form' %}" class="mb-4 flex flex-wrap items-end gap-2" role="search" aria-label="Termin per Code öffnen">
   <div class="fieldset"><label class="fieldset-legend text-sm" for="code">Code von der Ausschreibung</label><input class="input w-40 font-mono" id="code" name="code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="z. B. K7M4PX" required></div>

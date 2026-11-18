@@ -1187,6 +1187,20 @@ def participants(occurrence: Occurrence) -> list[Participant]:
     ]
 
 
+def trainings_on(day: date) -> list[Occurrence]:
+    """Für den Trainingstausch: alle Trainings eines Tages, auch abgesagte (die ohne Knöpfe)."""
+    ensure_generated()
+    return list(
+        Occurrence.objects.filter(
+            starts_at__gte=_aware(day, time.min),
+            starts_at__lt=_aware(day + timedelta(days=1), time.min),
+            event__event_type__name__iexact=TRAINING,
+        )
+        .select_related("event")
+        .order_by("starts_at", "pk")
+    )
+
+
 def team(occurrence: Occurrence) -> list[Participation]:
     return list(
         occurrence.participations.filter(status__in=ACTIVE, role__is_team=True)

@@ -93,7 +93,7 @@ test("Übungsleiterin bestätigt und reicht den Vormonat ein, die Abteilungsleit
   await expect(trainer.getByRole("button", { name: "Hat nicht stattgefunden" })).toBeHidden(); // im Menü
   await expectNoA11yViolations(trainer);
   await trainer.getByRole("button", { name: "Mich entfernen" }).click();
-  await expect(trainer.getByText("Du bist als Trainer ausgetragen.")).toBeVisible();
+  await expect(trainer.getByText("Du bist als Trainer entfernt.")).toBeVisible();
   await trainer.goto("/abrechnung/");
   await trainer.getByRole("link", { name: month }).click();
   await expect(trainer.getByRole("heading", { name: "Nicht bestätigt" })).toHaveCount(0);

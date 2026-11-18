@@ -9,6 +9,7 @@ urlpatterns = [
     path("stunden/", RedirectView.as_view(pattern_name="billing_index", permanent=True)),
     path("einsaetze/", RedirectView.as_view(pattern_name="billing_index", permanent=True)),
     path("termine/", views.agenda, name="agenda"),
+    path("trainingstausch/", views.training_swap, name="training_swap"),
     path("q/", views.quick_link, name="quick_link_form"),
     path("q/<str:code>/", views.quick_link, name="quick_link"),
     path("termine/<int:pk>/qr.<str:kind>", views.occurrence_qr, name="occurrence_qr"),

@@ -12,6 +12,7 @@ const pages = [
   { path: "/meine-daten/", heading: "Meine Daten" },
   { path: "/mitglieder/interessen/", heading: "Interessen" },
   { path: "/termine/", heading: "Termine" },
+  { path: "/trainingstausch/", heading: "Trainingstausch" },
   { path: "/veranstaltungen/", heading: "Veranstaltungen" },
   { path: "/veranstaltungen/neu/", heading: "Veranstaltung anlegen" },
   { path: "/zielgruppen/", heading: "Zielgruppen-Vorlagen" },

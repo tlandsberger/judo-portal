@@ -51,6 +51,15 @@ def groups(context: Any) -> list[Group]:
             ),
         ],
     )
+    if can("can_plan_events"):
+        own.items.append(
+            Item(
+                "Trainingstausch",
+                "bi-arrow-left-right",
+                "training_swap",
+                "Trainings eines Tages: vertreten, übertragen, entfernen",
+            )
+        )
     if can("has_own_members"):
         own.items.append(
             Item(

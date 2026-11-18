@@ -50,15 +50,7 @@
     {% for row in team_rows %}{% with p=row.p %}
     <li class="list-row items-center px-0">
       <div class="list-col-grow"><div class="font-semibold">{{ p.member.display_name }}{% if row.is_self %} <span class="badge badge-ghost badge-sm">du</span>{% endif %}</div><div class="text-sm text-base-content/70">{{ p.role.name }}{% if p.is_confirmed %} · bestätigt, {{ p.minutes }} Minuten{% endif %}</div></div>
-      {% if row.can_change or row.can_take_over %}
-      <div class="flex flex-wrap justify-end gap-2 max-sm:list-col-wrap max-sm:justify-start">
-        {% if row.can_take_over %}<form method="post" action="{% url 'occurrence_take_over' occurrence.pk p.pk %}">{% csrf_token %}<button class="btn btn-outline btn-primary btn-sm" aria-label="{{ p.member.display_name }} vertreten"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Vertreten</button></form>{% endif %}
-        {% if row.can_change %}
-        <a class="btn btn-outline btn-sm" href="{% url 'occurrence_hand_over' occurrence.pk p.pk %}" aria-label="{% if row.is_self %}Meinen Platz übertragen{% else %}Platz von {{ p.member.display_name }} übertragen{% endif %}"><i class="bi bi-person-check" aria-hidden="true"></i> Übertragen</a>
-        <form method="post" action="{% url 'occurrence_team_remove' occurrence.pk p.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm" aria-label="{% if row.is_self %}Mich entfernen{% else %}{{ p.member.display_name }} entfernen{% endif %}">Entfernen</button></form>
-        {% endif %}
-      </div>
-      {% endif %}
+      {% include "events/_team_actions.html" %}
     </li>
     {% endwith %}{% endfor %}
   </ul>

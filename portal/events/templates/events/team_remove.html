@@ -3,14 +3,14 @@
 {% block width %}narrow{% endblock %}
 {% block back_url %}{% url 'occurrence_detail' occurrence.pk %}{% endblock %}
 {% block back_label %}{{ occurrence.event.title }}{% endblock %}
-{% block heading %}Wirklich austragen?{% endblock %}
+{% block heading %}Wirklich entfernen?{% endblock %}
 {% block page %}
 <div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
   <div role="alert" class="alert alert-soft alert-error"><i class="bi bi-exclamation-triangle text-lg" aria-hidden="true"></i>
     <span>Danach ist für <strong>{{ occurrence.event.title }}</strong> am {{ occurrence.starts_at|date:"l, d.m.Y" }} um {{ occurrence.starts_at|date:"H:i" }} Uhr kein Trainer mehr eingeteilt. Die Abteilungsleitung bekommt eine Nachricht.</span></div>
   <p>Gibt es eine Vertretung? Dann übertrage {% if is_self %}deinen Platz{% else %}den Platz{% endif %} lieber – so weiß jeder Bescheid.</p>
-  <form method="post" action="{% url 'occurrence_team_remove' occurrence.pk participation.pk %}">{% csrf_token %}<input type="hidden" name="confirmed" value="1">
-    <div class="action-bar"><button type="submit" class="btn btn-error">Trotzdem austragen</button><a class="btn" href="{% url 'occurrence_hand_over' occurrence.pk participation.pk %}">Übertragen</a></div>
+  <form method="post" action="{% url 'occurrence_team_remove' occurrence.pk participation.pk %}">{% csrf_token %}<input type="hidden" name="confirmed" value="1"><input type="hidden" name="next" value="{{ next }}">
+    <div class="action-bar"><button type="submit" class="btn btn-error">Trotzdem entfernen</button><a class="btn" href="{% url 'occurrence_hand_over' occurrence.pk participation.pk %}?next={{ next|urlencode }}">Übertragen</a></div>
   </form>
 </div></div>
 {% endblock %}
