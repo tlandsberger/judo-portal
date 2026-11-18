@@ -55,7 +55,7 @@
         {% if row.can_take_over %}<form method="post" action="{% url 'occurrence_take_over' occurrence.pk p.pk %}">{% csrf_token %}<button class="btn btn-outline btn-primary btn-sm" aria-label="{{ p.member.display_name }} vertreten"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Vertreten</button></form>{% endif %}
         {% if row.can_change %}
         <a class="btn btn-outline btn-sm" href="{% url 'occurrence_hand_over' occurrence.pk p.pk %}" aria-label="{% if row.is_self %}Meinen Platz übertragen{% else %}Platz von {{ p.member.display_name }} übertragen{% endif %}"><i class="bi bi-person-check" aria-hidden="true"></i> Übertragen</a>
-        <form method="post" action="{% url 'occurrence_team_remove' occurrence.pk p.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" aria-label="{% if row.is_self %}Mich austragen{% else %}{{ p.member.display_name }} austragen{% endif %}">Austragen</button></form>
+        <form method="post" action="{% url 'occurrence_team_remove' occurrence.pk p.pk %}">{% csrf_token %}<button class="btn btn-outline btn-error btn-sm" aria-label="{% if row.is_self %}Mich entfernen{% else %}{{ p.member.display_name }} entfernen{% endif %}">Entfernen</button></form>
         {% endif %}
       </div>
       {% endif %}
@@ -63,17 +63,13 @@
     {% endwith %}{% endfor %}
   </ul>
   {% else %}<p class="text-base-content/70">Noch keine Übungsleiter eingeteilt.</p>{% endif %}
-  {% if own_team and not occurrence.is_cancelled %}<p class="text-sm text-base-content/70">{% if started %}Nicht dabei gewesen? Übertrage deinen Platz an die Vertretung oder trag dich aus.{% else %}Du kannst nicht? Übertrage deinen Platz an deine Vertretung – oder trag dich aus, wenn es ohne dich geht.{% endif %}</p>{% endif %}
+  {% if own_team and not occurrence.is_cancelled %}<p class="text-sm text-base-content/70">{% if started %}Nicht dabei gewesen? Übertrage deinen Platz an die Vertretung oder entferne dich.{% else %}Du kannst nicht? Übertrage deinen Platz an deine Vertretung – oder entferne dich, wenn es ohne dich geht.{% endif %}</p>{% endif %}
   {% if team_form %}
-  <details class="collapse collapse-arrow border border-base-300">
-    <summary class="collapse-title text-sm font-semibold">Jemanden eintragen oder Rolle ändern</summary>
-    <div class="collapse-content">
-      <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-col gap-4">{% csrf_token %}
-        <div class="grid gap-x-4 sm:grid-cols-2">{{ team_form }}</div>
-        <div><button class="btn btn-outline btn-primary btn-sm" type="submit">Eintragen</button></div>
-      </form>
-    </div>
-  </details>
+  <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">{% csrf_token %}
+    {{ team_form.non_field_errors }}
+    {% for field in team_form %}<div class="sm:flex-1">{{ field.as_field_group }}</div>{% endfor %}
+    <div class="pt-2 sm:pt-0 sm:pb-1"><button class="btn btn-outline btn-primary" type="submit">Eintragen</button></div>
+  </form>
   {% elif self_roles %}
   <form method="post" action="{% url 'occurrence_team' occurrence.pk %}" class="flex flex-wrap gap-2">{% csrf_token %}
     {% for role in self_roles %}<button class="btn btn-outline btn-primary btn-sm" name="role" value="{{ role.pk }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Mich als {{ role.name }} eintragen</button>{% endfor %}

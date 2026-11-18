@@ -76,7 +76,6 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await admin.getByLabel("Ende", { exact: true }).fill(localDateTime(-1, "14:00"));
   await admin.getByRole("button", { name: "Speichern" }).click();
   await expect(admin.getByText("Termin angelegt. Trag hier die Übungsleiter ein.")).toBeVisible();
-  await admin.getByText("Jemanden eintragen oder Rolle ändern").click();
   await admin.getByLabel("Mitglied").selectOption({ label: "Clara Clever" });
   await admin.getByLabel("Rolle").selectOption({ label: "Trainer" });
   await admin.getByRole("button", { name: "Eintragen", exact: true }).click();
