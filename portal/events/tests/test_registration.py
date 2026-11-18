@@ -211,8 +211,6 @@ def test_agenda_lists_each_occurrence_once_for_two_children(parent, child):
     everything = services.agenda(parent, services.AgendaFilter(matching=False))
     assert [e.occurrence.event.title for e in everything.entries] == ["Kindertraining", "Erwachsenentraining"]
     assert not any(row.item.can_register for row in everything.entries[1].rows)
-    only_ole = services.agenda(parent, services.AgendaFilter(member=sibling.pk))
-    assert not only_ole.several and [row.member for row in only_ole.entries[0].rows] == [sibling]
 
 
 def test_agenda_shows_all_upcoming_not_only_six_weeks(parent, child):
@@ -228,20 +226,23 @@ def test_agenda_filters(parent, child):
     cancelled = make_occurrence(training, in_days=4)
     services.cancel(cancelled, notify=False)
     closed = make_occurrence(contest, in_days=6, registration_closes_at=timezone.now())
-    past = make_occurrence(training, in_days=-10)
+    adults = Event.objects.create(title="Erwachsene", event_type=event_type("Wettkampf"))
+    TargetGroup.objects.create(event=adults, min_age=18)
+    other = make_occurrence(adults, in_days=8)
+    make_occurrence(training, in_days=-10)
     services.register(mine, child, parent)
 
     def titles(**kwargs):
         return [e.occurrence for e in services.agenda(parent, services.AgendaFilter(**kwargs)).entries]
 
-    assert titles() == [mine, cancelled, closed]
-    assert titles(event_type=event_type("Wettkampf").pk) == [closed]
+    assert titles() == [mine, cancelled, closed]  # „Für mich“
+    assert titles(matching=False) == [mine, cancelled, closed, other]
     assert titles(event=training.pk) == [mine, cancelled]
     assert titles(hide_cancelled=True) == [mine, closed]
-    assert titles(mine=True) == [mine]
-    assert titles(open=True) == [mine]
-    today = timezone.localdate()
-    assert titles(start=today - timedelta(days=11), end=today - timedelta(days=9)) == [past]
+    assert titles(mine=True) == [mine]  # „Nur angemeldete“
+    assert titles(no_training=True) == [closed]  # „Ohne Trainings“
+    assert titles(matching=False, no_training=True) == [closed, other]
+    assert titles(mine=True, no_training=True) == []  # UND
 
 
 def test_agenda_without_own_members_lists_everything(head):

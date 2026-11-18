@@ -1,34 +1,23 @@
 {% extends "layouts/page.html" %}
-{% load help %}
+{% load help static %}
 {% block title %}Termine{% endblock %}
 {% block heading %}Termine{% endblock %}
 {% block heading_extra %}{% help_link "termine" %}{% endblock %}
 {% block more %}{% if can_plan_events %}<li><a href="{% url 'event_list' %}"><i class="bi bi-calendar3" aria-hidden="true"></i> Veranstaltungen</a></li>{% endif %}{% endblock %}
-{% block intro %}{% if agenda.has_members %}Alle Termine. Standardmäßig siehst du nur die, die zu {% if agenda.several %}euch{% else %}dir{% endif %} passen.{% else %}Alle Termine.{% endif %}{% endblock %}
+{% block intro %}Alle kommenden Termine.{% if agenda.has_members %} Mehrere Filter gelten zusammen.{% endif %}{% endblock %}
+{% block scripts %}<script src="{% static 'js/agenda.js' %}"></script>{% endblock %}
 {% block page %}
 <form method="get" action="{% url 'quick_link_form' %}" class="mb-4 flex flex-wrap items-end gap-2" role="search" aria-label="Termin per Code öffnen">
   <div class="fieldset"><label class="fieldset-legend text-sm" for="code">Code von der Ausschreibung</label><input class="input w-40 font-mono" id="code" name="code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="z. B. K7M4PX" required></div>
   <button class="btn mb-1" type="submit">Öffnen</button>
 </form>
-<details class="collapse collapse-arrow mb-6 bg-base-100 shadow-sm"{% if form.errors %} open{% endif %}>
-  <summary class="collapse-title font-semibold"><i class="bi bi-funnel" aria-hidden="true"></i> Filter{% if form.changed_count %} <span class="badge badge-soft badge-primary badge-sm">{{ form.changed_count }} aktiv</span>{% endif %}</summary>
-  <div class="collapse-content">
-    <form method="get" class="flex flex-col gap-3">
-      <input type="hidden" name="f" value="1">
-      {% if form.non_field_errors %}<div role="alert" class="alert alert-soft alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
-      <div class="grid gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
-        {% for field in form %}{% if field.widget_type != "checkbox" %}{{ field.as_field_group }}{% endif %}{% endfor %}
-      </div>
-      <div class="flex flex-wrap gap-x-6">
-        {% for field in form %}{% if field.widget_type == "checkbox" %}{{ field.as_field_group }}{% endif %}{% endfor %}
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button class="btn btn-primary" type="submit">Anzeigen</button>
-        {% if form.is_bound %}<a class="btn btn-ghost" href="{% url 'agenda' %}">Zurücksetzen</a>{% endif %}
-      </div>
-    </form>
+<form method="get" class="mb-6 flex flex-wrap items-center gap-2" data-auto-submit>
+  <input type="hidden" name="f" value="1">
+  <div class="filter" role="group" aria-label="Filter">
+    {% for chip in form.chips %}<input class="btn btn-sm" type="checkbox" name="{{ chip.name }}" value="{{ chip.value }}" aria-label="{{ chip.label }}"{% if chip.checked %} checked{% endif %}>{% endfor %}
   </div>
-</details>
+  <noscript><button class="btn btn-sm btn-primary" type="submit">Anwenden</button></noscript>
+</form>
 
 <section class="card bg-base-100 shadow-sm" aria-labelledby="h-termine"><div class="card-body">
   <h2 class="card-title" id="h-termine">{{ page.paginator.count }} Termin{{ page.paginator.count|pluralize:"e" }}</h2>
@@ -46,7 +35,7 @@
   </nav>
   {% endif %}
   {% elif form.is_bound %}<p class="text-base-content/70">Keine Termine für diese Filter.</p>
-  {% elif agenda.has_members %}<p class="text-base-content/70">Gerade keine passenden Termine. Im Filter kannst du dir auch die übrigen anzeigen lassen.</p>
+  {% elif agenda.has_members %}<p class="text-base-content/70">Gerade keine passenden Termine. Schalte „Für mich“ aus, um auch die übrigen zu sehen.</p>
   {% else %}<p class="text-base-content/70">Noch keine Termine.</p>{% endif %}
 </div></section>
 {% endblock %}
