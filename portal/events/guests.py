@@ -74,9 +74,13 @@ def _check(occurrence: Occurrence, guest: Guest) -> None:
         raise services.RegistrationError("Der Termin ist abgesagt.")
     if services.window(occurrence) != "open":
         raise services.RegistrationError("Die Anmeldung zu diesem Termin ist nicht offen.")
-    match = services.match_event(occurrence.event, guest, timezone.localdate(occurrence.starts_at))
-    if match == services.Match.NO:
+    if services.match_occurrence(occurrence, guest) == services.Match.NO and not services.is_recommendation(occurrence):
         raise services.RegistrationError(f"{occurrence.event.title} passt leider nicht zu {guest.first_name}.")
+
+
+def _off_target(occurrence: Occurrence, guest: Guest) -> bool:
+    """Über den Link außerhalb einer empfohlenen Zielgruppe angemeldet (ADR 0019)."""
+    return services.match_occurrence(occurrence, guest) == services.Match.NO
 
 
 def _status(occurrence: Occurrence) -> ParticipationStatus:
@@ -119,6 +123,7 @@ def register(event: Event, data: dict[str, Any], occurrences: Iterable[Occurrenc
             status=ParticipationStatus.REGISTERED if by else ParticipationStatus.PENDING,
             registered_by=by,
             exception_by=by,
+            off_target=by is None and _off_target(occurrence, guest),
             weight=guest.weight,
         )
     log.info("Gast %s für %s Termine von %s", guest.pk, len(occurrences), "Team" if by else "Link")
@@ -145,6 +150,12 @@ def confirm(guest: Guest) -> None:
     ):
         participation.status = _status(participation.occurrence)
         participation.save(update_fields=["status", "updated_at"])
+        if participation.off_target:
+            _notify_off_target(participation)
+
+
+def _notify_off_target(participation: Participation) -> None:
+    transaction.on_commit(lambda: services.notices.off_target(participation))
 
 
 @transaction.atomic
@@ -163,9 +174,12 @@ def add(guest: Guest, occurrence: Occurrence) -> Participation:
             "role": services.default_role(),
             "status": _status(occurrence) if guest.confirmed_at else ParticipationStatus.PENDING,
             "weight": guest.weight,
+            "off_target": _off_target(occurrence, guest),
             "created_at": timezone.now(),
         },
     )
+    if participation.off_target and guest.confirmed_at:
+        _notify_off_target(participation)
     audit.log(
         None,
         audit.Area.EVENTS,

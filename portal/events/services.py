@@ -29,6 +29,7 @@ from .models import (
     Event,
     Guest,
     Occurrence,
+    OccurrenceTargetGroup,
     ParticipantRole,
     Participation,
     ParticipationStatus,
@@ -36,6 +37,7 @@ from .models import (
     Schedule,
     ScheduleTeam,
     TargetGroupTemplate,
+    TargetMode,
 )
 
 log = logging.getLogger(__name__)
@@ -265,6 +267,72 @@ def match_event(event: Event, member: Member | Guest, on: date, interest_ids: se
     if not groups:
         return Match.YES
     return max(match_group(group, member, on, interest_ids) for group in groups)
+
+
+def target_groups(occurrence: Occurrence) -> list[Criteria]:
+    """Zielgruppen eines Termins: eigene, wenn sie abweichen, sonst die der Veranstaltung (ADR 0019)."""
+    if occurrence.custom_target_groups:
+        return list(occurrence.target_groups.all())
+    return list(occurrence.event.target_groups.all())
+
+
+def match_occurrence(occurrence: Occurrence, person: Member | Guest, interest_ids: set[int] | None = None) -> Match:
+    """Wie ``match_event``, aber mit den Zielgruppen des Termins."""
+    groups = target_groups(occurrence)
+    if not groups:
+        return Match.YES
+    on = timezone.localdate(occurrence.starts_at)
+    return max(match_group(group, person, on, interest_ids) for group in groups)
+
+
+def is_recommendation(occurrence: Occurrence) -> bool:
+    """Zielgruppen nur als Empfehlung: Wer nicht passt, darf sich trotzdem anmelden."""
+    return occurrence.event.target_mode == TargetMode.RECOMMENDED
+
+
+def not_in_group_message(member: Member | Guest, own: bool) -> str:
+    """Hinweis, wenn die Zielgruppe Vorgabe ist und nicht passt; ``own`` heißt: das eigene Mitgliedsprofil."""
+    who = "Du gehörst" if own else f"{member.first_name} gehört"
+    return (
+        f"{who} leider nicht zur Zielgruppe dieses Termins. Anmeldung nur durch Übungs- oder Abteilungsleiter möglich."
+    )
+
+
+@transaction.atomic
+def customize_target_groups(occurrence: Occurrence, by: User | None = None) -> None:
+    """Der Termin bekommt eigene Zielgruppen, zunächst als Kopie der Zielgruppen der Veranstaltung."""
+    if occurrence.custom_target_groups:
+        return
+    for group in occurrence.event.target_groups.all():
+        copy = OccurrenceTargetGroup.objects.create(
+            occurrence=occurrence, name=group.name, **{name: getattr(group, name) for name in group.CRITERIA}
+        )
+        copy.interests.set(group.interests.all())
+    occurrence.custom_target_groups = True
+    occurrence.is_modified = True  # bleibt bei Neuerzeugung aus dem Zeitplan erhalten
+    occurrence.save(update_fields=["custom_target_groups", "is_modified"])
+    audit.log(by, audit.Area.EVENTS, "occurrence_target_groups", f"Zielgruppen für {_when(occurrence)} angepasst")
+
+
+@transaction.atomic
+def save_occurrence_target_groups(occurrence: Occurrence, formset: Any, by: User | None = None) -> None:
+    formset.save()
+    groups = "; ".join(str(group) for group in occurrence.target_groups.all()) or "alle"
+    audit.log(by, audit.Area.EVENTS, "occurrence_target_groups", f"Zielgruppen für {_when(occurrence)}: {groups}")
+
+
+@transaction.atomic
+def reset_target_groups(occurrence: Occurrence, by: User | None = None) -> None:
+    """Wieder die Zielgruppen der Veranstaltung."""
+    occurrence.target_groups.all().delete()
+    occurrence.custom_target_groups = False
+    occurrence.save(update_fields=["custom_target_groups"])
+    audit.log(
+        by,
+        audit.Area.EVENTS,
+        "occurrence_target_groups",
+        f"Zielgruppen für {_when(occurrence)} wieder wie die Veranstaltung",
+    )
 
 
 def matching_members(target: Criteria | Event, on: date | None = None) -> list[tuple[Member, Match]]:
@@ -521,8 +589,14 @@ def registered_count(occurrence: Occurrence) -> int:
     return occurrence.participations.filter(status=ParticipationStatus.REGISTERED, role__is_team=False).count()
 
 
-def check_register(occurrence: Occurrence, member: Member, match: Match | None = None) -> None:
-    """Prüft, ob sich das Mitglied selbst (bzw. über die Eltern) anmelden kann."""
+def check_register(
+    occurrence: Occurrence, member: Member, match: Match | None = None, *, by: User | None = None
+) -> Match:
+    """Prüft, ob sich das Mitglied selbst (bzw. über die Eltern) anmelden kann, und gibt das Matching zurück.
+
+    Ist die Zielgruppe eine Vorgabe und passt nicht, geht die Anmeldung nur über Übungs- oder Abteilungsleiter;
+    ist sie eine Empfehlung, ist die Anmeldung erlaubt (ADR 0019).
+    """
     if occurrence.is_cancelled:
         raise RegistrationError("Der Termin ist abgesagt.")
     _check_not_team(occurrence, member)
@@ -533,9 +607,11 @@ def check_register(occurrence: Occurrence, member: Member, match: Match | None =
     if state == "closed":
         raise RegistrationError("Die Anmeldung ist geschlossen.")
     if match is None:
-        match = match_event(occurrence.event, member, timezone.localdate(occurrence.starts_at))
-    if match == Match.NO:
-        raise RegistrationError(f"{occurrence.event.title} passt nicht zu {member.first_name}.")
+        match = match_occurrence(occurrence, member)
+    if match == Match.NO and not is_recommendation(occurrence):
+        own = by is not None and member_user(member) == by
+        raise RegistrationError(not_in_group_message(member, own))
+    return match
 
 
 def _check_not_team(occurrence: Occurrence, member: Member) -> None:
@@ -556,12 +632,13 @@ def register(
 ) -> Participation:
     """Meldet ein Mitglied mit der „Rolle bei Anmeldung“ an. Ausnahmen (Abteilungsleitung, Team) gelten unabhängig
     von Zielgruppe, Anmeldezeitraum und Höchstzahl. Ist der Termin voll, kommt das Mitglied auf die Warteliste."""
+    off_target = False
     if exception:
         if occurrence.is_cancelled:
             raise RegistrationError("Der Termin ist abgesagt.")
         _check_not_team(occurrence, member)
     else:
-        check_register(occurrence, member)
+        off_target = check_register(occurrence, member, by=by) == Match.NO
     existing = Participation.objects.filter(occurrence=occurrence, member=member).first()
     if existing and existing.is_active and not exception:
         return existing
@@ -581,12 +658,15 @@ def register(
             "status": status,
             "registered_by": by,
             "exception_by": by if exception else None,
+            "off_target": off_target,
             "weight": weight,
             "note": note,
             "created_at": timezone.now(),
         },
     )
     log.info("Mitglied %s für Termin %s: %s", member.pk, occurrence.pk, status)
+    if off_target:
+        transaction.on_commit(lambda: notices.off_target(participation, by))
     state = "auf der Warteliste" if status == ParticipationStatus.WAITLIST else "angemeldet"
     _audit(
         by,
@@ -923,7 +1003,18 @@ class AgendaItem:
     @property
     def can_register(self) -> bool:
         active = self.participation is not None and self.participation.is_active
-        return not active and not self.occurrence.is_cancelled and self.window == "open" and self.match != Match.NO
+        return not active and not self.occurrence.is_cancelled and self.window == "open" and not self.blocked
+
+    @property
+    def blocked_hint(self) -> bool:
+        """Statt „Anmelden“ den Hinweis zeigen, dass nur Übungs- oder Abteilungsleiter anmelden können."""
+        active = self.participation is not None and self.participation.is_active
+        return self.blocked and not active and not self.occurrence.is_cancelled and self.window == "open"
+
+    @property
+    def blocked(self) -> bool:
+        """Passt nicht, und die Zielgruppe ist eine Vorgabe: anmelden nur über Übungs- oder Abteilungsleiter."""
+        return self.match == Match.NO and not is_recommendation(self.occurrence)
 
     @property
     def can_unregister(self) -> bool:
@@ -992,7 +1083,10 @@ def occurrences(flt: AgendaFilter, now: datetime | None = None) -> QuerySet[Occu
     """Termine nach Zeitraum, Art, Veranstaltung und Absage; die übrigen Filter brauchen die eigenen Mitglieder."""
     now = now or timezone.now()
     rows = Occurrence.objects.select_related("event__event_type").prefetch_related(
-        "event__target_groups__interests", "participations__role", "participations__member"
+        "event__target_groups__interests",
+        "target_groups__interests",
+        "participations__role",
+        "participations__member",
     )
     since = Q(starts_at__gte=_aware(flt.start, time.min)) if flt.start else Q(ends_at__gte=now)
     rows = rows.filter(since)
@@ -1031,10 +1125,9 @@ def agenda(user: Any, flt: AgendaFilter | None = None) -> Agenda:
         if flt.open and (occurrence.is_cancelled or state != "open"):
             continue
         entry = AgendaEntry(occurrence)
-        on = timezone.localdate(occurrence.starts_at)
         for link in shown:
             member = link.member
-            match = match_event(occurrence.event, member, on, interests[member.pk])
+            match = match_occurrence(occurrence, member, interests[member.pk])
             participation = participations.get((occurrence.pk, member.pk))
             active = participation is not None and participation.is_active
             if active or match != Match.NO or not flt.matching:

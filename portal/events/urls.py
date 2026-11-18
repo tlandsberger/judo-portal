@@ -14,6 +14,7 @@ urlpatterns = [
     path("termine/<int:pk>/abmelden/<int:member_pk>/", views.unregister, name="unregister"),
     path("termine/<int:pk>/bearbeiten/", views.occurrence_edit, name="occurrence_edit"),
     path("termine/<int:pk>/hinweis/", views.occurrence_note, name="occurrence_note"),
+    path("termine/<int:pk>/zielgruppen/", views.occurrence_target_groups, name="occurrence_target_groups"),
     path("termine/<int:pk>/absagen/", views.occurrence_cancel, name="occurrence_cancel"),
     path("termine/<int:pk>/team/", views.occurrence_team, name="occurrence_team"),
     path(

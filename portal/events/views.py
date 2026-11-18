@@ -33,6 +33,7 @@ from .forms import (
     HandOverForm,
     NoteForm,
     OccurrenceForm,
+    OccurrenceTargetGroupFormSet,
     ParticipantRoleForm,
     RegisterForm,
     ScheduleForm,
@@ -54,6 +55,9 @@ from .models import (
 from .services import MANAGE_EVENTS, Match, RegistrationError
 
 AGENDA_PAGE = 30  # Termine je Seite in „Termine“
+OFF_TARGET_NOTE = (
+    "Die Zielgruppe ist nur eine Empfehlung. Die Übungsleiter erfahren, dass die Anmeldung außerhalb liegt."
+)
 
 
 def _user(request: HttpRequest) -> User:
@@ -123,14 +127,13 @@ def _team_rows(
 def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
     occurrence = get_object_or_404(Occurrence.objects.select_related("event", "schedule"), pk=pk)
     user = _user(request)
-    on = timezone.localdate(occurrence.starts_at)
     window = services.window(occurrence)
     own = []
     for link in members.effective_links(user):
         participation = (
             Participation.objects.filter(occurrence=occurrence, member=link.member).select_related("role").first()
         )
-        match = services.match_event(occurrence.event, link.member, on)
+        match = services.match_occurrence(occurrence, link.member)
         own.append((link, services.AgendaItem(occurrence, match, participation, window)))
     lead = services.can_lead(user, occurrence)
     show_participants = services.can_see_participants(user, occurrence)
@@ -150,6 +153,8 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "started": occurrence.starts_at <= timezone.now(),
         "participants": services.participants(occurrence) if show_participants else None,
         "registered": services.registered_count(occurrence),
+        "target_groups": services.target_groups(occurrence),
+        "recommendation": services.is_recommendation(occurrence),
     }
     if lead:
         context["note_form"] = NoteForm(instance=occurrence)
@@ -175,7 +180,7 @@ def register(request: HttpRequest, pk: int, member_pk: int) -> HttpResponse:
     member = _own_member(request, member_pk)
     event = occurrence.event
     try:
-        services.check_register(occurrence, member)
+        match = services.check_register(occurrence, member, by=_user(request))
     except RegistrationError as error:
         messages.error(request, str(error))
         return redirect(_next(request, occurrence))
@@ -198,13 +203,13 @@ def register(request: HttpRequest, pk: int, member_pk: int) -> HttpResponse:
                 messages.info(request, f"{member.first_name} steht auf der Warteliste.")
             else:
                 messages.success(request, f"{member.first_name} ist angemeldet.")
+            if participation.off_target:
+                messages.info(request, OFF_TARGET_NOTE)
         return redirect(_next(request, occurrence))
-    match = services.match_event(event, member, timezone.localdate(occurrence.starts_at))
-    return render(
-        request,
-        "events/register.html",
-        {"occurrence": occurrence, "member": member, "form": form, "maybe": match == Match.MAYBE},
-    )
+    context = {"occurrence": occurrence, "member": member, "form": form, "maybe": match == Match.MAYBE}
+    context["off_target"] = match == Match.NO
+    context["off_target_note"] = OFF_TARGET_NOTE
+    return render(request, "events/register.html", context)
 
 
 @require_POST
@@ -248,6 +253,38 @@ def occurrence_edit(request: HttpRequest, pk: int) -> HttpResponse:
         messages.success(request, "Termin gespeichert.")
         return redirect("occurrence_detail", pk=occurrence.pk)
     return render(request, "events/occurrence_edit.html", {"occurrence": occurrence, "form": form})
+
+
+@role_required(*MANAGE_EVENTS)
+def occurrence_target_groups(request: HttpRequest, pk: int) -> HttpResponse:
+    """Zielgruppen eines einzelnen Termins anpassen oder wieder die der Veranstaltung übernehmen (ADR 0019)."""
+    occurrence = get_object_or_404(Occurrence.objects.select_related("event"), pk=pk)
+    action = request.POST.get("action") if request.method == "POST" else None
+    if action == "customize":
+        services.customize_target_groups(occurrence, _user(request))
+        return redirect("occurrence_target_groups", pk=pk)
+    if action == "reset":
+        services.reset_target_groups(occurrence, _user(request))
+        messages.success(request, "Der Termin hat wieder die Zielgruppen der Veranstaltung.")
+        return redirect("occurrence_detail", pk=pk)
+    groups = None
+    if occurrence.custom_target_groups:
+        groups = OccurrenceTargetGroupFormSet(
+            request.POST if action == "save" else None, instance=occurrence, prefix="zg"
+        )
+        if action == "save" and groups.is_valid():
+            services.save_occurrence_target_groups(occurrence, groups, _user(request))
+            messages.success(request, "Zielgruppen für diesen Termin gespeichert.")
+            return redirect("occurrence_detail", pk=pk)
+    context = {
+        "occurrence": occurrence,
+        "event": occurrence.event,
+        "groups": groups,
+        "event_groups": list(occurrence.event.target_groups.all()),
+        "templates": services.template_data(),
+        "groups_intro": "Gilt nur für diesen Termin, statt der Zielgruppen der Veranstaltung.",
+    }
+    return render(request, "events/occurrence_target_groups.html", context)
 
 
 @require_POST

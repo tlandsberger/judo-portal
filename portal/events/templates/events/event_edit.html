@@ -8,7 +8,7 @@
 {% block page %}
 <form method="post" class="flex flex-col gap-6">{% csrf_token %}
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-veranstaltung"><div class="card-body gap-4">
-    {{ form }}
+    {% for field in form %}{% if field.name != "target_mode" %}{{ field.as_field_group }}{% endif %}{% endfor %}
   </div></section>
   {% include "events/_target_groups.html" %}
   <div class="action-bar"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% url 'event_detail' event.pk %}">Abbrechen</a></div>

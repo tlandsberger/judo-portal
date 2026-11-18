@@ -1,8 +1,9 @@
 <section class="card bg-base-100 shadow-sm" aria-labelledby="h-zielgruppen" data-target-groups data-prefix="{{ groups.prefix }}"><div class="card-body gap-4">
   <div>
     <h2 class="card-title" id="h-zielgruppen">Zielgruppen</h2>
-    <p class="text-sm text-base-content/70">Anmelden kann sich, wer zu mindestens einer Zielgruppe passt; ohne Zielgruppe alle. Leere Felder gelten für alle. Das Alter zählt nach Jahrgang wie bei den Judo-Altersklassen: U13 heißt zum Beispiel „Alter bis 12“.</p>
+    <p class="text-sm text-base-content/70">{% if groups_intro %}{{ groups_intro }} {% endif %}Es zählt, wer zu mindestens einer Zielgruppe passt; ohne Zielgruppe passen alle. Leere Felder gelten für alle. Das Alter zählt nach Jahrgang wie bei den Judo-Altersklassen: U13 heißt zum Beispiel „Alter bis 12“.</p>
   </div>
+  {% if form.target_mode %}{{ form.target_mode.as_field_group }}{% endif %}
   {{ groups.management_form }}
   {% if groups.non_form_errors %}<div role="alert" class="alert alert-error alert-soft">{{ groups.non_form_errors|join:" " }}</div>{% endif %}
   <div class="flex flex-col gap-4" data-target-group-list>

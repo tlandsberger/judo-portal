@@ -61,7 +61,7 @@ def test_agenda_filter_form(client, parent, child):
     assert all(e.occurrence.event != adults for e in response.context["page"].object_list)
     assert re.search(r'name="passend"[^>]*checked', page)  # „Nur passende“ ist vorausgewählt
     page = client.get(reverse("agenda"), {"f": "1"}).content.decode()
-    assert "35 Termine" in page and "passt nicht zur Zielgruppe" in page
+    assert "35 Termine" in page and "Mia gehört leider nicht zur Zielgruppe dieses Termins" in page
     assert "Frühere" in client.get(reverse("agenda"), {"f": "1", "seite": "2"}).content.decode()
     page = client.get(reverse("agenda"), {"f": "1", "passend": "on", "von": "2030-02-01", "bis": "2030-01-01"})
     assert "„Bis“ muss nach „Von“ liegen." in page.content.decode()
@@ -101,6 +101,52 @@ def test_participants_only_for_own_team(client, trainer, parent, child):
     assert "Teilnehmer" not in page and parent.email not in page
     assert client.get(reverse("participant_add", args=[occurrence.pk])).status_code == 403
     assert client.get(reverse("member_list")).status_code == 403
+
+
+def test_recommended_target_group_offers_registration(client, parent, child):
+    event = Event.objects.create(title="Erwachsenentraining", target_mode="recommended")
+    TargetGroup.objects.create(event=event, min_age=18)
+    occurrence = make_occurrence(event)
+    login(client, parent)
+    page = client.get(reverse("agenda"), {"f": "1"}).content.decode()
+    assert "passt nicht zur Zielgruppe" in page and "gehört leider nicht" not in page
+    assert reverse("register", args=[occurrence.pk, child.pk]) in page
+    response = client.post(reverse("register", args=[occurrence.pk, child.pk]), follow=True)
+    assert "Die Zielgruppe ist nur eine Empfehlung" in response.content.decode()
+    assert Participation.objects.get().off_target
+
+
+def test_occurrence_target_groups_page_only_for_head(client, head, trainer, child, parent):
+    event = Event.objects.create(title="Training")
+    TargetGroup.objects.create(event=event, name="Erwachsene", min_age=18)
+    occurrence = make_occurrence(event)
+    services.set_team(occurrence, services.own_member(trainer), role("Trainer"))
+    url = reverse("occurrence_target_groups", args=[occurrence.pk])
+    assert login(client, trainer).get(url).status_code == 403
+    client.logout()
+    login(client, head)
+    assert url in client.get(reverse("occurrence_detail", args=[occurrence.pk])).content.decode()
+    assert "Wie die Veranstaltung" in client.get(url).content.decode()
+    client.post(url, {"action": "customize"})
+    occurrence.refresh_from_db()
+    group = occurrence.target_groups.get()
+    data = {
+        "action": "save",
+        "zg-TOTAL_FORMS": "1",
+        "zg-INITIAL_FORMS": "1",
+        "zg-0-id": str(group.pk),
+        "zg-0-occurrence": str(occurrence.pk),
+        "zg-0-name": "Kinder",
+        "zg-0-max_age": "12",
+    }
+    assert client.post(url, data).status_code == 302
+    group.refresh_from_db()
+    assert (group.name, group.min_age, group.max_age) == ("Kinder", None, 12)
+    page = client.get(reverse("occurrence_detail", args=[occurrence.pk])).content.decode()
+    assert "für diesen Termin angepasst" in page
+    client.post(url, {"action": "reset"})
+    occurrence.refresh_from_db()
+    assert not occurrence.custom_target_groups
 
 
 def test_link_from_occurrence_to_event_for_staff_only(client, trainer, parent, child):
