@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 
 from portal.accounts import services as accounts
 from portal.accounts.permissions import role_required
-from portal.core import audit
+from portal.core import audit, ordering
 
 from . import csv_import, services
 from .forms import AccessForm, ImportForm, InterestForm, MemberForm, SelfServiceForm
@@ -134,6 +134,12 @@ def interest_list(request: HttpRequest, pk: int | None = None) -> HttpResponse:
         "members/interest_list.html",
         {"interests": Interest.objects.all(), "form": form, "interest": interest},
     )
+
+
+@require_POST
+@role_required(*MANAGE_MEMBERS)
+def interest_reorder(request: HttpRequest) -> HttpResponse:
+    return ordering.handle(request, Interest, "position", "interest_list")
 
 
 @require_POST

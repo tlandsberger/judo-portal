@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date, timedelta
 from typing import Any
 
 from django.contrib import messages
@@ -19,7 +20,7 @@ from django.views.decorators.http import require_POST
 
 from portal.accounts.models import User
 from portal.accounts.permissions import role_required
-from portal.core import audit
+from portal.core import audit, ordering
 from portal.members import services as members
 from portal.members.models import Member
 
@@ -90,6 +91,37 @@ def agenda(request: HttpRequest) -> HttpResponse:
     query.pop("seite", None)
     context = {"agenda": result, "page": page, "form": form, "query": query.urlencode()}
     return render(request, "events/agenda.html", context)
+
+
+@login_required
+def training_swap(request: HttpRequest) -> HttpResponse:
+    """Trainingstausch: alle Trainings eines Tages mit ihren Übungsleitern; Vertreten, Übertragen und Entfernen
+    wie am Termin (ADR 0018), danach zurück zu diesem Tag."""
+    user = _user(request)
+    if not services.can_plan_staff(user):
+        raise PermissionDenied
+    try:
+        day = date.fromisoformat(request.GET.get("tag", ""))
+    except ValueError:
+        day = timezone.localdate()
+    member = services.own_member(user)
+    trainings = []
+    for occurrence in services.trainings_on(day):
+        team = services.team(occurrence)
+        own_team = next((p for p in team if member and p.member_id == member.pk), None)
+        lead = services.can_lead(user, occurrence)
+        trainings.append(
+            {"occurrence": occurrence, "team_rows": _team_rows(user, occurrence, team, member, own_team, lead)}
+        )
+    context = {
+        "day": day,
+        "today": timezone.localdate(),
+        "previous": day - timedelta(days=1),
+        "following": day + timedelta(days=1),
+        "trainings": trainings,
+        "back": f"{reverse('training_swap')}?tag={day.isoformat()}",
+    }
+    return render(request, "events/training_swap.html", context)
 
 
 def _own_member(request: HttpRequest, member_pk: int) -> Member:
@@ -379,7 +411,12 @@ def occurrence_team_remove(request: HttpRequest, pk: int, participation_pk: int)
         return render(
             request,
             "events/team_remove.html",
-            {"participation": participation, "occurrence": participation.occurrence, "is_self": is_self},
+            {
+                "participation": participation,
+                "occurrence": participation.occurrence,
+                "is_self": is_self,
+                "next": _next(request, participation.occurrence),
+            },
         )
     try:
         services.withdraw(participation, _user(request))
@@ -387,8 +424,8 @@ def occurrence_team_remove(request: HttpRequest, pk: int, participation_pk: int)
         messages.error(request, str(error))
     else:
         name = "Du bist" if is_self else f"{participation.person.display_name} ist"
-        messages.success(request, f"{name} als {participation.role.name} ausgetragen.")
-    return redirect("occurrence_detail", pk=pk)
+        messages.success(request, f"{name} als {participation.role.name} entfernt.")
+    return redirect(_next(request, participation.occurrence))
 
 
 @login_required
@@ -416,7 +453,7 @@ def occurrence_hand_over(request: HttpRequest, pk: int, participation_pk: int) -
             form.add_error("member", str(error))
         else:
             messages.success(request, f"Übertragen: {substitute.display_name} übernimmt und bekommt eine Nachricht.")
-            return redirect("occurrence_detail", pk=pk)
+            return redirect(_next(request, occurrence))
     return render(
         request,
         "events/hand_over.html",
@@ -426,6 +463,7 @@ def occurrence_hand_over(request: HttpRequest, pk: int, participation_pk: int) -
             "form": form,
             "is_self": is_self,
             "started": occurrence.starts_at <= timezone.now(),
+            "next": _next(request, occurrence),
         },
     )
 
@@ -450,7 +488,7 @@ def occurrence_take_over(request: HttpRequest, pk: int, participation_pk: int) -
         messages.error(request, str(error))
     else:
         messages.success(request, f"Du vertrittst {participation.person.display_name} als {participation.role.name}.")
-    return redirect("occurrence_detail", pk=pk)
+    return redirect(_next(request, participation.occurrence))
 
 
 @require_POST
@@ -925,8 +963,14 @@ def event_guest_link(request: HttpRequest, pk: int) -> HttpResponse:
 
 @role_required(*MANAGE_EVENTS)
 def event_type_list(request: HttpRequest) -> HttpResponse:
-    types = EventType.objects.annotate(count=Count("events"))
+    types = EventType.objects.annotate(count=Count("events")).order_by("order", "name")
     return render(request, "events/event_type_list.html", {"types": types})
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def event_type_reorder(request: HttpRequest) -> HttpResponse:
+    return ordering.handle(request, EventType, "order", "event_type_list")
 
 
 @role_required(*MANAGE_EVENTS)
@@ -961,6 +1005,12 @@ def role_list(request: HttpRequest) -> HttpResponse:
         "events/role_list.html",
         {"roles": roles, "without_member": services.users_without_member(restricted)},
     )
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def role_reorder(request: HttpRequest) -> HttpResponse:
+    return ordering.handle(request, ParticipantRole, "order", "role_list")
 
 
 @role_required(*MANAGE_EVENTS)

@@ -13,7 +13,7 @@
   <form method="post" class="flex flex-col gap-4">{% csrf_token %}
     {{ form }}
     <p class="text-sm text-base-content/70">Die Vertretung bekommt eine Push-Benachrichtigung, sonst eine Mail.{% if participation.is_confirmed %} Deine Bestätigung wird zurückgenommen.{% endif %}</p>
-    <div class="action-bar"><button type="submit" class="btn btn-primary">Übertragen</button><a class="btn" href="{% url 'occurrence_detail' occurrence.pk %}">Abbrechen</a></div>
+    <div class="action-bar"><button type="submit" class="btn btn-primary">Übertragen</button><a class="btn" href="{{ next }}">Abbrechen</a></div>
   </form>
 </div></div>
 {% endblock %}

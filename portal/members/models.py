@@ -11,6 +11,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from portal.core import ordering
+
 # Bis zu diesem Alter gilt eine Verknüpfung „Erziehungsberechtigt“; ab diesem Alter gibt es einen eigenen Zugang.
 ADULT_AGE = 18
 OWN_ACCESS_AGE = 14
@@ -69,6 +71,10 @@ class Interest(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        ordering.append(self, "position")
+        super().save(*args, **kwargs)
 
 
 class Member(models.Model):

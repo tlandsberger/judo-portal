@@ -8,13 +8,16 @@
 {% block page %}
 <section class="card bg-base-100 shadow-sm" aria-labelledby="h-arten"><div class="card-body">
   <h2 class="card-title" id="h-arten">{{ types|length }} Veranstaltungsart{{ types|length|pluralize:"en" }}</h2>
+  {% if types|length > 1 %}<p class="text-sm text-base-content/70">In dieser Reihenfolge stehen die Arten zur Auswahl. Mit den Pfeilen änderst du sie.</p>{% endif %}
+  <form id="reihenfolge" method="post" action="{% url 'event_type_reorder' %}" hidden>{% csrf_token %}</form>
   <ul class="list">
     {% for event_type in types %}
-    <li class="list-row items-center px-0">
+    <li class="list-row items-center px-0" id="sort-{{ event_type.pk }}">
       <div class="list-col-grow">
         <a class="link link-hover font-semibold" href="{% url 'event_type_edit' event_type.pk %}">{{ event_type.name }}</a>
         <div class="text-sm text-base-content/70">{{ event_type.count }} Veranstaltung{{ event_type.count|pluralize:"en" }}{% if not event_type.is_active %} · inaktiv{% endif %}</div>
       </div>
+      {% include "partials/sort_buttons.html" with pk=event_type.pk name=event_type.name %}
     </li>
     {% endfor %}
   </ul>

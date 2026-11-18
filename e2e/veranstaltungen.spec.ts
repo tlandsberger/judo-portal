@@ -76,7 +76,6 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await admin.getByLabel("Ende", { exact: true }).fill(localDateTime(-1, "14:00"));
   await admin.getByRole("button", { name: "Speichern" }).click();
   await expect(admin.getByText("Termin angelegt. Trag hier die Übungsleiter ein.")).toBeVisible();
-  await admin.getByText("Jemanden eintragen oder Rolle ändern").click();
   await admin.getByLabel("Mitglied").selectOption({ label: "Clara Clever" });
   await admin.getByLabel("Rolle").selectOption({ label: "Trainer" });
   await admin.getByRole("button", { name: "Eintragen", exact: true }).click();
@@ -115,13 +114,16 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await expect(parent.getByRole("heading", { name: "Nächste Termine" })).toBeVisible();
   await parent.goto("/termine/");
   await expectNoA11yViolations(parent);
-  // Filter: standardmäßig nur passende Termine
-  await parent.locator("summary", { hasText: "Filter" }).click();
-  await expect(parent.getByLabel("Nur passende Termine")).toBeChecked();
+  // Filter: standardmäßig „Für mich“, weitere gelten zusammen und sofort
+  await expect(parent.getByRole("checkbox", { name: "Für mich" })).toBeChecked();
+  await parent.getByRole("checkbox", { name: "Nur angemeldete" }).check();
+  await expect(parent).toHaveURL(/angemeldet=1/);
+  await expect(parent.getByRole("checkbox", { name: "Für mich" })).toBeChecked();
+  await expect(parent.getByRole("checkbox", { name: "Nur angemeldete" })).toBeChecked();
+  await expect(parent.getByText("Keine Termine für diese Filter.")).toBeVisible();
   await expectNoA11yViolations(parent);
-  await parent.getByLabel("Abgesagte ausblenden").check();
-  await parent.getByRole("button", { name: "Anzeigen" }).click();
-  await expect(parent.getByText("1 aktiv")).toBeVisible();
+  await parent.getByRole("checkbox", { name: "Nur angemeldete" }).uncheck();
+  await expect(parent).not.toHaveURL(/angemeldet=1/);
   // Code von der Ausschreibung: alle Termine der Veranstaltung
   await parent.getByLabel("Code von der Ausschreibung").fill(code.toLowerCase());
   await parent.getByRole("button", { name: "Öffnen" }).click();

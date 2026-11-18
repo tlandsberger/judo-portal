@@ -1,0 +1,45 @@
+{% extends "layouts/page.html" %}
+{% load help static %}
+{% block title %}Trainingstausch{% endblock %}
+{% block heading %}Trainingstausch{% endblock %}
+{% block heading_extra %}{% help_link "team" %}{% endblock %}
+{% block intro %}Alle Trainings eines Tages mit ihren Übungsleitern. Vertreten, übertragen oder entfernen gilt sofort.{% endblock %}
+{% block scripts %}<script src="{% static 'js/auto-submit.js' %}"></script>{% endblock %}
+{% block page %}
+<form method="get" class="mb-6 flex flex-wrap items-end gap-2" data-auto-submit>
+  <div class="fieldset"><label class="fieldset-legend text-sm" for="tag">Tag</label><input class="input w-48" type="date" id="tag" name="tag" value="{{ day|date:'Y-m-d' }}" required></div>
+  <div class="join mb-1">
+    <a class="btn join-item" href="?tag={{ previous|date:'Y-m-d' }}" aria-label="Vorheriger Tag"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+    {% if day != today %}<a class="btn join-item" href="?tag={{ today|date:'Y-m-d' }}">Heute</a>{% endif %}
+    <a class="btn join-item" href="?tag={{ following|date:'Y-m-d' }}" aria-label="Nächster Tag"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+  </div>
+  <noscript><button class="btn btn-primary mb-1" type="submit">Anzeigen</button></noscript>
+</form>
+
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-tag"><div class="card-body">
+  <h2 class="card-title" id="h-tag">{{ day|date:"l, d.m.Y" }}</h2>
+  {% if trainings %}
+  <ul class="list">
+    {% for training in trainings %}{% with occurrence=training.occurrence %}
+    <li class="flex flex-col gap-2 border-base-300 py-4 not-last:border-b">
+      <div>
+        <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a>
+        {% if occurrence.is_cancelled %}<span class="badge badge-soft badge-error badge-sm">abgesagt</span>{% endif %}
+        <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %}</div>
+      </div>
+      {% if training.team_rows %}
+      <ul class="list">
+        {% for row in training.team_rows %}{% with p=row.p %}
+        <li class="list-row items-center px-0">
+          <div class="list-col-grow"><div class="font-semibold">{{ p.member.display_name }}{% if row.is_self %} <span class="badge badge-ghost badge-sm">du</span>{% endif %}</div><div class="text-sm text-base-content/70">{{ p.role.name }}{% if p.is_confirmed %} · bestätigt{% endif %}</div></div>
+          {% include "events/_team_actions.html" with next=back %}
+        </li>
+        {% endwith %}{% endfor %}
+      </ul>
+      {% else %}<p class="text-sm text-base-content/70">Noch keine Übungsleiter eingeteilt.</p>{% endif %}
+    </li>
+    {% endwith %}{% endfor %}
+  </ul>
+  {% else %}<p class="text-base-content/70">An diesem Tag ist kein Training.</p>{% endif %}
+</div></section>
+{% endblock %}

@@ -1066,21 +1066,21 @@ class Agenda:
 
 @dataclass
 class AgendaFilter:
-    """Filter der Seite „Termine“. Ohne Zeitraum: alle kommenden Termine, so weit sie erzeugt sind."""
+    """Filter der Seite „Termine“; mehrere gelten zusammen (UND). Ohne Enddatum: alle kommenden Termine."""
 
-    matching: bool = True  # nur Termine, die zu einem eigenen Mitglied passen oder für die es eingetragen ist
-    member: int | None = None
-    event_type: int | None = None
-    event: int | None = None
-    start: date | None = None
+    matching: bool = True  # „Für mich“: passt zu einem eigenen Mitglied oder es ist eingetragen
+    mine: bool = False  # „Nur angemeldete“: ein eigenes Mitglied ist angemeldet, auf der Warteliste oder Übungsleiter
+    no_training: bool = False  # „Ohne Trainings“: alles außer der Veranstaltungsart „Training“
+    event: int | None = None  # nur diese Veranstaltung (Schnellzugang per Code)
     end: date | None = None
-    mine: bool = False  # nur eigene Anmeldungen und Einteilungen als Übungsleiter
-    open: bool = False  # nur Termine mit offener Anmeldung
     hide_cancelled: bool = False
 
 
+TRAINING = "Training"
+
+
 def occurrences(flt: AgendaFilter, now: datetime | None = None) -> QuerySet[Occurrence]:
-    """Termine nach Zeitraum, Art, Veranstaltung und Absage; die übrigen Filter brauchen die eigenen Mitglieder."""
+    """Kommende Termine nach Art, Veranstaltung und Absage; die übrigen Filter brauchen die eigenen Mitglieder."""
     now = now or timezone.now()
     rows = Occurrence.objects.select_related("event__event_type").prefetch_related(
         "event__target_groups__interests",
@@ -1088,12 +1088,11 @@ def occurrences(flt: AgendaFilter, now: datetime | None = None) -> QuerySet[Occu
         "participations__role",
         "participations__member",
     )
-    since = Q(starts_at__gte=_aware(flt.start, time.min)) if flt.start else Q(ends_at__gte=now)
-    rows = rows.filter(since)
+    rows = rows.filter(ends_at__gte=now)
     if flt.end:
         rows = rows.filter(starts_at__lt=_aware(flt.end + timedelta(days=1), time.min))
-    if flt.event_type:
-        rows = rows.filter(event__event_type_id=flt.event_type)
+    if flt.no_training:
+        rows = rows.exclude(event__event_type__name__iexact=TRAINING)
     if flt.event:
         rows = rows.filter(event_id=flt.event)
     if flt.hide_cancelled:
@@ -1110,7 +1109,7 @@ def agenda(user: Any, flt: AgendaFilter | None = None) -> Agenda:
     flt = flt or AgendaFilter()
     ensure_generated()
     links = members.effective_links(user)
-    shown = [link for link in links if flt.member is None or link.member.pk == flt.member] or links
+    shown = links
     rows = list(occurrences(flt))
     participations = {
         (p.occurrence_id, p.member_id): p
@@ -1122,8 +1121,6 @@ def agenda(user: Any, flt: AgendaFilter | None = None) -> Agenda:
     result = Agenda(several=len(shown) > 1, has_members=bool(links))
     for occurrence in rows:
         state = window(occurrence)
-        if flt.open and (occurrence.is_cancelled or state != "open"):
-            continue
         entry = AgendaEntry(occurrence)
         for link in shown:
             member = link.member
@@ -1188,6 +1185,20 @@ def participants(occurrence: Occurrence) -> list[Participant]:
         )
         for participation in rows
     ]
+
+
+def trainings_on(day: date) -> list[Occurrence]:
+    """Für den Trainingstausch: alle Trainings eines Tages, auch abgesagte (die ohne Knöpfe)."""
+    ensure_generated()
+    return list(
+        Occurrence.objects.filter(
+            starts_at__gte=_aware(day, time.min),
+            starts_at__lt=_aware(day + timedelta(days=1), time.min),
+            event__event_type__name__iexact=TRAINING,
+        )
+        .select_related("event")
+        .order_by("starts_at", "pk")
+    )
 
 
 def team(occurrence: Occurrence) -> list[Participation]:

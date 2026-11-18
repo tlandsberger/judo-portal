@@ -59,12 +59,14 @@ def test_agenda_filter_form(client, parent, child):
     page = response.content.decode()
     assert "34 Termine" in page and "Weitere Termine" in page
     assert all(e.occurrence.event != adults for e in response.context["page"].object_list)
-    assert re.search(r'name="passend"[^>]*checked', page)  # „Nur passende“ ist vorausgewählt
+    assert re.search(r'name="fuer_mich"[^>]*checked', page)  # „Für mich“ ist vorausgewählt
+    assert 'class="filter"' in page and 'aria-label="Ohne Trainings"' in page and "<details" not in page
     page = client.get(reverse("agenda"), {"f": "1"}).content.decode()
     assert "35 Termine" in page and "Mia gehört leider nicht zur Zielgruppe dieses Termins" in page
+    assert not re.search(r'name="fuer_mich"[^>]*checked', page)
     assert "Frühere" in client.get(reverse("agenda"), {"f": "1", "seite": "2"}).content.decode()
-    page = client.get(reverse("agenda"), {"f": "1", "passend": "on", "von": "2030-02-01", "bis": "2030-01-01"})
-    assert "„Bis“ muss nach „Von“ liegen." in page.content.decode()
+    page = client.get(reverse("agenda"), {"f": "1", "veranstaltung": adults.pk}).content.decode()
+    assert "1 Termin<" in page and 'aria-label="Nur Erwachsenentraining" checked' in page
 
 
 def test_register_form_with_weight(client, parent, child):

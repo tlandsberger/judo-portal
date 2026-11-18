@@ -98,4 +98,4 @@ class ImportForm(forms.Form):
 class InterestForm(forms.ModelForm):
     class Meta:
         model = Interest
-        fields = ("name", "position")
+        fields = ("name",)

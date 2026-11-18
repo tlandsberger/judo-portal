@@ -10,13 +10,15 @@
 
 <h2 id="vertretung">Vertretung</h2>
 <p>Kannst du einmal nicht, sprecht euch kurz ab. Danach reicht ein Tipp im Abschnitt „Übungsleiter“ des Termins – egal wer von euch beiden ihn macht. Es gilt sofort.</p>
-{% screenshot "vertretung" "Übungsleiter eines Termins mit Übertragen, Austragen und Vertreten" %}
+{% screenshot "vertretung" "Übungsleiter eines Termins mit Übertragen, Entfernen und Vertreten" %}
 <ul>
   <li><strong>Übertragen</strong> (du gibst ab): Tippe in deiner Zeile auf <strong>Übertragen</strong>, wähle, wer übernimmt, und tippe auf <strong>Übertragen</strong>. Die Vertretung bekommt eine Push-Benachrichtigung, sonst eine Mail.</li>
-  <li><strong>Vertreten</strong> (du übernimmst): Öffne den Termin, z. B. über den Link der anderen Person oder über <a href="{% url 'event_list' %}">Veranstaltungen</a>, und tippe in ihrer Zeile auf <strong>Vertreten</strong>. Du übernimmst ihre Rolle, sie bekommt eine Nachricht.</li>
-  <li><strong>Austragen</strong> (ohne Vertretung, z. B. als Co-Trainer): Tippe in deiner Zeile auf <strong>Austragen</strong>. Wäre danach kein Trainer mehr eingeteilt, fragt das Portal nach und gibt der Abteilungsleitung Bescheid; zwei Tage vor dem Termin erinnert es sie noch einmal, falls bis dahin niemand eingesprungen ist.</li>
+  <li><strong>Vertreten</strong> (du übernimmst): Öffne den Termin, z. B. über den Link der anderen Person, oder den <a href="{% url 'training_swap' %}">Trainingstausch</a> und tippe in ihrer Zeile auf <strong>Vertreten</strong>. Du übernimmst ihre Rolle, sie bekommt eine Nachricht.</li>
+  <li><strong>Entfernen</strong> (ohne Vertretung, z. B. als Co-Trainer): Tippe in deiner Zeile auf <strong>Entfernen</strong>. Wäre danach kein Trainer mehr eingeteilt, fragt das Portal nach und gibt der Abteilungsleitung Bescheid; zwei Tage vor dem Termin erinnert es sie noch einmal, falls bis dahin niemand eingesprungen ist.</li>
 </ul>
 <p>Das geht auch nach dem Termin, solange die Stunden nicht eingereicht sind: Wer vertreten hat, bestätigt dann die Stunden (siehe <a href="{% url 'help_chapter' 'stunden' %}#nicht-dabei">Nicht dabei?</a>).</p>
+<h3 id="trainingstausch">Trainingstausch</h3>
+<p>Unter <a href="{% url 'training_swap' %}">Trainingstausch</a> wählst du einen Tag und siehst alle Trainings dieses Tages mit ihren Übungsleitern. Daneben stehen dieselben Knöpfe wie am Termin: <strong>Vertreten</strong>, <strong>Übertragen</strong> und <strong>Entfernen</strong>. Mit den Pfeilen blätterst du zum vorherigen oder nächsten Tag; nach jeder Aktion bleibst du auf dem gewählten Tag.</p>
 
 <h2 id="termin">Am Termin</h2>
 {% screenshot "termin-team" "Termin aus Sicht der Übungsleiter" %}
@@ -27,5 +29,5 @@
   <li><strong>Ausnahme eintragen:</strong> Jemanden anmelden, der nicht zur Zielgruppe passt oder nach dem Anmeldeschluss kommt.</li>
   <li><strong>Außerhalb der Zielgruppe:</strong> Ist die Zielgruppe nur eine Empfehlung, kann sich jeder selbst anmelden. Gehört jemand nicht dazu, bekommst du eine Nachricht, und in der Teilnehmerliste steht „außerhalb der Zielgruppe“.</li>
   <li><strong>Gast eintragen:</strong> Bei Veranstaltungen mit Gästen trägst du Externe mit Name und Notfallkontakt ein. Sie bekommen eine Mail mit ihrem eigenen Link.</li>
-  <li><strong>Jemanden eintragen oder Rolle ändern:</strong> Weitere Übungsleiter eintragen (aufklappen im Abschnitt „Übungsleiter“).</li>
+  <li><strong>Übungsleiter eintragen:</strong> Im Abschnitt „Übungsleiter“ Mitglied und Rolle wählen und auf <strong>Eintragen</strong> tippen. Ist jemand schon eingetragen, ändert sich so seine Rolle.</li>
 </ul>

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 from django import forms
 from django.db import models
@@ -482,7 +482,7 @@ class TeamForm(forms.Form):
 class EventTypeForm(forms.ModelForm):
     class Meta:
         model = EventType
-        fields = ("name", "order", "is_active")
+        fields = ("name", "is_active")
 
 
 class ParticipantRoleForm(forms.ModelForm):
@@ -497,7 +497,7 @@ class ParticipantRoleForm(forms.ModelForm):
 
     class Meta:
         model = ParticipantRole
-        fields = ("name", "order", "event_types", "user_roles", "is_team", "is_billable", "is_default", "is_active")
+        fields = ("name", "event_types", "user_roles", "is_team", "is_billable", "is_default", "is_active")
         widgets = {"event_types": forms.CheckboxSelectMultiple()}
 
     def _get_validation_exclusions(self) -> set[str]:
@@ -592,61 +592,46 @@ class GuestRegisterForm(GuestForm):
 
 
 class AgendaFilterForm(forms.Form):
-    """Filter der Seite „Termine“. Das versteckte Feld „f“ markiert ein abgeschicktes Formular; ohne gelten die
-    Standardwerte (für eigene Mitglieder: nur passende Termine)."""
+    """Filter der Seite „Termine“ als Filter-Knöpfe, die zusammen gelten (UND). Das versteckte Feld „f“ markiert ein
+    abgeschicktes Formular; ohne gilt der Standard (für eigene Mitglieder: „Für mich“)."""
 
-    passend = forms.BooleanField(label="Nur passende Termine", required=False, initial=True)
-    mitglied = forms.TypedChoiceField(label="Mitglied", required=False, coerce=int, empty_value=None)
-    art = forms.ModelChoiceField(label="Art", queryset=EventType.objects.all(), required=False, empty_label="alle")
-    veranstaltung = forms.ModelChoiceField(
-        label="Veranstaltung", queryset=Event.objects.order_by("title"), required=False, empty_label="alle"
-    )
-    von = forms.DateField(label="Von", required=False, widget=DateInput())
-    bis = forms.DateField(label="Bis", required=False, widget=DateInput())
-    meine = forms.BooleanField(label="Nur meine Anmeldungen", required=False)
-    offen = forms.BooleanField(label="Nur mit offener Anmeldung", required=False)
-    ohne_abgesagte = forms.BooleanField(label="Abgesagte ausblenden", required=False)
+    fuer_mich = forms.BooleanField(label="Für mich", required=False, initial=True)
+    angemeldet = forms.BooleanField(label="Nur angemeldete", required=False)
+    ohne_training = forms.BooleanField(label="Ohne Trainings", required=False)
+    veranstaltung = forms.ModelChoiceField(queryset=Event.objects.all(), required=False)
 
     def __init__(self, data: Any, *, links: list[Any]) -> None:
         super().__init__(data if data is not None and "f" in data else None)
         self.has_members = bool(links)
-        if len(links) > 1:
-            field = cast(forms.TypedChoiceField, self.fields["mitglied"])
-            field.choices = [("", "alle"), *((link.member.pk, link.member.first_name) for link in links)]
-        else:
-            del self.fields["mitglied"]
         if not links:
-            del self.fields["passend"], self.fields["meine"]
+            del self.fields["fuer_mich"], self.fields["angemeldet"]
 
-    def clean(self) -> dict[str, Any]:
-        data = super().clean() or {}
-        if data.get("von") and data.get("bis") and data["bis"] < data["von"]:
-            self.add_error("bis", "„Bis“ muss nach „Von“ liegen.")
-        return data
-
-    def to_filter(self) -> AgendaFilter:
-        if not self.is_bound or not self.is_valid():
-            return AgendaFilter(matching=self.has_members)
-        data = self.cleaned_data
-        return AgendaFilter(
-            matching=bool(data.get("passend")),
-            member=data.get("mitglied"),
-            event_type=data["art"].pk if data.get("art") else None,
-            event=data["veranstaltung"].pk if data.get("veranstaltung") else None,
-            start=data.get("von"),
-            end=data.get("bis"),
-            mine=bool(data.get("meine")),
-            open=bool(data.get("offen")),
-            hide_cancelled=bool(data.get("ohne_abgesagte")),
-        )
+    def _value(self, name: str) -> Any:
+        if not self.is_bound:
+            return self.fields[name].initial if self.has_members else None
+        return self.cleaned_data.get(name) if self.is_valid() else None
 
     @property
-    def changed_count(self) -> int:
-        """Wie viele Filter vom Standard abweichen (für die Zusammenfassung)."""
-        if not self.is_bound or not self.is_valid():
-            return 0
-        default = {"passend": self.has_members}
-        return sum(1 for name in self.fields if bool(self.cleaned_data.get(name)) != default.get(name, False))
+    def chips(self) -> list[dict[str, Any]]:
+        """Die Filter-Knöpfe mit Name, Wert, Beschriftung und ob sie gesetzt sind."""
+        chips = [
+            {"name": name, "value": "1", "label": self.fields[name].label, "checked": bool(self._value(name))}
+            for name in ("fuer_mich", "angemeldet", "ohne_training")
+            if name in self.fields
+        ]
+        event = self._value("veranstaltung")
+        if event:
+            chips.append({"name": "veranstaltung", "value": event.pk, "label": f"Nur {event}", "checked": True})
+        return chips
+
+    def to_filter(self) -> AgendaFilter:
+        event = self._value("veranstaltung")
+        return AgendaFilter(
+            matching=bool(self._value("fuer_mich")),
+            mine=bool(self._value("angemeldet")),
+            no_training=bool(self._value("ohne_training")),
+            event=event.pk if event else None,
+        )
 
 
 class AttachmentForm(forms.Form):
