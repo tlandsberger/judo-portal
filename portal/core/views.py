@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import connection
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 from django.views.decorators.cache import cache_control, never_cache
 
 from portal.accounts.models import Role
@@ -12,7 +13,7 @@ from portal.accounts.permissions import role_required
 
 @login_required
 def home(request: HttpRequest) -> HttpResponse:
-    return render(request, "core/home.html")
+    return render(request, "core/home.html", {"now": timezone.now()})
 
 
 @role_required(Role.ADMIN)

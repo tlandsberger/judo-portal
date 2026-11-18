@@ -104,7 +104,7 @@ CHAPTERS = (
     Chapter(
         "team",
         "Als Übungsleiter am Termin",
-        "bi-people",
+        "bi-person-workspace",
         "Als Übungsleiter",
         "Als Trainer oder Co-Trainer eintragen, Teilnehmerliste, Hinweis, Absage, Gäste.",
         _team,

@@ -1063,22 +1063,28 @@ def team(occurrence: Occurrence) -> list[Participation]:
     )
 
 
-def open_confirmations(user: Any, now: datetime | None = None) -> int:
-    """Für die Startseite: vergangene, abrechnungsrelevante Team-Termine der letzten 90 Tage ohne Bestätigung."""
+def open_confirmations(user: Any, now: datetime | None = None) -> list[Participation]:
+    """Für die Startseite: vergangene, abrechnungsrelevante Termine der letzten 90 Tage, die noch auf „Stunden
+    bestätigen“ warten; ohne gesperrte (eingereichte Monate), ältester zuerst."""
     member = own_member(user)
     if member is None:
-        return 0
+        return []
     now = now or timezone.now()
-    return Participation.objects.filter(
-        member=member,
-        role__is_team=True,
-        role__is_billable=True,
-        status=ParticipationStatus.REGISTERED,
-        confirmed_at__isnull=True,
-        occurrence__cancelled_at__isnull=True,
-        occurrence__starts_at__lte=now,
-        occurrence__starts_at__gte=now - timedelta(days=90),
-    ).count()
+    rows = (
+        Participation.objects.filter(
+            member=member,
+            role__is_team=True,
+            role__is_billable=True,
+            status=ParticipationStatus.REGISTERED,
+            confirmed_at__isnull=True,
+            occurrence__cancelled_at__isnull=True,
+            occurrence__starts_at__lte=now,
+            occurrence__starts_at__gte=now - timedelta(days=90),
+        )
+        .select_related("occurrence__event", "role", "member")
+        .order_by("occurrence__starts_at")
+    )
+    return [p for p in rows if not locked_reason(p)]
 
 
 # Empfänger

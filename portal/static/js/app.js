@@ -70,6 +70,16 @@
     }
   });
 
+  // Am Handy ist die Hauptaktions-Leiste fixiert und kann zweizeilig werden: Platz darunter so hoch wie die Leiste,
+  // damit Inhalt und Footer nicht verdeckt werden (Ersatzwert ohne JavaScript in app.css).
+  var bar = document.querySelector(".action-bar");
+  if (bar && "ResizeObserver" in window) {
+    new ResizeObserver(function () {
+      var fixed = getComputedStyle(bar).position === "fixed";
+      document.documentElement.style.setProperty("--action-bar-space", fixed ? bar.offsetHeight + "px" : "0px");
+    }).observe(bar);
+  }
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("/sw.js").catch(function () {});

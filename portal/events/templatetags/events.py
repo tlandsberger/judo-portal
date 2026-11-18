@@ -18,6 +18,6 @@ def next_dates(user: Any, count: int = 3) -> dict[str, Any]:
 
 
 @register.simple_tag
-def open_confirmations(user: Any) -> int:
-    """Für die Startseite: wie viele vergangene Termine im Team noch auf „Stunden bestätigen“ warten."""
+def open_confirmations(user: Any) -> list[Any]:
+    """Für die Startseite: vergangene Termine als Übungsleiter, die noch auf „Stunden bestätigen“ warten."""
     return services.open_confirmations(user)

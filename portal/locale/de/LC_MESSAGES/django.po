@@ -271,3 +271,19 @@ msgstr "Passkey bearbeiten"
 
 msgid "- Select an option -"
 msgstr "– bitte wählen –"
+
+# Geräteliste (usersessions)
+msgid "Sessions"
+msgstr "Angemeldete Geräte"
+
+msgid "Sign Out Other Sessions"
+msgstr "Andere Geräte abmelden"
+
+msgid "Current"
+msgstr "Dieses Gerät"
+
+msgid "Started At"
+msgstr "Angemeldet seit"
+
+msgid "Last seen at"
+msgstr "Zuletzt aktiv"
