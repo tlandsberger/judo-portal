@@ -59,7 +59,7 @@ test.describe("Einladung", () => {
     await acceptInvitation(page, email);
     await expectNoA11yViolations(page);
 
-    await page.getByRole("link", { name: "Passkey hinzufügen" }).click();
+    await page.getByRole("link", { name: "Hinzufügen", exact: true }).click();
     await page.getByLabel("Name").fill("Testgerät");
     await page.getByRole("button", { name: "Passkey anlegen" }).click();
     await expect(page.getByText("1 Passkey eingerichtet.")).toBeVisible();
