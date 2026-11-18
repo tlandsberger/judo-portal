@@ -110,6 +110,7 @@ class TestAttachments:
         login(client, head)
         page = client.get(reverse("event_detail", args=[event.pk])).content.decode()
         assert "Für externe Teilnehmer sichtbar" in page
+        assert 'type="file" name="file" class="file-input' in page  # DaisyUI File Input
         client.post(reverse("attachment_public", args=[event.pk, attachment.pk]), {"public": "1"})
         attachment.refresh_from_db()
         assert attachment.public
