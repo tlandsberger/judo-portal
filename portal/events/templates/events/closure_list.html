@@ -1,0 +1,46 @@
+{% extends "layouts/page.html" %}
+{% load help %}
+{% block title %}Ferien und Feiertage{% endblock %}
+{% block back_url %}{% url 'event_list' %}{% endblock %}
+{% block back_label %}Veranstaltungen{% endblock %}
+{% block heading %}Ferien und Feiertage{% endblock %}
+{% block heading_extra %}{% help_link "veranstaltungen" %}{% endblock %}
+{% block primary %}<a class="btn btn-primary" href="{% url 'closure_import' %}"><i class="bi bi-upload" aria-hidden="true"></i> Importieren</a>{% endblock %}
+{% block intro %}Am Zeitplan einer Veranstaltung wählst du, in welchen Ferien und an welchen Feiertagen seine Termine ausfallen.{% endblock %}
+{% block page %}
+{% for item in items %}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-closure-{{ item.closure.pk }}"><div class="card-body gap-3">
+  <div class="flex flex-wrap items-start justify-between gap-2">
+    <div>
+      <h2 class="card-title" id="h-closure-{{ item.closure.pk }}">{{ item.closure.name }}</h2>
+      <p class="text-sm text-base-content/70">{% if item.schedules %}Gilt für {% for schedule in item.schedules %}{{ schedule.event.title }} ({{ schedule }}){% if not forloop.last %}, {% endif %}{% endfor %}.{% else %}Noch keinem Zeitplan zugeordnet.{% endif %}</p>
+    </div>
+    <form method="post" action="{% url 'closure_delete' item.closure.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm text-error" aria-label="{{ item.closure.name }} komplett löschen"><i class="bi bi-trash" aria-hidden="true"></i> Löschen</button></form>
+  </div>
+  {% if item.periods %}
+  <ul class="list">
+    {% for period in item.periods %}
+    <li class="list-row items-center px-0 py-2">
+      <div class="list-col-grow"><div class="font-semibold">{{ period.name }}</div>
+        <div class="text-sm text-base-content/70">{% if period.first == period.last %}{{ period.first|date:"D d.m.Y" }}{% else %}{{ period.first|date:"D d.m.Y" }} – {{ period.last|date:"D d.m.Y" }}{% endif %}</div></div>
+      <form method="post" action="{% url 'closure_period_delete' period.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-square btn-sm" aria-label="{{ period.name }} löschen" title="Löschen"><i class="bi bi-x-lg" aria-hidden="true"></i></button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="text-base-content/70">Keine Zeiträume ab diesem Jahr.</p>{% endif %}
+  {% if item.older %}<p class="text-sm text-base-content/70">Dazu {{ item.older }} ältere{% if item.older == 1 %}r{% endif %} Zeitr{{ item.older|pluralize:"aum,äume" }}.</p>{% endif %}
+</div></section>
+{% empty %}
+<div role="status" class="alert mb-6"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Noch keine Ferien und Feiertage. Lade bei schulferien.org die iCal-Dateien für Ferien und Feiertage herunter und importiere sie hier.</span></div>
+{% endfor %}
+
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-von-hand"><div class="card-body gap-4">
+  <h2 class="card-title" id="h-von-hand">Zeitraum von Hand</h2>
+  <p class="text-sm text-base-content/70">Für Tage, die in keinem Import stehen, z. B. einen Brückentag.</p>
+  <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+    {{ form }}
+    <datalist id="ferien-und-feiertage">{% for name in names %}<option value="{{ name }}"></option>{% endfor %}</datalist>
+    <div><button class="btn btn-outline btn-primary" type="submit">Zeitraum speichern</button></div>
+  </form>
+</div></section>
+{% endblock %}

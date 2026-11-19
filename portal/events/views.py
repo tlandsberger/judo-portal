@@ -24,12 +24,14 @@ from portal.core import audit, ordering
 from portal.members import services as members
 from portal.members.models import Member
 
-from . import attachments, export, guests, quicklinks, services
+from . import attachments, closures, export, guests, quicklinks, services
 from .forms import (
     AdjustForm,
     AgendaFilterForm,
     AttachmentForm,
     CancelRangeForm,
+    ClosureImportForm,
+    ClosurePeriodForm,
     ConfirmForm,
     EventCreateForm,
     EventForm,
@@ -49,6 +51,8 @@ from .forms import (
     TeamForm,
 )
 from .models import (
+    Closure,
+    ClosurePeriod,
     Event,
     EventAttachment,
     EventType,
@@ -110,10 +114,7 @@ def training_swap(request: HttpRequest) -> HttpResponse:
     for occurrence in services.trainings_on(day):
         team = services.team(occurrence)
         own_team = next((p for p in team if member and p.member_id == member.pk), None)
-        lead = services.can_lead(user, occurrence)
-        trainings.append(
-            {"occurrence": occurrence, "team_rows": _team_rows(user, occurrence, team, member, own_team, lead)}
-        )
+        trainings.append({"occurrence": occurrence, "team_rows": _team_rows(user, occurrence, team, member, own_team)})
     context = {
         "day": day,
         "today": timezone.localdate(),
@@ -142,15 +143,15 @@ def _team_rows(
     team: list[Participation],
     member: Member | None,
     own_team: Participation | None,
-    lead: bool,
 ) -> list[dict[str, Any]]:
-    """Übungsleiter mit ihren Aktionen (ADR 0018): Übertragen und Austragen für sich selbst und wer den Termin leitet,
-    Vertreten für andere, die die Rolle übernehmen dürfen."""
+    """Übungsleiter mit ihren Aktionen (ADR 0018): Übertragen und Entfernen nur für den eigenen Eintrag und für die
+    Abteilungsleitung, Vertreten für andere, die die Rolle übernehmen dürfen."""
+    manage = services.can_manage_events(user)
     rows = []
     for p in team:
         is_self = p == own_team
         open_ = not occurrence.is_cancelled and not services.locked_reason(p)
-        can_change = open_ and (is_self or lead) and (is_self or not p.is_confirmed)
+        can_change = open_ and (is_self or (manage and not p.is_confirmed))
         can_take_over = (
             open_
             and member is not None
@@ -207,7 +208,7 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
             for role in services.team_roles(occurrence.event)
             if services.can_take_role(member, role, occurrence.event, timezone.localdate(occurrence.starts_at))
         ]
-    context["team_rows"] = _team_rows(user, occurrence, team, member, own_team, lead)
+    context["team_rows"] = _team_rows(user, occurrence, team, member, own_team)
     return render(request, "events/occurrence_detail.html", context)
 
 
@@ -387,7 +388,8 @@ def occurrence_team(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 def _team_participation(request: HttpRequest, pk: int, participation_pk: int) -> tuple[Participation, bool]:
-    """Übungsleiter-Teilnahme, die der Benutzer ändern darf: die eigene oder als Leitung des Termins."""
+    """Übungsleiter-Teilnahme, die der Benutzer übertragen oder entfernen darf: die eigene oder als
+    Abteilungsleitung."""
     participation = get_object_or_404(
         Participation.objects.select_related("occurrence__event", "member", "role"),
         pk=participation_pk,
@@ -397,7 +399,7 @@ def _team_participation(request: HttpRequest, pk: int, participation_pk: int) ->
     )
     member = services.own_member(request.user)
     is_self = member is not None and participation.member_id == member.pk
-    if not is_self and not services.can_lead(request.user, participation.occurrence):
+    if not is_self and not services.can_manage_events(request.user):
         raise PermissionDenied
     return participation, is_self
 
@@ -680,7 +682,7 @@ def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
     occurrences = event.occurrences.filter(ends_at__gte=timezone.now()).prefetch_related(
         "participations__role", "participations__member"
     )[:20]
-    schedules = list(event.schedules.prefetch_related("team__member", "team__role"))
+    schedules = list(event.schedules.prefetch_related("team__member", "team__role", "closures"))
     for schedule in schedules:
         schedule.team_form = _team_form(event, prefix=f"s{schedule.pk}")  # type: ignore[attr-defined]
     can_manage = services.can_manage_events(request.user)
@@ -691,6 +693,7 @@ def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "schedules": schedules,
         "occurrences": occurrences,
         "can_manage": can_manage,
+        "can_add_occurrence": services.can_add_occurrence(request.user, event),
         "cancel_form": CancelRangeForm(),
         "quick": _quick(event) if can_manage else None,
         "attachments": list(event.attachments.all()),
@@ -782,16 +785,18 @@ def schedule_edit(request: HttpRequest, pk: int, schedule_pk: int | None = None)
         saved = form.save(commit=False)
         saved.event = event
         saved.save()
+        form.save_m2m()
         if schedule:
-            kept = services.regenerate(saved)
+            kept = services.regenerate(saved, sync_closures=False)  # abgeglichen wird unten, mit Meldung
             if kept:
                 dates = ", ".join(f"{timezone.localtime(o.starts_at):%d.%m.}" for o in kept)
                 messages.warning(
                     request, f"Diese Termine haben Anmeldungen oder Abweichungen und bleiben, wie sie sind: {dates}."
                 )
         else:
-            services.generate(saved)
-        messages.success(request, f"Zeitplan „{saved}“ gespeichert.")
+            services.generate(saved, sync_closures=False)
+        batch = closures.sync([saved], by=_user(request))
+        messages.success(request, f"Zeitplan „{saved}“ gespeichert.{_closure_summary(batch)}")
         return redirect("event_detail", pk=event.pk)
     return render(request, "events/schedule_edit.html", {"form": form, "event": event, "schedule": schedule})
 
@@ -808,15 +813,25 @@ def schedule_delete(request: HttpRequest, pk: int, schedule_pk: int) -> HttpResp
     return redirect("event_detail", pk=pk)
 
 
-@role_required(*MANAGE_EVENTS)
+@login_required
 def occurrence_create(request: HttpRequest, pk: int) -> HttpResponse:
+    """Neuer Termin: Abteilungsleitung und fest eingeteilte Übungsleiter der Veranstaltung."""
     event = get_object_or_404(Event, pk=pk)
+    if not services.can_add_occurrence(request.user, event):
+        raise PermissionDenied
+    can_manage = services.can_manage_events(request.user)
+    # „Übungsleiter zählen zur Höchstzahl“ setzen auch Übungsleiter, die den Termin anlegen.
     form = OccurrenceForm(request.POST or None, event=event, can_manage=True)
     if request.method == "POST" and form.is_valid():
         occurrence = form.save(commit=False)
         occurrence.event = event
-        occurrence.save()
-        messages.success(request, "Termin angelegt. Trag hier die Übungsleiter ein.")
+        services.add_occurrence(occurrence, _user(request))
+        messages.success(
+            request,
+            "Termin angelegt. Trag hier die Übungsleiter ein."
+            if can_manage
+            else "Termin angelegt. Bist du dabei, trag dich hier als Übungsleiter ein.",
+        )
         return redirect("occurrence_detail", pk=occurrence.pk)
     return render(request, "events/occurrence_edit.html", {"form": form, "event": event, "occurrence": None})
 
@@ -1269,3 +1284,89 @@ def event_export(request: HttpRequest, pk: int) -> HttpResponse:
         audit.log(request.user, audit.Area.EVENTS, "export", f"Teilnahmen {event.title} ({period}) exportiert")
         return _xlsx(export.event_workbook(event, start, end), f"teilnahmen-{_slug(event.title)}.xlsx")
     return render(request, "events/event_export.html", {"event": event, "form": form})
+
+
+# Ferien und Feiertage (ADR 0026)
+
+CLOSURE_SESSION = "closure_import"
+
+
+def _closure_summary(batch: closures.Batch) -> str:
+    parts = []
+    if batch.cancelled:
+        count = len(batch.cancelled)
+        parts.append(f"{count} Termin{'e fallen' if count != 1 else ' fällt'} wegen Ferien und Feiertagen aus")
+    if batch.restored:
+        count = len(batch.restored)
+        parts.append(f"{count} Termin{'e finden' if count != 1 else ' findet'} wieder statt")
+    return (" " + ", ".join(parts) + ".") if parts else ""
+
+
+@role_required(*MANAGE_EVENTS)
+def closure_list(request: HttpRequest) -> HttpResponse:
+    since = date(timezone.localdate().year, 1, 1)
+    items = [
+        {
+            "closure": closure,
+            "periods": [p for p in closure.periods.all() if p.last >= since],
+            "older": sum(1 for p in closure.periods.all() if p.last < since),
+            "schedules": list(Schedule.objects.filter(closures=closure).select_related("event")),
+        }
+        for closure in Closure.objects.prefetch_related("periods")
+    ]
+    form = ClosurePeriodForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        batch = closures.add_period(data["closure"], data["name"], data["first"], data["last"], _user(request))
+        messages.success(request, f"Zeitraum „{data['name']}“ gespeichert.{_closure_summary(batch)}")
+        return redirect("closure_list")
+    return render(
+        request,
+        "events/closure_list.html",
+        {"items": items, "form": form, "names": [str(item["closure"]) for item in items]},
+    )
+
+
+@role_required(*MANAGE_EVENTS)
+def closure_import(request: HttpRequest) -> HttpResponse:
+    """Hochladen, Vorschau, Übernehmen. Die gelesenen Einträge liegen bis zum Übernehmen in der Sitzung."""
+    if request.method == "POST" and request.POST.get("action") == "confirm":
+        rows = [closures.Row.from_dict(row) for row in request.session.pop(CLOSURE_SESSION, [])]
+        if not rows:
+            messages.error(request, "Die Vorschau ist abgelaufen. Lade die Datei bitte noch einmal hoch.")
+            return redirect("closure_import")
+        changed, batch = closures.import_rows(rows, _user(request))
+        messages.success(
+            request, f"{changed} Zeitr{'äume' if changed != 1 else 'aum'} übernommen.{_closure_summary(batch)}"
+        )
+        return redirect("closure_list")
+    form = ClosureImportForm(request.POST or None, request.FILES or None)
+    preview = None
+    if request.method == "POST" and form.is_valid():
+        try:
+            rows = closures.parse(form.cleaned_data["file"].read())
+        except closures.ImportError_ as error:
+            form.add_error("file", str(error))
+        else:
+            request.session[CLOSURE_SESSION] = [row.as_dict() for row in rows]
+            preview = closures.preview(rows)
+    return render(request, "events/closure_import.html", {"form": form, "preview": preview})
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def closure_period_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    period = get_object_or_404(ClosurePeriod.objects.select_related("closure"), pk=pk)
+    batch = closures.delete_periods([period], _user(request))
+    messages.success(request, f"Zeitraum „{period.name}“ gelöscht.{_closure_summary(batch)}")
+    return redirect("closure_list")
+
+
+@require_POST
+@role_required(*MANAGE_EVENTS)
+def closure_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    closure = get_object_or_404(Closure, pk=pk)
+    name = closure.name
+    batch = closures.delete_closure(closure, _user(request))
+    messages.success(request, f"„{name}“ gelöscht.{_closure_summary(batch)}")
+    return redirect("closure_list")

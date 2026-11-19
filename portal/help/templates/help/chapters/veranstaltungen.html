@@ -40,5 +40,21 @@
 <h2 id="export">Teilnahmen exportieren</h2>
 <p>Über <strong><i class="bi bi-three-dots-vertical" aria-hidden="true"></i> Weitere Aktionen</strong> → <strong>Teilnahmen exportieren</strong> bekommst du eine Excel-Datei für einen Zeitraum: Das Blatt „Teilnahmen“ hat eine Zeile je Teilnahme, das Blatt „Anwesenheit“ zeigt alle Personen und Termine (x = angemeldet, W = Warteliste). Die Datei enthält personenbezogene Daten; geh sorgsam mit ihr um. Jeder Export wird protokolliert.</p>
 
-<h2 id="absagen">Ferien und Ausfälle</h2>
-<p>Auf der Veranstaltung „Termine absagen“ mit Zeitraum, dann <strong>Termine in diesem Zeitraum absagen</strong>. Angemeldete und Übungsleiter bekommen eine Nachricht.</p>
+<h2 id="ferien-und-feiertage">Ferien und Feiertage</h2>
+<p>Unter Veranstaltungen → <strong><i class="bi bi-three-dots-vertical" aria-hidden="true"></i> Weitere Aktionen</strong> → <a href="{% url 'closure_list' %}">Ferien und Feiertage</a> stehen die Ferien und Feiertage. Am Zeitplan wählst du, in welchen davon seine Termine ausfallen.</p>
+<ol>
+  <li>Bei schulferien.org für Schleswig-Holstein die iCal-Datei der <strong>Ferien</strong> und die der <strong>Feiertage</strong> herunterladen.</li>
+  <li>Auf <strong><i class="bi bi-upload" aria-hidden="true"></i> Importieren</strong> tippen, eine Datei wählen und <strong>Vorschau anzeigen</strong>. Die Vorschau zeigt, was neu ist, was sich geändert hat und was schon da ist.</li>
+  <li><strong>Übernehmen</strong>. Jede Ferienart wird ein eigener Eintrag (z. B. „Herbstferien“), alle Feiertage zusammen „Gesetzliche Feiertage“. Mit der zweiten Datei genauso. Für das nächste Jahr importierst du die neuen Dateien einfach dazu; Doppeltes erkennt das Portal.</li>
+  <li>Den Zeitplan öffnen (auf der Veranstaltung auf den Zeitplan tippen), unter <strong>Fällt aus in</strong> die passenden ankreuzen und speichern. Ein Wettkampftraining kann so zum Beispiel in den Herbstferien stattfinden und nur an Feiertagen ausfallen.</li>
+</ol>
+<ul>
+  <li><strong>Was passiert:</strong> Kommende Termine des Zeitplans in diesen Zeiträumen fallen aus und zeigen „fällt aus: Herbstferien“. Auch Termine, die das Portal später erzeugt, fallen gleich aus.</li>
+  <li><strong>Nachrichten:</strong> Wer schon angemeldet oder als Übungsleiter eingeteilt ist, bekommt je Eintrag (z. B. „Herbstferien“) eine Nachricht mit allen betroffenen Terminen. Alle anderen sehen den Ausfall unter „Termine“.</li>
+  <li><strong>Ausnahme:</strong> Soll ein einzelner Termin doch stattfinden, am Termin über <strong><i class="bi bi-three-dots-vertical" aria-hidden="true"></i> Weitere Aktionen</strong> → <strong>Findet doch statt</strong>. Er bleibt dann, auch wenn Ferien und Feiertage später neu abgeglichen werden.</li>
+  <li><strong>Zurücknehmen:</strong> Nimmst du Ferien oder Feiertage am Zeitplan wieder heraus oder löschst einen Zeitraum oder einen ganzen Eintrag, finden die betroffenen Termine wieder statt; die Beteiligten erfahren es. Von Hand abgesagte Termine bleiben abgesagt.</li>
+  <li><strong>Von Hand:</strong> Tage, die in keinem Import stehen, z. B. einen Brückentag, trägst du unten unter „Zeitraum von Hand“ ein.</li>
+</ul>
+
+<h2 id="absagen">Einzelne Ausfälle</h2>
+<p>Für einmalige Ausfälle, z. B. eine Hallensperrung: auf der Veranstaltung „Termine absagen“ mit Zeitraum, dann <strong>Termine in diesem Zeitraum absagen</strong>. Angemeldete und Übungsleiter bekommen eine Nachricht.</p>

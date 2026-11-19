@@ -250,6 +250,47 @@ class WeekOfMonth(models.IntegerChoices):
     LAST = -1, "letzten"
 
 
+class Closure(models.Model):
+    """Ferien und Feiertage (ADR 0026): benannte Gruppe von Zeiträumen, z. B. „Herbstferien“ oder „Gesetzliche
+    Feiertage“. Zeitpläne wählen sie aus; ihre Termine in diesen Zeiträumen fallen aus.
+    """
+
+    name = models.CharField("Name", max_length=80, unique=True)
+
+    class Meta:
+        verbose_name = "Ferien oder Feiertage"
+        verbose_name_plural = "Ferien und Feiertage"
+        ordering = ("name",)
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class ClosurePeriod(models.Model):
+    closure = models.ForeignKey(Closure, on_delete=models.CASCADE, related_name="periods", verbose_name="Gehört zu")
+    name = models.CharField("Bezeichnung", max_length=120)
+    first = models.DateField("Von")
+    last = models.DateField("Bis")
+    uid = models.CharField("Kennung aus dem Import", max_length=255, blank=True, editable=False)
+
+    class Meta:
+        verbose_name = "Zeitraum"
+        verbose_name_plural = "Zeiträume"
+        ordering = ("first",)
+        constraints = [
+            models.UniqueConstraint(fields=["closure", "first", "last"], name="closure_period_unique"),
+            models.CheckConstraint(condition=models.Q(last__gte=models.F("first")), name="closure_period_order"),
+        ]
+
+    def __str__(self) -> str:
+        if self.first == self.last:
+            return f"{self.name} ({self.first:%d.%m.%Y})"
+        return f"{self.name} ({self.first:%d.%m.}–{self.last:%d.%m.%Y})"
+
+    def covers(self, day: date) -> bool:
+        return self.first <= day <= self.last
+
+
 class Schedule(models.Model):
     """Zeitplan einer wiederkehrenden Veranstaltung, z. B. „Dienstag 17:00–18:30“ für einen Zeitraum.
 
@@ -283,6 +324,13 @@ class Schedule(models.Model):
         "Anmeldung schließt (Stunden vorher)", null=True, blank=True, help_text="Leer heißt: zum Beginn."
     )
     generated_until = models.DateField(null=True, blank=True, editable=False)
+    closures = models.ManyToManyField(
+        Closure,
+        verbose_name="Fällt aus in",
+        blank=True,
+        related_name="schedules",
+        help_text="Termine dieses Zeitplans fallen in diesen Ferien und an diesen Feiertagen aus.",
+    )
 
     class Meta:
         verbose_name = "Zeitplan"
@@ -322,6 +370,11 @@ class Occurrence(models.Model):
     )
     is_modified = models.BooleanField(default=False, editable=False)
     cancelled_at = models.DateTimeField(null=True, blank=True)
+    # Abgesagt wegen Ferien oder Feiertagen (ADR 0026); ``closure_exempt``: „Findet doch statt“ trotzdem.
+    closure_period = models.ForeignKey(
+        ClosurePeriod, on_delete=models.SET_NULL, null=True, blank=True, editable=False, related_name="occurrences"
+    )
+    closure_exempt = models.BooleanField(default=False, editable=False)
     trainer_missing_since = models.DateTimeField(
         null=True, blank=True, editable=False, help_text="Der letzte Trainer hat sich ausgetragen (ADR 0018)."
     )

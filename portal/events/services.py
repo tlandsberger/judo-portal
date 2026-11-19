@@ -23,7 +23,7 @@ from portal.core import audit
 from portal.members import services as members
 from portal.members.models import LinkKind, Member, MemberLink, grade_rank
 
-from . import notices
+from . import closures, notices
 from .models import (
     Criteria,
     Event,
@@ -211,6 +211,29 @@ def can_join_team(user: Any) -> bool:
 def can_plan_staff(user: Any) -> bool:
     """Veranstaltungen ansehen und Teams planen: Abteilungsleitung und alle, die Team sein können."""
     return can_manage_events(user) or can_join_team(user)
+
+
+def can_add_occurrence(user: Any, event: Event, today: date | None = None) -> bool:
+    """Neue Termine anlegen: Abteilungsleitung; Übungsleiter nur bei Veranstaltungen, in deren laufendem Zeitplan sie
+    fest eingeteilt sind."""
+    if can_manage_events(user):
+        return True
+    member = own_member(user) if user.is_authenticated else None
+    if member is None or not can_join_team(user):
+        return False
+    today = today or timezone.localdate()
+    return ScheduleTeam.objects.filter(
+        Q(schedule__valid_until__isnull=True) | Q(schedule__valid_until__gte=today),
+        schedule__event=event,
+        member=member,
+    ).exists()
+
+
+def add_occurrence(occurrence: Occurrence, by: User | None = None) -> Occurrence:
+    """Einzelnen Termin zu einer Veranstaltung anlegen (ohne Zeitplan) und protokollieren."""
+    occurrence.save()
+    _audit(by, "occurrence_create", f"Termin {_when(occurrence)} angelegt")
+    return occurrence
 
 
 def team_participation(user: Any, occurrence: Occurrence) -> Participation | None:
@@ -459,7 +482,7 @@ def on_schedule(schedule: Schedule, day: date) -> bool:
 
 
 @transaction.atomic
-def generate(schedule: Schedule, today: date | None = None) -> int:
+def generate(schedule: Schedule, today: date | None = None, *, sync_closures: bool = True) -> int:
     """Erzeugt fehlende Termine eines Zeitplans bis zum Gültigkeitsende, höchstens 12 Monate im Voraus."""
     today = today or timezone.localdate()
     start = max(schedule.valid_from, today)
@@ -482,6 +505,8 @@ def generate(schedule: Schedule, today: date | None = None) -> int:
             created += 1
     schedule.generated_until = end
     schedule.save(update_fields=["generated_until"])
+    if sync_closures and created and schedule.closures.exists():
+        closures.sync([schedule])  # neue Termine in Ferien und an Feiertagen fallen gleich aus (ADR 0026)
     return created
 
 
@@ -507,14 +532,14 @@ def _replaceable(occurrences: QuerySet[Occurrence]) -> QuerySet[Occurrence]:
 
 
 @transaction.atomic
-def regenerate(schedule: Schedule) -> list[Occurrence]:
+def regenerate(schedule: Schedule, *, sync_closures: bool = True) -> list[Occurrence]:
     """Nach einer Änderung am Zeitplan: zukünftige Termine neu erzeugen.
 
     Gibt die zukünftigen Termine zurück, die bleiben mussten (Anmeldungen, Abweichungen) und nicht mehr zum
     Zeitplan passen; über sie entscheidet die Abteilungsleitung.
     """
     _replaceable(schedule.occurrences.all()).delete()
-    generate(schedule)
+    generate(schedule, sync_closures=sync_closures)
     for occurrence in schedule.occurrences.filter(starts_at__gte=timezone.now(), is_modified=False):
         occurrence.apply_rule(schedule)
         occurrence.save(update_fields=["registration_opens_at", "registration_closes_at"])
@@ -593,6 +618,7 @@ def cancel_range(event: Event, first: date, last: date, by: User | None = None) 
 
 
 def uncancel(occurrence: Occurrence, by: User | None = None) -> None:
+    closures.exempt(occurrence)  # in Ferien oder an Feiertagen: bleibt trotzdem
     occurrence.cancelled_at = None
     occurrence.save(update_fields=["cancelled_at"])
     _audit(by, "uncancel", f"Absage von {_when(occurrence)} zurückgenommen")
