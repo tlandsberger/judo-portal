@@ -14,6 +14,8 @@ from .models import Claim, ClaimStatus, Rate
 class RateForm(forms.ModelForm):
     """Neuer Satz für eine Rolle. Erhöhungen trägst du mit neuem „gültig ab“ ein, alte Monate bleiben unverändert."""
 
+    layout = (("hourly_rate", "valid_from"),)
+
     class Meta:
         model = Rate
         fields = ("role", "hourly_rate", "valid_from")

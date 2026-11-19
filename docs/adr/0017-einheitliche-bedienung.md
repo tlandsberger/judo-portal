@@ -41,6 +41,12 @@ Karte: Zurück-Link, Titel mit Hilfe oder Badges, rechts die Aktionen, darunter 
 - **Formulare** (eines je Seite) legen „Speichern“ und „Abbrechen“ in eine `.action-bar`; am Handy steht
   „Abbrechen“ links, die Hauptaktion rechts. Kleinere Formulare in Abschnitten (Telefon, Hinweis, Satz eintragen)
   bleiben normale Buttons im Abschnitt.
+- **Felder nebeneinander** (Nachtrag November 2026): Zusammengehörige Felder – Zeiträume und Intervalle (von–bis,
+  gültig ab–bis, Anmeldung ab–Anmeldeschluss), Vor- und Nachname, E-Mail und Telefon – stehen ab `sm` in einer
+  Zeile, am Handy untereinander. Die Formulare nennen die Gruppen im Attribut `layout`; `div.html` und der Tag
+  `field_rows` (`portal/core/templatetags/form_layout.py`) setzen sie um, auch für Formulare, die ihre Felder in
+  Abschnitte aufteilen. Steht eine Checkbox neben einem Eingabefeld, rückt sie auf dessen Höhe. Optionsgruppen
+  (Checkboxen, Radios) stehen bis drei Optionen nebeneinander, bei vier in zwei und bei mehr in drei Spalten.
 - **Abschnitts- und Zeilenaktionen** bleiben klein im Abschnitt bzw. in der Zeile (siehe unten).
 - **Drei Breiten** über den Block `width`: `wide` (volle Inhaltsbreite) für Seiten mit mehrspaltigen Tabellen oder
   Rastern (Veranstaltungen, Mitglieder, Benutzer, Abrechnungen, Protokoll, Monat), `normal` (Standard,

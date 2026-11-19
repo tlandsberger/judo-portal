@@ -1,0 +1,2 @@
+{% for row in rows %}{% if row.grid %}<div class="{{ row.grid }}">{% for field in row.fields %}{% if row.mixed and field.widget_type == "checkbox" %}<div class="sm:pt-9">{{ field.as_field_group }}</div>{% else %}{{ field.as_field_group }}{% endif %}{% endfor %}</div>{% else %}{{ row.fields.0.as_field_group }}{% endif %}
+{% endfor %}
