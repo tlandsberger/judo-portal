@@ -1,0 +1,10 @@
+{% extends "email/base.html" %}
+{% block greeting %}{{ user.greeting }}{% endblock %}
+{% block content %}
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">am <strong>{{ when|date:"d.m.Y" }}</strong> wird {{ member.first_name }} 18 Jahre alt. Dann endet deine Verknüpfung mit {{ member.display_name }} im Vereinsportal: Du siehst die Daten von {{ member.first_name }} nicht mehr und kannst {{ member.first_name }} nicht mehr zu Terminen anmelden.</p>
+      {% if deleted %}<p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Weil du dann kein weiteres Mitglied im Portal hast, wird an diesem Tag auch dein Zugang gelöscht. Du bekommst dazu noch eine Mail.</p>
+      {% else %}<p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Dein Zugang bleibt bestehen.</p>
+      {% endif %}{% if child_access_url %}<p style="margin:0 0 16px;font-size:16px;line-height:1.5;">{{ member.first_name }} hat noch keinen eigenen Zugang. Richte ihn jetzt ein, damit {{ member.first_name }} das Portal weiter nutzen kann. Du gibst nur die E-Mail-Adresse von {{ member.first_name }} ein.</p>
+      {% include "email/_button.html" with url=child_access_url label="Zugang einrichten" %}
+      {% endif %}<p style="margin:0;font-size:14px;color:#5c5c5c;line-height:1.5;">Stimmt das Geburtsdatum nicht? Dann gib uns bitte kurz Bescheid.</p>
+{% endblock %}

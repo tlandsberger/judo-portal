@@ -29,5 +29,6 @@ Mit dem Neuaufbau im November 2026 beginnt die Nummerierung neu; die ADRs der Vo
 | [0022](0022-feste-rollen-statt-django-gruppen.md) | Feste Rollen statt Django-Gruppen und -Berechtigungen | angenommen |
 | [0023](0023-e-mail-adresse-aendern.md) | E-Mail-Adresse ändern mit Bestätigung | angenommen |
 | [0024](0024-eigener-zugang-fuer-kinder.md) | Eigener Zugang für Kinder ab 14, eingerichtet von den Eltern | angenommen |
+| [0025](0025-verknuepfung-endet-mit-volljaehrigkeit.md) | Verknüpfung der Eltern endet mit der Volljährigkeit | angenommen |
 
 Vorlage: Kontext · Entscheidung · Konsequenzen · Verworfene Alternativen.

@@ -134,6 +134,14 @@ class Member(models.Model):
     def display_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
+    def adult_on(self) -> date:
+        """18. Geburtstag; wer am 29. Februar geboren ist, wird in Nicht-Schaltjahren am 1. März volljährig."""
+        born = self.birth_date
+        try:
+            return born.replace(year=born.year + ADULT_AGE)
+        except ValueError:
+            return date(born.year + ADULT_AGE, 3, 1)
+
     def age(self, on: date | None = None) -> int:
         on = on or timezone.localdate()
         born = self.birth_date
@@ -161,6 +169,8 @@ class MemberLink(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="links")
     kind = models.CharField("Art", max_length=10, choices=LinkKind.choices)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
+    # Vorankündigung an Eltern, dass die Verknüpfung zum 18. Geburtstag gelöst wird (ADR 0025)
+    adult_notice_sent_at = models.DateTimeField("Vorankündigung Volljährigkeit", null=True, blank=True)
 
     class Meta:
         verbose_name = "Verknüpfung"
