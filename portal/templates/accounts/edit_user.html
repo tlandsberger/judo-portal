@@ -15,6 +15,7 @@
     <div class="action-bar"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% url 'user_list' %}">Abbrechen</a></div>
   </form>
 </div></div>
+{% url 'user_email_change' target_user.pk as email_action %}{% include "accounts/_email_change.html" with action=email_action own=False %}
 {% if target_user.is_active and not set_up %}
 <section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-einladung"><div class="card-body gap-4">
   <div>

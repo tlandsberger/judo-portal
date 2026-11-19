@@ -6,14 +6,15 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from portal.core import audit
 
 from . import services
-from .forms import InvitationForm, ProfileForm, UserForm
-from .models import Invitation, Role, User
+from .forms import EmailChangeForm, InvitationForm, ProfileForm, UserForm
+from .models import EmailChange, Invitation, Role, User
 from .permissions import MANAGE_USERS, role_required
 
 
@@ -79,7 +80,66 @@ def security(request: HttpRequest) -> HttpResponse:
         return redirect("security")
     context = _login_methods(user)
     context["profile_form"] = form
+    context.update(_email_context(user, own=True))
     return render(request, "accounts/security.html", context)
+
+
+def _email_context(user: User, *, own: bool) -> dict[str, object]:
+    return {
+        "email_user": user,
+        "email_form": EmailChangeForm(member_name=services.own_member_name(user), own=own),
+        "email_pending": services.pending_email_change(user),
+    }
+
+
+def _change_email(request: HttpRequest, user: User) -> None:
+    """Gemeinsam für den eigenen Zugang und die Benutzerverwaltung: ändern (Link senden) oder verwerfen."""
+    actor: User = request.user  # type: ignore[assignment]
+    if request.POST.get("action") == "cancel":
+        services.cancel_email_change(user, actor)
+        messages.success(request, "Die Änderung der E-Mail-Adresse ist verworfen.")
+        return
+    form = EmailChangeForm(request.POST, member_name=services.own_member_name(user), own=user == actor)
+    if not form.is_valid():
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(request, str(error))
+        return
+    try:
+        change = services.request_email_change(
+            user, form.cleaned_data["email"], actor, sync_member=form.cleaned_data.get("sync_member", False)
+        )
+    except services.EmailChangeError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(
+            request, f"Wir haben einen Link an {change.email} geschickt. Erst danach gilt die neue Adresse."
+        )
+
+
+@require_POST
+@login_required
+def email_change(request: HttpRequest) -> HttpResponse:
+    _change_email(request, request.user)  # type: ignore[arg-type]
+    return redirect(reverse("security") + "#e-mail")
+
+
+@never_cache
+def confirm_email_change(request: HttpRequest, token: str) -> HttpResponse:
+    """Link aus der Mail an die neue Adresse; bestätigt wird per Klick (POST), damit ein bloßes Öffnen nichts ändert."""
+    change = EmailChange.objects.filter(token=token).select_related("user").first()
+    if change is None or not change.is_valid:
+        return render(request, "accounts/email_change_confirm.html", {"change": None}, status=410)
+    if request.method == "POST":
+        try:
+            user = services.confirm_email_change(change, request)
+        except services.EmailChangeError as error:
+            return render(request, "accounts/email_change_confirm.html", {"error": str(error)}, status=410)
+        messages.success(request, f"Deine E-Mail-Adresse ist jetzt {user.email}.")
+        if request.user.is_authenticated and request.user.pk == user.pk:
+            return redirect("security")
+        return redirect("account_login")
+    return render(request, "accounts/email_change_confirm.html", {"change": change})
 
 
 def _profile(user: User) -> dict[str, str]:
@@ -219,11 +279,21 @@ def edit_user(request: HttpRequest, pk: int) -> HttpResponse:
             )
         messages.success(request, f"{target_user.display_name} gespeichert.")
         return redirect("user_list")
-    return render(
-        request,
-        "accounts/edit_user.html",
-        {"target_user": target_user, "form": form, "set_up": services.has_login_method(target_user)},
-    )
+    context = {"target_user": target_user, "form": form, "set_up": services.has_login_method(target_user)}
+    context.update(_email_context(target_user, own=target_user == actor))
+    return render(request, "accounts/edit_user.html", context)
+
+
+@require_POST
+@role_required(*MANAGE_USERS)
+def user_email_change(request: HttpRequest, pk: int) -> HttpResponse:
+    """E-Mail-Adresse eines Benutzers ändern, z. B. wenn die alte nicht mehr erreichbar ist; gilt nach Bestätigung."""
+    target_user = get_object_or_404(User, pk=pk)
+    if target_user.has_role(Role.ADMIN) and not request.user.has_role(Role.ADMIN):  # type: ignore[union-attr]
+        messages.error(request, "Administratoren kann nur ein Administrator ändern.")
+    else:
+        _change_email(request, target_user)
+    return redirect(reverse("edit_user", args=[pk]) + "#e-mail")
 
 
 @require_POST

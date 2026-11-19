@@ -167,3 +167,35 @@ class KnownDevice(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} – {self.description}"
+
+
+EMAIL_CHANGE_DAYS = 3
+
+
+def _email_change_expiry() -> datetime:
+    return timezone.now() + timedelta(days=EMAIL_CHANGE_DAYS)
+
+
+class EmailChange(models.Model):
+    """Neue E-Mail-Adresse, die noch bestätigt werden muss. Bis dahin gilt die alte (ADR 0011). Je Benutzer eine."""
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="email_change")
+    email = models.EmailField("Neue E-Mail")
+    token = models.CharField(max_length=64, unique=True, default=_new_token, editable=False)
+    sync_member = models.BooleanField("In die Mitgliedsdaten übernehmen", default=False)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField(default=_email_change_expiry)
+
+    class Meta:
+        verbose_name = "Offene E-Mail-Änderung"
+        verbose_name_plural = "Offene E-Mail-Änderungen"
+
+    def __str__(self) -> str:
+        return f"{self.user} → {self.email}"
+
+    @property
+    def is_valid(self) -> bool:
+        return self.expires_at > timezone.now()

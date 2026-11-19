@@ -18,8 +18,8 @@ from django.utils import timezone
 from portal.core import audit
 
 from . import devices
-from .models import Invitation, KnownDevice, Role, User
-from .signals import greeting_requested, invitation_accepted
+from .models import EMAIL_CHANGE_DAYS, EmailChange, Invitation, KnownDevice, Role, User
+from .signals import email_changed, greeting_requested, invitation_accepted, own_member_requested
 
 log = logging.getLogger(__name__)
 
@@ -247,3 +247,111 @@ def ensure_initial_admin() -> Invitation | None:
     invitation = invite(email, roles=[Role.ADMIN])
     log.warning("Erster Administrator eingeladen: %s – Link: %s", email, invitation_url(invitation))
     return invitation
+
+
+# E-Mail-Adresse ändern (ADR 0011): wirksam erst mit dem Link an die neue Adresse, die alte bekommt einen Hinweis.
+
+
+class EmailChangeError(Exception):
+    pass
+
+
+def own_member_name(user: User) -> str:
+    """Name des eigenen Mitgliedsprofils (von ``portal.members`` über ein Signal), sonst ""."""
+    for _receiver, answer in own_member_requested.send(sender=User, user=user):
+        if answer:
+            return str(answer)
+    return ""
+
+
+def email_change_url(change: EmailChange) -> str:
+    return settings.BASE_URL + reverse("confirm_email_change", args=[change.token])
+
+
+def pending_email_change(user: User) -> EmailChange | None:
+    change = EmailChange.objects.filter(user=user).first()
+    return change if change is not None and change.is_valid else None
+
+
+def _check_email_free(email: str, user: User) -> None:
+    if User.objects.filter(email__iexact=email).exclude(pk=user.pk).exists():
+        raise EmailChangeError("Diese E-Mail-Adresse gehört schon zu einem anderen Benutzer.")
+    if EmailAddress.objects.filter(email__iexact=email).exclude(user=user).exists():
+        raise EmailChangeError("Diese E-Mail-Adresse gehört schon zu einem anderen Benutzer.")
+
+
+@transaction.atomic
+def request_email_change(user: User, email: str, by: User, *, sync_member: bool = False) -> EmailChange:
+    """Neue Adresse vormerken und den Bestätigungslink an sie schicken. Eine ältere offene Änderung ersetzt sie."""
+    email = email.strip()
+    if email.lower() == user.email.lower():
+        raise EmailChangeError("Das ist schon die aktuelle E-Mail-Adresse.")
+    _check_email_free(email, user)
+    EmailChange.objects.filter(user=user).delete()
+    change = EmailChange.objects.create(
+        user=user, email=email, sync_member=sync_member and bool(own_member_name(user)), requested_by=by
+    )
+    who = "selbst" if by.pk == user.pk else f"von {by.display_name}"
+    audit.log(by, audit.Area.LOGIN, "email_change_requested", f"Neue E-Mail-Adresse angefragt ({who})", user=user)
+    transaction.on_commit(lambda: send_email_change(change))
+    return change
+
+
+def send_email_change(change: EmailChange) -> None:
+    context = {
+        "greeting": greeting(user=change.user),
+        "change": change,
+        "url": email_change_url(change),
+        "days": EMAIL_CHANGE_DAYS,
+        "by_other": change.requested_by_id not in (None, change.user_id),
+        "requested_by": change.requested_by,
+    }
+    EmailMultiAlternatives(
+        subject=settings.EMAIL_SUBJECT_PREFIX + "Neue E-Mail-Adresse bestätigen",
+        body=render_to_string("accounts/email/email_change.txt", context),
+        to=[change.email],
+    ).send()
+
+
+def cancel_email_change(user: User, by: User) -> None:
+    if EmailChange.objects.filter(user=user).delete()[0]:
+        audit.log(by, audit.Area.LOGIN, "email_change_cancelled", "Neue E-Mail-Adresse verworfen", user=user)
+
+
+@transaction.atomic
+def confirm_email_change(change: EmailChange, request: HttpRequest | None = None) -> User:
+    """Link bestätigt: Die neue Adresse gilt (auch für die Anmeldung), die alte bekommt einen Sicherheitshinweis."""
+    if not change.is_valid:
+        raise EmailChangeError("Der Link ist abgelaufen. Ändere die E-Mail-Adresse bitte noch einmal.")
+    user = change.user
+    _check_email_free(change.email, user)
+    old_email = user.email
+    user.email = change.email
+    user.save(update_fields=["email"])
+    EmailAddress.objects.filter(user=user).delete()
+    EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
+    sync_member, by = change.sync_member, change.requested_by
+    change.delete()
+    audit.log(
+        user,
+        audit.Area.LOGIN,
+        "email_changed",
+        "E-Mail-Adresse geändert",
+        user=user,
+        changes={"E-Mail": [old_email, user.email]},
+    )
+    log.info("E-Mail-Adresse von Benutzer %s geändert", user.pk)
+    email_changed.send(sender=User, user=user, old_email=old_email, sync_member=sync_member, by=by)
+    transaction.on_commit(lambda: _notify_old_address(user, old_email, request))
+    return user
+
+
+def _notify_old_address(user: User, old_email: str, request: HttpRequest | None) -> None:
+    """Sicherheitshinweis an die bisherige Adresse, wie die übrigen Sicherheitsmails von allauth (ADR 0011)."""
+    from allauth.account.adapter import get_adapter
+    from allauth.core import context
+
+    with context.request_context(request):
+        get_adapter(request).send_notification_mail(
+            "account/email/email_changed", user, {"old_email": old_email, "new_email": user.email}, email=old_email
+        )

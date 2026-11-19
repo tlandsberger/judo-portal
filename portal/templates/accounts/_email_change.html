@@ -1,0 +1,13 @@
+{% comment %}E-Mail-Adresse ändern (eigene oder in der Benutzerverwaltung); action = Ziel des Formulars, own = eigener Zugang.{% endcomment %}
+<section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-email" id="e-mail"><div class="card-body gap-4">
+  <div><h2 class="card-title" id="h-email">E-Mail-Adresse</h2><p class="text-sm text-base-content/70">{% if own %}Deine Adresse{% else %}Die Adresse{% endif %} für die Anmeldung und alle Mails: <strong class="break-all">{{ email_user.email }}</strong></p></div>
+  {% if email_pending %}
+  <div role="status" class="alert"><i class="bi bi-envelope-check" aria-hidden="true"></i><span>Neue Adresse <strong class="break-all">{{ email_pending.email }}</strong> wartet auf Bestätigung über den Link, den wir dorthin geschickt haben (gültig bis {{ email_pending.expires_at|date:"d.m.Y H:i" }} Uhr). Bis dahin gilt die bisherige Adresse.</span></div>
+  <form method="post" action="{{ action }}">{% csrf_token %}<button class="btn btn-outline btn-sm" name="action" value="cancel">Änderung verwerfen</button></form>
+  {% endif %}
+  <form method="post" action="{{ action }}" class="flex flex-col gap-4">{% csrf_token %}
+    {{ email_form }}
+    <p class="text-sm text-base-content/70">Wir schicken einen Link an die neue Adresse. Erst wenn {% if own %}du ihn bestätigst{% else %}er bestätigt ist{% endif %}, gilt sie – auch für die Anmeldung. Die bisherige Adresse bekommt dann einen Hinweis.</p>
+    <div><button type="submit" class="btn btn-primary" name="action" value="change">E-Mail-Adresse ändern</button></div>
+  </form>
+</div></section>

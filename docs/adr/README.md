@@ -27,5 +27,6 @@ Mit dem Neuaufbau im November 2026 beginnt die Nummerierung neu; die ADRs der Vo
 | [0020](0020-schnellzugang-per-code-und-qr-code.md) | Schnellzugang per Code, Quick-Link und QR-Code | angenommen |
 | [0021](0021-anhaenge-und-excel-export.md) | Dateianhänge im Datenverzeichnis und Excel-Export | angenommen |
 | [0022](0022-feste-rollen-statt-django-gruppen.md) | Feste Rollen statt Django-Gruppen und -Berechtigungen | angenommen |
+| [0023](0023-e-mail-adresse-aendern.md) | E-Mail-Adresse ändern mit Bestätigung | angenommen |
 
 Vorlage: Kontext · Entscheidung · Konsequenzen · Verworfene Alternativen.

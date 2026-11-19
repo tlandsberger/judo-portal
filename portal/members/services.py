@@ -219,6 +219,24 @@ MEMBER_FIELDS = (
 )
 
 
+def own_member(user: Any) -> Member | None:
+    """Das eigene Mitgliedsprofil eines Benutzers (Verknüpfung „eigenes Profil“), sonst None."""
+    link = MemberLink.objects.filter(user=user, kind=LinkKind.SELF).select_related("member").first()
+    return link.member if link else None
+
+
+def take_over_email(user: User) -> Member | None:
+    """Nach einer bestätigten neuen E-Mail-Adresse: in das eigene Mitgliedsprofil übernehmen (protokolliert)."""
+    member = own_member(user)
+    if member is None or member.email == user.email:
+        return member
+    before = member_snapshot(member)
+    member.email = user.email
+    member.save(update_fields=["email", "updated_at"])
+    record_change(member, before, user, "neue E-Mail-Adresse des Zugangs übernommen")
+    return member
+
+
 def member_snapshot(member: Member | None) -> dict[str, Any] | None:
     return audit.snapshot(member, MEMBER_FIELDS) if member is not None and member.pk else None
 

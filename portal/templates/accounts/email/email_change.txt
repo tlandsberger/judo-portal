@@ -1,0 +1,14 @@
+{% autoescape off %}{{ greeting }},
+
+{% if by_other %}{{ requested_by.display_name }} hat für deinen Zugang zum Vereinsportal der Judo-Abteilung im Wedeler TSV diese neue E-Mail-Adresse eingetragen.{% else %}du möchtest für deinen Zugang zum Vereinsportal der Judo-Abteilung im Wedeler TSV diese neue E-Mail-Adresse verwenden.{% endif %}
+
+Bitte bestätige sie über diesen Link (gültig für {{ days }} Tage):
+{{ url }}
+
+Erst danach gilt die neue Adresse, auch für die Anmeldung. Bis dahin bleibt alles, wie es ist.
+Hast du das nicht veranlasst? Dann ignoriere diese Mail einfach.
+
+Viele Grüße
+Wedeler TSV e.V. – Abteilung Judo
+judo@wedeler-tsv.de · https://www.wedeler-tsv.de/sportangebote-judo/
+{% endautoescape %}

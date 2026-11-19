@@ -19,7 +19,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from portal.accounts.models import Invitation, KnownDevice, Role, User
+from portal.accounts.models import EmailChange, Invitation, KnownDevice, Role, User
 from portal.billing.models import Claim, Rate
 from portal.core import audit
 from portal.events.models import Participation
@@ -401,6 +401,10 @@ def export_user(user: User) -> dict[str, Any]:
         "Einladungen": [
             {"Angelegt": _value(i.created_at), "Angenommen": _value(i.accepted_at)}
             for i in Invitation.objects.filter(user=user)
+        ],
+        "Offene E-Mail-Änderung": [
+            {"Neue E-Mail": c.email, "Angefragt": _value(c.created_at), "Gültig bis": _value(c.expires_at)}
+            for c in EmailChange.objects.filter(user=user)
         ],
         # Nur Einträge über den Benutzer selbst – nicht, was er (z. B. als Abteilungsleitung) bei anderen geändert hat.
         "Protokoll": _audit_rows(audit.AuditEntry.objects.filter(user_id=user.pk, member_id__isnull=True)),

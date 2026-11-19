@@ -1,0 +1,2 @@
+{% extends "account/email/base_notification.txt" %}
+{% block notification_message %}Deine E-Mail-Adresse wurde von {{ old_email }} in {{ new_email }} geändert. Mails und Anmeldecodes gehen ab jetzt an die neue Adresse.{% endblock notification_message %}
