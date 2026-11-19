@@ -38,6 +38,7 @@ urlpatterns = [
         name="occurrence_take_over",
     ),
     path("termine/<int:pk>/bestaetigen/", views.hours_confirm, name="hours_confirm"),
+    path("termine/<int:pk>/stunden-anpassen/", views.hours_adjust, name="hours_adjust"),
     path("termine/<int:pk>/bestaetigung-zuruecknehmen/", views.hours_unconfirm, name="hours_unconfirm"),
     # Altlast: „Nicht dabei?“ steht jetzt am Termin (beim nächsten Aufräumen entfernen)
     path("termine/<int:pk>/nicht-dabei/", views.hours_absent, name="hours_absent"),

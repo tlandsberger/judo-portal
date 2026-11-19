@@ -181,13 +181,21 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await trainer.getByRole("region", { name: "Noch bestätigen" }).getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
   await expect(trainer.getByText("Danke, deine Stunden sind bestätigt.")).toBeVisible();
   await expect(trainer.getByRole("region", { name: "Noch bestätigen" })).toHaveCount(0);
-  // Im Monat: Dauer sehen, versehentlich bestätigt? Zurücknehmen und erneut bestätigen
+  // Im Monat: Dauer über den Stift anpassen; versehentlich bestätigt? Zurücknehmen und erneut bestätigen
   await trainer.goto(billingMonthPath(1));
-  await expect(trainer.getByRole("spinbutton", { name: /Minuten für Randori-Lehrgang/ })).toHaveValue("240");
+  await expect(trainer.getByRole("cell", { name: "240", exact: true }).first()).toBeVisible();
+  await trainer.getByRole("link", { name: /Randori-Lehrgang am .* anpassen/ }).click();
+  await expect(trainer.getByRole("heading", { level: 1, name: "Stunden anpassen" })).toBeVisible();
+  await expect(trainer.getByLabel("Dauer (Minuten)")).toHaveValue("240");
+  await expectNoA11yViolations(trainer);
+  await trainer.getByLabel("Dauer (Minuten)").fill("210");
+  await trainer.getByRole("button", { name: "Speichern" }).click();
+  await expect(trainer.getByText("Deine Stunden sind angepasst.")).toBeVisible();
+  await expect(trainer.getByRole("cell", { name: "210", exact: true }).first()).toBeVisible();
   await trainer.getByRole("button", { name: /Bestätigung für Randori-Lehrgang am .* zurücknehmen/ }).click();
   await expect(trainer.getByText("Die Bestätigung ist zurückgenommen.")).toBeVisible();
   await trainer.getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
-  await expect(trainer.getByRole("spinbutton", { name: /Minuten für Randori-Lehrgang/ })).toHaveValue("240");
+  await expect(trainer.getByRole("cell", { name: "240", exact: true }).first()).toBeVisible();
   await expectNoA11yViolations(trainer);
   await trainerContext.close();
   await admin.context().close();

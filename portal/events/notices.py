@@ -233,6 +233,11 @@ def confirm_due(ends_at: datetime) -> datetime:
     return (end + timedelta(days=1)).replace(hour=CONFIRM_MORNING_HOUR, minute=0, second=0, microsecond=0)
 
 
+def _adjust_url(occurrence: Occurrence) -> str:
+    """Formular „Anpassen“ der Stunden; danach zurück zu „Meine Abrechnung“."""
+    return reverse("hours_adjust", args=[occurrence.pk]) + "?next=" + reverse("billing_index")
+
+
 def notify_confirm_hours(now: datetime | None = None) -> None:
     """Abrechnungsrelevante Rollen: am Abend des Termins an das Bestätigen der Stunden erinnern."""
     now = now or timezone.now()
@@ -259,7 +264,7 @@ def notify_confirm_hours(now: datetime | None = None) -> None:
             url=reverse("billing_index"),
             actions=[
                 Action("confirm", "Bestätigen", {"p": participation.pk}),
-                Action("absent", "Nicht dabei?", url=f"{_url(occurrence)}#h-team"),
+                Action("adjust", "Anpassen", url=_adjust_url(occurrence)),
             ],
         )
 
@@ -283,7 +288,10 @@ def handed_over(substitute: Participation, absent: Member, by: User | None) -> N
                 title="Stunden bestätigen",
                 body=f"Du hast {absent.display_name} bei {what} vertreten. Bitte bestätige deine Stunden.",
                 url=reverse("billing_index"),
-                actions=[Action("confirm", "Bestätigen", {"p": substitute.pk})],
+                actions=[
+                    Action("confirm", "Bestätigen", {"p": substitute.pk}),
+                    Action("adjust", "Anpassen", url=_adjust_url(occurrence)),
+                ],
             )
         else:
             notifications.notify(

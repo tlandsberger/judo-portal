@@ -72,15 +72,8 @@
     {% for role in self_roles %}<button class="btn btn-outline btn-primary btn-sm" name="role" value="{{ role.pk }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Mich als {{ role.name }} eintragen</button>{% endfor %}
   </form>
   {% endif %}
-  {% if confirm_form and started and not occurrence.is_cancelled %}
-  <form method="post" action="{% url 'hours_confirm' occurrence.pk %}" class="flex flex-wrap items-end gap-3">{% csrf_token %}
-    <div class="w-40">{{ confirm_form }}</div>
-    <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Stunden bestätigen</button>
-  </form>
-  {% elif can_unconfirm %}
-  <form method="post" action="{% url 'hours_unconfirm' occurrence.pk %}">{% csrf_token %}
-    <button class="btn btn-outline" type="submit"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Bestätigung zurücknehmen</button>
-  </form>
+  {% if own_team and own_team.role.is_billable and started and not occurrence.is_cancelled %}
+  <p class="text-sm text-base-content/70"><i class="bi bi-receipt" aria-hidden="true"></i> {% if own_team.is_confirmed %}Deine Stunden sind bestätigt.{% else %}Deine Stunden sind noch nicht bestätigt.{% endif %} Bestätigen und anpassen kannst du sie in <a class="link" href="{% url 'billing_index' %}">Meine Abrechnung</a>.</p>
   {% endif %}
 </div></section>
 {% endif %}

@@ -22,6 +22,12 @@ Aufstellung, die die Abteilungsleitung freigegeben hat. Ausgezahlt wird weiterhi
     Seite „Stundensätze“ ab. Bestehende Einteilungen bleiben. `portal.events` kennt die Sätze nicht: `billing`
     meldet die Prüfung über `events.services.register_role_check` an; `can_take_role` und `role_unavailable`
     fragen alle angemeldeten Prüfungen ab.
+- **Bestätigen und Anpassen** (November 2026): Stunden bestätigt man nur auf der Startseite, unter „Meine Abrechnung“
+  oder aus der Benachrichtigung, nicht am Termin; dort steht nur, ob sie bestätigt sind. Weicht etwas ab, öffnet
+  „Anpassen“ (bei bestätigten Zeilen der Stift in der Tabelle des Monats) ein Formular mit Übungsleiter, Rolle und Dauer
+  (`events.services.adjust_hours`). Eigene Dauer und Rolle gelten danach als bestätigt. Ein anderer Übungsleiter
+  übernimmt den Platz wie beim Übertragen und bestätigt seine Stunden selbst. Das Formular bietet nur
+  abrechnungsrelevante Rollen an, für die ein Satz gilt. „Bestätigung zurücknehmen“ bleibt als Knopf in der Tabelle.
 - **Eine Abrechnung (`Claim`) je Übungsleiter und Monat**, einzureichen nach Monatsende.
   - Ein noch offener Monat ist kein Datensatz, sondern wird aus den bestätigten Teilnahmen berechnet.
   - **Frist:** der 5. (Kalendertag) des dritten Folgemonats, z. B. Januar bis 5. April (`deadline`).

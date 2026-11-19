@@ -3,19 +3,29 @@
 {% screenshot "stunden" "Meine Abrechnung mit Terminen zum Bestätigen und den Monaten" %}
 
 <h2 id="bestaetigen">Stunden bestätigen</h2>
-<ol>
-  <li>Am Abend des Termins kommt eine Erinnerung – mit dem Knopf <strong>Bestätigen</strong> geht es direkt aus der Nachricht.</li>
-  <li>Oder auf der <a href="{% url 'home' %}">Startseite</a> bei „Stunden bestätigen“ bzw. unter <a href="{% url 'billing_index' %}">Meine Abrechnung</a> bei „Noch bestätigen“ auf <strong>Bestätigen</strong> tippen. Die Dauer kommt aus dem Termin.</li>
-  <li>Hat es länger oder kürzer gedauert, öffne den Monat, trag die Minuten ein und tippe auf <strong>Ändern</strong>.</li>
-  <li>Versehentlich bestätigt? Mit <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> (<strong>Bestätigung zurücknehmen</strong>) machst du es rückgängig.</li>
-</ol>
-<p>Ändern und zurücknehmen geht, bis der Monat zur Abrechnung eingereicht ist.</p>
+<p>Stunden bestätigst du an drei Stellen. Am Termin selbst geht das nicht, dort siehst du nur, ob deine Stunden schon bestätigt sind.</p>
+<ul>
+  <li>In der <strong>Erinnerung</strong> am Abend des Termins: mit dem Knopf <strong>Bestätigen</strong> direkt aus der Nachricht.</li>
+  <li>Auf der <a href="{% url 'home' %}">Startseite</a> bei „Stunden bestätigen“.</li>
+  <li>Unter <a href="{% url 'billing_index' %}">Meine Abrechnung</a> bei „Noch bestätigen“ oder im Monat bei „Nicht bestätigt“.</li>
+</ul>
+<p>Mit <strong>Bestätigen</strong> gilt alles wie geplant: du in deiner Rolle, die Dauer aus dem Termin.</p>
+
+<h2 id="anpassen">Anpassen</h2>
+<p>Lief es anders als geplant, tippe an derselben Stelle auf <strong><i class="bi bi-pencil" aria-hidden="true"></i> Anpassen</strong>. Schon bestätigte Stunden öffnest du in der Tabelle des Monats mit dem Stift. Im Formular änderst du:</p>
+<ul>
+  <li><strong>Dauer:</strong> Es hat länger oder kürzer gedauert. Trag die Minuten ein.</li>
+  <li><strong>Rolle:</strong> Du warst zum Beispiel Co-Trainer statt Trainer. Zur Auswahl stehen die Rollen, für die du einen Stundensatz hast.</li>
+  <li><strong>Übungsleiter:</strong> Jemand hat dich vertreten. Wähle, wer da war. Die Vertretung übernimmt den Platz, bekommt eine Push-Benachrichtigung und bestätigt ihre Stunden selbst.</li>
+</ul>
+{% screenshot "stunden-anpassen" "Formular Stunden anpassen mit Übungsleiter, Rolle und Dauer" %}
+<p>Mit <strong>Bestätigen</strong> (bei schon bestätigten Stunden <strong>Speichern</strong>) gilt deine Angabe. Versehentlich bestätigt? Mit <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> (<strong>Bestätigung zurücknehmen</strong>) in der Tabelle des Monats machst du es rückgängig. Anpassen und zurücknehmen geht, bis der Monat zur Abrechnung eingereicht ist.</p>
 
 <h2 id="nicht-dabei">Nicht dabei?</h2>
-<p>Lief es anders als geplant, tippe in der Erinnerung oder unter <a href="{% url 'billing_index' %}">Meine Abrechnung</a> auf <strong>Nicht dabei?</strong>. Das öffnet den Termin beim Abschnitt „Übungsleiter“:</p>
+<p>Warst du gar nicht da und hat dich auch niemand vertreten, entferne dich am Termin im Abschnitt „Übungsleiter“. Das Formular „Anpassen“ verlinkt dorthin.</p>
 <ul>
-  <li><strong>Übertragen:</strong> Du wurdest vertreten. Wähle, wer übernommen hat; die Vertretung bekommt eine Push-Benachrichtigung, um ihre Stunden zu bestätigen. Hast du schon bestätigt, wird das zurückgenommen.</li>
   <li><strong>Entfernen:</strong> Du warst nicht dabei und niemand hat übernommen.</li>
+  <li><strong>Übertragen:</strong> geht am Termin weiterhin, genauso wie ein anderer Übungsleiter im Formular „Anpassen“.</li>
   <li><strong>Hat nicht stattgefunden:</strong> Über <strong><i class="bi bi-three-dots-vertical" aria-hidden="true"></i> Weitere Aktionen</strong>. Der Termin gilt als ausgefallen; Teilnehmer bekommen keine Nachricht mehr. Hat schon ein anderer Übungsleiter bestätigt, sprecht euch bitte vorher ab.</li>
 </ul>
 <p>Hat dich jemand vertreten und es noch nicht eingetragen, kann die Vertretung auch selbst am Termin auf <strong>Vertreten</strong> tippen.</p>

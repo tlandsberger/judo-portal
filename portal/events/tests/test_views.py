@@ -198,8 +198,8 @@ def test_confirm_from_billing_index(client, trainer):
     login(client, trainer)
     page = client.get(reverse("billing_index")).content.decode()
     assert "Noch bestätigen" in page
-    assert reverse("occurrence_detail", args=[past.pk]) + "#h-team" in page  # „Nicht dabei?“
-    assert reverse("occurrence_detail", args=[coming.pk]) + "#h-team" not in page
+    assert reverse("hours_adjust", args=[past.pk]) in page  # „Anpassen“
+    assert reverse("hours_adjust", args=[coming.pk]) not in page
     response = client.post(
         reverse("hours_confirm", args=[past.pk]), {"minutes": "75", "next": reverse("billing_index")}
     )

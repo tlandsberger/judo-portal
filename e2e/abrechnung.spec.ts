@@ -86,9 +86,14 @@ test("Übungsleiterin bestätigt und reicht den Vormonat ein, die Abteilungsleit
   await expect(trainer.getByRole("cell", { name: "22,50 €" }).first()).toBeVisible();
   await expectNoA11yViolations(trainer);
   // Beim Zusatztraining war Dora nicht dabei: entfernen
-  // „Nicht dabei?“ führt zum Termin; dort Übertragen oder Entfernen (ADR 0018)
-  await trainer.getByRole("link", { name: /Nicht dabei\? Zusatztraining/ }).click();
+  // „Anpassen“ öffnet das Formular; ohne Vertretung führt der Link zum Termin, dort Entfernen (ADR 0018)
+  await trainer.getByRole("link", { name: /Zusatztraining am .* anpassen/ }).click();
+  await expect(trainer.getByRole("heading", { level: 1, name: "Stunden anpassen" })).toBeVisible();
+  await expect(trainer.getByRole("button", { name: "Bestätigen" })).toBeVisible();
+  await expectNoA11yViolations(trainer);
+  await trainer.getByRole("link", { name: "entferne dich am Termin" }).click();
   await expect(trainer.getByRole("heading", { level: 1, name: "Zusatztraining" })).toBeVisible();
+  await expect(trainer.getByRole("button", { name: /bestätigen/i })).toHaveCount(0); // am Termin keine Stunden
   await expect(trainer.getByRole("link", { name: "Meinen Platz übertragen" })).toBeVisible();
   await expect(trainer.getByRole("button", { name: "Hat nicht stattgefunden" })).toBeHidden(); // im Menü
   await expectNoA11yViolations(trainer);
@@ -99,7 +104,7 @@ test("Übungsleiterin bestätigt und reicht den Vormonat ein, die Abteilungsleit
   await expect(trainer.getByRole("heading", { name: "Nicht bestätigt" })).toHaveCount(0);
   await trainer.getByRole("button", { name: `${month} einreichen` }).click();
   await expect(trainer.getByText(`${month} ist eingereicht.`)).toBeVisible();
-  await expect(trainer.getByRole("button", { name: "Ändern" })).toHaveCount(0);
+  await expect(trainer.getByRole("link", { name: /anpassen/ })).toHaveCount(0);
 
   // Abteilungsleitung prüft und gibt frei
   await admin.goto("/abrechnung/alle/");

@@ -1,0 +1,21 @@
+{% extends "layouts/page.html" %}
+{% load help %}
+{% block title %}Stunden anpassen{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block back_url %}{{ next }}{% endblock %}
+{% block back_label %}Zurück{% endblock %}
+{% block heading %}Stunden anpassen{% endblock %}
+{% block heading_extra %}{% help_link "stunden" %}{% endblock %}
+{% block intro %}War es anders als geplant? Trag ein, wer da war, in welcher Rolle und wie lange.{% endblock %}
+{% block page %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+  <p><a class="link font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a> am {{ occurrence.starts_at|date:"l, d.m.Y" }}, {{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if participation.is_confirmed %} · bestätigt mit {{ participation.minutes }} Minuten{% endif %}</p>
+  <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% if form.non_field_errors %}<div role="alert" class="alert alert-soft alert-error"><i class="bi bi-exclamation-triangle text-lg" aria-hidden="true"></i><span>{{ form.non_field_errors|join:" " }}</span></div>{% endif %}
+    {{ form }}
+    <p class="text-sm text-base-content/70">Gar nicht dabei und keine Vertretung? Dann <a class="link" href="{% url 'occurrence_detail' occurrence.pk %}#h-team">entferne dich am Termin</a>.</p>
+    <div class="action-bar"><button type="submit" class="btn btn-primary">{% if participation.is_confirmed %}Speichern{% else %}Bestätigen{% endif %}</button><a class="btn" href="{{ next }}">Abbrechen</a></div>
+  </form>
+</div></div>
+{% endblock %}

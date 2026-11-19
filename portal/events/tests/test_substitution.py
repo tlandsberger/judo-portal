@@ -104,15 +104,15 @@ def test_cancel_menu_after_start_cancels_without_notices(client, shift, trainer)
     assert not SentNotification.objects.filter(kind="cancelled").exists()
 
 
-def test_confirm_reminder_offers_absent_button(shift, monkeypatch):
+def test_confirm_reminder_offers_adjust_button(shift, monkeypatch):
     seen: list[list[Action]] = []
     monkeypatch.setattr(
         notices.notifications, "notify", lambda user, **kwargs: seen.append(list(kwargs["actions"])) or True
     )
     notices.notify_confirm_hours(timezone.now() + timedelta(days=1))
     [actions] = seen
-    assert [a.title for a in actions] == ["Bestätigen", "Nicht dabei?"]
-    assert actions[1].url == reverse("occurrence_detail", args=[shift.occurrence_id]) + "#h-team"
+    assert [a.title for a in actions] == ["Bestätigen", "Anpassen"]
+    assert actions[1].url == reverse("hours_adjust", args=[shift.occurrence_id]) + "?next=/abrechnung/"
 
 
 def test_old_absent_url_redirects_to_occurrence(client, shift, trainer):

@@ -1,4 +1,4 @@
-{# Nicht bestätigte Termine mit „Bestätigen“ und „Nicht dabei?“ (Monat und Übersicht „Meine Abrechnung“). #}
+{# Nicht bestätigte Termine mit „Bestätigen“ und „Anpassen“ (Startseite, Monat und Übersicht „Meine Abrechnung“). #}
     <ul class="list">
       {% for p in rows %}
       <li class="list-row items-center px-0">
@@ -11,7 +11,7 @@
         <form method="post" action="{% url 'hours_confirm' p.occurrence_id %}">{% csrf_token %}<input type="hidden" name="minutes" value="{{ p.occurrence.minutes }}"><input type="hidden" name="next" value="{{ request.path }}">
           <button class="btn btn-primary btn-sm" aria-label="{{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }} bestätigen">Bestätigen</button>
         </form>
-        <a class="btn btn-ghost btn-sm" href="{% url 'occurrence_detail' p.occurrence_id %}#h-team" aria-label="Nicht dabei? {{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }}">Nicht dabei?</a>
+        <a class="btn btn-outline btn-sm" href="{% url 'hours_adjust' p.occurrence_id %}?next={{ request.path|urlencode }}" aria-label="{{ p.occurrence.event.title }} am {{ p.occurrence.starts_at|date:'d.m.' }} anpassen"><i class="bi bi-pencil" aria-hidden="true"></i> Anpassen</a>
         </div>
         {% endif %}
       </li>

@@ -878,6 +878,31 @@ def unconfirm(participation: Participation, by: User | None = None) -> None:
     )
 
 
+@transaction.atomic
+def adjust_hours(
+    participation: Participation, *, minutes: int, role: ParticipantRole, member: Member, by: User | None = None
+) -> Participation:
+    """„Anpassen“ nach dem Termin: Dauer, Rolle oder Übungsleiter in einem Schritt (ADR 0014).
+
+    Eigene Dauer und Rolle gelten als bestätigt. War jemand anderes da, übernimmt die Vertretung den Platz und
+    bestätigt ihre Stunden selbst (wie beim Übertragen); die eingegebene Dauer gilt dann nicht.
+    """
+    occurrence = participation.occurrence
+    if occurrence.starts_at > timezone.now():
+        raise RegistrationError("Anpassen kannst du erst, wenn der Termin begonnen hat.")
+    if member.pk != participation.member_id:
+        return hand_over(participation, member, role, by)
+    if role.pk != participation.role_id:
+        if not role.is_billable:
+            raise RegistrationError(f"Für {role.name} werden keine Stunden abgerechnet.")
+        _check_unlocked(participation)
+        _check_role(member, role, occurrence.event, timezone.localdate(occurrence.starts_at))
+        unconfirm(participation, by)
+        participation = set_team(occurrence, member, role, by)
+    confirm(participation, minutes, by)
+    return participation
+
+
 # Vertretungen und Austragen (ADR 0018): vor dem Termin wie nachträglich („Nicht dabei?“, ADR 0012)
 
 
