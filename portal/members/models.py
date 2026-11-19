@@ -134,6 +134,14 @@ class Member(models.Model):
     def display_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
+    def adult_on(self) -> date:
+        """18. Geburtstag; wer am 29. Februar geboren ist, wird in Nicht-Schaltjahren am 1. März volljährig."""
+        born = self.birth_date
+        try:
+            return born.replace(year=born.year + ADULT_AGE)
+        except ValueError:
+            return date(born.year + ADULT_AGE, 3, 1)
+
     def age(self, on: date | None = None) -> int:
         on = on or timezone.localdate()
         born = self.birth_date
@@ -161,6 +169,8 @@ class MemberLink(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="links")
     kind = models.CharField("Art", max_length=10, choices=LinkKind.choices)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
+    # Vorankündigung an Eltern, dass die Verknüpfung zum 18. Geburtstag gelöst wird (ADR 0025)
+    adult_notice_sent_at = models.DateTimeField("Vorankündigung Volljährigkeit", null=True, blank=True)
 
     class Meta:
         verbose_name = "Verknüpfung"
@@ -197,3 +207,23 @@ class PendingLink(models.Model):
 
     def __str__(self) -> str:
         return f"{self.invitation.email} → {self.member} ({self.get_kind_display()})"
+
+
+class AccessOffer(models.Model):
+    """Hinweis an einen Elternteil, dass sein Kind (ab 14) einen eigenen Zugang bekommen kann (ADR 0024).
+
+    Hält fest, ob die Mail zum 14. Geburtstag raus ist und ob der Elternteil das Banner mit „Nicht jetzt“ weggeklickt
+    hat. Ohne Eintrag zeigt die Startseite das Banner."""
+
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="access_offers")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+")
+    notified_at = models.DateTimeField("Mail verschickt", null=True, blank=True)
+    dismissed_at = models.DateTimeField("Ausgeblendet", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Hinweis auf eigenen Zugang"
+        verbose_name_plural = "Hinweise auf eigenen Zugang"
+        constraints = [models.UniqueConstraint(fields=["member", "user"], name="access_offer_unique")]
+
+    def __str__(self) -> str:
+        return f"{self.member} → {self.user}"

@@ -82,3 +82,10 @@ Service Worker; eine App im Store wollen wir nicht pflegen.
 - **ntfy/Gotify:** eigene App auf jedem Handy nötig und Themen statt Benutzer; Aktionsknöpfe ohne Anmeldung wären
   schwer abzusichern.
 - **Einstellungen je Anlass:** mehr Oberfläche, wenig Nutzen; bei Bedarf später ergänzbar.
+
+## Nachtrag (November 2026): Mails einheitlich als HTML
+
+Alle Mails gehen als HTML im Vereins-Look mit Textfassung als Alternative, auch die Sicherheitsmails und Codes von
+allauth (`*_message.html` neben `*_message.txt`, allauth hängt die HTML-Fassung selbst an). Das Grundgerüst steht in
+`portal/templates/email/base.html` (Inline-Styles, weil Mailprogramme kaum CSS können), Knopf und Code als Includes.
+Ein Test prüft, dass es zu jeder Textfassung eine HTML-Fassung gibt.

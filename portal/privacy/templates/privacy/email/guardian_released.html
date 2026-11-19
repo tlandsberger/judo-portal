@@ -1,0 +1,10 @@
+{% extends "email/base.html" %}
+{% block greeting %}{{ greeting }}{% endblock %}
+{% block content %}
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;"><strong>{{ member_name }}</strong> ist jetzt volljährig. Deshalb ist deine Verknüpfung als Elternteil im Vereinsportal gelöst.</p>
+      {% if deleted %}<p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Weil du kein weiteres Mitglied im Portal hast, ist auch dein Zugang gelöscht, mit Anmeldewegen (Passwort, Passkeys), Geräten und Benachrichtigungen.</p>
+      <p style="margin:0;font-size:14px;color:#5c5c5c;line-height:1.5;">Falls das ein Versehen ist, gib uns bitte kurz Bescheid.</p>
+      {% else %}<p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Dein Zugang bleibt bestehen.</p>
+      {% include "email/_button.html" with label="Vereinsportal öffnen" %}
+      {% endif %}
+{% endblock %}

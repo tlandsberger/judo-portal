@@ -39,6 +39,16 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await admin.getByLabel("Clara selbst").check();
   await admin.getByRole("button", { name: "Zugang geben" }).click();
   await expect(admin.getByText("Eigenes Profil · clara@test.local")).toBeVisible();
+  // Abrechnungsrelevante Rollen gibt es nur mit Stundensatz (ADR 0014)
+  for (const role of ["Trainer", "Co-Trainer"]) {
+    await admin.goto("/abrechnung/saetze/");
+    await admin.getByRole("link", { name: "Clara Clever", exact: true }).click();
+    await admin.getByLabel("Rolle").selectOption({ label: role });
+    await admin.getByLabel("Satz (€/Stunde)").fill("15");
+    await admin.getByLabel("Gültig ab").fill("2020-01-01");
+    await admin.getByRole("button", { name: "Speichern" }).click();
+    await expect(admin.getByText(`Satz für ${role} ab 01.01.2020 gespeichert`)).toBeVisible();
+  }
 
   // Rollen: Trainer gibt es bei Lehrgängen, abrechnungsrelevant
   await admin.goto("/rollen/");
@@ -171,13 +181,21 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await trainer.getByRole("region", { name: "Noch bestätigen" }).getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
   await expect(trainer.getByText("Danke, deine Stunden sind bestätigt.")).toBeVisible();
   await expect(trainer.getByRole("region", { name: "Noch bestätigen" })).toHaveCount(0);
-  // Im Monat: Dauer sehen, versehentlich bestätigt? Zurücknehmen und erneut bestätigen
+  // Im Monat: Dauer über den Stift anpassen; versehentlich bestätigt? Zurücknehmen und erneut bestätigen
   await trainer.goto(billingMonthPath(1));
-  await expect(trainer.getByRole("spinbutton", { name: /Minuten für Randori-Lehrgang/ })).toHaveValue("240");
+  await expect(trainer.getByRole("cell", { name: "240", exact: true }).first()).toBeVisible();
+  await trainer.getByRole("link", { name: /Randori-Lehrgang am .* anpassen/ }).click();
+  await expect(trainer.getByRole("heading", { level: 1, name: "Stunden anpassen" })).toBeVisible();
+  await expect(trainer.getByLabel("Dauer (Minuten)")).toHaveValue("240");
+  await expectNoA11yViolations(trainer);
+  await trainer.getByLabel("Dauer (Minuten)").fill("210");
+  await trainer.getByRole("button", { name: "Speichern" }).click();
+  await expect(trainer.getByText("Deine Stunden sind angepasst.")).toBeVisible();
+  await expect(trainer.getByRole("cell", { name: "210", exact: true }).first()).toBeVisible();
   await trainer.getByRole("button", { name: /Bestätigung für Randori-Lehrgang am .* zurücknehmen/ }).click();
   await expect(trainer.getByText("Die Bestätigung ist zurückgenommen.")).toBeVisible();
   await trainer.getByRole("button", { name: /Randori-Lehrgang am .* bestätigen/ }).click();
-  await expect(trainer.getByRole("spinbutton", { name: /Minuten für Randori-Lehrgang/ })).toHaveValue("240");
+  await expect(trainer.getByRole("cell", { name: "240", exact: true }).first()).toBeVisible();
   await expectNoA11yViolations(trainer);
   await trainerContext.close();
   await admin.context().close();

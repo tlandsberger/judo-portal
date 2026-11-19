@@ -67,3 +67,23 @@ class ProfileForm(forms.ModelForm):
             "last_name": forms.TextInput(attrs={"autocomplete": "family-name"}),
             "phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "tel"}),
         }
+
+
+class EmailChangeForm(forms.Form):
+    """Neue E-Mail-Adresse; gilt erst nach Bestätigung über den Link an die neue Adresse (ADR 0011)."""
+
+    email = forms.EmailField(label="Neue E-Mail-Adresse")
+    sync_member = forms.BooleanField(required=False, initial=True)
+
+    def __init__(self, *args: Any, member_name: str = "", own: bool = True, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        if member_name:
+            whose = "meine Mitgliedsdaten" if own else f"die Mitgliedsdaten von {member_name}"
+            self.fields["sync_member"].label = f"Auch in {whose} übernehmen"
+            self.fields["sync_member"].help_text = "Sobald die neue Adresse bestätigt ist."
+        else:
+            del self.fields["sync_member"]
+
+    def clean_email(self) -> str:
+        email: str = self.cleaned_data["email"].strip().lower()
+        return email

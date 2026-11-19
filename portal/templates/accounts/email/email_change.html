@@ -1,0 +1,9 @@
+{% extends "email/base.html" %}
+{% block greeting %}{{ greeting }}{% endblock %}
+{% block content %}
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">{% if by_other %}{{ requested_by.display_name }} hat für deinen Zugang zum Vereinsportal der Judo-Abteilung im Wedeler TSV diese neue E-Mail-Adresse eingetragen:{% else %}du möchtest für deinen Zugang zum Vereinsportal der Judo-Abteilung im Wedeler TSV diese neue E-Mail-Adresse verwenden:{% endif %}</p>
+      <p style="margin:0 0 16px;padding:12px 16px;border-left:4px solid #027d31;background:#f4f8f5;font-size:16px;line-height:1.5;">{{ change.email }}</p>
+      {% include "email/_button.html" with label="Neue Adresse bestätigen" %}
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Erst danach gilt die neue Adresse, auch für die Anmeldung. Bis dahin bleibt alles, wie es ist.</p>
+      <p style="margin:0;font-size:14px;color:#5c5c5c;line-height:1.5;">Der Link ist {{ days }} Tage gültig. Hast du das nicht veranlasst? Dann ignoriere diese Mail einfach.</p>
+{% endblock %}

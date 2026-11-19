@@ -26,6 +26,7 @@ from portal.members.models import Member
 
 from . import attachments, export, guests, quicklinks, services
 from .forms import (
+    AdjustForm,
     AgendaFilterForm,
     AttachmentForm,
     CancelRangeForm,
@@ -155,7 +156,7 @@ def _team_rows(
             and member is not None
             and own_team is None
             and not p.is_confirmed
-            and services.can_take_role(member, p.role, occurrence.event)
+            and services.can_take_role(member, p.role, occurrence.event, timezone.localdate(occurrence.starts_at))
         )
         rows.append({"p": p, "is_self": is_self, "can_change": can_change, "can_take_over": can_take_over})
     return rows
@@ -204,13 +205,9 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
         context["self_roles"] = [
             role
             for role in services.team_roles(occurrence.event)
-            if services.can_take_role(member, role, occurrence.event)
+            if services.can_take_role(member, role, occurrence.event, timezone.localdate(occurrence.starts_at))
         ]
     context["team_rows"] = _team_rows(user, occurrence, team, member, own_team, lead)
-    if own_team and own_team.role.is_billable and not own_team.is_confirmed:
-        context["confirm_form"] = ConfirmForm(initial={"minutes": occurrence.minutes})
-    if own_team and own_team.is_confirmed and not services.locked_reason(own_team):
-        context["can_unconfirm"] = True
     return render(request, "events/occurrence_detail.html", context)
 
 
@@ -513,6 +510,81 @@ def hours_confirm(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         messages.success(request, "Die Dauer ist geändert." if corrected else "Danke, deine Stunden sind bestätigt.")
     return redirect(_next(request, participation.occurrence))
+
+
+@login_required
+def hours_adjust(request: HttpRequest, pk: int) -> HttpResponse:
+    """„Anpassen“ der eigenen Stunden: von der Startseite, aus der Abrechnung oder der Benachrichtigung (ADR 0014)."""
+    member = services.own_member(request.user)
+    participation = get_object_or_404(
+        Participation.objects.select_related("occurrence__event", "role"),
+        occurrence_id=pk,
+        member=member,
+        role__is_team=True,
+        role__is_billable=True,
+        status__in=services.ACTIVE,
+    )
+    occurrence = participation.occurrence
+    back = _next(request, occurrence)
+    blocked = services.locked_reason(participation) or (
+        "Der Termin ist abgesagt."
+        if occurrence.is_cancelled
+        else "Anpassen kannst du erst, wenn der Termin begonnen hat."
+        if occurrence.starts_at > timezone.now()
+        else None
+    )
+    if blocked:
+        messages.error(request, blocked)
+        return redirect(back)
+    if member is None:  # schon von get_object_or_404 ausgeschlossen, für mypy
+        raise Http404
+    day = timezone.localdate(occurrence.starts_at)
+    taken = set(
+        occurrence.participations.filter(role__is_team=True, status__in=services.ACTIVE)
+        .exclude(pk=participation.pk)
+        .values_list("member_id", flat=True)
+    )
+    candidates = [m for m in services.team_candidates(occurrence.event) if m.pk not in taken]
+    if member.pk not in {m.pk for m in candidates}:
+        candidates.append(member)
+    roles = [
+        role
+        for role in services.team_roles(occurrence.event)
+        if role.is_billable
+        and (role.pk == participation.role_id or services.can_take_role(member, role, occurrence.event, day))
+    ]
+    form = AdjustForm(
+        request.POST or None,
+        candidates=candidates,
+        roles=roles,
+        planned=occurrence.minutes,
+        initial={
+            "member": member.pk,
+            "role": participation.role_id,
+            "minutes": participation.minutes or occurrence.minutes,
+        },
+    )
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        was_confirmed = participation.is_confirmed
+        try:
+            services.adjust_hours(
+                participation, minutes=data["minutes"], role=data["role"], member=data["member"], by=_user(request)
+            )
+        except RegistrationError as error:
+            form.add_error(None, str(error))
+        else:
+            if data["member"].pk != member.pk:
+                text = f"{data['member'].display_name} übernimmt und bestätigt die Stunden selbst."
+            else:
+                text = "Deine Stunden sind angepasst." if was_confirmed else "Danke, deine Stunden sind bestätigt."
+            messages.success(request, text)
+            return redirect(back)
+    return render(
+        request,
+        "events/hours_adjust.html",
+        {"participation": participation, "occurrence": occurrence, "form": form, "next": back},
+    )
 
 
 def hours_absent(request: HttpRequest, pk: int) -> HttpResponse:

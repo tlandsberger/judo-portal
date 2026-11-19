@@ -525,7 +525,7 @@ class RegisterForm(forms.Form):
 class TeamForm(forms.Form):
     """Team eines Termins oder Standard-Team eines Zeitplans: Mitglied und Rolle."""
 
-    layout = (("member", "role"),)
+    layout: tuple[Any, ...] = (("member", "role"),)
 
     member = forms.ModelChoiceField(label="Mitglied", queryset=Member.objects.none())
     role = forms.ModelChoiceField(label="Rolle", queryset=ParticipantRole.objects.none())
@@ -585,6 +585,21 @@ class HandOverForm(TeamForm):
         super().__init__(*args, **kwargs)
         self.fields["member"].label = "Wer übernimmt?"
         self.fields["role"].label = "Als"
+
+
+class AdjustForm(TeamForm):
+    """„Anpassen“ der Stunden (ADR 0014): wer da war, in welcher Rolle und wie lange."""
+
+    layout = (("member", "role"), "minutes")
+
+    minutes = forms.IntegerField(label="Dauer (Minuten)", min_value=1, max_value=24 * 60)
+
+    def __init__(self, *args: Any, planned: int, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["member"].label = "Übungsleiter"
+        self.fields[
+            "minutes"
+        ].help_text = f"Laut Termin {planned} Minuten. Bei einer Vertretung trägt sie die Dauer selbst ein."
 
 
 class ConfirmForm(forms.Form):

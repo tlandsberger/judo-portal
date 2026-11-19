@@ -22,6 +22,7 @@
   </li>
 </ul>
 {% include "notifications/_settings.html" %}
+{% url 'email_change' as email_action %}{% include "accounts/_email_change.html" with action=email_action own=True %}
 <section class="card mt-6 bg-base-100 shadow-sm" aria-labelledby="h-daten" id="meine-daten"><div class="card-body gap-4">
   <div><h2 class="card-title" id="h-daten">Meine Daten</h2><p class="text-sm text-base-content/70">So erscheinst du im Portal und in Mails.</p></div>
   <form method="post" class="flex flex-col gap-4">{% csrf_token %}

@@ -63,6 +63,12 @@ function lastMonthPath(): string {
   return `/abrechnung/${month.getFullYear()}/${month.getMonth() + 1}/`;
 }
 
+/** Monat von gestern: dort steht Claras bestätigter Randori-Lehrgang. */
+function yesterdayMonthPath(): string {
+  const day = new Date(Date.now() - 24 * 3600 * 1000);
+  return `/abrechnung/${day.getFullYear()}/${day.getMonth() + 1}/`;
+}
+
 test("Screenshots für die Hilfe", async ({ browser }) => {
   test.setTimeout(360_000);
   const parents = await stateFor(browser, "eltern-zwei@test.local", "Sicher-Eltern-321");
@@ -90,6 +96,11 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
     await page.goto("/meine-daten/");
     await page.getByRole("link", { name: /David Dachs/ }).click();
     await expect(page.getByRole("link", { name: "Bearbeiten" })).toBeVisible();
+  });
+  await shoot(browser, parents, "eigener-zugang", async (page) => {
+    await page.goto("/");
+    await page.getByRole("link", { name: "Zugang einrichten" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Eigener Zugang für David" })).toBeVisible();
   });
   await shoot(browser, parents, "zugang", async (page) => {
     await page.goto("/zugang/anmeldung/");
@@ -130,6 +141,11 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
   await shoot(browser, dora, "abrechnung-monat", async (page) => {
     await page.goto(lastMonthPath());
     await expect(page.getByRole("heading", { name: "Bestätigte Stunden" })).toBeVisible();
+  });
+  await shoot(browser, clara, "stunden-anpassen", async (page) => {
+    await page.goto(yesterdayMonthPath());
+    await page.getByRole("link", { name: /Randori-Lehrgang am .* anpassen/ }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Stunden anpassen" })).toBeVisible();
   });
 
   // Abteilungsleitung

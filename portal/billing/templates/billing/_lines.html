@@ -4,48 +4,30 @@
     <thead class="text-base-content/70"><tr>
       <th scope="col">Datum</th><th scope="col">Veranstaltung</th><th scope="col" class="hidden sm:table-cell">Rolle</th>
       <th scope="col" class="hidden text-right sm:table-cell">Minuten</th><th scope="col" class="hidden text-right sm:table-cell">Satz</th><th scope="col" class="text-right">Betrag</th>
-      {% if editable %}<th scope="col" class="hidden md:table-cell"><span class="sr-only">Dauer ändern</span></th>{% endif %}
+      {% if editable %}<th scope="col" class="w-0 px-1"><span class="sr-only">Anpassen</span></th>{% endif %}
     </tr></thead>
     <tbody>
     {% for line in lines %}
-      <tr{% if editable %} class="max-md:border-b-0"{% endif %}>
+      <tr>
         <td class="whitespace-nowrap">{{ line.day|date:"D d.m." }}</td>
         <td><a class="link link-hover" href="{% url 'occurrence_detail' line.participation.occurrence_id %}">{{ line.event_title }}</a><div class="text-sm text-base-content/70 sm:hidden">{{ line.role_name }} · {{ line.minutes }} Min.{% if line.hourly_rate is not None %} · {{ line.hourly_rate|floatformat:"2g" }} €/h{% endif %}</div></td>
         <td class="hidden sm:table-cell">{{ line.role_name }}</td>
         <td class="hidden text-right sm:table-cell">{{ line.minutes }}</td>
         <td class="hidden text-right whitespace-nowrap sm:table-cell">{% if line.hourly_rate is not None %}{{ line.hourly_rate|floatformat:"2g" }} €{% else %}<span class="badge badge-soft badge-error badge-sm">kein Satz</span>{% endif %}</td>
         <td class="text-right whitespace-nowrap">{% if line.amount is not None %}{{ line.amount|floatformat:"2g" }} €{% else %}<span class="badge badge-soft badge-error badge-sm">kein Satz</span>{% endif %}</td>
-        {% if editable %}<td class="hidden md:table-cell"><div class="flex items-center justify-end gap-1">
-          <form method="post" action="{% url 'hours_confirm' line.participation.occurrence_id %}" class="join">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
-            <label class="sr-only" for="min-{{ line.participation.pk }}">Minuten für {{ line.event_title }} am {{ line.day|date:"d.m." }}</label>
-            <input id="min-{{ line.participation.pk }}" class="input input-sm join-item w-20" type="number" name="minutes" min="1" max="1440" value="{{ line.minutes }}">
-            <button class="btn btn-sm join-item">Ändern</button>
-          </form>
+        {% if editable %}<td class="w-0 px-1"><div class="flex items-center justify-end max-sm:flex-col">
+          <a class="btn btn-ghost btn-square btn-sm" href="{% url 'hours_adjust' line.participation.occurrence_id %}?next={{ request.path|urlencode }}" aria-label="{{ line.event_title }} am {{ line.day|date:'d.m.' }} anpassen" title="Anpassen"><i class="bi bi-pencil" aria-hidden="true"></i></a>
           <form method="post" action="{% url 'hours_unconfirm' line.participation.occurrence_id %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
             <button class="btn btn-ghost btn-square btn-sm" aria-label="Bestätigung für {{ line.event_title }} am {{ line.day|date:'d.m.' }} zurücknehmen" title="Bestätigung zurücknehmen"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
           </form>
         </div></td>{% endif %}
       </tr>
-      {% if editable %}{# Auf schmalen Bildschirmen: Dauer ändern in eigener Zeile, damit der Betrag sichtbar bleibt #}
-      <tr class="md:hidden">
-        <td colspan="6" class="pt-0"><div class="flex items-center justify-end gap-1">
-          <form method="post" action="{% url 'hours_confirm' line.participation.occurrence_id %}" class="join">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
-            <label class="sr-only" for="min-m-{{ line.participation.pk }}">Minuten für {{ line.event_title }} am {{ line.day|date:"d.m." }}</label>
-            <input id="min-m-{{ line.participation.pk }}" class="input input-sm join-item w-20" type="number" name="minutes" min="1" max="1440" value="{{ line.minutes }}">
-            <button class="btn btn-sm join-item">Ändern</button>
-          </form>
-          <form method="post" action="{% url 'hours_unconfirm' line.participation.occurrence_id %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
-            <button class="btn btn-ghost btn-square btn-sm" aria-label="Bestätigung für {{ line.event_title }} am {{ line.day|date:'d.m.' }} zurücknehmen" title="Bestätigung zurücknehmen"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
-          </form>
-        </div></td>
-      </tr>
-      {% endif %}
     {% endfor %}
     </tbody>
     <tfoot><tr class="font-semibold text-base-content">
       <td colspan="2">Summe · {{ hours|floatformat:"2g" }} Stunden</td><td class="hidden sm:table-cell"></td>
       <td class="hidden text-right sm:table-cell">{{ total_minutes }}</td><td class="hidden sm:table-cell"></td>
-      <td class="text-right whitespace-nowrap">{{ total_amount|floatformat:"2g" }} €</td>{% if editable %}<td class="hidden md:table-cell"></td>{% endif %}
+      <td class="text-right whitespace-nowrap">{{ total_amount|floatformat:"2g" }} €</td>{% if editable %}<td class="px-1"></td>{% endif %}
     </tr></tfoot>
   </table>
 </div>

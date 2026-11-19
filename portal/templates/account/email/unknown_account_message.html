@@ -1,0 +1,6 @@
+{% extends "email/base.html" %}
+{% block content %}
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">jemand hat versucht, sich mit der Adresse <strong>{{ email }}</strong> im Vereinsportal anzumelden. Zu dieser Adresse gibt es aber keinen Zugang.</p>
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Zugänge gibt es nur per Einladung. Wende dich dafür bitte an die Abteilungsleitung (<a href="mailto:judo@wedeler-tsv.de" style="color:#027d31;">judo@wedeler-tsv.de</a>).</p>
+      <p style="margin:0;font-size:14px;color:#5c5c5c;line-height:1.5;">Warst du das nicht, kannst du diese Mail ignorieren.</p>
+{% endblock %}

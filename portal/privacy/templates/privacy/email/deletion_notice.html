@@ -1,15 +1,9 @@
-<!doctype html>
-<html lang="de"><body style="margin:0;padding:24px;background:#f4f8f5;font-family:Segoe UI,Arial,sans-serif;color:#1a1a1a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;">
-    <tr><td style="background:#0a3d1c;color:#ffffff;padding:20px 28px;border-radius:14px 14px 0 0;font-size:20px;font-weight:700;">Wedeler TSV Judo</td></tr>
-    <tr><td style="padding:28px;">
-      <p style="margin:0 0 16px;font-size:16px;">{{ user.greeting }},</p>
+{% extends "email/base.html" %}
+{% block greeting %}{{ user.greeting }}{% endblock %}
+{% block content %}
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">{% if own %}dein Austritt aus der Judo-Abteilung ist eingetragen{% else %}der Austritt von <strong>{{ member.display_name }}</strong> aus der Judo-Abteilung ist eingetragen{% endif %} ({{ member.left_on|date:"d.m.Y" }}).</p>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Am <strong>{{ when|date:"d.m.Y" }}</strong> löschen wir {% if own %}deine Daten{% else %}die Daten von {{ member.display_name }}{% endif %} im Vereinsportal: Stammdaten, Teilnahmen an Terminen und Abrechnungen. Hast du dann kein weiteres Mitglied im Portal, wird auch dein Zugang gelöscht.</p>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Bis dahin kannst du unter „Meine Daten“ die Datenauskunft (Art. 15 DSGVO) als PDF herunterladen.</p>
-      <p style="margin:24px 0;"><a href="{{ url }}" style="background:#027d31;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;display:inline-block;">Datenauskunft (Art. 15 DSGVO)</a></p>
+      {% include "email/_button.html" with label="Datenauskunft (Art. 15 DSGVO)" %}
       <p style="margin:0;font-size:14px;color:#5c5c5c;line-height:1.5;">Stimmt der Austritt nicht? Dann gib uns bitte kurz Bescheid.</p>
-    </td></tr>
-    <tr><td style="padding:16px 28px;border-top:1px solid #d9d9d9;font-size:13px;color:#5c5c5c;">Wedeler TSV e.V. – Abteilung Judo · judo@wedeler-tsv.de</td></tr>
-  </table>
-</body></html>
+{% endblock %}

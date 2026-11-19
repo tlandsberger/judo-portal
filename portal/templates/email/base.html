@@ -1,0 +1,12 @@
+{% comment %}Grundgerüst aller HTML-Mails (Inline-Styles, weil Mailprogramme kaum CSS können). Die Textfassung bleibt
+als Alternative. Absätze: _p (normal) bzw. _small (grau, klein) als Stil; Knopf und Code als Include.{% endcomment %}<!doctype html>
+<html lang="de"><body style="margin:0;padding:24px;background:#f4f8f5;font-family:Segoe UI,Arial,sans-serif;color:#1a1a1a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;">
+    <tr><td style="background:#0a3d1c;color:#ffffff;padding:20px 28px;border-radius:14px 14px 0 0;font-size:20px;font-weight:700;">Wedeler TSV Judo</td></tr>
+    <tr><td style="padding:28px;">
+      <p style="margin:0 0 16px;font-size:16px;">{% block greeting %}Hallo{% endblock %},</p>
+{% block content %}{% endblock %}
+    </td></tr>
+    <tr><td style="padding:16px 28px;border-top:1px solid #d9d9d9;font-size:13px;color:#5c5c5c;">Wedeler TSV e.V. – Abteilung Judo · <a href="mailto:judo@wedeler-tsv.de" style="color:#5c5c5c;">judo@wedeler-tsv.de</a></td></tr>
+  </table>
+</body></html>

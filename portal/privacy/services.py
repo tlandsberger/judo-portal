@@ -19,12 +19,13 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from portal.accounts.models import Invitation, KnownDevice, Role, User
+from portal.accounts.models import EmailChange, Invitation, KnownDevice, Role, User
 from portal.billing.models import Claim, Rate
 from portal.core import audit
 from portal.events.models import Participation
+from portal.members import child_access
 from portal.members import services as members
-from portal.members.models import LinkKind, Member, MemberLink, PendingLink
+from portal.members.models import ADULT_AGE, AccessOffer, LinkKind, Member, MemberLink, PendingLink
 from portal.notifications.models import PushNotificationSubscription, SentNotification
 
 log = logging.getLogger(__name__)
@@ -137,16 +138,17 @@ class DeletionPreview:
     users_deleted: list[User] = field(default_factory=list)
 
 
+def _keeps_access(user: User, without: Member) -> bool:
+    """Ob der Benutzer ohne ``without`` noch ein Mitglied (auch vorgemerkt) oder eine Funktionsrolle hat."""
+    others = MemberLink.objects.filter(user=user).exclude(member=without).exists()
+    pending = PendingLink.objects.filter(invitation__user=user).exclude(member=without).exists()
+    return others or pending or any(role in user.roles for role in FUNCTION_ROLES)
+
+
 def _orphaned_users(member: Member) -> list[User]:
     """Benutzer, die nach dem Löschen kein Mitglied mehr haben und keine Funktionsrolle."""
-    result = []
-    for link in MemberLink.objects.filter(member=member).select_related("user"):
-        user = link.user
-        others = MemberLink.objects.filter(user=user).exclude(member=member).exists()
-        pending = PendingLink.objects.filter(invitation__user=user).exclude(member=member).exists()
-        if not others and not pending and not any(role in user.roles for role in FUNCTION_ROLES):
-            result.append(user)
-    return result
+    links = MemberLink.objects.filter(member=member).select_related("user")
+    return [link.user for link in links if not _keeps_access(link.user, member)]
 
 
 def preview_deletion(member: Member) -> DeletionPreview:
@@ -159,12 +161,14 @@ def preview_deletion(member: Member) -> DeletionPreview:
     )
 
 
-def delete_user(user: User, by: User | None, reason: str) -> None:
-    """Benutzer mit Anmeldewegen, Geräten und Benachrichtigungen löschen; vorher eine Mail."""
+def delete_user(user: User, by: User | None, reason: str, *, notify: bool = True) -> None:
+    """Benutzer mit Anmeldewegen, Geräten und Benachrichtigungen löschen; danach eine Mail (außer ``notify=False``,
+    wenn der Anlass seine eigene Mail schickt)."""
     email, name = user.email, user.display_name
     # Wer sich selbst löscht, kann nicht mehr als Handelnder im Protokoll stehen.
     actor = None if by is not None and by.pk == user.pk else by
-    transaction.on_commit(lambda: _send_user_deleted(email, name, reason))
+    if notify:
+        transaction.on_commit(lambda: _send_user_deleted(email, name, reason))
     audit.forget_user(user.pk)
     user.delete()
     audit.log(actor, audit.Area.PRIVACY, "user_deleted", f"Benutzer gelöscht ({reason})")
@@ -239,12 +243,104 @@ def delete_member(member: Member, by: User | None, reason: str) -> DeletionPrevi
     return result
 
 
+# Volljährigkeit: Verknüpfungen „Erziehungsberechtigt“ enden mit dem 18. Geburtstag (ADR 0025)
+
+ADULT_NOTICE_MONTHS = 1
+REASON_ADULT = "Kind volljährig, kein Mitglied mehr"
+
+
+def _guardian_links() -> Any:
+    return MemberLink.objects.filter(kind=LinkKind.GUARDIAN).select_related("user", "member")
+
+
+def send_adult_notices(today: date | None = None) -> int:
+    """Einen Monat vor dem 18. Geburtstag: Eltern ankündigen, dass die Verknüpfung gelöst (und der Zugang, wenn
+    sonst nichts bleibt, gelöscht) wird. Einmal je Verknüpfung."""
+    today = today or timezone.localdate()
+    horizon = _add_months(today, ADULT_NOTICE_MONTHS)
+    count = 0
+    for link in _guardian_links().filter(adult_notice_sent_at__isnull=True, user__is_active=True):
+        member, user = link.member, link.user
+        if member.age(today) >= ADULT_AGE or member.adult_on() > horizon:
+            continue
+        context = {
+            "member": member,
+            "when": member.adult_on(),
+            "deleted": not _keeps_access(user, member),
+            "child_access_url": "" if child_access.has_own_access(member) else child_access.child_access_url(member),
+        }
+        _send(user, f"{member.first_name} wird 18 Jahre alt: deine Verknüpfung endet", "adult_notice", context)
+        MemberLink.objects.filter(pk=link.pk).update(adult_notice_sent_at=timezone.now())
+        audit.log(
+            None,
+            audit.Area.MEMBERS,
+            "adult_notice",
+            f"Vorankündigung an {user.display_name}: Verknüpfung endet am {member.adult_on():%d.%m.%Y}",
+            member=member,
+            user=user,
+        )
+        count += 1
+    return count
+
+
+def _send_guardian_released(email: str, greeting: str, member_name: str, deleted: bool) -> None:
+    context = {
+        "greeting": greeting,
+        "member_name": member_name,
+        "deleted": deleted,
+        "url": settings.BASE_URL + reverse("home"),
+        "base_url": settings.BASE_URL,
+    }
+    subject = "Dein Zugang wurde gelöscht" if deleted else f"Verknüpfung mit {member_name} gelöst"
+    message = EmailMultiAlternatives(
+        subject=settings.EMAIL_SUBJECT_PREFIX + subject,
+        body=render_to_string("privacy/email/guardian_released.txt", context),
+        to=[email],
+    )
+    message.attach_alternative(render_to_string("privacy/email/guardian_released.html", context), "text/html")
+    message.send()
+
+
+@transaction.atomic
+def release_guardian(link: MemberLink) -> bool:
+    """Verknüpfung eines volljährigen Kindes lösen; ohne weiteres Mitglied und Funktion den Zugang löschen.
+    Eine Mail für beides. Gibt zurück, ob der Zugang gelöscht wurde."""
+    user, member = link.user, link.member
+    deleted = not _keeps_access(user, member)
+    email, greeting, member_name = user.email, user.greeting, member.display_name
+    link.delete()
+    audit.log(
+        None,
+        audit.Area.MEMBERS,
+        "unlink",
+        f"Verknüpfung {user.display_name} ↔ {member_name} gelöst ({member.first_name} ist volljährig)",
+        member=member,
+        user=None if deleted else user,
+    )
+    if deleted:
+        delete_user(user, None, REASON_ADULT, notify=False)
+    if user.is_active or deleted:
+        transaction.on_commit(lambda: _send_guardian_released(email, greeting, member_name, deleted))
+    log.info("Verknüpfung mit volljährigem Mitglied %s gelöst%s", member.pk, ", Zugang gelöscht" if deleted else "")
+    return deleted
+
+
+def release_adult_children(today: date | None = None) -> int:
+    today = today or timezone.localdate()
+    links = [link for link in _guardian_links() if link.member.age(today) >= ADULT_AGE]
+    for link in links:
+        release_guardian(link)
+    return len(links)
+
+
 def run_daily(today: date | None = None) -> None:
-    """Nächtlich: Hinweise zum Austritt, Löschen nach der Frist."""
+    """Nächtlich: Hinweise zum Austritt, Löschen nach der Frist, Verknüpfungen volljähriger Kinder."""
     today = today or timezone.localdate()
     send_deletion_notices(today)
     for member in due_for_deletion(today):
         delete_member(member, None, REASON_LEFT)
+    send_adult_notices(today)
+    release_adult_children(today)
 
 
 # Auskunft
@@ -401,6 +497,14 @@ def export_user(user: User) -> dict[str, Any]:
         "Einladungen": [
             {"Angelegt": _value(i.created_at), "Angenommen": _value(i.accepted_at)}
             for i in Invitation.objects.filter(user=user)
+        ],
+        "Offene E-Mail-Änderung": [
+            {"Neue E-Mail": c.email, "Angefragt": _value(c.created_at), "Gültig bis": _value(c.expires_at)}
+            for c in EmailChange.objects.filter(user=user)
+        ],
+        "Hinweise auf eigenen Zugang für Kinder": [
+            {"Mitglied": o.member.display_name, "Mail": _value(o.notified_at), "Ausgeblendet": _value(o.dismissed_at)}
+            for o in AccessOffer.objects.filter(user=user).select_related("member")
         ],
         # Nur Einträge über den Benutzer selbst – nicht, was er (z. B. als Abteilungsleitung) bei anderen geändert hat.
         "Protokoll": _audit_rows(audit.AuditEntry.objects.filter(user_id=user.pk, member_id__isnull=True)),

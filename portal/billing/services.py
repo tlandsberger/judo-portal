@@ -83,6 +83,16 @@ def rate_for(member: Member, role: ParticipantRole, day: date) -> Rate | None:
     return Rate.objects.filter(member=member, role=role, valid_from__lte=day).order_by("-valid_from").first()
 
 
+def missing_rate(member: Member, role: ParticipantRole, day: date) -> str | None:
+    """Abrechnungsrelevante Rollen kann nur übernehmen, wer dafür am Termintag einen Stundensatz hat."""
+    if not role.is_billable or rate_for(member, role, day) is not None:
+        return None
+    return (
+        f"Für {member.first_name} ist als {role.name} noch kein Stundensatz eingetragen. "
+        "Den trägt die Abteilungsleitung unter „Stundensätze“ ein."
+    )
+
+
 def amount(minutes: int, hourly_rate: Decimal) -> Decimal:
     """Betrag einer Zeile, kaufmännisch auf Cent gerundet."""
     return (Decimal(minutes) * hourly_rate / 60).quantize(CENT, rounding=ROUND_HALF_UP)
@@ -514,3 +524,4 @@ def unsubmitted(month: date) -> list[Member]:
 
 def register_all() -> None:
     events.register_lock(lock_reason)
+    events.register_role_check(missing_rate)

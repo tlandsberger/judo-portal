@@ -5,9 +5,11 @@ import {
   acceptInvitation,
   addVirtualAuthenticator,
   expectNoA11yViolations,
+  lastMailTo,
   loginCode,
   loginWithPassword,
   logout,
+  setPassword,
 } from "./helpers";
 
 test("Anmelden mit Passwort und per Code aus der Mail", async ({ page }) => {
@@ -99,5 +101,44 @@ test("Einladungslink ohne Mail erstellen und weitergeben", async ({ browser }) =
   await page.getByRole("button", { name: "Einladung annehmen" }).click();
   await expect(page.getByRole("heading", { name: "Wie möchtest du dich anmelden?" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Lieber per Code anmelden" })).toBeVisible();
+  await context.close();
+});
+
+test("E-Mail-Adresse ändern: gilt erst nach Bestätigung, danach Anmeldung mit der neuen Adresse", async ({ browser }) => {
+  const stamp = Date.now();
+  const oldEmail = `wechsel-${stamp}@test.local`;
+  const newEmail = `neu-${stamp}@test.local`;
+  const admin = await browser.newContext({ storageState: ADMIN_STATE });
+  const adminPage = await admin.newPage();
+  await adminPage.goto("/verwaltung/benutzer/einladen/");
+  await adminPage.getByLabel("E-Mail").fill(oldEmail);
+  await adminPage.getByLabel("Vorname").fill("Wera");
+  await adminPage.getByRole("button", { name: "Einladung senden" }).click();
+  await admin.close();
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await acceptInvitation(page, oldEmail);
+  await setPassword(page, "Sicher-12345!");
+  await page.goto("/zugang/anmeldung/");
+  await page.getByLabel("Neue E-Mail-Adresse").fill(newEmail);
+  await page.getByRole("button", { name: "E-Mail-Adresse ändern" }).click();
+  await expect(page.getByText(`Wir haben einen Link an ${newEmail} geschickt.`)).toBeVisible();
+  await expect(page.getByText("wartet auf Bestätigung")).toBeVisible();
+  await expect(page.getByText(`Angemeldet als ${oldEmail}`)).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  const link = lastMailTo(newEmail).match(/https?:\/\/\S+\/zugang\/e-mail\/[\w-]+\//);
+  expect(link).not.toBeNull();
+  await page.goto(new URL(link![0]).pathname);
+  await expect(page.getByRole("heading", { name: "Neue E-Mail-Adresse bestätigen" })).toBeVisible();
+  await expectNoA11yViolations(page);
+  await page.getByRole("button", { name: "Bestätigen" }).click();
+  await expect(page.getByText(`Deine E-Mail-Adresse ist jetzt ${newEmail}.`)).toBeVisible();
+  expect(lastMailTo(oldEmail)).toContain(newEmail);
+
+  await logout(page);
+  await loginWithPassword(page, newEmail, "Sicher-12345!");
+  await expect(page.getByRole("heading", { name: "Hallo Wera" })).toBeVisible();
   await context.close();
 });

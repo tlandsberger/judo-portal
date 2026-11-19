@@ -1,0 +1,8 @@
+{% extends "email/base.html" %}
+{% block greeting %}{{ user.greeting }}{% endblock %}
+{% block content %}
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;"><strong>{{ member.first_name }}</strong> ist 14 Jahre alt geworden, herzlichen Glückwunsch! Ab jetzt kann {{ member.first_name }} einen eigenen Zugang zum Vereinsportal bekommen und sich zum Beispiel selbst zu Terminen anmelden.</p>
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Du gibst dafür nur die E-Mail-Adresse von {{ member.first_name }} ein, die Einladung schicken wir direkt an {{ member.first_name }}. Bis zum 18. Geburtstag behältst du deinen Zugang zu den Daten.</p>
+      {% include "email/_button.html" with label="Zugang einrichten" %}
+      <p style="margin:0;font-size:14px;color:#5c5c5c;line-height:1.5;">Braucht {{ member.first_name }} noch keinen eigenen Zugang, musst du nichts tun. Du kannst ihn später jederzeit unter „Meine Daten“ einrichten.</p>
+{% endblock %}

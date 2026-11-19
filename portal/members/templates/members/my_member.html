@@ -12,4 +12,18 @@
   {% include "members/_facts.html" with all=False %}
   <p class="text-sm text-base-content/70">Kontakt- und Judo-Daten kannst du selbst ändern. Stimmt etwas anderes nicht, schreib an <a class="link" href="mailto:{{ club_email }}">{{ club_email }}</a>.</p>
 </div></div>
+{% if own_access %}
+<section class="card mt-6 bg-base-100 shadow-sm" id="eigener-zugang" aria-labelledby="h-eigener-zugang"><div class="card-body gap-3">
+  <h2 class="card-title" id="h-eigener-zugang">Eigener Zugang</h2>
+  {% if own_access.own_user %}
+  <p>{{ member.first_name }} hat einen eigenen Zugang ({{ own_access.own_user.email }}).</p>
+  {% elif own_access.invitation %}
+  <p>Die Einladung an {{ own_access.invitation.email }} ist verschickt und gilt bis {{ own_access.invitation.expires_at|date:"j. F" }}.</p>
+  <div><a class="btn btn-sm" href="{% url 'child_access' member.pk %}">Erneut einladen</a></div>
+  {% else %}
+  <p>{{ member.first_name }} kann einen eigenen Zugang bekommen und sich dann selbst zu Terminen anmelden.</p>
+  <div><a class="btn btn-sm btn-primary" href="{% url 'child_access' member.pk %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Zugang einrichten</a></div>
+  {% endif %}
+</div></section>
+{% endif %}
 {% endblock %}

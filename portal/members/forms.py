@@ -109,3 +109,19 @@ class InterestForm(forms.ModelForm):
     class Meta:
         model = Interest
         fields = ("name",)
+
+
+class ChildAccessForm(forms.Form):
+    """Eltern richten den eigenen Zugang ihres Kindes ein: Einladung an die Adresse des Kindes."""
+
+    email = forms.EmailField(label="E-Mail-Adresse")
+    sync_member = forms.BooleanField(required=False, initial=True)
+
+    def __init__(self, *args: Any, member: Member, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["email"].label = f"E-Mail-Adresse von {member.first_name}"
+        self.fields["email"].help_text = f"Die eigene Adresse von {member.first_name}, nicht deine."
+        self.fields["sync_member"].label = f"Auch in die Mitgliedsdaten von {member.first_name} übernehmen"
+
+    def clean_email(self) -> str:
+        return str(self.cleaned_data["email"]).strip().lower()

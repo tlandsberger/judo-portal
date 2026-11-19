@@ -60,6 +60,9 @@ class RegistrationError(Exception):
 # Teilnahme schon eingereicht ist. So kennt diese App die Abrechnung nicht.
 LockCheck = Callable[["Participation"], str | None]
 _locks: list[LockCheck] = []
+# Weitere Voraussetzungen für eine Rolle aus anderen Apps (z. B. Stundensatz aus ``billing``): Grund oder ``None``.
+RoleCheck = Callable[[Member, "ParticipantRole", date], str | None]
+_role_checks: list[RoleCheck] = []
 
 
 def _when(occurrence: Occurrence) -> str:
@@ -139,8 +142,30 @@ def user_may_take(user: User | None, role: ParticipantRole) -> bool:
     return user is not None and user.has_role(*role.user_roles)
 
 
-def can_take_role(member: Member, role: ParticipantRole, event: Event) -> bool:
-    return role_offered(role, event) and user_may_take(member_user(member) if role.user_roles else None, role)
+def register_role_check(check: RoleCheck) -> None:
+    if check not in _role_checks:
+        _role_checks.append(check)
+
+
+def role_unavailable(member: Member, role: ParticipantRole, event: Event, day: date | None = None) -> str | None:
+    """Warum das Mitglied die Rolle bei dieser Veranstaltung (am Tag ``day``, sonst heute) nicht übernehmen kann."""
+    if not role_offered(role, event) or not user_may_take(member_user(member) if role.user_roles else None, role):
+        return f"{member.first_name} kann bei {event.title} nicht {role.name} sein."
+    for check in _role_checks:
+        reason = check(member, role, day or timezone.localdate())
+        if reason:
+            return reason
+    return None
+
+
+def can_take_role(member: Member, role: ParticipantRole, event: Event, day: date | None = None) -> bool:
+    return role_unavailable(member, role, event, day) is None
+
+
+def _check_role(member: Member, role: ParticipantRole, event: Event, day: date | None = None) -> None:
+    reason = role_unavailable(member, role, event, day)
+    if reason:
+        raise RegistrationError(reason)
 
 
 def team_roles(event: Event | None = None) -> list[ParticipantRole]:
@@ -759,8 +784,7 @@ def set_team(occurrence: Occurrence, member: Member, role: ParticipantRole, by: 
     Teilnahme umgestellt; ein frei gewordener Platz geht an die Warteliste."""
     if not role.is_team:
         raise RegistrationError(f"{role.name} ist keine Übungsleiter-Rolle.")
-    if not can_take_role(member, role, occurrence.event):
-        raise RegistrationError(f"{member.first_name} kann bei {occurrence.event.title} nicht {role.name} sein.")
+    _check_role(member, role, occurrence.event, timezone.localdate(occurrence.starts_at))
     existing = Participation.objects.filter(occurrence=occurrence, member=member).select_related("role").first()
     if existing and existing.is_confirmed:
         raise RegistrationError("Bestätigte Stunden bleiben für die Abrechnung, wie sie sind.")
@@ -854,6 +878,31 @@ def unconfirm(participation: Participation, by: User | None = None) -> None:
     )
 
 
+@transaction.atomic
+def adjust_hours(
+    participation: Participation, *, minutes: int, role: ParticipantRole, member: Member, by: User | None = None
+) -> Participation:
+    """„Anpassen“ nach dem Termin: Dauer, Rolle oder Übungsleiter in einem Schritt (ADR 0014).
+
+    Eigene Dauer und Rolle gelten als bestätigt. War jemand anderes da, übernimmt die Vertretung den Platz und
+    bestätigt ihre Stunden selbst (wie beim Übertragen); die eingegebene Dauer gilt dann nicht.
+    """
+    occurrence = participation.occurrence
+    if occurrence.starts_at > timezone.now():
+        raise RegistrationError("Anpassen kannst du erst, wenn der Termin begonnen hat.")
+    if member.pk != participation.member_id:
+        return hand_over(participation, member, role, by)
+    if role.pk != participation.role_id:
+        if not role.is_billable:
+            raise RegistrationError(f"Für {role.name} werden keine Stunden abgerechnet.")
+        _check_unlocked(participation)
+        _check_role(member, role, occurrence.event, timezone.localdate(occurrence.starts_at))
+        unconfirm(participation, by)
+        participation = set_team(occurrence, member, role, by)
+    confirm(participation, minutes, by)
+    return participation
+
+
 # Vertretungen und Austragen (ADR 0018): vor dem Termin wie nachträglich („Nicht dabei?“, ADR 0012)
 
 
@@ -919,8 +968,7 @@ def hand_over(
     existing = occurrence.participations.filter(member=member, role__is_team=True, status__in=ACTIVE).first()
     if existing:
         raise RegistrationError(f"{member.display_name} ist schon als {existing.role.name} eingetragen.")
-    if not can_take_role(member, role, occurrence.event):
-        raise RegistrationError(f"{member.first_name} kann bei {occurrence.event.title} nicht {role.name} sein.")
+    _check_role(member, role, occurrence.event, timezone.localdate(occurrence.starts_at))
     unconfirm(participation, by)
     absent = participation.member
     remove_team(participation, by)
@@ -965,8 +1013,9 @@ def create_event(
     ``dates``: „once“ (ein Termin, Team am Termin), „weekly“ (je Wochentag ein Zeitplan mit Standard-Team) oder
     „later“ (nur die Veranstaltung). ``event`` ist gespeichert; schlägt etwas fehl, wird alles zurückgerollt.
     """
-    if team and not can_take_role(team[0], team[1], event):
-        raise RegistrationError(f"{team[0].first_name} kann bei {event.title} nicht {team[1].name} sein.")
+    if team:
+        day = timezone.localdate(once["starts_at"]) if dates == "once" and once else None
+        _check_role(*team, event, day)
     if dates == "once" and once:
         occurrence = Occurrence.objects.create(event=event, **once)
         if team:
@@ -991,8 +1040,9 @@ def _future(schedule: Schedule) -> QuerySet[Occurrence]:
 @transaction.atomic
 def set_schedule_team(schedule: Schedule, member: Member, role: ParticipantRole) -> None:
     """Standard-Team eines Zeitplans ändern; zukünftige Termine ziehen nach (bestätigte Stunden bleiben)."""
-    if not role.is_team or not can_take_role(member, role, schedule.event):
-        raise RegistrationError(f"{member.first_name} kann bei {schedule.event.title} nicht {role.name} sein.")
+    if not role.is_team:
+        raise RegistrationError(f"{role.name} ist keine Übungsleiter-Rolle.")
+    _check_role(member, role, schedule.event)
     ScheduleTeam.objects.update_or_create(schedule=schedule, member=member, defaults={"role": role})
     for occurrence in _future(schedule):
         existing = Participation.objects.filter(occurrence=occurrence, member=member).select_related("role").first()

@@ -1,0 +1,7 @@
+{% extends "email/base.html" %}
+{% block content %}
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">an deinem Zugang zum Vereinsportal wurde gerade Folgendes geändert:</p>
+      <p style="margin:0 0 16px;padding:12px 16px;border-left:4px solid #027d31;background:#f4f8f5;font-size:16px;line-height:1.5;">{% block notification_message %}{% endblock notification_message %}</p>
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Warst du das nicht? Dann melde dich bitte umgehend bei <a href="mailto:judo@wedeler-tsv.de" style="color:#027d31;">judo@wedeler-tsv.de</a>.</p>
+      <p style="margin:0;font-size:14px;color:#5c5c5c;line-height:1.5;">Zeitpunkt: {{ timestamp }} · Browser: {{ user_agent }} · IP-Adresse: {{ ip }}</p>
+{% endblock %}
