@@ -689,6 +689,7 @@ def event_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "schedules": schedules,
         "occurrences": occurrences,
         "can_manage": can_manage,
+        "can_add_occurrence": services.can_add_occurrence(request.user, event),
         "cancel_form": CancelRangeForm(),
         "quick": _quick(event) if can_manage else None,
         "attachments": list(event.attachments.all()),
@@ -806,15 +807,25 @@ def schedule_delete(request: HttpRequest, pk: int, schedule_pk: int) -> HttpResp
     return redirect("event_detail", pk=pk)
 
 
-@role_required(*MANAGE_EVENTS)
+@login_required
 def occurrence_create(request: HttpRequest, pk: int) -> HttpResponse:
+    """Neuer Termin: Abteilungsleitung und fest eingeteilte Übungsleiter der Veranstaltung."""
     event = get_object_or_404(Event, pk=pk)
+    if not services.can_add_occurrence(request.user, event):
+        raise PermissionDenied
+    can_manage = services.can_manage_events(request.user)
+    # „Übungsleiter zählen zur Höchstzahl“ setzen auch Übungsleiter, die den Termin anlegen.
     form = OccurrenceForm(request.POST or None, event=event, can_manage=True)
     if request.method == "POST" and form.is_valid():
         occurrence = form.save(commit=False)
         occurrence.event = event
-        occurrence.save()
-        messages.success(request, "Termin angelegt. Trag hier die Übungsleiter ein.")
+        services.add_occurrence(occurrence, _user(request))
+        messages.success(
+            request,
+            "Termin angelegt. Trag hier die Übungsleiter ein."
+            if can_manage
+            else "Termin angelegt. Bist du dabei, trag dich hier als Übungsleiter ein.",
+        )
         return redirect("occurrence_detail", pk=occurrence.pk)
     return render(request, "events/occurrence_edit.html", {"form": form, "event": event, "occurrence": None})
 

@@ -455,7 +455,7 @@ class OccurrenceForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         event = event or (self.instance.event if self.instance.event_id else None)
         if not can_manage or event is None or event.capacity is None:
-            del self.fields["team_counts"]  # über die Höchstzahl entscheidet die Abteilungsleitung
+            del self.fields["team_counts"]  # beim Bearbeiten entscheidet darüber die Abteilungsleitung
             return
         default = "ja" if event.team_counts else "nein"
         self.fields["team_counts"] = forms.TypedChoiceField(

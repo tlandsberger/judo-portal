@@ -74,7 +74,7 @@
 <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-termine"><div class="card-body gap-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 class="card-title" id="h-termine">Nächste Termine</h2>
-    {% if can_manage %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'occurrence_create' event.pk %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Termin</a>{% endif %}
+    {% if can_add_occurrence %}<a class="btn btn-outline btn-primary btn-sm" href="{% url 'occurrence_create' event.pk %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Termin</a>{% endif %}
   </div>
   {% if occurrences %}
   <ul class="list">

@@ -52,6 +52,9 @@ Nach dem ersten Release der Veranstaltungen (ADR 0010) zeigten sich drei Schwäc
 - **Team-Rollen** brauchen ein eigenes Mitgliedsprofil (Verknüpfung „eigenes Profil“), dessen Benutzer eine der
   Benutzerrollen hat (`services.can_take_role`). Die Seite „Rollen“ nennt Übungsleiter ohne eigenes Profil.
 - **Rechte:** Den Termin leitet, wer eine Team-Rolle daran hat (`can_lead`), dazu die Abteilungsleitung.
+  Neue einzelne Termine legt die Abteilungsleitung an, dazu Übungsleiter, die in einem laufenden Zeitplan der
+  Veranstaltung fest eingeteilt sind (`can_add_occurrence`, November 2026). Sie werden dabei nicht automatisch
+  eingetragen, können beim Anlegen auch „Übungsleiter zählen zur Höchstzahl“ setzen; das Anlegen steht im Protokoll.
 
 ### Standard-Team am Zeitplan
 

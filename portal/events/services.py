@@ -213,6 +213,29 @@ def can_plan_staff(user: Any) -> bool:
     return can_manage_events(user) or can_join_team(user)
 
 
+def can_add_occurrence(user: Any, event: Event, today: date | None = None) -> bool:
+    """Neue Termine anlegen: Abteilungsleitung; Übungsleiter nur bei Veranstaltungen, in deren laufendem Zeitplan sie
+    fest eingeteilt sind."""
+    if can_manage_events(user):
+        return True
+    member = own_member(user) if user.is_authenticated else None
+    if member is None or not can_join_team(user):
+        return False
+    today = today or timezone.localdate()
+    return ScheduleTeam.objects.filter(
+        Q(schedule__valid_until__isnull=True) | Q(schedule__valid_until__gte=today),
+        schedule__event=event,
+        member=member,
+    ).exists()
+
+
+def add_occurrence(occurrence: Occurrence, by: User | None = None) -> Occurrence:
+    """Einzelnen Termin zu einer Veranstaltung anlegen (ohne Zeitplan) und protokollieren."""
+    occurrence.save()
+    _audit(by, "occurrence_create", f"Termin {_when(occurrence)} angelegt")
+    return occurrence
+
+
 def team_participation(user: Any, occurrence: Occurrence) -> Participation | None:
     member = own_member(user)
     if member is None:
