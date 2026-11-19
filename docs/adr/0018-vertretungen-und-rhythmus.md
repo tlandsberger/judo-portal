@@ -19,11 +19,12 @@ Zeitpläne kannten nur „jede Woche“; Trainings alle zwei Wochen oder am 1. S
 Im Abschnitt „Übungsleiter“ eines Termins hat jede Zeile ihre Aktionen. Vor dem Termin und nachträglich gilt dieselbe
 Bedienung (`services.hand_over`, `services.withdraw`):
 
-- **Übertragen** (die eigene Zeile oder als Leitung des Termins): Wer abgibt, wählt, wer übernimmt. Die Rolle ist
-  vorausgewählt.
+- **Übertragen** (die eigene Zeile oder als Abteilungsleitung): Wer abgibt, wählt, wer übernimmt. Die Rolle ist
+  vorausgewählt. Andere Übungsleiter desselben Termins dürfen fremde Zeilen weder übertragen noch austragen
+  (November 2026); sie können nur vertreten.
 - **Vertreten** (fremde Zeile, wenn man die Rolle übernehmen darf und noch nicht eingeteilt ist): Man übernimmt den
   Platz mit dessen Rolle.
-- **Austragen** ohne Vertretung, z. B. als Co-Trainer.
+- **Austragen** ohne Vertretung, z. B. als Co-Trainer; ebenfalls nur die eigene Zeile oder als Abteilungsleitung.
 - **Mich als … eintragen** wie bisher, zusätzlich zu den Eingeteilten.
 
 Übertragen und Vertreten gelten **sofort**, ohne Annahme: Die Übungsleiter sprechen sich vorher ab, und jede

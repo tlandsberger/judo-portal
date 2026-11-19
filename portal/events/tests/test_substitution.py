@@ -175,9 +175,22 @@ def test_hand_over_page(client, upcoming, trainer, ben_user, django_capture_on_c
     assert services.team(upcoming.occurrence)[0].member == ben
 
 
-def test_hand_over_only_own_or_as_lead(client, upcoming, ben_user):
+def test_hand_over_and_remove_only_own_or_as_head(client, upcoming, ben_user, head):
+    hand_over = reverse("occurrence_hand_over", args=[upcoming.occurrence_id, upcoming.pk])
+    remove = reverse("occurrence_team_remove", args=[upcoming.occurrence_id, upcoming.pk])
     client.force_login(ben_user)
-    assert client.get(reverse("occurrence_hand_over", args=[upcoming.occurrence_id, upcoming.pk])).status_code == 403
+    assert client.get(hand_over).status_code == 403
+    # Auch als Übungsleiter am selben Termin nur den eigenen Eintrag
+    co = services.set_team(upcoming.occurrence, services.own_member(ben_user), role("Co-Trainer"))
+    assert client.get(hand_over).status_code == 403
+    assert client.post(remove).status_code == 403
+    page = client.get(reverse("occurrence_detail", args=[upcoming.occurrence_id])).content.decode()
+    assert hand_over not in page and remove not in page
+    assert reverse("occurrence_hand_over", args=[upcoming.occurrence_id, co.pk]) in page
+    # Die Abteilungsleitung darf alle
+    client.force_login(head)
+    assert client.get(hand_over).status_code == 200
+    assert hand_over in client.get(reverse("occurrence_detail", args=[upcoming.occurrence_id])).content.decode()
 
 
 def test_additional_trainer_and_withdraw_without_substitute(client, upcoming, ben_user):

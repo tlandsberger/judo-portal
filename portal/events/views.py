@@ -110,10 +110,7 @@ def training_swap(request: HttpRequest) -> HttpResponse:
     for occurrence in services.trainings_on(day):
         team = services.team(occurrence)
         own_team = next((p for p in team if member and p.member_id == member.pk), None)
-        lead = services.can_lead(user, occurrence)
-        trainings.append(
-            {"occurrence": occurrence, "team_rows": _team_rows(user, occurrence, team, member, own_team, lead)}
-        )
+        trainings.append({"occurrence": occurrence, "team_rows": _team_rows(user, occurrence, team, member, own_team)})
     context = {
         "day": day,
         "today": timezone.localdate(),
@@ -142,15 +139,15 @@ def _team_rows(
     team: list[Participation],
     member: Member | None,
     own_team: Participation | None,
-    lead: bool,
 ) -> list[dict[str, Any]]:
-    """Übungsleiter mit ihren Aktionen (ADR 0018): Übertragen und Austragen für sich selbst und wer den Termin leitet,
-    Vertreten für andere, die die Rolle übernehmen dürfen."""
+    """Übungsleiter mit ihren Aktionen (ADR 0018): Übertragen und Entfernen nur für den eigenen Eintrag und für die
+    Abteilungsleitung, Vertreten für andere, die die Rolle übernehmen dürfen."""
+    manage = services.can_manage_events(user)
     rows = []
     for p in team:
         is_self = p == own_team
         open_ = not occurrence.is_cancelled and not services.locked_reason(p)
-        can_change = open_ and (is_self or lead) and (is_self or not p.is_confirmed)
+        can_change = open_ and (is_self or (manage and not p.is_confirmed))
         can_take_over = (
             open_
             and member is not None
@@ -207,7 +204,7 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
             for role in services.team_roles(occurrence.event)
             if services.can_take_role(member, role, occurrence.event, timezone.localdate(occurrence.starts_at))
         ]
-    context["team_rows"] = _team_rows(user, occurrence, team, member, own_team, lead)
+    context["team_rows"] = _team_rows(user, occurrence, team, member, own_team)
     return render(request, "events/occurrence_detail.html", context)
 
 
@@ -387,7 +384,8 @@ def occurrence_team(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 def _team_participation(request: HttpRequest, pk: int, participation_pk: int) -> tuple[Participation, bool]:
-    """Übungsleiter-Teilnahme, die der Benutzer ändern darf: die eigene oder als Leitung des Termins."""
+    """Übungsleiter-Teilnahme, die der Benutzer übertragen oder entfernen darf: die eigene oder als
+    Abteilungsleitung."""
     participation = get_object_or_404(
         Participation.objects.select_related("occurrence__event", "member", "role"),
         pk=participation_pk,
@@ -397,7 +395,7 @@ def _team_participation(request: HttpRequest, pk: int, participation_pk: int) ->
     )
     member = services.own_member(request.user)
     is_self = member is not None and participation.member_id == member.pk
-    if not is_self and not services.can_lead(request.user, participation.occurrence):
+    if not is_self and not services.can_manage_events(request.user):
         raise PermissionDenied
     return participation, is_self
 
