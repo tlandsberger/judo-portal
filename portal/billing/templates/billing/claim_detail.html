@@ -1,13 +1,19 @@
 {% extends "layouts/page.html" %}
+{% load static %}
 {% block title %}Abrechnung {{ claim.member.display_name }} {{ claim.month_label }}{% endblock %}
 {% block width %}wide{% endblock %}
 {% block back_url %}{% if can_decide %}{% url 'claim_list' %}{% else %}{% url 'billing_index' %}{% endif %}{% endblock %}
 {% block back_label %}{% if can_decide %}Abrechnungen{% else %}Meine Abrechnung{% endif %}{% endblock %}
 {% block heading %}{{ claim.member.display_name }}{% endblock %}
-{% block heading_extra %}{% if claim.is_late %}<span class="badge badge-soft badge-error">verspätet</span>{% endif %}{% include "billing/_badge.html" with label=claim.get_status_display %}{% endblock %}
+{% block heading_extra %}{% if claim.is_late %}<span class="badge badge-soft badge-error">verspätet</span>{% endif %}{% if claim.is_corrected %}<span class="badge badge-ghost">korrigiert</span>{% endif %}{% include "billing/_badge.html" with label=claim.get_status_display %}{% endblock %}
 {% block primary %}{% if claim.status == "approved" %}<a class="btn btn-primary" href="{% url 'claim_pdf' claim.pk %}"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF herunterladen</a>{% endif %}{% endblock %}
 {% block intro %}{{ claim.month_label }}{% if claim.member.member_number %} · Mitgliedsnummer {{ claim.member.member_number }}{% endif %}{% endblock %}
+{% block scripts %}{% if can_decide and claim.status == "approved" %}<script src="{% static 'js/confirm-dialog.js' %}"></script>{% endif %}{% endblock %}
 {% block page %}
+{% if claim.is_corrected %}
+<div role="status" class="alert alert-soft mb-6"><i class="bi bi-pencil-square text-lg" aria-hidden="true"></i>
+  <span>Korrigierte Abrechnung: Die Freigabe vom {{ claim.corrected_from|date:"d.m.Y H:i" }} Uhr wurde zurückgenommen.{% if claim.status == "approved" %} Das PDF ist als korrigiert gekennzeichnet.{% endif %}</span></div>
+{% endif %}
 {% if claim.is_late %}
 <div role="alert" class="alert alert-soft alert-error mb-6"><i class="bi bi-clock-history text-lg" aria-hidden="true"></i>
   <span>Nach der Frist eingereicht (Frist war der {{ deadline|date:"d.m.Y" }}).{% if can_decide and claim.status == "submitted" %} Mit „Freigeben“ lässt du die Ausnahme zu; sonst gib die Abrechnung mit Begründung zurück.{% endif %}</span></div>
@@ -27,6 +33,26 @@
   <form method="post" action="{% url 'claim_send_back' claim.pk %}" class="flex flex-col gap-3">{% csrf_token %}
     {{ send_back_form }}
     <div><button class="btn"><i class="bi bi-arrow-return-left" aria-hidden="true"></i> Zurückgeben</button></div>
+  </form>
+</div></section>
+{% endif %}
+{% if can_decide and claim.status == "approved" %}
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-reklamieren"><div class="card-body gap-4">
+  <h2 class="card-title" id="h-reklamieren">Reklamieren</h2>
+  <p class="text-sm text-base-content/70">Hat die Geschäftsstelle noch Mängel gefunden? Gib die Abrechnung mit Begründung an {{ claim.member.first_name }} zurück. Nach der erneuten Freigabe ist das PDF als korrigierte Abrechnung gekennzeichnet.</p>
+  <form method="post" action="{% url 'claim_send_back' claim.pk %}" class="flex flex-col gap-3" data-confirm-dialog="reklamieren-bestaetigen">{% csrf_token %}
+    {{ send_back_form }}
+    <div><button class="btn btn-outline btn-error" type="submit"><i class="bi bi-arrow-return-left" aria-hidden="true"></i> Reklamieren</button></div>
+    <dialog id="reklamieren-bestaetigen" class="modal" aria-labelledby="reklamieren-titel"{% if confirm_reopen %} open{% endif %}>
+      <div class="modal-box">
+        <h3 id="reklamieren-titel" class="text-lg font-bold">Freigegebene Abrechnung reklamieren?</h3>
+        <p class="py-4">Die Freigabe vom {{ claim.decided_at|date:"d.m.Y" }} wird zurückgenommen. {{ claim.member.first_name }} bekommt die Abrechnung mit deiner Rückmeldung zurück und reicht sie erneut ein. Ein schon weitergegebenes PDF gilt dann nicht mehr.</p>
+        <div class="modal-action">
+          <a class="btn" href="{% url 'claim_detail' claim.pk %}" data-dialog-cancel>Abbrechen</a>
+          <button class="btn btn-error" type="submit" name="confirmed" value="1">Reklamieren</button>
+        </div>
+      </div>
+    </dialog>
   </form>
 </div></section>
 {% endif %}

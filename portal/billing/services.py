@@ -336,23 +336,35 @@ def can_decide(user: Any) -> bool:
     return bool(user.is_authenticated and user.has_role(*DECIDE))
 
 
-def _decide(claim: Claim, by: User, status: ClaimStatus, feedback: str = "") -> None:
-    if claim.status != ClaimStatus.SUBMITTED:
+def _decide(claim: Claim, by: User, status: ClaimStatus, feedback: str = "") -> bool:
+    """Entscheiden; zurückgeben geht auch nach der Freigabe (Reklamation). Liefert, ob eine Freigabe zurückgenommen
+    wurde."""
+    allowed = (
+        (ClaimStatus.SUBMITTED, ClaimStatus.APPROVED) if status == ClaimStatus.RETURNED else (ClaimStatus.SUBMITTED,)
+    )
+    if claim.status not in allowed:
         raise BillingError("Die Abrechnung ist nicht (mehr) eingereicht.")
+    reopened = claim.status == ClaimStatus.APPROVED
+    if reopened:
+        claim.corrected_from = claim.decided_at
     claim.status = status
     claim.decided_at = timezone.now()
     claim.decided_by = by
     claim.decided_by_name = by.display_name
     claim.feedback = feedback
-    claim.save(update_fields=["status", "decided_at", "decided_by", "decided_by_name", "feedback"])
-    verb = "freigegeben" if status == ClaimStatus.APPROVED else f"zurückgegeben: {feedback}"
+    claim.save(update_fields=["status", "decided_at", "decided_by", "decided_by_name", "feedback", "corrected_from"])
+    if status == ClaimStatus.APPROVED:
+        verb = "freigegeben" + (" (korrigiert)" if claim.is_corrected else "")
+    else:
+        verb = f"{'nach der Freigabe ' if reopened else ''}zurückgegeben: {feedback}"
     audit.log(
         by,
         audit.Area.BILLING,
-        "approve" if status == ClaimStatus.APPROVED else "send_back",
+        "approve" if status == ClaimStatus.APPROVED else ("reopen" if reopened else "send_back"),
         f"Abrechnung {claim.month_label} von {claim.member.display_name} {verb}",
         member=claim.member_id,
     )
+    return reopened
 
 
 @transaction.atomic
@@ -363,11 +375,15 @@ def approve(claim: Claim, by: User) -> None:
 
 @transaction.atomic
 def send_back(claim: Claim, by: User, feedback: str) -> None:
-    """Zurückgeben: die Termine sind wieder offen, der Übungsleiter korrigiert und reicht erneut ein."""
+    """Zurückgeben: die Termine sind wieder offen, der Übungsleiter korrigiert und reicht erneut ein.
+
+    Auch eine freigegebene Abrechnung lässt sich so reklamieren, z. B. wenn die Geschäftsstelle Mängel findet. Sie
+    merkt sich die zurückgenommene Freigabe; nach der erneuten Freigabe weist das PDF sie als korrigiert aus.
+    """
     if not feedback.strip():
         raise BillingError("Schreib bitte kurz, was geändert werden soll.")
-    _decide(claim, by, ClaimStatus.RETURNED, feedback.strip())
-    transaction.on_commit(lambda: notices.decided(claim))
+    reopened = _decide(claim, by, ClaimStatus.RETURNED, feedback.strip())
+    transaction.on_commit(lambda: notices.decided(claim, reopened=reopened))
 
 
 # Überblick für die Abteilungsleitung

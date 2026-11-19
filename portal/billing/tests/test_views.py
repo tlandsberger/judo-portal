@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import pytest
 from django.urls import reverse
+from django.utils import timezone
 
 from portal.billing import services
 from portal.billing.models import Claim, ClaimStatus, Rate
@@ -84,7 +85,7 @@ def test_head_approves_and_downloads(client, trainer, other_trainer, head):
     csv = client.get(month_url("claim_csv", month_ago())).content.decode("utf-8-sig")
     assert csv.splitlines()[1].split(";")[1:3] == ["Trainer", "Anna"]
     assert csv.splitlines()[1].split(";")[4:6] == ["1,50", "22,50"]
-    assert csv.splitlines()[1].split(";")[7] == "nein"
+    assert csv.splitlines()[1].split(";")[7:] == ["nein", "nein", ""]
     login(client, trainer)
     assert client.get(reverse("claim_pdf", args=[claim.pk])).status_code == 200
 
@@ -138,3 +139,60 @@ def test_own_billing_has_no_link_to_claim_list(client, trainer):
     claims = client.get(reverse("claim_list")).content.decode().split("<aside", 1)[0]
     assert f'href="{reverse("billing_index")}"' not in claims
     assert reverse("rate_list") in claims
+
+
+def pdf_text(content: bytes) -> str:
+    """Text aus den (komprimierten) Inhalts-Streams des PDFs."""
+    import re
+    import zlib
+
+    streams = re.findall(rb"stream\r?\n(.*?)\r?\nendstream", content, re.S)
+    text = b""
+    for stream in streams:
+        try:
+            text += zlib.decompress(stream)
+        except zlib.error:
+            text += stream
+    return text.decode("cp1252", "replace")
+
+
+def test_head_reopens_approved_claim_after_confirmation(client, trainer, head):
+    set_rate(trainer)
+    make_shift(trainer, month_ago() + timedelta(days=2))
+    member = events.own_member(trainer)
+    claim = services.submit(member, month_ago(), trainer)
+    services.approve(claim, head)
+    login(client, head)
+    page = client.get(reverse("claim_detail", args=[claim.pk])).content.decode()
+    assert "Reklamieren" in page and 'data-confirm-dialog="reklamieren-bestaetigen"' in page
+    assert "korrigierte" not in pdf_text(client.get(reverse("claim_pdf", args=[claim.pk])).content)
+    # Ohne Bestätigung zeigt der Server den Dialog und ändert nichts
+    url = reverse("claim_send_back", args=[claim.pk])
+    page = client.post(url, {"feedback": "Datum falsch"}).content.decode()
+    assert '<dialog id="reklamieren-bestaetigen" class="modal" aria-labelledby="reklamieren-titel" open>' in page
+    assert "Datum falsch" in page
+    assert Claim.objects.get().status == ClaimStatus.APPROVED
+    response = client.post(url, {"feedback": "Datum falsch", "confirmed": "1"}, follow=True)
+    assert "Die Freigabe ist zurückgenommen" in response.content.decode()
+    assert Claim.objects.get().status == ClaimStatus.RETURNED
+    # Erneut eingereicht und freigegeben: PDF und Liste zeigen „korrigiert“
+    services.approve(services.submit(member, month_ago(), trainer), head)
+    text = pdf_text(client.get(reverse("claim_pdf", args=[claim.pk])).content)
+    assert "korrigiert" in text and "Korrigierte Abrechnung: ersetzt die am" in text
+    assert "korrigiert</span>" in client.get(reverse("claim_list")).content.decode()
+    csv = client.get(month_url("claim_csv", month_ago())).content.decode("utf-8-sig").splitlines()
+    assert csv[0].split(";")[8:] == ["Korrigiert", "Ersetzt Freigabe vom"]
+    claim.refresh_from_db()
+    assert csv[1].split(";")[8:] == ["ja", f"{timezone.localtime(claim.corrected_from):%d.%m.%Y}"]
+
+
+def test_only_heads_may_reopen(client, trainer, head):
+    set_rate(trainer)
+    make_shift(trainer, month_ago() + timedelta(days=2))
+    claim = services.submit(events.own_member(trainer), month_ago(), trainer)
+    services.approve(claim, head)
+    login(client, trainer)
+    assert "Reklamieren" not in client.get(reverse("claim_detail", args=[claim.pk])).content.decode()
+    response = client.post(reverse("claim_send_back", args=[claim.pk]), {"feedback": "x", "confirmed": "1"})
+    assert response.status_code == 403
+    assert Claim.objects.get().status == ClaimStatus.APPROVED

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 from datetime import date
+from typing import Any
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -130,9 +131,7 @@ def _claim(request: HttpRequest, pk: int) -> Claim:
     return claim
 
 
-@login_required
-def claim_detail(request: HttpRequest, pk: int) -> HttpResponse:
-    claim = _claim(request, pk)
+def _detail(request: HttpRequest, claim: Claim, form: SendBackForm | None = None, **extra: Any) -> HttpResponse:
     return render(
         request,
         "billing/claim_detail.html",
@@ -140,10 +139,16 @@ def claim_detail(request: HttpRequest, pk: int) -> HttpResponse:
             "claim": claim,
             "lines": claim.lines.all(),
             "can_decide": services.can_decide(request.user),
-            "send_back_form": SendBackForm(),
+            "send_back_form": form or SendBackForm(),
             "deadline": services.deadline(claim.month),
+            **extra,
         },
     )
+
+
+@login_required
+def claim_detail(request: HttpRequest, pk: int) -> HttpResponse:
+    return _detail(request, _claim(request, pk))
 
 
 @require_POST
@@ -166,6 +171,10 @@ def claim_send_back(request: HttpRequest, pk: int) -> HttpResponse:
     _decider(request)
     claim = get_object_or_404(Claim, pk=pk)
     form = SendBackForm(request.POST)
+    if claim.status == ClaimStatus.APPROVED and form.is_valid() and not request.POST.get("confirmed"):
+        # Reklamation einer freigegebenen Abrechnung erst nach Bestätigung (ohne JavaScript: Dialog vom Server)
+        return _detail(request, claim, form, confirm_reopen=True)
+    reopened = claim.status == ClaimStatus.APPROVED
     try:
         if not form.is_valid():
             raise BillingError("Schreib bitte kurz, was geändert werden soll.")
@@ -173,7 +182,8 @@ def claim_send_back(request: HttpRequest, pk: int) -> HttpResponse:
     except BillingError as error:
         messages.error(request, str(error))
     else:
-        messages.success(request, f"Die Abrechnung ist an {claim.member.display_name} zurückgegeben.")
+        what = "Die Freigabe ist zurückgenommen, die Abrechnung" if reopened else "Die Abrechnung"
+        messages.success(request, f"{what} ist an {claim.member.display_name} zurückgegeben.")
     return redirect("claim_detail", pk=pk)
 
 
@@ -198,7 +208,18 @@ def claim_csv(request: HttpRequest, year: int, month: int) -> HttpResponse:
     response.write("﻿")
     writer = csv.writer(response, delimiter=";", lineterminator="\r\n")
     writer.writerow(
-        ["Monat", "Nachname", "Vorname", "Mitgliedsnummer", "Stunden", "Betrag (€)", "Freigegeben am", "Verspätet"]
+        [
+            "Monat",
+            "Nachname",
+            "Vorname",
+            "Mitgliedsnummer",
+            "Stunden",
+            "Betrag (€)",
+            "Freigegeben am",
+            "Verspätet",
+            "Korrigiert",  # neue Spalten hinten, damit bestehende Auswertungen weiter passen
+            "Ersetzt Freigabe vom",
+        ]
     )
     for claim in services.approved_for_month(day):
         writer.writerow(
@@ -211,6 +232,8 @@ def claim_csv(request: HttpRequest, year: int, month: int) -> HttpResponse:
                 formats.number_format(claim.total_amount, 2),
                 formats.date_format(timezone.localtime(claim.decided_at), "d.m.Y") if claim.decided_at else "",
                 "ja" if claim.is_late else "nein",
+                "ja" if claim.is_corrected else "nein",
+                formats.date_format(timezone.localtime(claim.corrected_from), "d.m.Y") if claim.corrected_from else "",
             ]
         )
     return response

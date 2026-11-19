@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
+from django.core import mail
 from django.utils import timezone
 
 from portal.billing import services
@@ -126,9 +127,37 @@ def test_send_back_unlocks_and_resubmit(trainer, head):
     assert claim.total_minutes == 60 and claim.lines.count() == 1 and claim.feedback == "Bitte 60 Minuten"
     services.approve(claim, head)
     claim.refresh_from_db()
-    assert claim.status == ClaimStatus.APPROVED and claim.decided_by_name == head.display_name
+    assert (
+        claim.status == ClaimStatus.APPROVED and claim.decided_by_name == head.display_name and not claim.is_corrected
+    )
+
+
+def test_approved_claim_can_be_reopened_and_is_marked_corrected(trainer, head, run_on_commit):
+    """Reklamation nach der Freigabe, z. B. wenn die Geschäftsstelle Mängel findet."""
+    from portal.core.models import AuditEntry
+    from portal.notifications.models import SentNotification
+
+    month = month_ago()
+    set_rate(trainer)
+    done = make_shift(trainer, month + timedelta(days=2))
+    member = events.own_member(trainer)
+    claim = services.submit(member, month, trainer)
+    services.approve(claim, head)
+    claim.refresh_from_db()
+    approved_at = claim.decided_at
+    run_on_commit(services.send_back, claim, head, "Geschäftsstelle: Datum falsch")
+    claim.refresh_from_db()
+    assert claim.status == ClaimStatus.RETURNED and claim.corrected_from == approved_at and claim.is_corrected
+    assert not services.is_locked(done)  # der Monat ist wieder offen
+    assert AuditEntry.objects.filter(action="reopen").exists()
+    assert SentNotification.objects.get(kind="claim_decided").user == trainer
+    assert "schon freigegebene" in mail.outbox[-1].body
+    claim = services.submit(member, month, trainer)
+    services.approve(claim, head)
+    claim.refresh_from_db()
+    assert claim.status == ClaimStatus.APPROVED and claim.corrected_from == approved_at
     with pytest.raises(BillingError):
-        services.send_back(claim, head, "zu spät")
+        services.approve(claim, head)  # schon freigegeben
 
 
 def test_department_head_can_approve_own_claim(head):

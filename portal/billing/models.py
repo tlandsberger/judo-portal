@@ -66,6 +66,12 @@ class Claim(models.Model):
         "Verspätet eingereicht", default=False, help_text="Nach der Frist (5. des dritten Folgemonats) eingereicht."
     )
     feedback = models.TextField("Rückmeldung", blank=True)
+    corrected_from = models.DateTimeField(
+        "Ersetzt Freigabe vom",
+        null=True,
+        blank=True,
+        help_text="Zurückgenommene Freigabe; das PDF weist die Abrechnung als korrigiert aus.",
+    )
     total_minutes = models.PositiveIntegerField("Minuten", default=0)
     total_amount = models.DecimalField("Betrag (€)", max_digits=9, decimal_places=2, default=Decimal("0"))
 
@@ -85,6 +91,11 @@ class Claim(models.Model):
     @property
     def hours(self) -> Decimal:
         return hours(self.total_minutes)
+
+    @property
+    def is_corrected(self) -> bool:
+        """Schon einmal freigegeben und danach reklamiert (ADR 0014)."""
+        return self.corrected_from is not None
 
     @property
     def is_locked(self) -> bool:

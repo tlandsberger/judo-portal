@@ -34,8 +34,23 @@ def render(claim: Claim) -> bytes:
     pdf.set_font("Helvetica", "B", 16)
     pdf.cell(0, 8, "Wedeler TSV Judo", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Helvetica", "", 13)
-    pdf.cell(0, 8, f"Übungsleiterabrechnung {claim.month_label}", new_x="LMARGIN", new_y="NEXT")
+    title = f"Übungsleiterabrechnung {claim.month_label}" + (" – korrigiert" if claim.is_corrected else "")
+    pdf.cell(0, 8, title, new_x="LMARGIN", new_y="NEXT")
     pdf.ln(4)
+    if claim.is_corrected:
+        # Deutlich sichtbar, damit die Geschäftsstelle die frühere Fassung ersetzt
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.set_draw_color(0)
+        pdf.multi_cell(
+            0,
+            6,
+            f"Korrigierte Abrechnung: ersetzt die am {_when(claim.corrected_from)} Uhr freigegebene Fassung.",
+            border=1,
+            padding=2,
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
+        pdf.ln(4)
 
     pdf.set_font("Helvetica", "", 10)
     facts = [
