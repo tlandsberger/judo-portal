@@ -174,6 +174,7 @@ class EventForm(forms.ModelForm):
             "description",
             "location",
             "capacity",
+            "team_counts",
             "weight_required",
             "guests_welcome",
             "target_mode",
@@ -406,7 +407,15 @@ class OccurrenceForm(forms.ModelForm):
 
     class Meta:
         model = Occurrence
-        fields = ("starts_at", "ends_at", "location", "note", "registration_opens_at", "registration_closes_at")
+        fields = (
+            "starts_at",
+            "ends_at",
+            "location",
+            "note",
+            "registration_opens_at",
+            "registration_closes_at",
+            "team_counts",
+        )
         widgets = {
             "starts_at": DateTimeInput(),
             "ends_at": DateTimeInput(),
@@ -414,6 +423,24 @@ class OccurrenceForm(forms.ModelForm):
             "registration_closes_at": DateTimeInput(),
         }
         labels = {"location": "Ort (falls abweichend)"}
+
+    def __init__(self, *args: Any, event: Event | None = None, can_manage: bool = False, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        event = event or (self.instance.event if self.instance.event_id else None)
+        if not can_manage or event is None or event.capacity is None:
+            del self.fields["team_counts"]  # über die Höchstzahl entscheidet die Abteilungsleitung
+            return
+        default = "ja" if event.team_counts else "nein"
+        self.fields["team_counts"] = forms.TypedChoiceField(
+            label="Übungsleiter zählen zur Höchstzahl",
+            choices=[("", f"Wie bei der Veranstaltung ({default})"), ("ja", "Ja"), ("nein", "Nein")],
+            coerce=lambda value: value == "ja",
+            empty_value=None,
+            required=False,
+            help_text=f"Höchstzahl: {event.capacity} je Termin.",
+        )
+        if self.instance.team_counts is not None:
+            self.initial["team_counts"] = "ja" if self.instance.team_counts else "nein"
 
     def clean(self) -> dict[str, Any]:
         data = super().clean() or {}

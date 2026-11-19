@@ -178,6 +178,7 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
     team = services.team(occurrence)
     member = services.own_member(user)
     own_team = next((p for p in team if member and p.member_id == member.pk), None)
+    participants = services.participants(occurrence) if show_participants else None
     context = {
         "occurrence": occurrence,
         "event": occurrence.event,
@@ -189,7 +190,7 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "can_manage": services.can_manage_events(user),
         "can_join_team": services.can_join_team(user),
         "started": occurrence.starts_at <= timezone.now(),
-        "participants": services.participants(occurrence) if show_participants else None,
+        "participants": participants,
         "registered": services.registered_count(occurrence),
         "target_groups": services.target_groups(occurrence),
         "quick": _quick(occurrence) if lead else None,
@@ -287,7 +288,9 @@ def _lead_occurrence(request: HttpRequest, pk: int) -> Occurrence:
 @login_required
 def occurrence_edit(request: HttpRequest, pk: int) -> HttpResponse:
     occurrence = _lead_occurrence(request, pk)
-    form = OccurrenceForm(request.POST or None, instance=occurrence)
+    form = OccurrenceForm(
+        request.POST or None, instance=occurrence, can_manage=services.can_manage_events(request.user)
+    )
     if request.method == "POST" and form.is_valid():
         services.update_occurrence(form.save(commit=False), form.changed_data, _user(request))
         messages.success(request, "Termin gespeichert.")
@@ -636,6 +639,8 @@ def event_edit(request: HttpRequest, pk: int) -> HttpResponse:
         with transaction.atomic():
             event = form.save()
             templates = services.save_target_groups(groups)
+            if "team_counts" in form.changed_data:
+                services.promote_upcoming(event)
         messages.success(request, f"„{event.title}“ gespeichert.{_templates_saved(templates)}")
         return redirect("event_detail", pk=event.pk)
     return render(
@@ -734,7 +739,7 @@ def schedule_delete(request: HttpRequest, pk: int, schedule_pk: int) -> HttpResp
 @role_required(*MANAGE_EVENTS)
 def occurrence_create(request: HttpRequest, pk: int) -> HttpResponse:
     event = get_object_or_404(Event, pk=pk)
-    form = OccurrenceForm(request.POST or None)
+    form = OccurrenceForm(request.POST or None, event=event, can_manage=True)
     if request.method == "POST" and form.is_valid():
         occurrence = form.save(commit=False)
         occurrence.event = event
