@@ -6,6 +6,7 @@ import pytest
 from django.utils import timezone
 
 from portal.accounts.models import Role, User
+from portal.events import services
 from portal.events.models import Event, EventType, Occurrence, ParticipantRole
 from portal.members.models import LinkKind, Member, MemberLink
 from portal.members.tests.conftest import PASSWORD, make_member, make_user, years_ago
@@ -17,6 +18,8 @@ __all__ = [
     "make_occurrence",
     "make_trainer",
     "make_user",
+    "rates_not_required",
+    "rates_required",
     "role",
     "years_ago",
 ]
@@ -46,6 +49,19 @@ def make_occurrence(
     event = event or Event.objects.create(title="Training")
     starts = timezone.now().replace(microsecond=0) + timedelta(days=in_days)
     return Occurrence.objects.create(event=event, starts_at=starts, ends_at=starts + timedelta(hours=hours), **extra)
+
+
+@pytest.fixture(autouse=True)
+def rates_not_required(request, monkeypatch):
+    """Die meisten Tests prüfen Termine, nicht Stundensätze: ohne ``rates_required`` ist die Prüfung aus ``billing``
+    (Stundensatz für abrechnungsrelevante Rollen) abgeschaltet."""
+    if "rates_required" not in request.fixturenames:
+        monkeypatch.setattr(services, "_role_checks", [])
+
+
+@pytest.fixture
+def rates_required() -> None:
+    """Prüfungen anderer Apps für Rollen (Stundensatz) gelten wie im Betrieb."""
 
 
 @pytest.fixture

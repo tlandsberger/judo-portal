@@ -11,9 +11,31 @@ from portal.billing import services
 from portal.billing.models import Rate
 from portal.events import services as events
 from portal.events.models import Event, Occurrence, Participation
-from portal.events.tests.conftest import child, head, make_member, make_trainer, make_user, parent, role, trainer
+from portal.events.tests.conftest import (
+    child,
+    head,
+    make_member,
+    make_trainer,
+    make_user,
+    parent,
+    rates_not_required,
+    rates_required,
+    role,
+    trainer,
+)
 
-__all__ = ["child", "head", "make_member", "make_trainer", "make_user", "parent", "role", "trainer"]
+__all__ = [
+    "child",
+    "head",
+    "make_member",
+    "make_trainer",
+    "make_user",
+    "parent",
+    "rates_not_required",
+    "rates_required",
+    "role",
+    "trainer",
+]
 
 
 def month_ago(count: int = 1) -> date:

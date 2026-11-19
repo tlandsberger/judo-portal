@@ -16,6 +16,12 @@ Aufstellung, die die Abteilungsleitung freigegeben hat. Ausgezahlt wird weiterhi
   - Es gilt der Satz, der am Termintag gültig ist.
   - Ohne Satz lässt sich eine Rolle für diese Person nicht abrechnen; das Einreichen nennt die fehlenden Rollen.
   - Gepflegt von der Abteilungsleitung (Seite „Stundensätze“).
+  - **Rolle nur mit Satz** (November 2026): Eine abrechnungsrelevante Rolle kann nur übernehmen, wer dafür am Termintag
+    (bei Zeitplänen und neuen Veranstaltungen: heute) einen Satz hat. Ohne Satz bietet der Termin die Rolle nicht
+    zum Übernehmen oder Vertreten an, und Eintragen, Übertragen und feste Einteilung lehnen sie mit Hinweis auf die
+    Seite „Stundensätze“ ab. Bestehende Einteilungen bleiben. `portal.events` kennt die Sätze nicht: `billing`
+    meldet die Prüfung über `events.services.register_role_check` an; `can_take_role` und `role_unavailable`
+    fragen alle angemeldeten Prüfungen ab.
 - **Eine Abrechnung (`Claim`) je Übungsleiter und Monat**, einzureichen nach Monatsende.
   - Ein noch offener Monat ist kein Datensatz, sondern wird aus den bestätigten Teilnahmen berechnet.
   - **Frist:** der 5. (Kalendertag) des dritten Folgemonats, z. B. Januar bis 5. April (`deadline`).

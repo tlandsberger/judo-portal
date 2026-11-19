@@ -39,6 +39,16 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await admin.getByLabel("Clara selbst").check();
   await admin.getByRole("button", { name: "Zugang geben" }).click();
   await expect(admin.getByText("Eigenes Profil · clara@test.local")).toBeVisible();
+  // Abrechnungsrelevante Rollen gibt es nur mit Stundensatz (ADR 0014)
+  for (const role of ["Trainer", "Co-Trainer"]) {
+    await admin.goto("/abrechnung/saetze/");
+    await admin.getByRole("link", { name: "Clara Clever", exact: true }).click();
+    await admin.getByLabel("Rolle").selectOption({ label: role });
+    await admin.getByLabel("Satz (€/Stunde)").fill("15");
+    await admin.getByLabel("Gültig ab").fill("2020-01-01");
+    await admin.getByRole("button", { name: "Speichern" }).click();
+    await expect(admin.getByText(`Satz für ${role} ab 01.01.2020 gespeichert`)).toBeVisible();
+  }
 
   // Rollen: Trainer gibt es bei Lehrgängen, abrechnungsrelevant
   await admin.goto("/rollen/");

@@ -155,7 +155,7 @@ def _team_rows(
             and member is not None
             and own_team is None
             and not p.is_confirmed
-            and services.can_take_role(member, p.role, occurrence.event)
+            and services.can_take_role(member, p.role, occurrence.event, timezone.localdate(occurrence.starts_at))
         )
         rows.append({"p": p, "is_self": is_self, "can_change": can_change, "can_take_over": can_take_over})
     return rows
@@ -204,7 +204,7 @@ def occurrence_detail(request: HttpRequest, pk: int) -> HttpResponse:
         context["self_roles"] = [
             role
             for role in services.team_roles(occurrence.event)
-            if services.can_take_role(member, role, occurrence.event)
+            if services.can_take_role(member, role, occurrence.event, timezone.localdate(occurrence.starts_at))
         ]
     context["team_rows"] = _team_rows(user, occurrence, team, member, own_team, lead)
     if own_team and own_team.role.is_billable and not own_team.is_confirmed:
