@@ -18,4 +18,6 @@ urlpatterns = [
     path("meine-daten/", views.my_data, name="my_data"),
     path("meine-daten/<int:pk>/", views.my_member, name="my_member"),
     path("meine-daten/<int:pk>/bearbeiten/", views.my_member_edit, name="my_member_edit"),
+    path("meine-daten/<int:pk>/eigener-zugang/", views.child_access_view, name="child_access"),
+    path("meine-daten/<int:pk>/eigener-zugang/nicht-jetzt/", views.child_access_dismiss, name="child_access_dismiss"),
 ]

@@ -6,4 +6,8 @@ class MembersConfig(AppConfig):
     verbose_name = "Mitglieder"
 
     def ready(self) -> None:
-        from . import signals  # noqa: F401
+        from portal.core import scheduler
+
+        from . import child_access, signals  # noqa: F401
+
+        scheduler.register_daily(child_access.run_daily)

@@ -1,0 +1,24 @@
+{% extends "layouts/page.html" %}
+{% block title %}Eigener Zugang für {{ member.first_name }}{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block back_url %}{% url 'my_member' member.pk %}{% endblock %}
+{% block back_label %}{{ member.display_name }}{% endblock %}
+{% block heading %}Eigener Zugang für {{ member.first_name }}{% endblock %}
+{% block page %}
+<div class="card bg-base-100 shadow-sm"><div class="card-body gap-4">
+  {% if own_user %}
+  <p>{{ member.first_name }} hat schon einen eigenen Zugang ({{ own_user.email }}).</p>
+  <div><a class="btn" href="{% url 'my_member' member.pk %}">Zurück</a></div>
+  {% else %}
+  <p>Mit einem eigenen Zugang meldet sich {{ member.first_name }} selbst an und ab, sieht die eigenen Termine und pflegt die eigenen Daten. Du gibst nur die E-Mail-Adresse ein, die Einladung geht direkt an {{ member.first_name }}.</p>
+  <p class="text-sm text-base-content/70">Bis zum 18. Geburtstag von {{ member.first_name }} behältst du deinen Zugang zu den Daten und kannst weiter anmelden.</p>
+  {% if invitation %}
+  <div class="alert alert-soft"><i class="bi bi-envelope text-lg" aria-hidden="true"></i><span>Die Einladung an <strong>{{ invitation.email }}</strong> ist verschickt und gilt bis {{ invitation.expires_at|date:"j. F" }}. Ist sie nicht angekommen, schick sie hier noch einmal, auch an eine andere Adresse. Die alte Einladung gilt dann nicht mehr.</span></div>
+  {% endif %}
+  <form method="post" class="flex flex-col gap-4">{% csrf_token %}
+    {{ form }}
+    <div class="action-bar"><button type="submit" class="btn btn-primary"><i class="bi bi-send" aria-hidden="true"></i> {% if invitation %}Neu einladen{% else %}Einladen{% endif %}</button><a class="btn" href="{% url 'my_member' member.pk %}">Abbrechen</a></div>
+  </form>
+  {% endif %}
+</div></div>
+{% endblock %}

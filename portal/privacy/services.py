@@ -24,7 +24,7 @@ from portal.billing.models import Claim, Rate
 from portal.core import audit
 from portal.events.models import Participation
 from portal.members import services as members
-from portal.members.models import LinkKind, Member, MemberLink, PendingLink
+from portal.members.models import AccessOffer, LinkKind, Member, MemberLink, PendingLink
 from portal.notifications.models import PushNotificationSubscription, SentNotification
 
 log = logging.getLogger(__name__)
@@ -405,6 +405,10 @@ def export_user(user: User) -> dict[str, Any]:
         "Offene E-Mail-Änderung": [
             {"Neue E-Mail": c.email, "Angefragt": _value(c.created_at), "Gültig bis": _value(c.expires_at)}
             for c in EmailChange.objects.filter(user=user)
+        ],
+        "Hinweise auf eigenen Zugang für Kinder": [
+            {"Mitglied": o.member.display_name, "Mail": _value(o.notified_at), "Ausgeblendet": _value(o.dismissed_at)}
+            for o in AccessOffer.objects.filter(user=user).select_related("member")
         ],
         # Nur Einträge über den Benutzer selbst – nicht, was er (z. B. als Abteilungsleitung) bei anderen geändert hat.
         "Protokoll": _audit_rows(audit.AuditEntry.objects.filter(user_id=user.pk, member_id__isnull=True)),

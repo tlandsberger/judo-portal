@@ -12,8 +12,8 @@ from portal.accounts import services as accounts
 from portal.accounts.permissions import role_required
 from portal.core import audit, ordering
 
-from . import csv_import, services
-from .forms import AccessForm, ImportForm, InterestForm, MemberForm, SelfServiceForm
+from . import child_access, csv_import, services
+from .forms import AccessForm, ChildAccessForm, ImportForm, InterestForm, MemberForm, SelfServiceForm
 from .models import Interest, Member, MemberLink
 from .services import MANAGE_MEMBERS
 
@@ -208,7 +208,46 @@ def my_data(request: HttpRequest) -> HttpResponse:
 def my_member(request: HttpRequest, pk: int) -> HttpResponse:
     member = _own_member(request, pk)
     several = len(services.effective_links(request.user)) > 1
-    return render(request, "members/my_member.html", {"member": member, "several": several})
+    context = {"member": member, "several": several, "own_access": child_access.state(request.user, member)}
+    return render(request, "members/my_member.html", context)
+
+
+@login_required
+def child_access_view(request: HttpRequest, pk: int) -> HttpResponse:
+    """Eltern richten den eigenen Zugang ihres Kindes ab 14 ein (ADR 0024)."""
+    member = _own_member(request, pk)
+    own_access = child_access.state(request.user, member)
+    if own_access is None:
+        raise PermissionDenied
+    form = ChildAccessForm(request.POST or None, member=member, initial={"email": member.email})
+    if request.method == "POST" and own_access["own_user"] is None and form.is_valid():
+        try:
+            invitation = child_access.invite_child(
+                request.user,  # type: ignore[arg-type]
+                member,
+                form.cleaned_data["email"],
+                sync_member=form.cleaned_data["sync_member"],
+            )
+        except child_access.ChildAccessError as error:
+            form.add_error("email", str(error))
+        else:
+            messages.success(request, f"Die Einladung an {invitation.email} ist unterwegs.")
+            return redirect("my_member", pk=member.pk)
+    return render(request, "members/child_access.html", {"member": member, "form": form, **own_access})
+
+
+@login_required
+@require_POST
+def child_access_dismiss(request: HttpRequest, pk: int) -> HttpResponse:
+    """„Nicht jetzt“ im Banner auf der Startseite."""
+    member = _own_member(request, pk)
+    if child_access.state(request.user, member) is None:
+        raise PermissionDenied
+    child_access.dismiss(request.user, member)  # type: ignore[arg-type]
+    messages.info(
+        request, f"Den eigenen Zugang für {member.first_name} kannst du jederzeit unter Meine Daten einrichten."
+    )
+    return redirect("home")
 
 
 @login_required

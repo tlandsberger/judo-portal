@@ -91,6 +91,11 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
     await page.getByRole("link", { name: /David Dachs/ }).click();
     await expect(page.getByRole("link", { name: "Bearbeiten" })).toBeVisible();
   });
+  await shoot(browser, parents, "eigener-zugang", async (page) => {
+    await page.goto("/");
+    await page.getByRole("link", { name: "Zugang einrichten" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Eigener Zugang für David" })).toBeVisible();
+  });
   await shoot(browser, parents, "zugang", async (page) => {
     await page.goto("/zugang/anmeldung/");
     await expect(page.getByRole("heading", { level: 1, name: "Meine Anmeldung" })).toBeVisible();

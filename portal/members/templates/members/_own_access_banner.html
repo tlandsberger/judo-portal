@@ -1,0 +1,11 @@
+{% load members %}{% own_access_offers user as offers %}{% for child in offers %}
+<div class="alert alert-soft {% if forloop.last %}mb-8{% else %}mb-4{% endif %}">
+  <i class="bi bi-person-plus text-lg" aria-hidden="true"></i>
+  <div class="flex flex-col gap-3">
+    <span>{{ child.first_name }} ist {% if child.age == 14 %}jetzt {% endif %}{{ child.age }} Jahre alt und kann einen eigenen Zugang bekommen. Du gibst nur die E-Mail-Adresse von {{ child.first_name }} ein, die Einladung schicken wir direkt.</span>
+    <div class="flex flex-wrap gap-2">
+      <a class="btn btn-sm btn-primary" href="{% url 'child_access' child.pk %}">Zugang einrichten</a>
+      <form method="post" action="{% url 'child_access_dismiss' child.pk %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-ghost">Nicht jetzt</button></form>
+    </div>
+  </div>
+</div>{% endfor %}

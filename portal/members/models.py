@@ -197,3 +197,23 @@ class PendingLink(models.Model):
 
     def __str__(self) -> str:
         return f"{self.invitation.email} → {self.member} ({self.get_kind_display()})"
+
+
+class AccessOffer(models.Model):
+    """Hinweis an einen Elternteil, dass sein Kind (ab 14) einen eigenen Zugang bekommen kann (ADR 0024).
+
+    Hält fest, ob die Mail zum 14. Geburtstag raus ist und ob der Elternteil das Banner mit „Nicht jetzt“ weggeklickt
+    hat. Ohne Eintrag zeigt die Startseite das Banner."""
+
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="access_offers")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+")
+    notified_at = models.DateTimeField("Mail verschickt", null=True, blank=True)
+    dismissed_at = models.DateTimeField("Ausgeblendet", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Hinweis auf eigenen Zugang"
+        verbose_name_plural = "Hinweise auf eigenen Zugang"
+        constraints = [models.UniqueConstraint(fields=["member", "user"], name="access_offer_unique")]
+
+    def __str__(self) -> str:
+        return f"{self.member} → {self.user}"
