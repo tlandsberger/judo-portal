@@ -141,6 +141,11 @@ class Event(models.Model):
         blank=True,
         help_text="Leer heißt: unbegrenzt. Sonst gibt es eine Warteliste.",
     )
+    team_counts = models.BooleanField(
+        "Übungsleiter zählen zur Höchstzahl",
+        default=False,
+        help_text="Gilt für alle Termine; an einem einzelnen Termin kann die Abteilungsleitung es anders festlegen.",
+    )
     weight_required = models.BooleanField(
         "Gewicht bei Anmeldung erforderlich", default=False, help_text="Zum Beispiel für Wettkämpfe."
     )
@@ -326,6 +331,12 @@ class Occurrence(models.Model):
         editable=False,
         help_text="Der Termin hat eigene Zielgruppen statt der Zielgruppen der Veranstaltung (ADR 0019).",
     )
+    team_counts = models.BooleanField(
+        "Übungsleiter zählen zur Höchstzahl",
+        null=True,
+        blank=True,
+        help_text="Leer heißt: wie bei der Veranstaltung.",
+    )
 
     class Meta:
         verbose_name = "Termin"
@@ -338,6 +349,14 @@ class Occurrence(models.Model):
     @property
     def is_cancelled(self) -> bool:
         return self.cancelled_at is not None
+
+    @property
+    def counts_team(self) -> bool:
+        """Zählen die Übungsleiter zur Höchstzahl? Am Termin festgelegt, sonst wie bei der Veranstaltung; ohne
+        Höchstzahl nie."""
+        if self.event.capacity is None:
+            return False
+        return self.event.team_counts if self.team_counts is None else self.team_counts
 
     @property
     def place(self) -> str:

@@ -22,6 +22,7 @@ const pages = [
   { path: "/veranstaltungsarten/", heading: "Veranstaltungsarten" },
   { path: "/veranstaltungsarten/neu/", heading: "Veranstaltungsart anlegen" },
   { path: "/abrechnung/alle/", heading: "Abrechnungen" },
+  { path: "/abrechnung/alle/pruefen/", heading: "Prüfansicht" },
   { path: "/abrechnung/saetze/", heading: "Stundensätze" },
   { path: "/protokoll/", heading: "Protokoll" },
   { path: "/meine-daten/auskunft/", heading: "Datenauskunft (Art. 15 DSGVO)" },

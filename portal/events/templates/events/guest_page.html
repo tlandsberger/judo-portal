@@ -61,7 +61,7 @@
   <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-daten"><div class="card-body gap-4">
     <h2 class="card-title" id="h-daten">Deine Daten</h2>
     <form method="post" class="flex flex-col gap-4">{% csrf_token %}
-      <div class="grid gap-x-4 sm:grid-cols-2">{% for field in form %}{{ field.as_field_group }}{% endfor %}</div>
+      {{ form }}
       <div><button class="btn btn-primary" name="action" value="save">Speichern</button></div>
     </form>
     {% include "events/_privacy.html" %}

@@ -105,6 +105,12 @@ test("Übungsleiterin bestätigt und reicht den Vormonat ein, die Abteilungsleit
   await admin.goto("/abrechnung/alle/");
   await expect(admin.getByRole("heading", { name: "Zu prüfen" })).toBeVisible();
   await expectNoA11yViolations(admin);
+  // Prüfansicht: alle eingereichten Stunden nach Termin
+  await admin.getByRole("link", { name: "Prüfansicht" }).click();
+  await expect(admin.getByRole("heading", { level: 1, name: "Prüfansicht" })).toBeVisible();
+  await expect(admin.getByRole("link", { name: "Dora Daumen" }).first()).toBeVisible();
+  await expectNoA11yViolations(admin);
+  await admin.goBack();
   await admin.getByRole("link", { name: `Dora Daumen · ${month}` }).click();
   await expectNoA11yViolations(admin);
   await admin.getByRole("button", { name: "Freigeben" }).click();
@@ -116,6 +122,27 @@ test("Übungsleiterin bestätigt und reicht den Vormonat ein, die Abteilungsleit
   // Dora sieht die Freigabe
   await trainer.reload();
   await expect(trainer.getByText(/Freigegeben von/)).toBeVisible();
+
+  // Die Geschäftsstelle findet einen Mangel: Abteilungsleitung reklamiert nach Bestätigung im Dialog
+  await admin.getByLabel("Rückmeldung").fill("Geschäftsstelle: Bitte Datum prüfen");
+  await admin.getByRole("button", { name: "Reklamieren" }).click();
+  const dialog = admin.getByRole("dialog", { name: "Freigegebene Abrechnung reklamieren?" });
+  await expect(dialog).toBeVisible();
+  await expectNoA11yViolations(admin);
+  await dialog.getByRole("link", { name: "Abbrechen" }).click();
+  await expect(dialog).toBeHidden();
+  await admin.getByRole("button", { name: "Reklamieren" }).click();
+  await dialog.getByRole("button", { name: "Reklamieren" }).click();
+  await expect(admin.getByText("Die Freigabe ist zurückgenommen, die Abrechnung ist an Dora Daumen zurückgegeben.")).toBeVisible();
+  await expect(admin.getByText(/Korrigierte Abrechnung: Die Freigabe vom/)).toBeVisible();
+
+  // Dora reicht erneut ein, die Abteilungsleitung gibt frei: als korrigiert gekennzeichnet
+  await trainer.reload();
+  await expect(trainer.getByText("Geschäftsstelle: Bitte Datum prüfen")).toBeVisible();
+  await trainer.getByRole("button", { name: `${month} einreichen` }).click();
+  await admin.reload();
+  await admin.getByRole("button", { name: "Freigeben" }).click();
+  await expect(admin.locator(".badge", { hasText: "korrigiert" })).toBeVisible();
   await trainerContext.close();
   await admin.context().close();
 });

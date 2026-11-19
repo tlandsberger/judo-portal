@@ -44,7 +44,7 @@ def submitted(claim: Claim) -> None:
         )
 
 
-def decided(claim: Claim) -> None:
+def decided(claim: Claim, *, reopened: bool = False) -> None:
     user = events.member_user(claim.member)
     if user is None or claim.decided_at is None:
         return
@@ -52,7 +52,8 @@ def decided(claim: Claim) -> None:
         title, body = f"Freigegeben: {claim.month_label}", f"Deine Abrechnung für {claim.month_label} ist freigegeben."
     else:
         title = f"Zurückgegeben: {claim.month_label}"
-        body = f"Deine Abrechnung für {claim.month_label} kam zurück: {claim.feedback}"
+        already = "schon freigegebene " if reopened else ""
+        body = f"Deine {already}Abrechnung für {claim.month_label} kam zurück: {claim.feedback}"
     notifications.notify(
         user,
         key=f"claim-decided:{claim.pk}:{int(claim.decided_at.timestamp())}",

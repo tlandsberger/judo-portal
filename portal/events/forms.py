@@ -63,6 +63,8 @@ CRITERIA_WIDGETS = {
 class CriteriaForm(forms.ModelForm):
     """Kriterien einer Zielgruppe oder Vorlage, mit Prüfung von/bis."""
 
+    layout = (("min_age", "max_age"), ("min_weight", "max_weight"), ("min_grade", "max_grade"))
+
     genders = forms.MultipleChoiceField(
         label="Geschlecht",
         choices=Gender.choices,
@@ -166,6 +168,12 @@ OccurrenceTargetGroupFormSet = forms.inlineformset_factory(
 
 
 class EventForm(forms.ModelForm):
+    layout: tuple[tuple[str, ...], ...] = (
+        ("event_type", "location"),
+        ("capacity", "team_counts"),
+        ("weight_required", "guests_welcome"),
+    )
+
     class Meta:
         model = Event
         fields = (
@@ -174,6 +182,7 @@ class EventForm(forms.ModelForm):
             "description",
             "location",
             "capacity",
+            "team_counts",
             "weight_required",
             "guests_welcome",
             "target_mode",
@@ -196,6 +205,13 @@ class EventForm(forms.ModelForm):
 
 
 RHYTHM_FIELDS = ("repeat", "interval", "week_of_month")
+# Zeitplan: Rhythmus-Wert, Uhrzeit, Gültigkeit und Anmeldefenster jeweils nebeneinander (Formular-``layout``)
+RHYTHM_ROWS = (
+    ("interval", "week_of_month"),
+    ("start_time", "end_time"),
+    ("valid_from", "valid_until"),
+    ("opens_hours_before", "closes_hours_before"),
+)
 
 
 def _rhythm_widgets() -> dict[str, forms.Widget]:
@@ -222,6 +238,14 @@ def _clean_rhythm(form: forms.BaseForm, data: dict[str, Any]) -> None:
 
 class EventCreateForm(EventForm):
     """Veranstaltung anlegen und gleich die Termine festlegen: einmalig, wiederkehrend oder später (ADR 0012)."""
+
+    layout = (
+        *EventForm.layout,
+        ("starts_at", "ends_at"),
+        ("registration_opens_at", "registration_closes_at"),
+        *RHYTHM_ROWS,
+        ("team_member", "team_role"),
+    )
 
     ONCE, WEEKLY, LATER = "once", "weekly", "later"
 
@@ -365,6 +389,8 @@ class EventCreateForm(EventForm):
 
 
 class ScheduleForm(forms.ModelForm):
+    layout = RHYTHM_ROWS
+
     class Meta:
         model = Schedule
         fields = (
@@ -404,9 +430,19 @@ class ScheduleForm(forms.ModelForm):
 class OccurrenceForm(forms.ModelForm):
     """Termin von Hand (einmalig oder zusätzlich) bzw. Abweichung an einem Termin."""
 
+    layout = (("starts_at", "ends_at"), ("registration_opens_at", "registration_closes_at"))
+
     class Meta:
         model = Occurrence
-        fields = ("starts_at", "ends_at", "location", "note", "registration_opens_at", "registration_closes_at")
+        fields = (
+            "starts_at",
+            "ends_at",
+            "location",
+            "note",
+            "registration_opens_at",
+            "registration_closes_at",
+            "team_counts",
+        )
         widgets = {
             "starts_at": DateTimeInput(),
             "ends_at": DateTimeInput(),
@@ -414,6 +450,24 @@ class OccurrenceForm(forms.ModelForm):
             "registration_closes_at": DateTimeInput(),
         }
         labels = {"location": "Ort (falls abweichend)"}
+
+    def __init__(self, *args: Any, event: Event | None = None, can_manage: bool = False, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        event = event or (self.instance.event if self.instance.event_id else None)
+        if not can_manage or event is None or event.capacity is None:
+            del self.fields["team_counts"]  # über die Höchstzahl entscheidet die Abteilungsleitung
+            return
+        default = "ja" if event.team_counts else "nein"
+        self.fields["team_counts"] = forms.TypedChoiceField(
+            label="Übungsleiter zählen zur Höchstzahl",
+            choices=[("", f"Wie bei der Veranstaltung ({default})"), ("ja", "Ja"), ("nein", "Nein")],
+            coerce=lambda value: value == "ja",
+            empty_value=None,
+            required=False,
+            help_text=f"Höchstzahl: {event.capacity} je Termin.",
+        )
+        if self.instance.team_counts is not None:
+            self.initial["team_counts"] = "ja" if self.instance.team_counts else "nein"
 
     def clean(self) -> dict[str, Any]:
         data = super().clean() or {}
@@ -429,9 +483,16 @@ class NoteForm(forms.ModelForm):
     class Meta:
         model = Occurrence
         fields = ("note",)
+        labels = {"note": "Hinweis für alle Teilnehmer"}
+        help_texts = {
+            "note": "Steht am Termin und in der Liste „Termine“, z. B. „Bitte Kata-Gürtel mitbringen“. "
+            "Bei einer Absage geht er mit der Nachricht raus."
+        }
 
 
 class CancelRangeForm(forms.Form):
+    layout = (("first", "last"),)
+
     first = forms.DateField(label="Von", widget=DateInput())
     last = forms.DateField(label="Bis", widget=DateInput())
 
@@ -464,6 +525,8 @@ class RegisterForm(forms.Form):
 class TeamForm(forms.Form):
     """Team eines Termins oder Standard-Team eines Zeitplans: Mitglied und Rolle."""
 
+    layout = (("member", "role"),)
+
     member = forms.ModelChoiceField(label="Mitglied", queryset=Member.objects.none())
     role = forms.ModelChoiceField(label="Rolle", queryset=ParticipantRole.objects.none())
 
@@ -486,6 +549,8 @@ class EventTypeForm(forms.ModelForm):
 
 
 class ParticipantRoleForm(forms.ModelForm):
+    layout = (("is_team", "is_billable"), ("is_default", "is_active"))
+
     user_roles = forms.MultipleChoiceField(
         label="Benutzerrollen",
         choices=[(Role.TRAINER.value, Role.TRAINER.label), (Role.DEPARTMENT_HEAD.value, Role.DEPARTMENT_HEAD.label)],
@@ -528,6 +593,14 @@ class ConfirmForm(forms.Form):
 
 class GuestForm(forms.ModelForm):
     """Daten eines Gastes: vom Team eingetragen, über den Anmeldelink oder auf der Gast-Seite geändert."""
+
+    layout = (
+        ("first_name", "last_name"),
+        ("birth_year", "gender"),
+        ("grade", "weight"),
+        ("email", "phone"),
+        ("club", "guardian_name"),
+    )
 
     class Meta:
         model = Guest
@@ -647,6 +720,8 @@ class AttachmentForm(forms.Form):
 
 
 class ExportForm(forms.Form):
+    layout = (("start", "end"),)
+
     start = forms.DateField(label="Von", required=False, widget=DateInput())
     end = forms.DateField(label="Bis", required=False, widget=DateInput())
 

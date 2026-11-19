@@ -35,7 +35,7 @@ Nach dem ersten Release der Veranstaltungen (ADR 0010) zeigten sich drei Schwäc
   |---|---|
   | Veranstaltungsarten | Bei welchen Arten die Rolle angeboten wird; leer heißt bei allen |
   | Benutzerrollen | Wer sie übernehmen darf (über den eigenen Zugang des Mitglieds); leer heißt jedes Mitglied |
-  | Team | Zählt nicht zur Höchstzahl, sieht die Teilnehmerliste eigener Termine, darf den Termin leiten |
+  | Team | Sieht die Teilnehmerliste eigener Termine, darf den Termin leiten; zur Höchstzahl siehe unten |
   | Abrechnungsrelevant | Stunden werden nach dem Termin bestätigt; Grundlage der Übungsleiterabrechnung |
   | Rolle bei Anmeldung | Genau eine Rolle; die bekommt, wer sich anmeldet oder angemeldet wird |
 
@@ -109,3 +109,14 @@ Nach dem ersten Release der Veranstaltungen (ADR 0010) zeigten sich drei Schwäc
 - **Team weiter als Benutzer:** Ein externer Prüfer bräuchte so keinen Mitgliedsdatensatz. Er hätte aber auch keinen
   Zugang zum Portal, und die doppelte Rolle (Teilnehmer und Trainer) ließe sich nicht verhindern.
 - **Feste Rollen im Code:** einfacher, aber jede neue Rolle (z. B. Kampfrichter) bräuchte ein Release.
+
+## Nachtrag (November 2026): Übungsleiter und Höchstzahl
+
+- **Höchstzahl:** `Event.team_counts` legt fest, ob Übungsleiter einen Platz belegen (Standard: nein, wie bisher).
+  Ein Termin kann abweichen: `Occurrence.team_counts` ist nullbar, leer heißt „wie die Veranstaltung“
+  (`Occurrence.counts_team`). So folgen Termine einer späteren Änderung an der Veranstaltung, nur echte Abweichungen
+  bleiben stehen; eine Abweichung zählt wie andere Änderungen am Termin (`is_modified`). Ohne Höchstzahl zählt
+  niemand mit. Die Einstellung am Termin ändert nur die Abteilungsleitung.
+- **Voll:** Zählen Übungsleiter mit, trägt über die Höchstzahl hinaus nur die Abteilungsleitung weitere ein
+  (`_check_team_place`); fest eingeteilte Übungsleiter aus dem Zeitplan trägt das Portal ohne Prüfung ein. Niemand
+  wird verdrängt. Wird ein Platz frei (Übungsleiter trägt sich aus, Einstellung aus), rückt die Warteliste nach.

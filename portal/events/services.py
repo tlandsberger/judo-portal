@@ -519,15 +519,18 @@ def delete_schedule(schedule: Schedule) -> int:
 
 @transaction.atomic
 def update_occurrence(occurrence: Occurrence, fields: Iterable[str], by: User | None = None) -> None:
-    """Abweichung an einem einzelnen Termin (Uhrzeit, Ort, Anmeldezeitraum) – der Termin bleibt dann bei Neuerzeugung.
+    """Abweichung an einem einzelnen Termin (Uhrzeit, Ort, Anmeldezeitraum, ob die Übungsleiter zur Höchstzahl
+    zählen) – der Termin bleibt dann bei Neuerzeugung.
 
     Ändern sich Uhrzeit oder Ort, bekommen Angemeldete und Team eine Benachrichtigung.
     """
     changed = set(fields)
     moved = bool(changed & {"starts_at", "ends_at", "location"})
-    if moved or changed & {"registration_opens_at", "registration_closes_at"}:
+    if moved or changed & {"registration_opens_at", "registration_closes_at", "team_counts"}:
         occurrence.is_modified = True
     occurrence.save()
+    if "team_counts" in changed:
+        promote(occurrence)  # zählen die Übungsleiter nicht mehr mit, werden Plätze frei
     if changed:
         labels = audit.labels_for(Occurrence, changed)
         _audit(by, "occurrence_update", f"{_when(occurrence)} geändert: {', '.join(sorted(labels.values()))}")
@@ -585,8 +588,26 @@ def window(occurrence: Occurrence, now: datetime | None = None) -> str:
 
 
 def registered_count(occurrence: Occurrence) -> int:
-    """Belegte Plätze: angemeldete Teilnahmen ohne Team-Rollen."""
-    return occurrence.participations.filter(status=ParticipationStatus.REGISTERED, role__is_team=False).count()
+    """Belegte Plätze: angemeldete Teilnehmer, dazu die Übungsleiter, wenn sie zur Höchstzahl zählen."""
+    taken = occurrence.participations.filter(status=ParticipationStatus.REGISTERED)
+    if not occurrence.counts_team:
+        taken = taken.filter(role__is_team=False)
+    return taken.count()
+
+
+def _check_team_place(occurrence: Occurrence, existing: Participation | None, by: User | None) -> None:
+    """Zählen die Übungsleiter zur Höchstzahl, trägt über die Höchstzahl hinaus nur die Abteilungsleitung ein
+    (oder das Portal selbst, z. B. für fest eingeteilte Übungsleiter)."""
+    capacity = occurrence.event.capacity
+    if capacity is None or not occurrence.counts_team or by is None or can_manage_events(by):
+        return
+    if existing is not None and existing.status == ParticipationStatus.REGISTERED:
+        return  # belegt schon einen Platz
+    if registered_count(occurrence) >= capacity:
+        raise RegistrationError(
+            "Der Termin ist voll, und die Übungsleiter zählen zur Höchstzahl. Über die Höchstzahl hinaus trägt "
+            "nur die Abteilungsleitung ein."
+        )
 
 
 def check_register(
@@ -720,6 +741,15 @@ def promote(occurrence: Occurrence) -> list[Participation]:
     return promoted
 
 
+def promote_upcoming(event: Event) -> None:
+    """Nach einer Änderung an der Veranstaltung (z. B. Übungsleiter zählen nicht mehr mit): Warteliste der kommenden
+    Termine nachrücken lassen."""
+    upcoming = event.occurrences.filter(starts_at__gte=timezone.now(), cancelled_at__isnull=True)
+    for occurrence in upcoming.filter(participations__status=ParticipationStatus.WAITLIST).distinct():
+        occurrence.event = event
+        promote(occurrence)
+
+
 # Team
 
 
@@ -736,7 +766,13 @@ def set_team(occurrence: Occurrence, member: Member, role: ParticipantRole, by: 
         raise RegistrationError("Bestätigte Stunden bleiben für die Abrechnung, wie sie sind.")
     if existing:
         _check_unlocked(existing)
-    freed = existing is not None and not existing.role.is_team and existing.status == ParticipationStatus.REGISTERED
+    _check_team_place(occurrence, existing, by)
+    freed = (
+        existing is not None
+        and not existing.role.is_team
+        and existing.status == ParticipationStatus.REGISTERED
+        and not occurrence.counts_team
+    )
     participation, _ = Participation.objects.update_or_create(
         occurrence=occurrence,
         member=member,
@@ -858,6 +894,8 @@ def withdraw(participation: Participation, by: User | None = None) -> None:
     missing = leaves_without_trainer(participation)
     unconfirm(participation, by)
     remove_team(participation, by)
+    if occurrence.counts_team:
+        promote(occurrence)
     if missing:
         occurrence.trainer_missing_since = timezone.now()
         occurrence.save(update_fields=["trainer_missing_since"])
@@ -969,11 +1007,17 @@ def set_schedule_team(schedule: Schedule, member: Member, role: ParticipantRole)
 
 @transaction.atomic
 def remove_schedule_team(entry: ScheduleTeam) -> None:
-    """Aus dem Standard-Team nehmen; zukünftige, unbestätigte Team-Teilnahmen fallen weg."""
-    Participation.objects.filter(
+    """Aus dem Standard-Team nehmen; zukünftige, unbestätigte Team-Teilnahmen fallen weg (frei gewordene Plätze
+    gehen an die Warteliste, wenn die Übungsleiter zur Höchstzahl zählen)."""
+    removed = Participation.objects.filter(
         occurrence__in=_future(entry.schedule), member=entry.member, role__is_team=True, confirmed_at=None
-    ).delete()
+    )
+    occurrences = list(Occurrence.objects.filter(participations__in=removed).select_related("event").distinct())
+    removed.delete()
     entry.delete()
+    for occurrence in occurrences:
+        if occurrence.counts_team:
+            promote(occurrence)
 
 
 # Ansichten

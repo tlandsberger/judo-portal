@@ -14,6 +14,8 @@ from .models import Claim, ClaimStatus, Rate
 class RateForm(forms.ModelForm):
     """Neuer Satz für eine Rolle. Erhöhungen trägst du mit neuem „gültig ab“ ein, alte Monate bleiben unverändert."""
 
+    layout = (("hourly_rate", "valid_from"),)
+
     class Meta:
         model = Rate
         fields = ("role", "hourly_rate", "valid_from")
@@ -41,6 +43,21 @@ class SendBackForm(forms.Form):
         max_length=1000,
         help_text="Was soll der Übungsleiter ändern?",
     )
+
+
+class ReviewFilterForm(forms.Form):
+    month = forms.TypedChoiceField(label="Monat", required=False)
+    pending = forms.ChoiceField(
+        label="Abrechnungen",
+        required=False,
+        choices=[("", "eingereicht und freigegeben"), ("1", "nur zu prüfen")],
+    )
+
+    def __init__(self, *args: Any, months: list[Any], **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["month"].choices = [  # type: ignore[attr-defined]
+            (f"{month:%Y-%m}", Claim(month=month).month_label) for month in months
+        ]
 
 
 class ClaimFilterForm(forms.Form):

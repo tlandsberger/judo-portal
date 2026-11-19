@@ -1,5 +1,6 @@
-// Zielgruppen im Formular der Veranstaltung: Blöcke hinzufügen und Vorlagen als Kopie übernehmen.
-// Ohne JavaScript lassen sich bestehende Zielgruppen weiter bearbeiten und entfernen.
+// Zielgruppen im Formular der Veranstaltung: Blöcke hinzufügen, entfernen und Vorlagen als Kopie übernehmen.
+// „Zielgruppe entfernen“ setzt das versteckte Löschfeld des Formsets und blendet den Block aus. Ohne JavaScript bleibt
+// stattdessen das Kästchen.
 (() => {
   const section = document.querySelector("[data-target-groups]");
   if (!section) return;
@@ -11,12 +12,35 @@
   const dataElement = document.getElementById("zielgruppen-vorlagen");
   const templates = dataElement ? JSON.parse(dataElement.textContent) : {};
 
+  // Kästchen „Löschen“ gegen den Knopf tauschen
+  const prepare = (block) => {
+    const box = block.querySelector("[data-target-group-delete]");
+    const button = block.querySelector("[data-target-group-remove]");
+    if (!box || !button) return;
+    box.hidden = true;
+    button.hidden = false;
+  };
+
+  // Wie beim Hinzufügen gilt das Entfernen erst mit „Speichern“: der Block verschwindet, das Löschfeld ist gesetzt.
+  const remove = (block) => {
+    block.querySelector("[data-target-group-delete] input[type=checkbox]").checked = true;
+    block.hidden = true;
+    section.querySelector("[data-target-group-add]")?.focus();
+  };
+
+  list.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-target-group-remove]");
+    if (button) remove(button.closest("[data-target-group]"));
+  });
+  for (const block of list.querySelectorAll("[data-target-group]")) prepare(block);
+
   const add = () => {
     const index = Number(total.value);
     const html = empty.innerHTML.replaceAll("__prefix__", String(index));
     list.insertAdjacentHTML("beforeend", html);
     total.value = String(index + 1);
     const block = list.lastElementChild;
+    prepare(block);
     return { block, field: (name) => block.querySelectorAll(`[name="${prefix}-${index}-${name}"]`) };
   };
 

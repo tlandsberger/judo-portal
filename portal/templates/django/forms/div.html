@@ -1,12 +1,9 @@
-{{ errors }}
+{% load form_layout %}{{ errors }}
 {% if errors and not fields %}
   <div>{% for field in hidden_fields %}{{ field }}{% endfor %}</div>
 {% endif %}
-<div class="flex flex-col gap-2">
-{% for field, errors in fields %}
-  {{ field.as_field_group }}
-  {% if forloop.last %}{% for field in hidden_fields %}{{ field }}{% endfor %}{% endif %}
-{% endfor %}
+{% field_rows form as rows %}<div class="flex flex-col gap-2">
+{% include "django/forms/_rows.html" %}{% if fields %}{% for field in hidden_fields %}{{ field }}{% endfor %}{% endif %}
 </div>
 {% if not fields and not errors %}
   {% for field in hidden_fields %}{{ field }}{% endfor %}

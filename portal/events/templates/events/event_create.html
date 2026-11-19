@@ -1,4 +1,5 @@
 {% extends "layouts/page.html" %}
+{% load form_layout %}
 {% load static %}
 {% block title %}Veranstaltung anlegen{% endblock %}
 {% block width %}narrow{% endblock %}
@@ -9,7 +10,7 @@
 <form method="post" class="flex flex-col gap-6" data-event-form>{% csrf_token %}
   {{ form.non_field_errors }}
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-veranstaltung"><div class="card-body gap-4">
-    <div class="flex flex-col gap-2">{% for field in form.event_fields %}{{ field.as_field_group }}{% endfor %}</div>
+    {% field_rows form form.event_fields as rows %}<div class="flex flex-col gap-2">{% include "django/forms/_rows.html" %}</div>
   </div></section>
 
   {% include "events/_target_groups.html" %}
@@ -19,20 +20,20 @@
     {{ form.dates.as_field_group }}
     <div class="flex flex-col gap-2" data-dates-for="once">
       <p class="text-sm text-base-content/70">Ein Termin, z. B. ein Wettkampf oder ein Lehrgang über das Wochenende. Weitere Termine kannst du danach ergänzen.</p>
-      <div class="grid gap-x-4 sm:grid-cols-2">{% for field in form.once_fields %}{{ field.as_field_group }}{% endfor %}</div>
+      {% field_rows form form.once_fields as rows %}<div class="flex flex-col gap-2">{% include "django/forms/_rows.html" %}</div>
     </div>
     <div class="flex flex-col gap-2" data-dates-for="weekly">
       <p class="text-sm text-base-content/70">Regelmäßig zur selben Zeit, z. B. ein Training jede Woche oder ein Termin am 1. Samstag im Monat. Das Portal legt die Termine bis zu einem Jahr im Voraus an.</p>
       {{ form.weekdays.as_field_group }}
       {{ form.repeat.as_field_group }}
-      <div class="grid gap-x-4 sm:grid-cols-2">{% for field in form.weekly_fields %}{% if field.name != "weekdays" and field.name != "repeat" %}{{ field.as_field_group }}{% endif %}{% endfor %}</div>
+      {% field_rows form form.weekly_fields exclude="weekdays repeat" as rows %}<div class="flex flex-col gap-2">{% include "django/forms/_rows.html" %}</div>
     </div>
     <p class="text-sm text-base-content/70" data-dates-for="later">Die Termine legst du später auf der Veranstaltung an.</p>
   </div></section>
 
   <section class="card bg-base-100 shadow-sm" aria-labelledby="h-team" data-dates-for="once weekly"><div class="card-body gap-4">
     <div><h2 class="card-title" id="h-team">Übungsleiter (optional)</h2><p class="text-sm text-base-content/70">Bei wiederkehrenden Terminen wird die Person fest eingeteilt. Weitere trägst du danach ein.</p></div>
-    <div class="grid gap-x-4 sm:grid-cols-2">{% for field in form.team_fields %}{{ field.as_field_group }}{% endfor %}</div>
+    {% field_rows form form.team_fields as rows %}<div class="flex flex-col gap-2">{% include "django/forms/_rows.html" %}</div>
   </div></section>
 
   <div class="action-bar"><button type="submit" class="btn btn-primary">Speichern</button><a class="btn" href="{% url 'event_list' %}">Abbrechen</a></div>

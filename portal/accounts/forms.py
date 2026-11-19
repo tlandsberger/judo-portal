@@ -16,6 +16,8 @@ class RolesField(forms.MultipleChoiceField):
 
 
 class InvitationForm(forms.Form):
+    layout = (("first_name", "last_name"),)
+
     email = forms.EmailField(label="E-Mail")
     first_name = forms.CharField(label="Vorname", max_length=100, required=False)
     last_name = forms.CharField(label="Nachname", max_length=100, required=False)
@@ -41,6 +43,8 @@ class InvitationForm(forms.Form):
 class UserForm(forms.ModelForm):
     """Name und Rollen eines Benutzers (Benutzerverwaltung)."""
 
+    layout = (("first_name", "last_name"),)
+
     class Meta:
         model = User
         fields = ("first_name", "last_name")
@@ -52,6 +56,8 @@ class UserForm(forms.ModelForm):
 
 class ProfileForm(forms.ModelForm):
     """„Meine Daten“: Name und Telefon, die jeder Benutzer selbst pflegt."""
+
+    layout = (("first_name", "last_name"),)
 
     class Meta:
         model = User

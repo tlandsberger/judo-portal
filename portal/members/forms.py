@@ -24,6 +24,14 @@ class WeightInput(forms.TextInput):
 class MemberForm(forms.ModelForm):
     """Alle Daten eines Mitglieds (Abteilungsleitung)."""
 
+    layout = (
+        ("first_name", "last_name"),
+        ("birth_date", "gender"),
+        ("joined_on", "left_on"),
+        ("email", "phone"),
+        ("grade", "weight"),
+    )
+
     class Meta:
         model = Member
         fields = (
@@ -56,6 +64,8 @@ class MemberForm(forms.ModelForm):
 
 class SelfServiceForm(forms.ModelForm):
     """Was Mitglieder und Eltern selbst pflegen: Kontakt- und Judo-Daten."""
+
+    layout = (("email", "phone"), ("grade", "weight"))
 
     class Meta:
         model = Member

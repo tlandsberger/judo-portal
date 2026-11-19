@@ -336,23 +336,35 @@ def can_decide(user: Any) -> bool:
     return bool(user.is_authenticated and user.has_role(*DECIDE))
 
 
-def _decide(claim: Claim, by: User, status: ClaimStatus, feedback: str = "") -> None:
-    if claim.status != ClaimStatus.SUBMITTED:
+def _decide(claim: Claim, by: User, status: ClaimStatus, feedback: str = "") -> bool:
+    """Entscheiden; zurückgeben geht auch nach der Freigabe (Reklamation). Liefert, ob eine Freigabe zurückgenommen
+    wurde."""
+    allowed = (
+        (ClaimStatus.SUBMITTED, ClaimStatus.APPROVED) if status == ClaimStatus.RETURNED else (ClaimStatus.SUBMITTED,)
+    )
+    if claim.status not in allowed:
         raise BillingError("Die Abrechnung ist nicht (mehr) eingereicht.")
+    reopened = claim.status == ClaimStatus.APPROVED
+    if reopened:
+        claim.corrected_from = claim.decided_at
     claim.status = status
     claim.decided_at = timezone.now()
     claim.decided_by = by
     claim.decided_by_name = by.display_name
     claim.feedback = feedback
-    claim.save(update_fields=["status", "decided_at", "decided_by", "decided_by_name", "feedback"])
-    verb = "freigegeben" if status == ClaimStatus.APPROVED else f"zurückgegeben: {feedback}"
+    claim.save(update_fields=["status", "decided_at", "decided_by", "decided_by_name", "feedback", "corrected_from"])
+    if status == ClaimStatus.APPROVED:
+        verb = "freigegeben" + (" (korrigiert)" if claim.is_corrected else "")
+    else:
+        verb = f"{'nach der Freigabe ' if reopened else ''}zurückgegeben: {feedback}"
     audit.log(
         by,
         audit.Area.BILLING,
-        "approve" if status == ClaimStatus.APPROVED else "send_back",
+        "approve" if status == ClaimStatus.APPROVED else ("reopen" if reopened else "send_back"),
         f"Abrechnung {claim.month_label} von {claim.member.display_name} {verb}",
         member=claim.member_id,
     )
+    return reopened
 
 
 @transaction.atomic
@@ -363,11 +375,15 @@ def approve(claim: Claim, by: User) -> None:
 
 @transaction.atomic
 def send_back(claim: Claim, by: User, feedback: str) -> None:
-    """Zurückgeben: die Termine sind wieder offen, der Übungsleiter korrigiert und reicht erneut ein."""
+    """Zurückgeben: die Termine sind wieder offen, der Übungsleiter korrigiert und reicht erneut ein.
+
+    Auch eine freigegebene Abrechnung lässt sich so reklamieren, z. B. wenn die Geschäftsstelle Mängel findet. Sie
+    merkt sich die zurückgenommene Freigabe; nach der erneuten Freigabe weist das PDF sie als korrigiert aus.
+    """
     if not feedback.strip():
         raise BillingError("Schreib bitte kurz, was geändert werden soll.")
-    _decide(claim, by, ClaimStatus.RETURNED, feedback.strip())
-    transaction.on_commit(lambda: notices.decided(claim))
+    reopened = _decide(claim, by, ClaimStatus.RETURNED, feedback.strip())
+    transaction.on_commit(lambda: notices.decided(claim, reopened=reopened))
 
 
 # Überblick für die Abteilungsleitung
@@ -380,6 +396,61 @@ def claims(month: date | None = None, status: str | None = None) -> QuerySet[Cla
     if status:
         rows = rows.filter(status=status)
     return rows.order_by("-month", "member__last_name", "member__first_name")
+
+
+@dataclass
+class ReviewLine:
+    line: ClaimLine
+    too_long: bool  # mehr Minuten als der Termin dauert
+
+
+@dataclass
+class ReviewGroup:
+    """Ein Termin mit allen abgerechneten Stunden aller Übungsleiter (Prüfansicht)."""
+
+    occurrence: Any
+    lines: list[ReviewLine] = field(default_factory=list)
+
+    @property
+    def total_minutes(self) -> int:
+        return sum(row.line.minutes for row in self.lines)
+
+    @property
+    def total_amount(self) -> Decimal:
+        return sum((row.line.amount for row in self.lines), Decimal("0"))
+
+    @property
+    def has_issue(self) -> bool:
+        return self.occurrence.is_cancelled or any(row.too_long for row in self.lines)
+
+
+REVIEW_STATUSES = (ClaimStatus.SUBMITTED, ClaimStatus.APPROVED)
+
+
+def review(month: date, only_pending: bool = False) -> list[ReviewGroup]:
+    """Prüfansicht: eingereichte (und freigegebene) Stunden eines Monats über alle Übungsleiter, je Termin.
+
+    Markiert, was auffällt: abgesagte Termine und mehr Minuten, als der Termin dauert.
+    """
+    statuses = (ClaimStatus.SUBMITTED,) if only_pending else REVIEW_STATUSES
+    lines = (
+        ClaimLine.objects.filter(claim__month=first_of_month(month), claim__status__in=statuses)
+        .select_related("claim__member", "participation__occurrence__event")
+        .order_by("participation__occurrence__starts_at", "participation__occurrence_id", "claim__member__last_name")
+    )
+    groups: dict[int, ReviewGroup] = {}
+    for line in lines:
+        occurrence = line.participation.occurrence
+        group = groups.setdefault(occurrence.pk, ReviewGroup(occurrence))
+        group.lines.append(ReviewLine(line, too_long=line.minutes > occurrence.minutes))
+    return list(groups.values())
+
+
+def review_month(only_pending: bool = False) -> date | None:
+    """Standard der Prüfansicht: der jüngste Monat mit zu prüfenden Abrechnungen, sonst der jüngste überhaupt."""
+    pending = Claim.objects.filter(status=ClaimStatus.SUBMITTED).order_by("-month").values_list("month", flat=True)
+    latest = Claim.objects.filter(status__in=REVIEW_STATUSES).order_by("-month").values_list("month", flat=True)
+    return pending.first() or (None if only_pending else latest.first())
 
 
 def pending_claims() -> QuerySet[Claim]:

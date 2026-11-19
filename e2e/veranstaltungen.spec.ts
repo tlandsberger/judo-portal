@@ -89,6 +89,12 @@ test("Lehrgang anlegen, Übungsleiter eintragen, Kind mit Gewicht anmelden, Trai
   await admin.getByRole("button", { name: "Für diesen Termin anpassen" }).click();
   await expect(admin.getByLabel("Bezeichnung")).toHaveValue("Kinder und Jugend");
   await admin.getByLabel("Alter bis").fill("12");
+  // Entfernen per Knopf statt Kästchen; wie das Hinzufügen gilt es mit „Speichern“
+  await expect(admin.getByRole("checkbox", { name: "Zielgruppe entfernen" })).toHaveCount(0);
+  await admin.getByRole("button", { name: "Weitere Zielgruppe hinzufügen" }).click();
+  await admin.getByLabel("Bezeichnung").nth(1).fill("Zu viel");
+  await admin.getByRole("button", { name: "Zielgruppe entfernen" }).nth(1).click();
+  await expect(admin.getByLabel("Bezeichnung").nth(1)).toBeHidden();
   await expectNoA11yViolations(admin);
   await admin.getByRole("button", { name: "Speichern" }).click();
   await expect(admin.getByText("Zielgruppen für diesen Termin gespeichert.")).toBeVisible();

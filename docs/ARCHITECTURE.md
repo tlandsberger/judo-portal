@@ -52,7 +52,7 @@ Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kom
 | Administrator (`admin`) | Technische Rolle: alles, inkl. technischer Verwaltung (Django-Admin unter `/technik/`) |
 
 Eltern sind keine Rolle: Ihr Benutzer wird mit den Kindern verknüpft (bis zu deren 18. Geburtstag). Was ein Benutzer
-sieht, ergibt sich aus Rollen und Verknüpfungen; geprüft wird immer auf dem Server (`portal/members/services.py`).
+sieht, ergibt sich aus Rollen und Verknüpfungen; geprüft wird immer auf dem Server (`portal/members/services.py`). Feste Rollen statt Django-Gruppen: ADR 0022.
 Unter „Meine Daten“ pflegen Mitglieder und Eltern Kontakt- und Judo-Daten sowie Interessen selbst. Unter „Termine“
 sehen sie je Mitglied die passenden Termine (Zielgruppen) und melden an oder ab.
 

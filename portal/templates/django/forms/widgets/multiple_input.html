@@ -1,4 +1,4 @@
-{% with id=widget.attrs.id %}<div{% if id %} id="{{ id }}"{% endif %} class="flex flex-col gap-2 py-1{% if widget.attrs.class %} {{ widget.attrs.class }}{% endif %}">{% for group, options, index in widget.optgroups %}{% if group %}
+{% comment %}Optionsgruppe (Checkboxen, Radios): bis drei Optionen nebeneinander, vier in zwei Spalten, mehr in drei.{% endcomment %}{% with id=widget.attrs.id count=widget.optgroups|length %}<div{% if id %} id="{{ id }}"{% endif %} class="{% if count == 4 %}grid grid-cols-2 gap-x-6 gap-y-2{% elif count > 4 %}grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3{% else %}flex flex-wrap gap-x-6 gap-y-2{% endif %} py-1{% if widget.attrs.class %} {{ widget.attrs.class }}{% endif %}">{% for group, options, index in widget.optgroups %}{% if group %}
   <div><span class="fieldset-legend text-sm">{{ group }}</span>{% endif %}{% for option in options %}<div>
     {% include option.template_name with widget=option %}</div>{% endfor %}{% if group %}
   </div>{% endif %}{% endfor %}

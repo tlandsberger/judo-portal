@@ -7,6 +7,7 @@ urlpatterns = [
     path("abrechnung/<int:year>/<int:month>/", views.billing_month, name="billing_month"),
     path("abrechnung/<int:year>/<int:month>/einreichen/", views.billing_submit, name="billing_submit"),
     path("abrechnung/alle/", views.claim_list, name="claim_list"),
+    path("abrechnung/alle/pruefen/", views.claim_review, name="claim_review"),
     path("abrechnung/alle/<int:year>-<int:month>.csv", views.claim_csv, name="claim_csv"),
     path("abrechnung/eingereicht/<int:pk>/", views.claim_detail, name="claim_detail"),
     path("abrechnung/eingereicht/<int:pk>/freigeben/", views.claim_approve, name="claim_approve"),

@@ -113,6 +113,7 @@ def test_form_offers_templates(client, head):
     page = client.get(reverse("event_create")).content.decode()
     assert "Aus Vorlage übernehmen" in page
     assert '"min_weight": "60,5"' in page
+    assert "data-target-group-remove" in page and "Zielgruppe entfernen</button>" in page  # Knopf statt Kästchen
 
 
 def test_preview_only_for_managers(client, head, trainer, child):
