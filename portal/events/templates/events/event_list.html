@@ -5,7 +5,7 @@
 {% block heading %}Veranstaltungen{% endblock %}
 {% block heading_extra %}{% help_link "veranstaltungen" %}{% endblock %}
 {% block primary %}{% if can_manage %}<a class="btn btn-primary" href="{% url 'event_create' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Veranstaltung anlegen</a>{% endif %}{% endblock %}
-{% block more %}{% if can_manage %}<li><a href="{% url 'target_group_list' %}"><i class="bi bi-bullseye" aria-hidden="true"></i> Zielgruppen-Vorlagen</a></li><li><a href="{% url 'role_list' %}"><i class="bi bi-person-badge" aria-hidden="true"></i> Rollen</a></li><li><a href="{% url 'event_type_list' %}"><i class="bi bi-tags" aria-hidden="true"></i> Veranstaltungsarten</a></li>{% endif %}{% endblock %}
+{% block more %}{% if can_manage %}<li><a href="{% url 'target_group_list' %}"><i class="bi bi-bullseye" aria-hidden="true"></i> Zielgruppen-Vorlagen</a></li><li><a href="{% url 'role_list' %}"><i class="bi bi-person-badge" aria-hidden="true"></i> Rollen</a></li><li><a href="{% url 'event_type_list' %}"><i class="bi bi-tags" aria-hidden="true"></i> Veranstaltungsarten</a></li><li><a href="{% url 'closure_list' %}"><i class="bi bi-calendar-x" aria-hidden="true"></i> Ferien und Feiertage</a></li>{% endif %}{% endblock %}
 {% block intro %}Trainings, Wettkämpfe, Lehrgänge und Prüfungen mit ihren Terminen und Übungsleitern.{% endblock %}
 {% block page %}
 <section class="card bg-base-100 shadow-sm" aria-labelledby="h-veranstaltungen"><div class="card-body">

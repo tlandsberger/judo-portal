@@ -1,0 +1,1 @@
+{# Badge eines abgesagten Termins; bei Ferien oder Feiertagen mit deren Namen (ADR 0026). Erwartet occurrence, optional small. #}<span class="badge badge-soft badge-error{% if small %} badge-sm{% endif %}">{% if occurrence.closure_period_id %}fällt aus: {{ occurrence.closure_period.closure.name }}{% else %}abgesagt{% endif %}</span>

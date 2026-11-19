@@ -33,7 +33,7 @@
           <div class="font-semibold">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr</div>
           <div class="text-sm text-base-content/70">{{ occurrence.place|default:"Ort folgt" }}</div>
           <div class="mt-1 flex flex-wrap gap-1">
-            {% if occurrence.is_cancelled %}<span class="badge badge-soft badge-error badge-sm">abgesagt</span>
+            {% if occurrence.is_cancelled %}{% include "events/_cancelled.html" with small=True %}
             {% elif p.status == "registered" %}<span class="badge badge-soft badge-primary badge-sm">angemeldet</span>
             {% elif p.status == "waitlist" %}<span class="badge badge-neutral badge-sm">Warteliste</span>
             {% elif p.status == "pending" %}<span class="badge badge-neutral badge-sm">noch nicht bestätigt</span>

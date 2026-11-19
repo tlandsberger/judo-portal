@@ -402,8 +402,10 @@ class ScheduleForm(forms.ModelForm):
             "valid_until",
             "opens_hours_before",
             "closes_hours_before",
+            "closures",
         )
         widgets = {
+            "closures": forms.CheckboxSelectMultiple(),
             "start_time": TimeInput(),
             "end_time": TimeInput(),
             "valid_from": DateInput(),
@@ -744,4 +746,52 @@ class ExportForm(forms.Form):
         data = super().clean() or {}
         if data.get("start") and data.get("end") and data["start"] > data["end"]:
             raise forms.ValidationError("„Von“ liegt nach „Bis“.")
+        return data
+
+
+class ClosureImportForm(forms.Form):
+    """iCal-Datei mit Ferien oder Feiertagen, z. B. von schulferien.org (ADR 0026)."""
+
+    file = forms.FileField(
+        label="iCal-Datei (.ics)",
+        help_text="Ferien oder Feiertage, z. B. von schulferien.org. Du kannst beide Dateien nacheinander importieren.",
+    )
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["file"].widget.attrs["accept"] = ".ics,text/calendar"
+
+    def clean_file(self) -> Any:
+        upload = self.cleaned_data["file"]
+        if upload.size > 1024 * 1024:
+            raise forms.ValidationError("Die Datei ist größer als 1 MB.")
+        if not upload.name.lower().endswith(".ics"):
+            raise forms.ValidationError("Bitte eine iCal-Datei (.ics) wählen.")
+        return upload
+
+
+class ClosurePeriodForm(forms.Form):
+    """Zeitraum von Hand, falls ein Import fehlt (z. B. bewegliche Ferientage der Schule)."""
+
+    layout = (("closure", "name"), ("first", "last"))
+
+    closure = forms.CharField(
+        label="Gehört zu",
+        max_length=80,
+        help_text="Z. B. „Herbstferien“ oder „Gesetzliche Feiertage“; vorhandene wählen oder neu eingeben.",
+    )
+    name = forms.CharField(label="Bezeichnung", max_length=120, help_text="Z. B. „Brückentag“.")
+    first = forms.DateField(label="Von", widget=DateInput())
+    last = forms.DateField(label="Bis", widget=DateInput(), required=False, help_text="Leer heißt: nur ein Tag.")
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["closure"].widget.attrs["list"] = "ferien-und-feiertage"
+
+    def clean(self) -> dict[str, Any]:
+        data = super().clean() or {}
+        if data.get("first") and not data.get("last"):
+            data["last"] = data["first"]
+        if data.get("first") and data.get("last") and data["last"] < data["first"]:
+            self.add_error("last", "„Bis“ liegt vor „Von“.")
         return data

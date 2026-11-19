@@ -1,0 +1,39 @@
+{% extends "layouts/page.html" %}
+{% load help %}
+{% block title %}Ferien und Feiertage importieren{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block back_url %}{% url 'closure_list' %}{% endblock %}
+{% block back_label %}Ferien und Feiertage{% endblock %}
+{% block heading %}Importieren{% endblock %}
+{% block heading_extra %}{% help_link "veranstaltungen" %}{% endblock %}
+{% block intro %}Lade bei schulferien.org die iCal-Datei für Schleswig-Holstein herunter: einmal die Ferien, einmal die Feiertage. Jede Ferienart wird ein eigener Eintrag (z. B. „Herbstferien“), alle Feiertage zusammen „Gesetzliche Feiertage“.{% endblock %}
+{% block page %}
+{% if preview %}
+<section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-vorschau"><div class="card-body gap-4">
+  <h2 class="card-title" id="h-vorschau">Vorschau</h2>
+  {% for name, group in preview.groups.items %}
+  <div>
+    <h3 class="font-semibold">{{ name }}</h3>
+    <ul class="mt-1 text-sm">
+      {% for row in group.new %}<li><span class="badge badge-soft badge-primary badge-sm">neu</span> {{ row.name }}: {{ row.first|date:"d.m.Y" }}{% if row.last != row.first %} – {{ row.last|date:"d.m.Y" }}{% endif %}</li>{% endfor %}
+      {% for row in group.changed %}<li><span class="badge badge-ghost badge-sm">geändert</span> {{ row.name }}: {{ row.first|date:"d.m.Y" }}{% if row.last != row.first %} – {{ row.last|date:"d.m.Y" }}{% endif %}</li>{% endfor %}
+      {% for row in group.known %}<li class="text-base-content/70">schon vorhanden: {{ row.name }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+  {% if preview.new_count %}
+  <form method="post" class="flex flex-col gap-3">{% csrf_token %}
+    <p class="text-sm text-base-content/70">Termine von Zeitplänen, die diese Ferien oder Feiertage ausgewählt haben, fallen danach aus. Wer schon angemeldet oder eingeteilt ist, bekommt eine Nachricht.</p>
+    <div class="action-bar"><button class="btn btn-primary" name="action" value="confirm">{{ preview.new_count }} Zeitr{{ preview.new_count|pluralize:"aum,äume" }} übernehmen</button><a class="btn" href="{% url 'closure_list' %}">Abbrechen</a></div>
+  </form>
+  {% else %}<p>Alles schon vorhanden, es gibt nichts zu übernehmen.</p>{% endif %}
+</div></section>
+{% endif %}
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-datei"><div class="card-body gap-4">
+  <h2 class="card-title" id="h-datei">{% if preview %}Andere Datei{% else %}Datei wählen{% endif %}</h2>
+  <form method="post" enctype="multipart/form-data" class="flex flex-col gap-4">{% csrf_token %}
+    {{ form }}
+    <div>{% if preview %}<button class="btn btn-outline" type="submit">Vorschau anzeigen</button>{% else %}<div class="action-bar"><button class="btn btn-primary" type="submit">Vorschau anzeigen</button><a class="btn" href="{% url 'closure_list' %}">Abbrechen</a></div>{% endif %}</div>
+  </form>
+</div></section>
+{% endblock %}

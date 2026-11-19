@@ -23,7 +23,7 @@ from portal.core import audit
 from portal.members import services as members
 from portal.members.models import LinkKind, Member, MemberLink, grade_rank
 
-from . import notices
+from . import closures, notices
 from .models import (
     Criteria,
     Event,
@@ -482,7 +482,7 @@ def on_schedule(schedule: Schedule, day: date) -> bool:
 
 
 @transaction.atomic
-def generate(schedule: Schedule, today: date | None = None) -> int:
+def generate(schedule: Schedule, today: date | None = None, *, sync_closures: bool = True) -> int:
     """Erzeugt fehlende Termine eines Zeitplans bis zum Gültigkeitsende, höchstens 12 Monate im Voraus."""
     today = today or timezone.localdate()
     start = max(schedule.valid_from, today)
@@ -505,6 +505,8 @@ def generate(schedule: Schedule, today: date | None = None) -> int:
             created += 1
     schedule.generated_until = end
     schedule.save(update_fields=["generated_until"])
+    if sync_closures and created and schedule.closures.exists():
+        closures.sync([schedule])  # neue Termine in Ferien und an Feiertagen fallen gleich aus (ADR 0026)
     return created
 
 
@@ -530,14 +532,14 @@ def _replaceable(occurrences: QuerySet[Occurrence]) -> QuerySet[Occurrence]:
 
 
 @transaction.atomic
-def regenerate(schedule: Schedule) -> list[Occurrence]:
+def regenerate(schedule: Schedule, *, sync_closures: bool = True) -> list[Occurrence]:
     """Nach einer Änderung am Zeitplan: zukünftige Termine neu erzeugen.
 
     Gibt die zukünftigen Termine zurück, die bleiben mussten (Anmeldungen, Abweichungen) und nicht mehr zum
     Zeitplan passen; über sie entscheidet die Abteilungsleitung.
     """
     _replaceable(schedule.occurrences.all()).delete()
-    generate(schedule)
+    generate(schedule, sync_closures=sync_closures)
     for occurrence in schedule.occurrences.filter(starts_at__gte=timezone.now(), is_modified=False):
         occurrence.apply_rule(schedule)
         occurrence.save(update_fields=["registration_opens_at", "registration_closes_at"])
@@ -616,6 +618,7 @@ def cancel_range(event: Event, first: date, last: date, by: User | None = None) 
 
 
 def uncancel(occurrence: Occurrence, by: User | None = None) -> None:
+    closures.exempt(occurrence)  # in Ferien oder an Feiertagen: bleibt trotzdem
     occurrence.cancelled_at = None
     occurrence.save(update_fields=["cancelled_at"])
     _audit(by, "uncancel", f"Absage von {_when(occurrence)} zurückgenommen")

@@ -35,6 +35,8 @@ E2E (Docker nötig): siehe `e2e/README.md`. Nach gewollten Design-Änderungen di
 - **„Übungsleiter“** für alle, die an einem Termin eine Rolle wie Trainer, Co-Trainer, Prüfer oder Betreuer haben –
   nie „Team“. Im Code heißt das weiter `team` (`is_team`, `team_role`, `ScheduleTeam`); feste Übungsleiter eines
   Zeitplans heißen in der Oberfläche „fest eingeteilt“.
+- **„Ferien und Feiertage“** für die Zeiträume, in denen Termine eines Zeitplans ausfallen – nicht „Schließzeiten“;
+  im Code `Closure`/`ClosurePeriod` (ADR 0026).
 - Passkeys heißen „Passkey“, nicht „Sicherheitsschlüssel“. Texte von allauth und anderen Paketen passen wir über
   `portal/locale/de/LC_MESSAGES/django.po` an (Du-Form, Begriffe wie oben); danach
   `uv run pybabel compile -d portal/locale -D django` und die `.mo` mit committen.

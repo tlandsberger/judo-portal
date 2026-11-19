@@ -24,7 +24,7 @@
     <li class="flex flex-col gap-2 border-base-300 py-4 not-last:border-b">
       <div>
         <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a>
-        {% if occurrence.is_cancelled %}<span class="badge badge-soft badge-error badge-sm">abgesagt</span>{% endif %}
+        {% if occurrence.is_cancelled %}{% include "events/_cancelled.html" with small=True %}{% endif %}
         <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %}</div>
       </div>
       {% if training.team_rows %}

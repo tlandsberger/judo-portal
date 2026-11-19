@@ -8,7 +8,7 @@
   <div class="list-col-grow">
     <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ event.title }}</a>
     <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr{% if occurrence.place %} · {{ occurrence.place }}{% endif %} · {{ event.event_type }}{% if not entry.rows %}{% for p in entry.team %} · {{ p.member.first_name }} ({{ p.role.name }}){% endfor %}{% endif %}</div>
-    {% if occurrence.is_cancelled %}<div class="mt-1"><span class="badge badge-soft badge-error badge-sm">abgesagt</span></div>
+    {% if occurrence.is_cancelled %}<div class="mt-1">{% include "events/_cancelled.html" with small=True %}</div>
     {% elif not several and entry.rows %}{% with item=entry.rows.0.item link=entry.rows.0.link %}<div class="mt-1 flex flex-wrap gap-1">{% include "events/_status.html" %}</div>{% endwith %}{% endif %}
     {% if occurrence.note %}<p class="mt-1 text-sm">{{ occurrence.note }}</p>{% endif %}
     {% if several and not occurrence.is_cancelled %}

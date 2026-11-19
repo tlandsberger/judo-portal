@@ -51,6 +51,7 @@
       <div class="grow">
         <h3 class="font-semibold">{% if can_manage %}<a class="link link-hover" href="{% url 'schedule_edit' event.pk schedule.pk %}">{{ schedule }}</a>{% else %}{{ schedule }}{% endif %}</h3>
         <p class="text-sm text-base-content/70">ab {{ schedule.valid_from|date:"d.m.Y" }}{% if schedule.valid_until %} bis {{ schedule.valid_until|date:"d.m.Y" }}{% else %}, bis auf Weiteres{% endif %} · Anmeldung {% if schedule.opens_hours_before is not None %}ab {{ schedule.opens_hours_before }} Std. vorher{% else %}sofort{% endif %} bis {% if schedule.closes_hours_before is not None %}{{ schedule.closes_hours_before }} Std. vorher{% else %}Beginn{% endif %}</p>
+        <p class="text-sm text-base-content/70">{% with names=schedule.closures.all %}{% if names %}Fällt aus in: {{ names|join:", " }}{% else %}Fällt in Ferien und an Feiertagen nicht aus{% endif %}{% endwith %}</p>
       </div>
     </div>
     {% if schedule.team.all %}
@@ -84,7 +85,7 @@
       <div class="list-col-grow">
         <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr</a>
         <div class="text-sm text-base-content/70">{% for p in occurrence.participations.all %}{% if p.role.is_team and p.is_active %}<span>{{ p.member.display_name }} ({{ p.role.name }})</span> {% endif %}{% endfor %}</div>
-        {% if occurrence.is_cancelled %}<span class="badge badge-soft badge-error badge-sm mt-1">abgesagt</span>{% elif occurrence.is_modified %}<span class="badge badge-ghost badge-sm mt-1">geändert</span>{% endif %}
+        {% if occurrence.is_cancelled %}<span class="mt-1">{% include "events/_cancelled.html" with small=True %}</span>{% elif occurrence.is_modified %}<span class="badge badge-ghost badge-sm mt-1">geändert</span>{% endif %}
       </div>
     </li>
     {% endfor %}
