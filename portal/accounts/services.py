@@ -306,11 +306,13 @@ def send_email_change(change: EmailChange) -> None:
         "by_other": change.requested_by_id not in (None, change.user_id),
         "requested_by": change.requested_by,
     }
-    EmailMultiAlternatives(
+    message = EmailMultiAlternatives(
         subject=settings.EMAIL_SUBJECT_PREFIX + "Neue E-Mail-Adresse bestätigen",
         body=render_to_string("accounts/email/email_change.txt", context),
         to=[change.email],
-    ).send()
+    )
+    message.attach_alternative(render_to_string("accounts/email/email_change.html", context), "text/html")
+    message.send()
 
 
 def cancel_email_change(user: User, by: User) -> None:

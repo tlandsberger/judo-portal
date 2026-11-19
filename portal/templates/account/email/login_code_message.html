@@ -1,0 +1,6 @@
+{% extends "email/base.html" %}
+{% block content %}
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">hier ist dein Anmeldecode für das Vereinsportal. Gib ihn im geöffneten Browserfenster ein:</p>
+      {% include "email/_code.html" %}
+      <p style="margin:0;font-size:14px;color:#5c5c5c;line-height:1.5;">Der Code ist nur kurz gültig. Hast du keinen Code angefordert, kannst du diese Mail ignorieren.</p>
+{% endblock %}
