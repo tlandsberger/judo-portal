@@ -368,3 +368,18 @@ def test_open_and_delete_from_the_entry(client, head):
         reverse("interest_delete", args=[interest.pk])
         in client.get(reverse("interest_edit", args=[interest.pk])).content.decode()
     )
+
+
+def test_note_for_all_participants_above_team_section(client, trainer, parent, child):
+    """Der Hinweis steht oben am Termin, nicht im Bereich „Übungsleiter“; nur wer leitet, bearbeitet ihn."""
+    occurrence = make_occurrence()
+    services.set_team(occurrence, services.own_member(trainer), role("Trainer"))
+    login(client, trainer)
+    url = reverse("occurrence_detail", args=[occurrence.pk])
+    client.post(reverse("occurrence_note", args=[occurrence.pk]), {"note": "Bitte Kata-Gürtel mitbringen"})
+    page = client.get(url).content.decode()
+    assert "Hinweis für alle Teilnehmer" in page
+    assert page.index("Hinweis für alle Teilnehmer") < page.index('id="h-team"')
+    login(client, parent)
+    page = client.get(url).content.decode()
+    assert "Hinweis für alle Teilnehmer" not in page and "Bitte Kata-Gürtel mitbringen" in page

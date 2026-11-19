@@ -429,6 +429,11 @@ class NoteForm(forms.ModelForm):
     class Meta:
         model = Occurrence
         fields = ("note",)
+        labels = {"note": "Hinweis für alle Teilnehmer"}
+        help_texts = {
+            "note": "Steht am Termin und in der Liste „Termine“, z. B. „Bitte Kata-Gürtel mitbringen“. "
+            "Bei einer Absage geht er mit der Nachricht raus."
+        }
 
 
 class CancelRangeForm(forms.Form):
