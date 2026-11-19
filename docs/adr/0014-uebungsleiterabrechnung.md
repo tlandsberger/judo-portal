@@ -33,6 +33,9 @@ Aufstellung, die die Abteilungsleitung freigegeben hat. Ausgezahlt wird weiterhi
     Markierung „korrigiert“, und das PDF ist als „korrigierte Abrechnung“ gekennzeichnet, mit dem Datum der ersetzten
     Freigabe. Die CSV hat dafür hinten die Spalten „Korrigiert“ und „Ersetzt Freigabe vom“. Protokolliert als
     `reopen`.
+- **Prüfansicht** (November 2026): Für die Abteilungsleitung alle eingereichten und freigegebenen Zeilen eines Monats
+  über alle Übungsleiter, nach Termin gruppiert (`services.review`). Markiert sind abgesagte Termine und Zeilen mit
+  mehr Minuten, als der Termin dauert; so fallen unplausible Abrechnungen vor der Freigabe auf.
 - **Schnappschuss:** Beim Einreichen werden Datum, Veranstaltung, Rolle, Minuten, Satz und Betrag als `ClaimLine`
   gespeichert. Spätere Änderungen an Terminen, Rollen oder Sätzen ändern eingereichte Abrechnungen nicht.
   - Betrag je Zeile kaufmännisch auf Cent gerundet (`Decimal`).

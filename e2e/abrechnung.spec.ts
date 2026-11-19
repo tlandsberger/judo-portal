@@ -105,6 +105,12 @@ test("Übungsleiterin bestätigt und reicht den Vormonat ein, die Abteilungsleit
   await admin.goto("/abrechnung/alle/");
   await expect(admin.getByRole("heading", { name: "Zu prüfen" })).toBeVisible();
   await expectNoA11yViolations(admin);
+  // Prüfansicht: alle eingereichten Stunden nach Termin
+  await admin.getByRole("link", { name: "Prüfansicht" }).click();
+  await expect(admin.getByRole("heading", { level: 1, name: "Prüfansicht" })).toBeVisible();
+  await expect(admin.getByRole("link", { name: "Dora Daumen" }).first()).toBeVisible();
+  await expectNoA11yViolations(admin);
+  await admin.goBack();
   await admin.getByRole("link", { name: `Dora Daumen · ${month}` }).click();
   await expectNoA11yViolations(admin);
   await admin.getByRole("button", { name: "Freigeben" }).click();

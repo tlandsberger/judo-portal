@@ -43,6 +43,21 @@ class SendBackForm(forms.Form):
     )
 
 
+class ReviewFilterForm(forms.Form):
+    month = forms.TypedChoiceField(label="Monat", required=False)
+    pending = forms.ChoiceField(
+        label="Abrechnungen",
+        required=False,
+        choices=[("", "eingereicht und freigegeben"), ("1", "nur zu prüfen")],
+    )
+
+    def __init__(self, *args: Any, months: list[Any], **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["month"].choices = [  # type: ignore[attr-defined]
+            (f"{month:%Y-%m}", Claim(month=month).month_label) for month in months
+        ]
+
+
 class ClaimFilterForm(forms.Form):
     month = forms.TypedChoiceField(label="Monat", required=False)
     status = forms.ChoiceField(label="Status", required=False, choices=[("", "alle"), *ClaimStatus.choices])

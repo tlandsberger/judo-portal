@@ -1,0 +1,55 @@
+{% extends "layouts/page.html" %}
+{% load help static %}
+{% block title %}Prüfansicht{% endblock %}
+{% block width %}wide{% endblock %}
+{% block back_url %}{% url 'claim_list' %}{% endblock %}
+{% block back_label %}Abrechnungen{% endblock %}
+{% block heading %}Prüfansicht{% endblock %}
+{% block heading_extra %}{% help_link "abrechnungen" %}{% endblock %}
+{% block intro %}Alle eingereichten Stunden eines Monats über alle Übungsleiter, nach Termin sortiert. So fällt auf, wenn etwas nicht zusammenpasst.{% endblock %}
+{% block scripts %}<script src="{% static 'js/auto-submit.js' %}"></script>{% endblock %}
+{% block page %}
+<form method="get" class="mb-6 flex flex-wrap items-end gap-3" data-auto-submit>
+  <div class="fieldset"><label class="fieldset-legend text-sm" for="r-month">Monat</label>
+    <select id="r-month" name="month" class="select">{% for value, label in form.fields.month.choices %}<option value="{{ value }}"{% if month and value == month|date:"Y-m" %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <div class="fieldset"><label class="fieldset-legend text-sm" for="r-pending">Abrechnungen</label>
+    <select id="r-pending" name="pending" class="select">{% for value, label in form.fields.pending.choices %}<option value="{{ value }}"{% if only_pending == True and value == "1" or only_pending == False and value == "" %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <noscript><button class="btn mb-1" type="submit">Anzeigen</button></noscript>
+</form>
+
+<section class="card bg-base-100 shadow-sm" aria-labelledby="h-termine"><div class="card-body">
+  <h2 class="card-title" id="h-termine">{% if month %}{{ month|date:"F Y" }}{% else %}Prüfansicht{% endif %}</h2>
+  {% if groups %}
+  <p class="text-sm text-base-content/70">{{ groups|length }} Termin{{ groups|length|pluralize:"e" }} · {{ total_minutes }} Minuten · {{ total_amount|floatformat:"2g" }} €{% if issues %} · <span class="font-semibold text-error">{{ issues }} auffällig</span>{% endif %}</p>
+  <ul class="list">
+    {% for group in groups %}{% with occurrence=group.occurrence %}
+    <li class="flex flex-col gap-1 border-base-300 py-4 not-last:border-b">
+      <div class="flex flex-wrap items-baseline justify-between gap-x-4">
+        <div>
+          <a class="link link-hover font-semibold" href="{% url 'occurrence_detail' occurrence.pk %}">{{ occurrence.event.title }}</a>
+          {% if occurrence.is_cancelled %}<span class="badge badge-soft badge-error badge-sm">abgesagt</span>{% endif %}
+          <div class="text-sm text-base-content/70">{{ occurrence.starts_at|date:"D d.m.Y" }}, {{ occurrence.starts_at|date:"H:i" }}–{{ occurrence.ends_at|date:"H:i" }} Uhr ({{ occurrence.minutes }} Min.)</div>
+        </div>
+      </div>
+      <ul class="list">
+        {% for row in group.lines %}{% with line=row.line claim=row.line.claim %}
+        <li class="list-row items-center px-0 py-2">
+          <div class="list-col-grow">
+            <a class="link link-hover" href="{% url 'claim_detail' claim.pk %}">{{ claim.member.display_name }}</a>
+            <span class="text-sm text-base-content/70">· {{ line.role_name }}</span>
+          </div>
+          <div class="flex flex-wrap items-center justify-end gap-2 text-sm">
+            {% if row.too_long %}<span class="badge badge-soft badge-error badge-sm">länger als der Termin</span>{% endif %}
+            {% include "billing/_badge.html" with label=claim.get_status_display %}
+            <span class="tabular-nums">{{ line.minutes }} Min.</span>
+            <span class="w-20 text-right tabular-nums max-sm:hidden">{{ line.amount|floatformat:"2g" }} €</span>{# Beträge ergeben sich aus den Sätzen; am Handy zählt die Übersicht #}
+          </div>
+        </li>
+        {% endwith %}{% endfor %}
+      </ul>
+    </li>
+    {% endwith %}{% endfor %}
+  </ul>
+  {% else %}<p class="text-base-content/70">{% if only_pending %}Gerade ist nichts zu prüfen.{% else %}Für diesen Monat sind keine Stunden eingereicht.{% endif %}</p>{% endif %}
+</div></section>
+{% endblock %}

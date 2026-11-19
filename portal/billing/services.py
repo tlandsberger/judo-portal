@@ -398,6 +398,61 @@ def claims(month: date | None = None, status: str | None = None) -> QuerySet[Cla
     return rows.order_by("-month", "member__last_name", "member__first_name")
 
 
+@dataclass
+class ReviewLine:
+    line: ClaimLine
+    too_long: bool  # mehr Minuten als der Termin dauert
+
+
+@dataclass
+class ReviewGroup:
+    """Ein Termin mit allen abgerechneten Stunden aller Übungsleiter (Prüfansicht)."""
+
+    occurrence: Any
+    lines: list[ReviewLine] = field(default_factory=list)
+
+    @property
+    def total_minutes(self) -> int:
+        return sum(row.line.minutes for row in self.lines)
+
+    @property
+    def total_amount(self) -> Decimal:
+        return sum((row.line.amount for row in self.lines), Decimal("0"))
+
+    @property
+    def has_issue(self) -> bool:
+        return self.occurrence.is_cancelled or any(row.too_long for row in self.lines)
+
+
+REVIEW_STATUSES = (ClaimStatus.SUBMITTED, ClaimStatus.APPROVED)
+
+
+def review(month: date, only_pending: bool = False) -> list[ReviewGroup]:
+    """Prüfansicht: eingereichte (und freigegebene) Stunden eines Monats über alle Übungsleiter, je Termin.
+
+    Markiert, was auffällt: abgesagte Termine und mehr Minuten, als der Termin dauert.
+    """
+    statuses = (ClaimStatus.SUBMITTED,) if only_pending else REVIEW_STATUSES
+    lines = (
+        ClaimLine.objects.filter(claim__month=first_of_month(month), claim__status__in=statuses)
+        .select_related("claim__member", "participation__occurrence__event")
+        .order_by("participation__occurrence__starts_at", "participation__occurrence_id", "claim__member__last_name")
+    )
+    groups: dict[int, ReviewGroup] = {}
+    for line in lines:
+        occurrence = line.participation.occurrence
+        group = groups.setdefault(occurrence.pk, ReviewGroup(occurrence))
+        group.lines.append(ReviewLine(line, too_long=line.minutes > occurrence.minutes))
+    return list(groups.values())
+
+
+def review_month(only_pending: bool = False) -> date | None:
+    """Standard der Prüfansicht: der jüngste Monat mit zu prüfenden Abrechnungen, sonst der jüngste überhaupt."""
+    pending = Claim.objects.filter(status=ClaimStatus.SUBMITTED).order_by("-month").values_list("month", flat=True)
+    latest = Claim.objects.filter(status__in=REVIEW_STATUSES).order_by("-month").values_list("month", flat=True)
+    return pending.first() or (None if only_pending else latest.first())
+
+
 def pending_claims() -> QuerySet[Claim]:
     return claims(status=ClaimStatus.SUBMITTED)
 

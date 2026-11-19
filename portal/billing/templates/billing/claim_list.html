@@ -4,12 +4,15 @@
 {% block width %}wide{% endblock %}
 {% block heading %}Abrechnungen{% endblock %}
 {% block heading_extra %}{% help_link "abrechnungen" %}{% endblock %}
-{% block more %}<li><a href="{% url 'rate_list' %}"><i class="bi bi-cash-stack" aria-hidden="true"></i> Stundensätze</a></li>{% endblock %}
+{% block more %}<li><a href="{% url 'claim_review' %}"><i class="bi bi-list-check" aria-hidden="true"></i> Prüfansicht</a></li><li><a href="{% url 'rate_list' %}"><i class="bi bi-cash-stack" aria-hidden="true"></i> Stundensätze</a></li>{% endblock %}
 {% block intro %}Monatsabrechnungen der Übungsleiter: prüfen, freigeben und für die Geschäftsstelle herunterladen.{% endblock %}
 {% block page %}
 {% if pending %}
 <section class="card mb-6 bg-base-100 shadow-sm" aria-labelledby="h-pruefen"><div class="card-body">
-  <h2 class="card-title" id="h-pruefen">Zu prüfen</h2>
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="card-title" id="h-pruefen">Zu prüfen</h2>
+    <a class="btn btn-outline btn-sm" href="{% url 'claim_review' %}?pending=1"><i class="bi bi-list-check" aria-hidden="true"></i> Prüfansicht</a>
+  </div>
   <ul class="list">{% for claim in pending %}{% include "billing/_claim_row.html" %}{% endfor %}</ul>
 </div></section>
 {% endif %}

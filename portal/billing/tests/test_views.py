@@ -196,3 +196,42 @@ def test_only_heads_may_reopen(client, trainer, head):
     response = client.post(reverse("claim_send_back", args=[claim.pk]), {"feedback": "x", "confirmed": "1"})
     assert response.status_code == 403
     assert Claim.objects.get().status == ClaimStatus.APPROVED
+
+
+def test_review_groups_hours_of_all_trainers_by_occurrence(client, trainer, other_trainer, head):
+    """Prüfansicht: Stunden aller Übungsleiter je Termin; auffällig sind abgesagte Termine und zu viele Minuten."""
+    from portal.events.models import Participation
+
+    set_rate(trainer)
+    set_rate(other_trainer, "Co-Trainer")
+    day = month_ago() + timedelta(days=2)
+    anna = make_shift(trainer, day)
+    occurrence = anna.occurrence
+    ben = events.set_team(occurrence, events.own_member(other_trainer), role("Co-Trainer"))
+    events.confirm(ben, occurrence.minutes + 30)  # mehr als der Termin
+    later = make_shift(trainer, day + timedelta(days=3))
+    services.submit(events.own_member(trainer), month_ago(), trainer)
+    claim_ben = services.submit(events.own_member(other_trainer), month_ago(), other_trainer)
+    services.approve(claim_ben, head)
+    login(client, head)
+    response = client.get(reverse("claim_review"))
+    groups = response.context["groups"]
+    assert [group.occurrence for group in groups] == [occurrence, later.occurrence]
+    assert {row.line.participation for row in groups[0].lines} == {anna, ben}
+    assert [row.too_long for row in groups[0].lines if row.line.participation == ben] == [True]
+    assert groups[0].has_issue and not groups[1].has_issue
+    page = response.content.decode()
+    assert "länger als der Termin" in page and "1 auffällig" in page
+    # Nur zu prüfen: Bens freigegebene Abrechnung fehlt
+    pending = client.get(reverse("claim_review"), {"pending": "1"}).context["groups"]
+    assert all(row.line.participation != ben for group in pending for row in group.lines)
+    assert Participation.objects.filter(pk=ben.pk).exists()
+
+
+def test_review_only_for_deciders(client, trainer, head):
+    login(client, trainer)
+    assert client.get(reverse("claim_review")).status_code == 403
+    login(client, head)
+    page = client.get(reverse("claim_review")).content.decode()
+    assert "Für diesen Monat sind keine Stunden eingereicht." in page
+    assert reverse("claim_review") in client.get(reverse("claim_list")).content.decode()

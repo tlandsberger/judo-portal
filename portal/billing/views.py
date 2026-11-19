@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from django.contrib import messages
@@ -18,7 +19,7 @@ from portal.events import services as events
 from portal.members.models import Member
 
 from . import pdf, services
-from .forms import ClaimFilterForm, RateForm, SendBackForm
+from .forms import ClaimFilterForm, RateForm, ReviewFilterForm, SendBackForm
 from .models import Claim, ClaimStatus, Rate
 from .services import BillingError
 
@@ -120,6 +121,33 @@ def claim_list(request: HttpRequest) -> HttpResponse:
             "claims": rows[:200],
             "month": month,
             "csv_months": [m for m in months if services.approved_for_month(m).exists()][:6],
+        },
+    )
+
+
+@login_required
+def claim_review(request: HttpRequest) -> HttpResponse:
+    """Prüfansicht: alle eingereichten Stunden eines Monats über alle Übungsleiter, nach Termin gruppiert."""
+    _decider(request)
+    months = services.claim_months()
+    form = ReviewFilterForm(request.GET or None, months=months)
+    only_pending = bool(form.is_valid() and form.cleaned_data["pending"])
+    month = services.review_month(only_pending)
+    if form.is_valid() and form.cleaned_data["month"]:
+        year, number = form.cleaned_data["month"].split("-")
+        month = _month(int(year), int(number))
+    groups = services.review(month, only_pending) if month else []
+    return render(
+        request,
+        "billing/claim_review.html",
+        {
+            "form": form,
+            "month": month,
+            "only_pending": only_pending,
+            "groups": groups,
+            "total_minutes": sum(group.total_minutes for group in groups),
+            "total_amount": sum((group.total_amount for group in groups), Decimal("0")),
+            "issues": sum(1 for group in groups if group.has_issue),
         },
     )
 

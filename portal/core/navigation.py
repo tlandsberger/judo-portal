@@ -138,7 +138,7 @@ def groups(context: Any) -> list[Group]:
                 "bi-cash-coin",
                 "claim_list",
                 "Abrechnungen prüfen, Stundensätze pflegen",
-                ("claim_detail", "rate_list", "rate_member"),
+                ("claim_detail", "claim_review", "rate_list", "rate_member"),
             )
         )
     if can("can_manage_users"):
