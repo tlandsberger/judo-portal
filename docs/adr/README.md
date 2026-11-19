@@ -25,5 +25,7 @@ Mit dem Neuaufbau im November 2026 beginnt die Nummerierung neu; die ADRs der Vo
 | [0018](0018-vertretungen-und-rhythmus.md) | Vertretungen und Rhythmus von Zeitplänen | angenommen |
 | [0019](0019-zielgruppen-empfehlung-und-je-termin.md) | Zielgruppen als Empfehlung oder Vorgabe, je Termin | angenommen |
 | [0020](0020-schnellzugang-per-code-und-qr-code.md) | Schnellzugang per Code, Quick-Link und QR-Code | angenommen |
+| [0021](0021-anhaenge-und-excel-export.md) | Dateianhänge im Datenverzeichnis und Excel-Export | angenommen |
+| [0022](0022-feste-rollen-statt-django-gruppen.md) | Feste Rollen statt Django-Gruppen und -Berechtigungen | angenommen |
 
 Vorlage: Kontext · Entscheidung · Konsequenzen · Verworfene Alternativen.
