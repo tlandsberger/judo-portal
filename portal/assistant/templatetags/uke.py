@@ -1,4 +1,6 @@
-"""Antworten von Uke anzeigen: Text sicher maskiert, dazu nur **fett** und einfache Listen („- …“)."""
+"""Antworten von Uke anzeigen: Text sicher maskiert, dazu nur **fett**, einfache Listen („- …“) und Termine, die
+die Antwort mit ihrer Marke [T12] nennt, als kleiner Link „Termin →“ (die Links prüft services.resolve_markers
+vor dem Speichern)."""
 
 from __future__ import annotations
 
@@ -11,14 +13,27 @@ from django.utils.safestring import SafeString, mark_safe
 register = template.Library()
 _BOLD = re.compile(r"\*\*(.+?)\*\*")
 _ITEM = re.compile(r"^\s*(?:[-*•]|\d+[.)])\s+")
-
-
-def _inline(line: str) -> str:
-    return _BOLD.sub(r"<strong>\1</strong>", escape(line))
+_MARKER = re.compile(r"\[(T\d+)\]")
 
 
 @register.filter
-def uke_text(value: str) -> SafeString:
+def uke_text(value: str, links: list[dict[str, str]] | None = None) -> SafeString:
+    refs = {link["ref"]: link for link in links or [] if link.get("ref")}
+
+    def marker(match: re.Match[str]) -> str:
+        link = refs.get(match.group(1))
+        if link is None:
+            return ""
+        # Titel und Zeit stehen schon im Text: hier nur ein kleiner Link, für Screenreader mit vollem Namen
+        return (
+            f'<a class="badge badge-sm badge-outline whitespace-nowrap no-underline" href="{escape(link["url"])}" '
+            f'aria-label="Termin öffnen: {escape(link["label"])}">Termin <i class="bi bi-arrow-right" '
+            'aria-hidden="true"></i></a>'
+        )
+
+    def _inline(line: str) -> str:
+        return _MARKER.sub(marker, _BOLD.sub(r"<strong>\1</strong>", escape(line)))
+
     parts: list[str] = []
     items: list[str] = []
     paragraph: list[str] = []

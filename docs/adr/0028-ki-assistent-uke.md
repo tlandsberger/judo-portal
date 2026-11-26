@@ -80,8 +80,12 @@ ein **nicht-modales** Chat-Fenster (`<dialog>` mit `show()`, Inhalt mit DaisyUI 
 - Ohne JavaScript schickt ein normales Formular die Frage ab.
 - Mit `static/js/uke.js` erscheinen Frage und „denkt nach“ sofort, die Antwort kommt als HTML-Schnipsel.
 - Antworten zeigt das Portal maskiert, mit nur **fett** und Listen.
-- Unter der Antwort stehen Links zu den Terminen und Hilfe-Kapiteln, die die Werkzeuge gefunden haben. Diese Links
-  stammen aus den Werkzeugen, nicht vom Modell, und stimmen deshalb immer.
+- Termine nennt das Modell mit einer Marke aus den Werkzeugen, z. B. „Kindertraining am Donnerstag um 17 Uhr
+  [T12]“. Das Portal prüft die Marken beim Speichern: Erfundene fallen weg, aus echten wird ein kleiner Link „Termin →“
+  direkt im Text.
+- Unter der Antwort stehen nur gefundene Termine und Hilfe-Kapitel, die der Text nicht schon nennt. So steht nichts
+  doppelt da, und wenn das Modell die Marken vergisst, fehlen die Links trotzdem nicht. Alle Links stammen aus dem
+  Portal, nicht vom Modell, und stimmen deshalb immer.
 
 ## Konsequenzen
 

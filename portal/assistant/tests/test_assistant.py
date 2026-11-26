@@ -337,3 +337,24 @@ def test_launcher_on_every_page_but_the_chat_itself(client):
     part = client.get(reverse("assistant"), {"teil": "1"}).content.decode()
     assert "data-uke-chat" in part and "<html" not in part
     assert client.post(reverse("assistant_new"), HTTP_X_UKE="1").status_code == 204
+
+
+@pytest.mark.django_db
+def test_named_occurrences_are_links_in_text_not_repeated_below(monkeypatch):
+    user = make_user("eltern@example.org")
+    first = make_occurrence(Event.objects.create(title="Kindertraining"), in_days=1)
+    second = make_occurrence(Event.objects.create(title="Randori"), in_days=2)
+    script = Script(
+        llm.Reply(tool_calls=[llm.ToolCall("c1", "termine_suchen", {})]),
+        llm.Reply(f"Morgen ist [T{first.pk}], erfunden ist [T999999]."),
+    )
+    monkeypatch.setattr(llm, "complete", script)
+
+    _, answer = services.ask(_ctx(user), Conversation.objects.create(user=user), "Was ist morgen?")
+
+    assert json.loads(script.calls[1][-1]["content"])["termine"][0]["marke"] == f"[T{first.pk}]"
+    assert answer.content == f"Morgen ist [T{first.pk}], erfunden ist ."
+    assert answer.extra_links == [tools._link(second)]  # nur, was der Text nicht nennt
+    html = uke_text(answer.content, answer.links)
+    assert f'href="/termine/{first.pk}/"' in html and 'aria-label="Termin öffnen: Kindertraining, ' in html
+    assert services.plain(answer) == "Morgen ist, erfunden ist ."

@@ -78,12 +78,24 @@ def _when(occurrence: Occurrence) -> str:
     return f"{WEEKDAYS[start.weekday()]}, {start:%d.%m.%Y}, {start:%H:%M}–{end:%H:%M} Uhr"
 
 
+def marker(occurrence: Occurrence) -> str:
+    """So nennt das Modell einen Termin in der Antwort; das Portal macht daraus einen Link (resolve_markers)."""
+    return f"[T{occurrence.pk}]"
+
+
 def _link(occurrence: Occurrence) -> dict[str, str]:
     start = timezone.localtime(occurrence.starts_at)
     return {
+        "ref": f"T{occurrence.pk}",
         "label": f"{occurrence.event.title}, {WEEKDAYS[start.weekday()]} {start:%d.%m. %H:%M}",
         "url": reverse("occurrence_detail", args=[occurrence.pk]),
     }
+
+
+def occurrence_links(pks: set[int]) -> dict[int, dict[str, str]]:
+    """Links zu Terminen nach ID; Termin-Seiten sehen alle angemeldeten Benutzer."""
+    rows = Occurrence.objects.select_related("event").filter(pk__in=pks)
+    return {occurrence.pk: _link(occurrence) for occurrence in rows}
 
 
 def _date(value: Any, name: str) -> date | None:
@@ -135,6 +147,7 @@ def search_occurrences(ctx: Context, args: dict[str, Any]) -> Result:
             _participants(ctx, entry.occurrence, names)
             | {
                 "termin_id": entry.occurrence.pk,
+                "marke": marker(entry.occurrence),
                 "titel": entry.occurrence.event.title,
                 "art": str(entry.occurrence.event.event_type),
                 "wann": _when(entry.occurrence),
@@ -205,6 +218,7 @@ def occurrence_details(ctx: Context, args: dict[str, Any]) -> Result:
     capacity = event.capacity
     data: dict[str, Any] = {
         "termin_id": occurrence.pk,
+        "marke": marker(occurrence),
         "titel": event.title,
         "art": str(event.event_type),
         "wann": _when(occurrence),

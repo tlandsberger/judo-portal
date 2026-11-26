@@ -24,7 +24,7 @@ def complete(messages: list[dict[str, Any]], tools: list[dict[str, Any]]) -> Rep
         if isinstance(data, dict) and "termine" in data:
             if not data["termine"]:
                 return Reply(f"Von {data['zeitraum']} habe ich keine Termine gefunden.")
-            lines = [f"- {t['titel']}: {t['wann']}" for t in data["termine"]]
+            lines = [f"- {t['titel']}: {t['wann']} {t['marke']}" for t in data["termine"]]
             return Reply(f"Ich habe {data['anzahl']} Termine gefunden:\n" + "\n".join(lines))
         if isinstance(data, list) and data:
             return Reply(f"Dazu steht in der Hilfe im Kapitel „{data[0]['kapitel']}“:\n{data[0]['text'][:300]}")
