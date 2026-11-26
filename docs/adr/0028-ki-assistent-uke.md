@@ -27,14 +27,18 @@ den Willen des anderen durch. „Kano“ (nach dem Gründer des Judo) haben wir 
 `ghcr.io/ggml-org/llama.cpp:server-vulkan`, als zweiter Container im Stack. Es ist nur im internen Docker-Netz
 erreichbar, ohne Traefik-Route.
 - Er nutzt die Arc-Grafik über Vulkan (`/dev/dri`), ohne Grafik läuft er nur auf der CPU, dann langsamer.
-- Modell: **Qwen3 8B** (4 Bit, `Q4_K_M`, etwa 5 GB), Werkzeugaufrufe im OpenAI-Format (`--jinja`), ohne
-  Denk-Modus. Der Container lädt das Modell beim ersten Start in ein eigenes Volume.
-- Im Test mit Beispieldaten hat das 8B-Modell „bald“, „der nächste“ und Wettkämpfe zuverlässiger erkannt als Qwen3 4B
-  (Instruct 2507). Das 4B-Modell bleibt die Ausweichlösung, wenn `manage.py assistant_benchmark` auf dem NUC zu
-  langsam ist (siehe `docs/betrieb.md`).
+- Modell: **Qwen3-30B-A3B Instruct 2507** (4 Bit, `Q4_K_M`, etwa 18 GB plus Kontext, Speichergrenze 24 GB),
+  Werkzeugaufrufe im OpenAI-Format (`--jinja`), ohne Denk-Modus. Der Container lädt das Modell beim ersten Start in
+  ein eigenes Volume.
+- Es ist ein Mixture-of-Experts-Modell, das je Token nur etwa 3 Milliarden Parameter rechnet. Es schreibt deshalb
+  schneller als ein dichtes 8B-Modell und ist trotzdem genauer.
+- Zuerst lief Qwen3 8B: Im Test mit Beispieldaten erkannte es „bald“, „der nächste“ und Wettkämpfe zuverlässiger als
+  Qwen3 4B, auf dem NUC schrieb es aber nur etwa 10 Tokens pro Sekunde, und die Antworten waren mittelmäßig.
+- Qwen3 8B (etwa 6 GB) bleibt die Ausweichlösung, wenn der Speicher knapp wird.
+- Eine Cloud (IONOS AI Model Hub) haben wir erwogen und verworfen: Daten bleiben lokal.
 - Kleine Modelle verketten Werkzeuge ungern. Deshalb liefert `termine_suchen` bei höchstens drei Treffern die
   Teilnehmer gleich mit, wenn der Benutzer sie sehen darf.
-- Links, die das Modell selbst schreibt, entfernt das Portal, weil sie oft erfunden sind.
+- Links, die das Modell selbst schreibt, entfernt das Portal, weil sie oft erfunden sind. Emojis auch.
 - Eigener Container statt im Portal-Image: Das Portal-Image bleibt klein, Renovate aktualisiert beide getrennt, der
   Modell-Dienst hat eine eigene Speichergrenze und ein Absturz trifft das Portal nicht. Ist er nicht erreichbar,
   antwortet Uke mit einem Hinweis, alles andere läuft weiter.
@@ -48,6 +52,14 @@ erreichbar, ohne Traefik-Route.
   `can_see_participants` …), ohne eigene Fachlogik. So sieht Uke genau das, was der Benutzer auch auf den Seiten
   sieht. Werkzeuge, die der Benutzer nicht nutzen darf, werden ihm gar nicht erst angeboten.
 - Höchstens vier Werkzeug-Runden je Frage, Eingaben auf 500 Zeichen und 60 Fragen je Stunde begrenzt.
+- In der ersten Runde jeder Frage muss das Modell ein Werkzeug aufrufen (`tool_choice: required`). Sonst beantwortet
+  es Rückfragen wie „Montag ist nicht der 01.12.“ aus dem Verlauf und rät dabei. Das kostet eine Runde, auch bei
+  „Danke“. Jede Runde ist auf 800 Tokens begrenzt; ohne Grenze schrieb Qwen3 8B mit der Werkzeugpflicht manchmal
+  endlos weiter.
+- Wochentage rechnet das Modell nicht selbst um: Der Systemprompt enthält die nächsten 14 Tage als Kalender, und
+  `termine_suchen` filtert mit `wochentag`.
+- Die Uhrzeit steht vor der aktuellen Frage, nicht im Systemprompt. So bleiben Systemprompt und Werkzeuge den ganzen
+  Tag gleich, und `llama-server` muss sie dank Prompt-Cache nicht bei jeder Frage neu einlesen.
 - Texte aus den Werkzeugen (Hinweise, Beschreibungen) sind laut Systemprompt nur Daten. Das allein schützt nicht
   sicher vor Prompt Injection. Deshalb gilt die nächste Regel.
 
@@ -80,9 +92,12 @@ ein **nicht-modales** Chat-Fenster (`<dialog>` mit `show()`, Inhalt mit DaisyUI 
 - Ohne JavaScript schickt ein normales Formular die Frage ab.
 - Mit `static/js/uke.js` erscheinen Frage und „denkt nach“ sofort, die Antwort kommt als HTML-Schnipsel.
 - Antworten zeigt das Portal maskiert, mit nur **fett** und Listen.
-- Termine nennt das Modell mit einer Marke aus den Werkzeugen, z. B. „Kindertraining am Donnerstag um 17 Uhr
+- Termine nennt das Modell mit einer Marke aus den Werkzeugen, z. B. „Kindertraining am Montag, 30.11., um 17 Uhr
   [T12]“. Das Portal prüft die Marken beim Speichern: Erfundene fallen weg, aus echten wird ein kleiner Link „Termin →“
   direkt im Text.
+- Datum und Wochentag im selben Absatz oder Listenpunkt setzt das Portal auf die des Termins. Modelle verrechnen sich
+  bei Wochentagen; so stimmt das Datum neben einem Link immer.
+- Steht die Marke allein („Trainer beim [T12] ist Anna“), zeigt der Link Titel, Tag und Uhrzeit aus der Datenbank.
 - Unter der Antwort stehen nur gefundene Termine und Hilfe-Kapitel, die der Text nicht schon nennt. So steht nichts
   doppelt da, und wenn das Modell die Marken vergisst, fehlen die Links trotzdem nicht. Alle Links stammen aus dem
   Portal, nicht vom Modell, und stimmen deshalb immer.

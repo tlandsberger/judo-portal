@@ -81,8 +81,12 @@ def parse(data: dict[str, Any]) -> Reply:
     return Reply(content=content, tool_calls=calls)
 
 
-def complete(messages: list[dict[str, Any]], tools: list[dict[str, Any]]) -> Reply:
-    """Eine Runde mit dem Modell: Verlauf und Werkzeuge hin, Text oder Werkzeugaufrufe zurück."""
+MAX_TOKENS = 800  # reicht für jede Antwort im Chat
+
+
+def complete(messages: list[dict[str, Any]], tools: list[dict[str, Any]], require_tool: bool = False) -> Reply:
+    """Eine Runde mit dem Modell: Verlauf und Werkzeuge hin, Text oder Werkzeugaufrufe zurück. ``require_tool``
+    zwingt das Modell, ein Werkzeug aufzurufen, statt aus dem Verlauf zu antworten."""
     url = settings.ASSISTANT_URL
     if url == FAKE:
         from . import fake
@@ -93,9 +97,12 @@ def complete(messages: list[dict[str, Any]], tools: list[dict[str, Any]]) -> Rep
         "messages": messages,
         "tools": tools,
         "temperature": 0.2,
+        "max_tokens": MAX_TOKENS,  # Schutz, falls sich das Modell in Wiederholungen verfängt
         # Qwen3 & Co.: ohne langes Nachdenken antworten, das kostet auf der CPU viel Zeit
         "chat_template_kwargs": {"enable_thinking": False},
     }
+    if require_tool and tools:
+        body["tool_choice"] = "required"
     request = urllib.request.Request(  # noqa: S310 – Adresse aus der Konfiguration, nur http(s)
         f"{url}/v1/chat/completions",
         data=json.dumps(body).encode(),

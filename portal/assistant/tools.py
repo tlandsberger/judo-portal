@@ -25,6 +25,7 @@ from portal.events import services as events
 from portal.events.models import Occurrence
 
 WEEKDAYS = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
+DAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
 MAX_DAYS = 62  # längster Zeitraum für eine Suche
 DEFAULT_DAYS = 14
 NAMES_UP_TO = 3  # bis zu so vielen Treffern stehen die Teilnehmer gleich dabei
@@ -48,7 +49,7 @@ class Context:
 @dataclass
 class Result:
     data: Any
-    links: list[dict[str, str]] = field(default_factory=list)
+    links: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -75,7 +76,7 @@ class ToolError(Exception):
 def _when(occurrence: Occurrence) -> str:
     start = timezone.localtime(occurrence.starts_at)
     end = timezone.localtime(occurrence.ends_at)
-    return f"{WEEKDAYS[start.weekday()]}, {start:%d.%m.%Y}, {start:%H:%M}–{end:%H:%M} Uhr"
+    return f"{DAYS[start.weekday()]}, {start:%d.%m.%Y}, {start:%H:%M}–{end:%H:%M} Uhr"
 
 
 def marker(occurrence: Occurrence) -> str:
@@ -83,16 +84,21 @@ def marker(occurrence: Occurrence) -> str:
     return f"[T{occurrence.pk}]"
 
 
-def _link(occurrence: Occurrence) -> dict[str, str]:
+def _link(occurrence: Occurrence) -> dict[str, Any]:
+    """``label`` für den Knopf unter der Antwort, ``text`` für die Marke im Satz. Beides kommt aus der Datenbank,
+    so stimmen Tag und Uhrzeit immer, auch wenn das Modell sich verrechnet."""
     start = timezone.localtime(occurrence.starts_at)
     return {
         "ref": f"T{occurrence.pk}",
         "label": f"{occurrence.event.title}, {WEEKDAYS[start.weekday()]} {start:%d.%m. %H:%M}",
+        "text": f"{occurrence.event.title} am {DAYS[start.weekday()]}, {start:%d.%m.}, um {start:%H:%M} Uhr",
+        "title": occurrence.event.title,
+        "day": start.date().isoformat(),
         "url": reverse("occurrence_detail", args=[occurrence.pk]),
     }
 
 
-def occurrence_links(pks: set[int]) -> dict[int, dict[str, str]]:
+def occurrence_links(pks: set[int]) -> dict[int, dict[str, Any]]:
     """Links zu Terminen nach ID; Termin-Seiten sehen alle angemeldeten Benutzer."""
     rows = Occurrence.objects.select_related("event").filter(pk__in=pks)
     return {occurrence.pk: _link(occurrence) for occurrence in rows}
@@ -105,6 +111,17 @@ def _date(value: Any, name: str) -> date | None:
         return date.fromisoformat(str(value)[:10])
     except ValueError as error:
         raise ToolError(f"{name} muss ein Datum im Format JJJJ-MM-TT sein.") from error
+
+
+def _weekday(value: Any) -> int | None:
+    """„Montag“, „montags“ oder „Mo“ → 0. Das Modell soll Wochentage nicht selbst in Daten umrechnen müssen."""
+    text = str(value or "").strip().lower()[:2]
+    if not text:
+        return None
+    for index, name in enumerate(WEEKDAYS):
+        if name.lower() == text:
+            return index
+    raise ToolError("wochentag muss ein Wochentag sein, z. B. Montag.")
 
 
 def _team(occurrence: Occurrence) -> list[str]:
@@ -123,6 +140,7 @@ def search_occurrences(ctx: Context, args: dict[str, Any]) -> Result:
     end = _date(args.get("bis"), "bis") or start + timedelta(days=DEFAULT_DAYS)
     end = min(max(end, start), start + timedelta(days=MAX_DAYS))
     text = str(args.get("suche") or "").strip().lower()
+    weekday = _weekday(args.get("wochentag"))
     flt = events.AgendaFilter(matching=False, mine=bool(args.get("nur_angemeldet")), end=end)
     found = []
     for entry in events.agenda(ctx.user, flt).entries:
@@ -131,6 +149,8 @@ def search_occurrences(ctx: Context, args: dict[str, Any]) -> Result:
             continue
         haystack = f"{occurrence.event.title} {occurrence.event.event_type} {occurrence.place}".lower()
         if text and text not in haystack:
+            continue
+        if weekday is not None and timezone.localtime(occurrence.starts_at).weekday() != weekday:
             continue
         found.append(entry)
     try:
@@ -295,6 +315,11 @@ TOOLS = (
                 "von": {"type": "string", "description": "Erster Tag, JJJJ-MM-TT. Standard: heute."},
                 "bis": {"type": "string", "description": "Letzter Tag, JJJJ-MM-TT. Standard: zwei Wochen nach von."},
                 "suche": {"type": "string", "description": "Optional: Teil des Titels, der Art oder des Orts."},
+                "wochentag": {
+                    "type": "string",
+                    "description": "Optional: nur Termine an diesem Wochentag, z. B. „Montag“ bei „Wer ist Montag "
+                    "Trainer?“. Mit anzahl 1 kommt der nächste Termin an diesem Tag.",
+                },
                 "anzahl": {
                     "type": "integer",
                     "description": "Nur die ersten so vielen Termine, z. B. 1 für „der nächste“. Bei höchstens 3 "

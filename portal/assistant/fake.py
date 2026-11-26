@@ -7,6 +7,7 @@ Fragen mit „Hilfe“ oder „wie“ durchsuchen die Hilfe; die Antwort fasst d
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from .llm import Reply, ToolCall
@@ -29,7 +30,7 @@ def complete(messages: list[dict[str, Any]], tools: list[dict[str, Any]]) -> Rep
         if isinstance(data, list) and data:
             return Reply(f"Dazu steht in der Hilfe im Kapitel „{data[0]['kapitel']}“:\n{data[0]['text'][:300]}")
         return Reply("Dazu habe ich nichts gefunden.")
-    text = str(last.get("content", "")).lower()
+    text = re.sub(r"^\[[\d:]+ Uhr\] ", "", str(last.get("content", ""))).lower()  # Uhrzeit vor der Frage
     names = {tool["function"]["name"] for tool in tools}
     if ("termin" in text or "training" in text) and "termine_suchen" in names:
         return Reply(tool_calls=[ToolCall("call_0", "termine_suchen", {})])
