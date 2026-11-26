@@ -30,7 +30,7 @@ const pages = [
   { path: "/hilfe/", heading: "Hilfe" },
   { path: "/hilfe/erste-schritte/", heading: "Erste Schritte" },
   { path: "/hilfe/veranstaltungen/", heading: "Veranstaltungen planen" },
-  { path: "/uke/", heading: "Uke" },
+  { path: "/uke/", heading: "KI-Assistent Uke" },
   { path: "/hilfe/uke/", heading: "Uke, der Assistent" },
 ];
 

@@ -8,7 +8,7 @@ Ohne JavaScript führt der Knopf zur Seite /uke/.
 </div>
 <dialog id="uke-panel" class="uke-panel card border border-base-300 bg-base-100 text-base-content shadow-2xl" aria-labelledby="uke-panel-titel" data-uke-panel data-src="{% url 'assistant' %}?teil=1" data-new="{% url 'assistant_new' %}">
   <div class="flex items-center gap-1 border-b border-base-300 px-4 py-2">
-    <h2 id="uke-panel-titel" class="flex-1 text-lg font-bold">Uke <span class="badge badge-ghost badge-sm align-middle font-normal">Testphase</span></h2>
+    <h2 id="uke-panel-titel" class="flex-1 text-lg font-bold">KI-Assistent Uke <span class="badge badge-ghost badge-sm align-middle font-normal">Testphase</span></h2>
     <button type="button" class="btn btn-ghost btn-sm btn-square" aria-label="Neues Gespräch" title="Neues Gespräch" data-uke-new><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
     <a href="{% url 'assistant' %}" class="btn btn-ghost btn-sm btn-square" aria-label="Als eigene Seite öffnen" title="Als eigene Seite öffnen"><i class="bi bi-arrows-angle-expand" aria-hidden="true"></i></a>
     <button type="button" class="btn btn-ghost btn-sm btn-square" aria-label="Schließen" title="Schließen" data-uke-close><i class="bi bi-x-lg" aria-hidden="true"></i></button>
