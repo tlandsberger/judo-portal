@@ -57,6 +57,8 @@ erreichbar, ohne Traefik-Route.
   „Danke“.
 - Wochentage rechnet das Modell nicht selbst um: Der Systemprompt enthält die nächsten 14 Tage als Kalender, und
   `termine_suchen` filtert mit `wochentag`.
+- Die Uhrzeit steht vor der aktuellen Frage, nicht im Systemprompt. So bleiben Systemprompt und Werkzeuge den ganzen
+  Tag gleich, und `llama-server` muss sie dank Prompt-Cache nicht bei jeder Frage neu einlesen.
 - Texte aus den Werkzeugen (Hinweise, Beschreibungen) sind laut Systemprompt nur Daten. Das allein schützt nicht
   sicher vor Prompt Injection. Deshalb gilt die nächste Regel.
 

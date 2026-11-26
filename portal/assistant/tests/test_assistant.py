@@ -408,6 +408,17 @@ def test_search_by_weekday_and_first_round_must_look_it_up(monkeypatch):
     assert script.required == [True, False]
 
 
+@pytest.mark.django_db
+def test_system_prompt_stays_the_same_all_day_for_the_prompt_cache(monkeypatch):
+    user = make_user("eltern@example.org")
+    script = Script(llm.Reply("Hallo."))
+    monkeypatch.setattr(llm, "complete", script)
+    services.ask(_ctx(user), Conversation.objects.create(user=user), "Hallo")
+    system, question = script.calls[0][0]["content"], script.calls[0][-1]["content"]
+    assert f"{timezone.localtime():%H:%M}" not in system and question.endswith("Uhr] Hallo")
+    assert services.system_prompt(user) == system
+
+
 def test_old_messages_keep_the_small_link():
     link = {"ref": "T5", "label": "Kindertraining, Mo 30.11. 17:00", "url": "/termine/5/"}
     html = uke_text("Kindertraining am Montag um 17 Uhr [T5]", [link])

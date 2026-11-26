@@ -156,7 +156,7 @@ def system_prompt(user: Any) -> str:
     return (
         "Du bist Uke, der Assistent im Vereinsportal „Wedeler TSV Judo“ der Judo-Abteilung im Wedeler TSV. "
         "Du antwortest kurz, freundlich und auf Deutsch in der Du-Form.\n"
-        f"Jetzt ist {tools.DAYS[now.weekday()]}, der {now:%d.%m.%Y}, {now:%H:%M} Uhr.\n"
+        f"Heute ist {tools.DAYS[now.weekday()]}, der {now:%d.%m.%Y}. Die Uhrzeit steht vor der Frage.\n"
         f"Kalender: {calendar(now.date())}.\n"
         f"Du sprichst mit {user.display_name}. Rollen: {', '.join(user.role_labels) or 'keine'}. "
         f"Eigene Mitglieder (eigenes Profil oder Kinder): {names}.\n"
@@ -201,7 +201,9 @@ def ask(ctx: tools.Context, conv: Conversation, text: str) -> tuple[Message, Mes
     text = check(user, text)
     messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt(user)}, *_history(conv)]
     question = Message.objects.create(conversation=conv, role=MessageRole.USER, content=text)
-    messages.append({"role": "user", "content": text})
+    # Die Uhrzeit steht nur an der aktuellen Frage: So bleibt der Systemprompt den ganzen Tag gleich, und der
+    # Modell-Server muss ihn mit den Werkzeugen nicht bei jeder Frage neu einlesen (Prompt-Cache).
+    messages.append({"role": "user", "content": f"[{timezone.localtime():%H:%M} Uhr] {text}"})
     available = {tool.name: tool for tool in tools.available(user)}
     specs = [tool.spec for tool in available.values()]
     links: list[dict[str, Any]] = []
