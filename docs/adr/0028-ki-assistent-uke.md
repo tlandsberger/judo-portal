@@ -54,7 +54,8 @@ erreichbar, ohne Traefik-Route.
 - Höchstens vier Werkzeug-Runden je Frage, Eingaben auf 500 Zeichen und 60 Fragen je Stunde begrenzt.
 - In der ersten Runde jeder Frage muss das Modell ein Werkzeug aufrufen (`tool_choice: required`). Sonst beantwortet
   es Rückfragen wie „Montag ist nicht der 01.12.“ aus dem Verlauf und rät dabei. Das kostet eine Runde, auch bei
-  „Danke“.
+  „Danke“. Jede Runde ist auf 800 Tokens begrenzt; ohne Grenze schrieb Qwen3 8B mit der Werkzeugpflicht manchmal
+  endlos weiter.
 - Wochentage rechnet das Modell nicht selbst um: Der Systemprompt enthält die nächsten 14 Tage als Kalender, und
   `termine_suchen` filtert mit `wochentag`.
 - Die Uhrzeit steht vor der aktuellen Frage, nicht im Systemprompt. So bleiben Systemprompt und Werkzeuge den ganzen
