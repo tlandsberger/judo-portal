@@ -1,0 +1,29 @@
+{% load help %}
+<p><strong>Uke</strong> ist der Assistent des Portals. Du schreibst ihm eine Frage in deinen eigenen Worten, und er sucht die Antwort aus den Terminen und der Hilfe heraus. Der Name kommt aus dem Judo: Uke ist der Partner, der mitarbeitet. Uke ist noch in der Testphase.</p>
+
+<h2 id="fragen">Fragen stellen</h2>
+<ol>
+  <li>Öffne <a href="{% url 'assistant' %}">Uke</a> in der Seitenleiste.</li>
+  <li>Schreib deine Frage ins Feld und tippe auf <strong>Senden</strong> (am Rechner reicht die Eingabetaste).</li>
+  <li>Uke antwortet nach ein paar Sekunden. Unter der Antwort stehen Links zu den Terminen oder Hilfe-Kapiteln, die er gefunden hat.</li>
+</ol>
+{% screenshot "uke" "Chat mit Uke: Frage nach den Trainings dieser Woche und die Antwort mit Links zu den Terminen" %}
+<p>Gute Fragen sind zum Beispiel:</p>
+<ul>
+  <li>„Welche Trainings sind diese Woche?“</li>
+  <li>„Ist Mia am Freitag angemeldet?“</li>
+  <li>„Wer ist morgen Trainer?“</li>
+  <li>„Wie richte ich einen Passkey ein?“</li>
+</ul>
+<p>Uke merkt sich, worüber ihr gerade sprecht. Mit <strong>Neues Gespräch</strong> fängst du von vorn an.</p>
+
+<h2 id="darf">Was Uke darf</h2>
+<ul>
+  <li>Uke sieht nur, was du auch siehst. Er arbeitet mit deinem Zugang und deinen Rechten, nicht mit mehr.</li>
+  <li>Uke kann noch nichts ändern. Anmelden, abmelden oder Vertretungen gehen weiter über die Seite des Termins; den Link bekommst du in der Antwort.</li>
+  <li>Uke ist eine KI und kann sich irren, zum Beispiel bei Namen oder Tagen. Prüf Wichtiges auf der Seite des Termins.</li>
+  <li>Uke läuft auf dem Server des Vereins. Deine Fragen gehen nicht an fremde Anbieter.</li>
+</ul>
+
+<h2 id="gespeichert">Was gespeichert wird</h2>
+<p>Deine Fragen und Ukes Antworten werden <strong>30 Tage</strong> gespeichert und danach automatisch gelöscht. Sehen kannst du sie in deiner <a href="{% url 'help_chapter' 'meine-daten' %}#auskunft">Datenauskunft</a>; im Portal zeigt Uke nur das laufende Gespräch. Löschst du deinen Zugang, werden auch die Gespräche gelöscht.</p>

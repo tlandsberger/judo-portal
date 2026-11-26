@@ -51,6 +51,8 @@ def groups(context: Any) -> list[Group]:
             ),
         ],
     )
+    if can("can_use_assistant"):
+        own.items.append(Item("Uke", "bi-chat-dots", "assistant", "Frag den Assistenten nach Terminen und dem Portal"))
     if can("can_plan_events"):
         own.items.append(
             Item(

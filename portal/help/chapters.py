@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from portal.accounts.permissions import can_manage_users
+from portal.assistant import services as assistant
 from portal.billing import services as billing
 from portal.events import services as events
 from portal.members import services as members
@@ -44,6 +45,10 @@ def _users(user: Any) -> bool:
     return bool(user.is_authenticated and can_manage_users(user))
 
 
+def _assistant(user: Any) -> bool:
+    return assistant.can_use(user)
+
+
 @dataclass(frozen=True)
 class Chapter:
     slug: str
@@ -76,6 +81,14 @@ CHAPTERS = (
         "Für alle",
         "Push-Benachrichtigungen einschalten, was per Mail kommt, wenn sie verspätet sind.",
         _signed_in,
+    ),
+    Chapter(
+        "uke",
+        "Uke, der Assistent",
+        "bi-chat-dots",
+        "Für alle",
+        "Fragen zu Terminen und zum Portal stellen, was Uke darf, was gespeichert wird.",
+        _assistant,
     ),
     Chapter(
         "zugang",

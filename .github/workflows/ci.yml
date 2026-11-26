@@ -92,7 +92,7 @@ jobs:
             -e PORTAL_WEBAUTHN_ALLOW_INSECURE_ORIGIN=true -e PORTAL_EMAIL_FILE_PATH=/data/mails \
             -e PORTAL_VAPID_PUBLIC_KEY=BG6yQHN5Y2DVbAZArgr83tLM0z-31Qa4vy1sJyJiypo2yQB595zpBIaz7yNjRFQ2y4rGgK67YM0uTLmhpXyKm4k \
             -e PORTAL_VAPID_PRIVATE_KEY=NpBS-KO1521c1ZzXKhffFK06MqwASAsF49FmBaA4XJk \
-            -e PORTAL_INITIAL_ADMIN_EMAIL=admin@test.local judo-portal:ci
+            -e PORTAL_INITIAL_ADMIN_EMAIL=admin@test.local -e PORTAL_ASSISTANT_URL=fake judo-portal:ci
           for i in $(seq 1 60); do
             [ "$(docker inspect -f '{{.State.Health.Status}}' portal)" = "healthy" ] && exit 0
             sleep 2

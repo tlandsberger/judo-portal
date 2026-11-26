@@ -1,0 +1,10 @@
+{% load uke %}{# Eine Nachricht im Chat (DaisyUI chat): Uke links, Du rechts; darunter Links zu den gefundenen Seiten. #}
+<div class="chat {% if message.is_user %}chat-end{% else %}chat-start{% endif %}">
+  <div class="chat-header">{% if message.is_user %}Du{% else %}Uke{% endif %}</div>
+  <div class="chat-bubble {% if message.is_user %}chat-bubble-primary{% elif message.failed %}chat-bubble-error{% endif %} space-y-2">{% if message.is_user %}{{ message.content|linebreaksbr }}{% else %}{{ message.content|uke_text }}{% endif %}</div>
+  {% if message.links %}
+  <div class="chat-footer mt-1 flex flex-wrap gap-2 opacity-100">
+    {% for link in message.links %}<a class="btn btn-sm btn-outline" href="{{ link.url }}">{{ link.label }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endfor %}
+  </div>
+  {% endif %}
+</div>

@@ -30,6 +30,8 @@ const pages = [
   { path: "/hilfe/", heading: "Hilfe" },
   { path: "/hilfe/erste-schritte/", heading: "Erste Schritte" },
   { path: "/hilfe/veranstaltungen/", heading: "Veranstaltungen planen" },
+  { path: "/uke/", heading: "Uke" },
+  { path: "/hilfe/uke/", heading: "Uke, der Assistent" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {
@@ -131,4 +133,24 @@ test("Portal ist als App installierbar (Manifest und Service Worker)", async ({ 
     return (await navigator.serviceWorker.getRegistrations()).length;
   });
   expect(registered).toBe(1);
+});
+
+test("Uke beantwortet eine Frage ohne Neuladen und zeigt Links zu den Terminen", async ({ browser }) => {
+  // In den Tests antwortet statt eines Sprachmodells PORTAL_ASSISTANT_URL=fake (feste Antworten, echte Werkzeuge)
+  const context = await browser.newContext({ storageState: ADMIN_STATE });
+  const page = await context.newPage();
+  await page.goto("/uke/");
+  const log = page.getByRole("log", { name: "Gespräch mit Uke" });
+  await page.getByLabel("Deine Frage").fill("Welche Termine gibt es?");
+  await page.getByLabel("Deine Frage").press("Enter");
+  await expect(log.getByText("Welche Termine gibt es?")).toBeVisible();
+  await expect(log.getByText(/Termine gefunden|keine Termine gefunden/)).toBeVisible();
+  await expect(page.getByLabel("Deine Frage")).toHaveValue("");
+  await expectNoA11yViolations(page);
+  // Nach dem Neuladen steht das Gespräch noch da; „Neues Gespräch“ fängt von vorn an
+  await page.reload();
+  await expect(log.getByText("Welche Termine gibt es?")).toBeVisible();
+  await page.getByRole("button", { name: "Neues Gespräch" }).click();
+  await expect(log.getByText("Welche Termine gibt es?")).toHaveCount(0);
+  await context.close();
 });

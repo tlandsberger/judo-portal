@@ -102,6 +102,15 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
     await page.getByRole("link", { name: "Zugang einrichten" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Eigener Zugang für David" })).toBeVisible();
   });
+  await shoot(browser, parents, "uke", async (page) => {
+    await page.goto("/uke/");
+    // Jedes Bild mit frischem Gespräch (die Sitzung merkt sich das vorige)
+    const fresh = page.getByRole("button", { name: "Neues Gespräch" });
+    if (await fresh.isVisible()) await fresh.click();
+    await page.getByLabel("Deine Frage").fill("Welche Trainings sind diese Woche?");
+    await page.getByRole("button", { name: "Senden" }).click();
+    await expect(page.getByText(/Termine gefunden/)).toBeVisible();
+  });
   await shoot(browser, parents, "zugang", async (page) => {
     await page.goto("/zugang/anmeldung/");
     await expect(page.getByRole("heading", { level: 1, name: "Meine Anmeldung" })).toBeVisible();

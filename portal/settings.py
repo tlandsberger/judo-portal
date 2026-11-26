@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "portal.billing",
     "portal.notifications",
     "portal.privacy",
+    "portal.assistant",
     "portal.help",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -105,6 +106,7 @@ TEMPLATES = [
                 "portal.members.context_processors.members",
                 "portal.events.context_processors.events",
                 "portal.billing.context_processors.billing",
+                "portal.assistant.context_processors.assistant",
             ],
         },
     }
@@ -135,6 +137,13 @@ BACKUP_HOUR = int(env("BACKUP_HOUR", "2") or 2)
 VAPID_PUBLIC_KEY = env("VAPID_PUBLIC_KEY", "") or ""
 VAPID_PRIVATE_KEY = env("VAPID_PRIVATE_KEY", "") or ""
 VAPID_SUBJECT = "mailto:judo@wedeler-tsv.de"
+
+# KI-Assistent „Uke“ (ADR 0028): Adresse eines OpenAI-kompatiblen Servers im internen Netz, z. B. llama.cpp unter
+# http://judo_portal_llm:8080. Leer = aus, kein Menüpunkt. „fake“ = feste Antworten für Tests und Demo.
+ASSISTANT_URL = (env("ASSISTANT_URL", "") or "").rstrip("/")
+ASSISTANT_MODEL = env("ASSISTANT_MODEL", "uke") or "uke"
+ASSISTANT_TIMEOUT = int(env("ASSISTANT_TIMEOUT", "90") or 90)
+ASSISTANT_KEEP_DAYS = 30
 
 AUTH_USER_MODEL = "accounts.User"
 AUTHENTICATION_BACKENDS = [

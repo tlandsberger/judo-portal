@@ -20,6 +20,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from portal.accounts.models import EmailChange, Invitation, KnownDevice, Role, User
+from portal.assistant import services as assistant
 from portal.billing.models import Claim, Rate
 from portal.core import audit
 from portal.events.models import Participation
@@ -506,6 +507,7 @@ def export_user(user: User) -> dict[str, Any]:
             {"Mitglied": o.member.display_name, "Mail": _value(o.notified_at), "Ausgeblendet": _value(o.dismissed_at)}
             for o in AccessOffer.objects.filter(user=user).select_related("member")
         ],
+        "Gespräche mit Uke": assistant.export(user),
         # Nur Einträge über den Benutzer selbst – nicht, was er (z. B. als Abteilungsleitung) bei anderen geändert hat.
         "Protokoll": _audit_rows(audit.AuditEntry.objects.filter(user_id=user.pk, member_id__isnull=True)),
     }

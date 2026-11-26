@@ -21,6 +21,7 @@ urlpatterns = [
     path("", include("portal.notifications.urls")),
     path("", include("portal.privacy.urls")),
     path("", include("portal.help.urls")),
+    path("", include("portal.assistant.urls")),
     # allauths Übersicht „Zwei-Faktor-Authentifizierung“ ersetzt die eigene Seite „Meine Anmeldung“.
     path("anmeldung/2fa/", RedirectView.as_view(pattern_name="security"), name="mfa_index_redirect"),
     path("anmeldung/", include("allauth.urls")),
