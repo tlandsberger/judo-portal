@@ -31,5 +31,6 @@ Mit dem Neuaufbau im November 2026 beginnt die Nummerierung neu; die ADRs der Vo
 | [0024](0024-eigener-zugang-fuer-kinder.md) | Eigener Zugang für Kinder ab 14, eingerichtet von den Eltern | angenommen |
 | [0025](0025-verknuepfung-endet-mit-volljaehrigkeit.md) | Verknüpfung der Eltern endet mit der Volljährigkeit | angenommen |
 | [0026](0026-ferien-und-feiertage.md) | Ferien und Feiertage: Termine fallen aus | angenommen |
+| [0027](0027-daisyui-theme-controller-footer.md) | DaisyUI statt eigener Lösungen: Theme Controller, Footer | angenommen |
 
 Vorlage: Kontext · Entscheidung · Konsequenzen · Verworfene Alternativen.

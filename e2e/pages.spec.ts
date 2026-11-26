@@ -86,10 +86,12 @@ test("Klick auf den eigenen Benutzer in der Seitenleiste öffnet „Meine Anmeld
 test("Umschalter zwischen hellem und dunklem Design merkt sich die Wahl", async ({ page }) => {
   await page.goto("/anmeldung/login/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "wtsv-light");
-  await page.getByRole("button", { name: "Dunkles Design einschalten" }).click();
+  const toggle = page.getByRole("checkbox", { name: "Dunkles Design" });
+  await page.locator("label:has(input.theme-controller)").click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "wtsv-dark");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "wtsv-dark");
+  await expect(toggle).toBeChecked();
 });
 
 test("Seitenleiste am Handy: öffnet über das Menü und schließt mit Escape", async ({ browser }) => {
