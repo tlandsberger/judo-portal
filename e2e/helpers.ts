@@ -50,9 +50,9 @@ export async function loginWithPassword(page: Page, email: string, password: str
 }
 
 export async function logout(page: Page) {
-  // Abmelden steht auf „Meine Anmeldung“ im Menü „Weitere Aktionen“
+  // Abmelden ist die Hauptaktion auf „Meine Anmeldung“
   await page.goto("/zugang/anmeldung/");
-  await moreAction(page, "button", "Abmelden");
+  await page.getByRole("button", { name: "Abmelden", exact: true }).click();
   await expect(page.getByRole("button", { name: "Mit Passkey anmelden" })).toBeVisible();
   // Erst wenn alle Skripte geladen sind, hängt der Passkey-Button an der Anmeldung per WebAuthn
   await page.waitForLoadState("networkidle");

@@ -1,4 +1,16 @@
-{# Umschalter Hell/Dunkel; Beschriftung und Symbol setzt static/js/app.js passend zum aktuellen Design. #}
-<button type="button" class="{{ button_class }}" data-theme-toggle aria-pressed="false" aria-label="Dunkles Design einschalten" title="Dunkles Design einschalten">
-  <i class="bi bi-moon-stars text-lg" aria-hidden="true"></i>{% if with_label %}<span data-theme-label>Dunkles Design</span>{% endif %}
-</button>
+{# Hell/Dunkel mit dem DaisyUI-Theme-Controller als Swap: angehakt = dunkles Design. Symbol und Text zeigen, wohin der Klick wechselt (hell: Mond „Dunkles Design“, dunkel: Sonne „Helles Design“). static/js/app.js setzt den Haken passend zum aktuellen Design und merkt sich die Wahl. #}
+{% if with_label %}
+<label class="has-focus-visible:outline-2">
+  <span class="swap">
+    <input type="checkbox" value="wtsv-dark" class="theme-controller" autocomplete="off" aria-label="Dunkles Design">
+    <span class="swap-off flex items-center gap-2" aria-hidden="true"><i class="bi bi-moon-stars"></i> Dunkles Design</span>
+    <span class="swap-on flex items-center gap-2" aria-hidden="true"><i class="bi bi-sun"></i> Helles Design</span>
+  </span>
+</label>
+{% else %}
+<label class="{{ button_class }} swap swap-rotate has-focus-visible:outline-2 has-focus-visible:outline-offset-2">
+  <input type="checkbox" value="wtsv-dark" class="theme-controller" autocomplete="off" aria-label="Dunkles Design">
+  <i class="bi bi-moon-stars swap-off text-lg" aria-hidden="true"></i>
+  <i class="bi bi-sun swap-on text-lg" aria-hidden="true"></i>
+</label>
+{% endif %}

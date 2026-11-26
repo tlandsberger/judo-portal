@@ -3,8 +3,8 @@
 {% block title %}Meine Anmeldung{% endblock %}
 {% block heading %}Meine Anmeldung{% endblock %}
 {% block heading_extra %}{% help_link "zugang" %}{% endblock %}
+{% block primary %}<button type="submit" form="abmelden" class="btn btn-primary"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Abmelden</button>{% endblock %}
 {% block more %}
-<li><button type="submit" form="abmelden"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Abmelden</button></li>
 <li><a href="{% url 'my_privacy' %}"><i class="bi bi-shield-check" aria-hidden="true"></i> Datenauskunft (Art. 15 DSGVO)</a></li>
 <li><a class="text-error" href="{% url 'own_access_delete' %}"><i class="bi bi-person-x" aria-hidden="true"></i> Meinen Zugang löschen</a></li>
 {% endblock %}

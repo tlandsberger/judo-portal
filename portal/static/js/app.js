@@ -8,33 +8,28 @@
   function current() {
     return document.documentElement.getAttribute("data-theme") === "wtsv-dark" ? "dark" : "light";
   }
+  // Den Wechsel selbst übernimmt DaisyUIs theme-controller per CSS; hier nur data-theme (für theme-init.js beim
+  // nächsten Laden) und alle Umschalter auf der Seite im Gleichschritt halten.
   function apply(theme) {
     var dark = theme === "dark";
     document.documentElement.setAttribute("data-theme", dark ? "wtsv-dark" : "wtsv-light");
-    document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
-      button.setAttribute("aria-pressed", String(dark));
-      button.setAttribute("aria-label", dark ? "Helles Design einschalten" : "Dunkles Design einschalten");
-      button.setAttribute("title", button.getAttribute("aria-label"));
-      var icon = button.querySelector(".bi");
-      if (icon) icon.className = "bi text-lg " + (dark ? "bi-sun" : "bi-moon-stars");
-      var label = button.querySelector("[data-theme-label]");
-      if (label) label.textContent = dark ? "Helles Design" : "Dunkles Design";
+    document.querySelectorAll("input.theme-controller").forEach(function (input) {
+      input.checked = dark;
     });
   }
 
-  document.addEventListener("click", function (event) {
-    var button = event.target.closest("[data-theme-toggle]");
-    if (!button) return;
-    var next = current() === "dark" ? "light" : "dark";
+  document.addEventListener("change", function (event) {
+    if (!event.target.matches("input.theme-controller")) return;
+    var next = event.target.checked ? "dark" : "light";
     try { localStorage.setItem("wtsv-theme", next); } catch (e) {}
     apply(next);
   });
   media.addEventListener("change", function (event) {
     if (!stored()) apply(event.matches ? "dark" : "light");
   });
-  document.addEventListener("DOMContentLoaded", function () {
-    apply(current());
-  });
+  // Sofort statt bei DOMContentLoaded: app.js steht am Ende von <body>, die Umschalter gibt es also schon. So ist der
+  // Haken gesetzt, bevor die Seite gezeichnet wird, und der Swap blendet beim Laden nicht über.
+  apply(current());
 
   // Seitenleiste am Handy: Menü-Button auch per Tastatur bedienbar, Escape schließt sie wieder.
   document.addEventListener("keydown", function (event) {
