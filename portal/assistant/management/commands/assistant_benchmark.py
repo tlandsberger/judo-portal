@@ -49,8 +49,8 @@ class Command(BaseCommand):
             ]
             start = time.monotonic()
             used = []
-            for _ in range(3):
-                reply = llm.complete(messages, specs)
+            for round_ in range(3):
+                reply = llm.complete(messages, specs, require_tool=round_ == 0)  # wie services.ask
                 if not reply.tool_calls:
                     break
                 messages.append(reply.as_message())
