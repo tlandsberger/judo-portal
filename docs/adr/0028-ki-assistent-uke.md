@@ -27,11 +27,15 @@ den Willen des anderen durch. „Kano“ (nach dem Gründer des Judo) haben wir 
 `ghcr.io/ggml-org/llama.cpp:server-vulkan`, als zweiter Container im Stack. Es ist nur im internen Docker-Netz
 erreichbar, ohne Traefik-Route.
 - Er nutzt die Arc-Grafik über Vulkan (`/dev/dri`), ohne Grafik läuft er nur auf der CPU, dann langsamer.
-- Modell: **Qwen3 8B** (4 Bit, `Q4_K_M`, etwa 5 GB), Werkzeugaufrufe im OpenAI-Format (`--jinja`), ohne
-  Denk-Modus. Der Container lädt das Modell beim ersten Start in ein eigenes Volume.
-- Im Test mit Beispieldaten hat das 8B-Modell „bald“, „der nächste“ und Wettkämpfe zuverlässiger erkannt als Qwen3 4B
-  (Instruct 2507). Das 4B-Modell bleibt die Ausweichlösung, wenn `manage.py assistant_benchmark` auf dem NUC zu
-  langsam ist (siehe `docs/betrieb.md`).
+- Modell: **Qwen3-30B-A3B Instruct 2507** (4 Bit, `Q4_K_M`, etwa 18 GB plus Kontext, Speichergrenze 24 GB),
+  Werkzeugaufrufe im OpenAI-Format (`--jinja`), ohne Denk-Modus. Der Container lädt das Modell beim ersten Start in
+  ein eigenes Volume.
+- Es ist ein Mixture-of-Experts-Modell, das je Token nur etwa 3 Milliarden Parameter rechnet. Es schreibt deshalb
+  schneller als ein dichtes 8B-Modell und ist trotzdem genauer.
+- Zuerst lief Qwen3 8B: Im Test mit Beispieldaten erkannte es „bald“, „der nächste“ und Wettkämpfe zuverlässiger als
+  Qwen3 4B, auf dem NUC schrieb es aber nur etwa 10 Tokens pro Sekunde, und die Antworten waren mittelmäßig.
+- Qwen3 8B (etwa 6 GB) bleibt die Ausweichlösung, wenn der Speicher knapp wird.
+- Eine Cloud (IONOS AI Model Hub) haben wir erwogen und verworfen: Daten bleiben lokal.
 - Kleine Modelle verketten Werkzeuge ungern. Deshalb liefert `termine_suchen` bei höchstens drei Treffern die
   Teilnehmer gleich mit, wenn der Benutzer sie sehen darf.
 - Links, die das Modell selbst schreibt, entfernt das Portal, weil sie oft erfunden sind.
