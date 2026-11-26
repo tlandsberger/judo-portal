@@ -325,3 +325,15 @@ def test_search_with_count_lists_participants_for_team_only():
     assert for_trainer["anzahl"] == 2 and len(for_trainer["termine"]) == 1
     assert for_trainer["termine"][0]["teilnehmer"] == [f"{child} (Angemeldet)"]
     assert "teilnehmer" not in for_parent["termine"][0] and "angemeldet" not in for_parent["termine"][0]
+
+
+@pytest.mark.django_db
+def test_launcher_on_every_page_but_the_chat_itself(client):
+    user = make_user("eltern@example.org")
+    client.force_login(user)
+    home = client.get(reverse("home")).content.decode()
+    assert "data-uke-open" in home and 'id="uke-panel"' in home
+    assert "data-uke-open" not in client.get(reverse("assistant")).content.decode()
+    part = client.get(reverse("assistant"), {"teil": "1"}).content.decode()
+    assert "data-uke-chat" in part and "<html" not in part
+    assert client.post(reverse("assistant_new"), HTTP_X_UKE="1").status_code == 204

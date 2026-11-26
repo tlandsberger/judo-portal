@@ -27,7 +27,10 @@ def chat(request: HttpRequest) -> HttpResponse:
     _check(request)
     conv = _conversation(request)
     history = list(conv.messages.all()) if conv else []
-    return render(request, "assistant/chat.html", {"history": history, "max_input": services.MAX_INPUT})
+    context = {"history": history, "max_input": services.MAX_INPUT}
+    if request.GET.get("teil") == "1":  # nur der Chat, für das Fenster auf allen Seiten
+        return render(request, "assistant/_chat.html", context)
+    return render(request, "assistant/chat.html", context)
 
 
 @require_POST
@@ -58,4 +61,6 @@ def new(request: HttpRequest) -> HttpResponse:
     """Neues Gespräch: das alte verschwindet von der Seite (gespeichert bleibt es 30 Tage für die Auskunft)."""
     _check(request)
     request.session.pop(SESSION_KEY, None)
+    if request.headers.get("X-Uke") == "1":
+        return HttpResponse(status=204)
     return redirect("assistant")

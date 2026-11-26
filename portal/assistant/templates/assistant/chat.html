@@ -1,35 +1,13 @@
 {% extends "layouts/page.html" %}
-{% load static %}
 {% block title %}Uke{% endblock %}
 {% block width %}normal{% endblock %}
 {% block heading %}Uke{% endblock %}
 {% block heading_extra %}<span class="badge badge-ghost">Testphase</span>{% endblock %}
-{% block primary %}{% if history %}<button type="submit" form="neu" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i> Neues Gespräch</button>{% endif %}{% endblock %}
-{% block intro %}Dein Assistent für Termine und Fragen zum Portal. Uke sieht nur, was du auch siehst, und kann noch nichts ändern.{% endblock %}
+{% block primary %}{% if history %}<button type="submit" form="uke-neu" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i> Neues Gespräch</button>{% endif %}{% endblock %}
+{% block intro %}Dein Assistent für Termine und Fragen zum Portal. Uke sieht nur, was du auch siehst, und kann noch nichts ändern. Du erreichst ihn auch von jeder Seite über den runden Knopf unten rechts.{% endblock %}
 {% block page %}
-<form id="neu" method="post" action="{% url 'assistant_new' %}" hidden>{% csrf_token %}</form>
+<form id="uke-neu" method="post" action="{% url 'assistant_new' %}" hidden>{% csrf_token %}</form>
 <div class="card border border-base-300 bg-base-100">
-  <div class="card-body gap-4">
-    <div id="verlauf" class="space-y-2" role="log" aria-live="polite" aria-label="Gespräch mit Uke">
-      <div class="chat chat-start">
-        <div class="chat-header">Uke</div>
-        <div class="chat-bubble">Hallo{% if user.first_name %} {{ user.first_name }}{% endif %}! Frag mich zum Beispiel „Welche Trainings sind diese Woche?“, „Wer ist morgen Trainer?“ oder „Wie richte ich einen Passkey ein?“</div>
-      </div>
-      {% for message in history %}{% include "assistant/_message.html" %}{% endfor %}
-    </div>
-    <div id="uke-fehler"></div>
-    <form id="uke-form" method="post" action="{% url 'assistant_send' %}" class="flex items-end gap-2" data-uke>
-      {% csrf_token %}
-      <label class="floating-label flex-1">
-        <span>Deine Frage</span>
-        <textarea name="frage" rows="2" maxlength="{{ max_input }}" required class="textarea w-full" placeholder="Deine Frage an Uke" autocomplete="off"></textarea>
-      </label>
-      <button type="submit" class="btn btn-primary btn-square" aria-label="Senden" title="Senden"><i class="bi bi-send" aria-hidden="true"></i></button>
-    </form>
-    <p class="text-sm text-base-content/70">Uke ist eine KI und kann sich irren. Prüf wichtige Angaben auf der Seite des Termins. Gespräche werden 30 Tage gespeichert und sind in deiner <a class="link" href="{% url 'help_chapter' 'uke' %}">Hilfe zu Uke</a> erklärt.</p>
-  </div>
+  <div class="card-body">{% include "assistant/_chat.html" %}</div>
 </div>
-<template id="uke-frage"><div class="chat chat-end"><div class="chat-header">Du</div><div class="chat-bubble chat-bubble-primary" data-text></div></div></template>
-<template id="uke-denkt"><div class="chat chat-start" data-denkt><div class="chat-header">Uke</div><div class="chat-bubble"><span class="loading loading-dots loading-sm" aria-hidden="true"></span><span class="sr-only">Uke denkt nach …</span></div></div></template>
 {% endblock %}
-{% block scripts %}<script src="{% static 'js/uke.js' %}"></script>{% endblock %}

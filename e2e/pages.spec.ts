@@ -154,3 +154,50 @@ test("Uke beantwortet eine Frage ohne Neuladen und zeigt Links zu den Terminen",
   await expect(log.getByText("Welche Termine gibt es?")).toHaveCount(0);
   await context.close();
 });
+
+test("Uke öffnet sich von jeder Seite als Fenster, ohne die Seite zu sperren", async ({ browser }) => {
+  const context = await browser.newContext({ storageState: ADMIN_STATE, viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  await page.goto("/termine/");
+  const fab = page.getByRole("button", { name: "Uke fragen" });
+  await expect(fab).toHaveAttribute("aria-expanded", "false");
+  await fab.click();
+  const panel = page.getByRole("dialog", { name: /Uke/ });
+  await expect(panel).toBeVisible();
+  await expect(fab).toHaveAttribute("aria-expanded", "true");
+  await expect(panel.getByLabel("Deine Frage")).toBeFocused();
+  await panel.getByLabel("Deine Frage").fill("Welche Termine gibt es?");
+  await panel.getByRole("button", { name: "Senden" }).click();
+  await expect(panel.getByText(/Termine gefunden|keine Termine gefunden/)).toBeVisible();
+  await expectNoA11yViolations(page);
+  // Nicht-modal: die Seite dahinter bleibt bedienbar, und beim Seitenwechsel ist das Gespräch wieder offen
+  await page.getByRole("link", { name: "Hilfe" }).first().click();
+  await expect(page.getByRole("heading", { level: 1, name: "Hilfe" })).toBeVisible();
+  await expect(panel.getByText("Welche Termine gibt es?")).toBeVisible();
+  // Escape schließt, der Fokus geht zurück auf den Knopf
+  await panel.getByLabel("Deine Frage").press("Escape");
+  await expect(panel).toBeHidden();
+  await expect(fab).toBeFocused();
+  await page.reload();
+  await expect(panel).toBeHidden();
+  await context.close();
+});
+
+test("Uke am Handy: Knopf über der Aktionsleiste, Fenster füllt den Bildschirm", async ({ browser }) => {
+  const context = await browser.newContext({ storageState: ADMIN_STATE, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  await page.goto("/mitglieder/");
+  const fab = page.getByRole("button", { name: "Uke fragen" });
+  const bar = page.locator(".action-bar");
+  const fabBox = await fab.boundingBox();
+  const barBox = await bar.boundingBox();
+  expect(fabBox!.y + fabBox!.height).toBeLessThanOrEqual(barBox!.y);
+  await fab.click();
+  const panel = page.getByRole("dialog", { name: /Uke/ });
+  await expect(panel).toBeVisible();
+  const box = await panel.boundingBox();
+  expect(box!.width).toBe(390);
+  await panel.getByRole("button", { name: "Schließen" }).click();
+  await expect(panel).toBeHidden();
+  await context.close();
+});

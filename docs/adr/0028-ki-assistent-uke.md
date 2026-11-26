@@ -67,7 +67,16 @@ erreichbar, ohne Traefik-Route.
 - An das Modell gehen nur die letzten acht Nachrichten des Gesprächs. Die Antworten der Werkzeuge werden nicht
   gespeichert.
 
-**Oberfläche:** Seite „Uke“ in der Seitenleiste für alle Benutzer, mit DaisyUI-`chat`.
+**Oberfläche:** Uke erreicht man von jeder Seite über einen runden Knopf unten rechts (DaisyUI `fab`). Er öffnet
+ein **nicht-modales** Chat-Fenster (`<dialog>` mit `show()`, Inhalt mit DaisyUI `chat`).
+- Nicht-modal, weil man mit Uke neben der Seite arbeitet: Man fragt, folgt einem Termin-Link und fragt weiter. Ein
+  modales Fenster würde die Seite sperren und den Gedankengang unterbrechen.
+- Am Desktop schwebt das Fenster unten rechts und öffnet sich nach einem Seitenwechsel wieder, mit demselben
+  Gespräch aus der Sitzung.
+- Am Handy füllt es den Bildschirm, weil daneben kein Platz ist. Ein Link schließt es dann. Der Knopf sitzt dort
+  über der Aktionsleiste und verschwindet bei offener Seitenleiste.
+- Escape oder ✕ schließen das Fenster, der Fokus springt zurück auf den Knopf.
+- Die Seite `/uke/` bleibt für Links und als Ersatz ohne JavaScript. Einen eigenen Menüpunkt gibt es nicht.
 - Ohne JavaScript schickt ein normales Formular die Frage ab.
 - Mit `static/js/uke.js` erscheinen Frage und „denkt nach“ sofort, die Antwort kommt als HTML-Schnipsel.
 - Antworten zeigt das Portal maskiert, mit nur **fett** und Listen.
@@ -95,3 +104,6 @@ erreichbar, ohne Traefik-Route.
 - **Spracherkennung im Browser** (Web Speech API): Chrome schickt die Aufnahmen an Google. Für Sprache folgt
   whisper.cpp auf dem Server.
 - **Verlauf im Portal anzeigen:** vorerst nicht gewünscht, nur in der Auskunft.
+- **Modales Overlay** (DaisyUI `modal`): sperrt die Seite und schließt beim Navigieren, passt nicht zu Fragen
+  neben der Arbeit.
+- **Eigener Menüpunkt in der Seitenleiste:** doppelt zum Knopf, der auf jeder Seite da ist.
