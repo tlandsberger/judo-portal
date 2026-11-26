@@ -3,6 +3,8 @@ im Portal zeigt nur die Chat-Seite das laufende Gespräch."""
 
 from __future__ import annotations
 
+from typing import Any
+
 from django.conf import settings
 from django.db import models
 
@@ -46,7 +48,7 @@ class Message(models.Model):
         return f"{self.get_role_display()}: {self.content[:40]}"
 
     @property
-    def extra_links(self) -> list[dict[str, str]]:
+    def extra_links(self) -> list[dict[str, Any]]:
         """Links unter der Antwort: gefundene Seiten, die der Text nicht selbst als Link nennt."""
         return [link for link in self.links if not link.get("inline")]
 

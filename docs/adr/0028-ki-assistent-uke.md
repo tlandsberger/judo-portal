@@ -38,7 +38,7 @@ erreichbar, ohne Traefik-Route.
 - Eine Cloud (IONOS AI Model Hub) haben wir erwogen und verworfen: Daten bleiben lokal.
 - Kleine Modelle verketten Werkzeuge ungern. Deshalb liefert `termine_suchen` bei höchstens drei Treffern die
   Teilnehmer gleich mit, wenn der Benutzer sie sehen darf.
-- Links, die das Modell selbst schreibt, entfernt das Portal, weil sie oft erfunden sind.
+- Links, die das Modell selbst schreibt, entfernt das Portal, weil sie oft erfunden sind. Emojis auch.
 - Eigener Container statt im Portal-Image: Das Portal-Image bleibt klein, Renovate aktualisiert beide getrennt, der
   Modell-Dienst hat eine eigene Speichergrenze und ein Absturz trifft das Portal nicht. Ist er nicht erreichbar,
   antwortet Uke mit einem Hinweis, alles andere läuft weiter.
@@ -52,6 +52,11 @@ erreichbar, ohne Traefik-Route.
   `can_see_participants` …), ohne eigene Fachlogik. So sieht Uke genau das, was der Benutzer auch auf den Seiten
   sieht. Werkzeuge, die der Benutzer nicht nutzen darf, werden ihm gar nicht erst angeboten.
 - Höchstens vier Werkzeug-Runden je Frage, Eingaben auf 500 Zeichen und 60 Fragen je Stunde begrenzt.
+- In der ersten Runde jeder Frage muss das Modell ein Werkzeug aufrufen (`tool_choice: required`). Sonst beantwortet
+  es Rückfragen wie „Montag ist nicht der 01.12.“ aus dem Verlauf und rät dabei. Das kostet eine Runde, auch bei
+  „Danke“.
+- Wochentage rechnet das Modell nicht selbst um: Der Systemprompt enthält die nächsten 14 Tage als Kalender, und
+  `termine_suchen` filtert mit `wochentag`.
 - Texte aus den Werkzeugen (Hinweise, Beschreibungen) sind laut Systemprompt nur Daten. Das allein schützt nicht
   sicher vor Prompt Injection. Deshalb gilt die nächste Regel.
 
@@ -84,9 +89,12 @@ ein **nicht-modales** Chat-Fenster (`<dialog>` mit `show()`, Inhalt mit DaisyUI 
 - Ohne JavaScript schickt ein normales Formular die Frage ab.
 - Mit `static/js/uke.js` erscheinen Frage und „denkt nach“ sofort, die Antwort kommt als HTML-Schnipsel.
 - Antworten zeigt das Portal maskiert, mit nur **fett** und Listen.
-- Termine nennt das Modell mit einer Marke aus den Werkzeugen, z. B. „Kindertraining am Donnerstag um 17 Uhr
+- Termine nennt das Modell mit einer Marke aus den Werkzeugen, z. B. „Kindertraining am Montag, 30.11., um 17 Uhr
   [T12]“. Das Portal prüft die Marken beim Speichern: Erfundene fallen weg, aus echten wird ein kleiner Link „Termin →“
   direkt im Text.
+- Datum und Wochentag im selben Absatz oder Listenpunkt setzt das Portal auf die des Termins. Modelle verrechnen sich
+  bei Wochentagen; so stimmt das Datum neben einem Link immer.
+- Steht die Marke allein („Trainer beim [T12] ist Anna“), zeigt der Link Titel, Tag und Uhrzeit aus der Datenbank.
 - Unter der Antwort stehen nur gefundene Termine und Hilfe-Kapitel, die der Text nicht schon nennt. So steht nichts
   doppelt da, und wenn das Modell die Marken vergisst, fehlen die Links trotzdem nicht. Alle Links stammen aus dem
   Portal, nicht vom Modell, und stimmen deshalb immer.

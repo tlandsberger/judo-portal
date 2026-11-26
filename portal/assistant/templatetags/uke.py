@@ -1,10 +1,11 @@
 """Antworten von Uke anzeigen: Text sicher maskiert, dazu nur **fett**, einfache Listen („- …“) und Termine, die
-die Antwort mit ihrer Marke [T12] nennt, als kleiner Link „Termin →“ (die Links prüft services.resolve_markers
-vor dem Speichern)."""
+die Antwort mit ihrer Marke [T12] nennt, als Link (die Links prüft services.resolve_markers vor dem Speichern):
+klein „Termin →“, wenn der Text den Termin selbst beschreibt, sonst mit Titel, Tag und Uhrzeit aus der Datenbank."""
 
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from django import template
 from django.utils.html import escape
@@ -17,14 +18,16 @@ _MARKER = re.compile(r"\[(T\d+)\]")
 
 
 @register.filter
-def uke_text(value: str, links: list[dict[str, str]] | None = None) -> SafeString:
+def uke_text(value: str, links: list[dict[str, Any]] | None = None) -> SafeString:
     refs = {link["ref"]: link for link in links or [] if link.get("ref")}
 
     def marker(match: re.Match[str]) -> str:
         link = refs.get(match.group(1))
         if link is None:
             return ""
-        # Titel und Zeit stehen schon im Text: hier nur ein kleiner Link, für Screenreader mit vollem Namen
+        if link.get("text") and not link.get("named"):
+            return f'<a class="link" href="{escape(link["url"])}">{escape(link["text"])}</a>'
+        # der Text nennt den Termin schon (und ältere Nachrichten): nur ein kleiner Link, für Screenreader mit Namen
         return (
             f'<a class="badge badge-sm badge-outline whitespace-nowrap no-underline" href="{escape(link["url"])}" '
             f'aria-label="Termin öffnen: {escape(link["label"])}">Termin <i class="bi bi-arrow-right" '

@@ -39,9 +39,13 @@ class Script:
         self.replies = list(replies)
         self.calls: list[list[dict[str, Any]]] = []
         self.tools: list[list[str]] = []
+        self.required: list[bool] = []
 
-    def __call__(self, messages: list[dict[str, Any]], specs: list[dict[str, Any]]) -> llm.Reply:
+    def __call__(
+        self, messages: list[dict[str, Any]], specs: list[dict[str, Any]], require_tool: bool = False
+    ) -> llm.Reply:
         self.calls.append([dict(m) for m in messages])
+        self.required.append(require_tool)
         self.tools.append([spec["function"]["name"] for spec in specs])
         return self.replies.pop(0)
 
@@ -171,7 +175,7 @@ def test_rounds_are_limited(monkeypatch):
 def test_unavailable_model(monkeypatch):
     user = make_user("eltern@example.org")
 
-    def down(*args: Any) -> llm.Reply:
+    def down(*args: Any, **kwargs: Any) -> llm.Reply:
         raise llm.Unavailable("weg")
 
     monkeypatch.setattr(llm, "complete", down)
@@ -304,9 +308,9 @@ def test_answer_text_is_escaped():
     )
 
 
-def test_links_from_model_are_removed():
-    assert services.clean("Siehe 👉 [Zum Termin](https://example.org/t/1) oder https://evil.example/x.") == (
-        "Siehe 👉 Zum Termin oder."
+def test_links_and_emojis_from_model_are_removed():
+    assert services.clean("Siehe 👉 [Zum Termin](https://example.org/t/1) oder https://evil.example/x. 😊") == (
+        "Siehe Zum Termin oder."
     )
 
 
@@ -356,5 +360,65 @@ def test_named_occurrences_are_links_in_text_not_repeated_below(monkeypatch):
     assert answer.content == f"Morgen ist [T{first.pk}], erfunden ist ."
     assert answer.extra_links == [tools._link(second)]  # nur, was der Text nicht nennt
     html = uke_text(answer.content, answer.links)
-    assert f'href="/termine/{first.pk}/"' in html and 'aria-label="Termin öffnen: Kindertraining, ' in html
-    assert services.plain(answer) == "Morgen ist, erfunden ist ."
+    text = tools._link(first)["text"]  # Titel, Tag und Uhrzeit aus der Datenbank, nicht vom Modell
+    assert text.startswith("Kindertraining am ") and " um " in text
+    assert f'<a class="link" href="/termine/{first.pk}/">{text}</a>' in html
+    assert services.plain(answer) == f"Morgen ist {text}, erfunden ist ."
+
+
+@pytest.mark.django_db
+def test_wrong_dates_next_to_an_occurrence_are_corrected():
+    monday = make_occurrence(Event.objects.create(title="Kindertraining"), in_days=4)
+    other = make_occurrence(Event.objects.create(title="Randori"), in_days=7)
+    day, day2 = timezone.localtime(monday.starts_at), timezone.localtime(other.starts_at)
+    name, name2 = tools.DAYS[day.weekday()], tools.WEEKDAYS[day2.weekday()]
+    wrong = day + timedelta(days=1)
+
+    text, links = services.resolve_markers(
+        f"Trainer beim Kindertraining am {tools.DAYS[wrong.weekday()]}, {wrong:%d.%m.%Y} [T{monday.pk}] ist Anna, "
+        f"Randori am Mo 01.01. [T{other.pk}].\n\n- [T{monday.pk}] ist um 17 Uhr\n- Sonst nichts am 05.05."
+    )
+
+    assert text == (
+        f"Trainer beim Kindertraining am {name}, {day:%d.%m.%Y} [T{monday.pk}] ist Anna, "
+        f"Randori am {name2} {day2:%d.%m.} [T{other.pk}].\n\n- [T{monday.pk}] ist um 17 Uhr\n- Sonst nichts am 05.05."
+    )
+    assert [link["named"] for link in links] == [True, True]  # beide im ersten Absatz beschrieben
+    alone, links = services.resolve_markers(f"Trainer beim [T{monday.pk}] ist Anna.")
+    assert links[0]["named"] is False and f">{links[0]['text']}</a>" in uke_text(alone, links)
+
+
+@pytest.mark.django_db
+def test_search_by_weekday_and_first_round_must_look_it_up(monkeypatch):
+    user = make_user("eltern@example.org")
+    event = Event.objects.create(title="Kindertraining")
+    occurrences = [make_occurrence(event, in_days=days) for days in range(1, 8)]
+    monday = next(o for o in occurrences if timezone.localtime(o.starts_at).weekday() == 0)
+
+    found = tools.search_occurrences(_ctx(user), {"wochentag": "montags", "anzahl": 1}).data
+    assert [row["termin_id"] for row in found["termine"]] == [monday.pk]
+    with pytest.raises(tools.ToolError):
+        tools.search_occurrences(_ctx(user), {"wochentag": "bald"})
+
+    script = Script(
+        llm.Reply(tool_calls=[llm.ToolCall("c1", "termine_suchen", {"wochentag": "Montag"})]), llm.Reply("Ok.")
+    )
+    monkeypatch.setattr(llm, "complete", script)
+    services.ask(_ctx(user), Conversation.objects.create(user=user), "Wer ist Montag Trainer?")
+    assert script.required == [True, False]
+
+
+def test_old_messages_keep_the_small_link():
+    link = {"ref": "T5", "label": "Kindertraining, Mo 30.11. 17:00", "url": "/termine/5/"}
+    html = uke_text("Kindertraining am Montag um 17 Uhr [T5]", [link])
+    assert 'aria-label="Termin öffnen: Kindertraining, Mo 30.11. 17:00"' in html
+
+
+def test_calendar_names_weekdays_so_the_model_does_not_count():
+    from datetime import date
+
+    text = services.calendar(date(2026, 11, 26))
+    assert text.startswith(
+        "Donnerstag 26.11.2026 (heute), Freitag 27.11.2026 (morgen), Samstag 28.11.2026 (übermorgen)"
+    )
+    assert "Montag 30.11.2026," in text and "Montag 07.12.2026" in text and "10.12.2026" not in text
