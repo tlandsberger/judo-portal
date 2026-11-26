@@ -151,3 +151,33 @@
     .drawer-content:has(.action-bar) { padding-bottom: var(--action-bar-space, calc(8rem + env(safe-area-inset-bottom))); }
   }
 }
+
+/* Assistent Uke (ADR 0028): Knopf unten rechts auf jeder Seite, darüber ein nicht-modales Chat-Fenster. Am Handy
+   füllt das Fenster den Bildschirm und der Knopf sitzt über der Aktionsleiste; bei offener Seitenleiste ist er weg.
+   Ohne Layer, weil DaisyUIs fab (Utilities-Layer) und card (display: flex) sonst gewinnen. */
+.uke-panel {
+  position: fixed;
+  inset: auto 1rem 5.5rem auto;
+  z-index: 1000;
+  margin: 0;
+  padding: 0;
+  width: min(26rem, calc(100vw - 2rem));
+  height: min(40rem, calc(100dvh - 7.5rem));
+  max-width: none;
+  max-height: none;
+  overflow: hidden;
+  flex-direction: column;
+}
+.uke-panel:not([open]) { display: none; }
+@media (width < 48rem) {
+  .uke-panel {
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  :root:has(.action-bar) .uke-fab { bottom: calc(var(--action-bar-space, calc(8rem + env(safe-area-inset-bottom))) + 1rem); }
+}
+:root:has(#navigation:checked) .uke-fab { display: none; }

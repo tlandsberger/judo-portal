@@ -17,6 +17,8 @@ Produktiv in der Homecloud (Repo `tlandsberger/homecloud`, Stack `application/ju
 | `PORTAL_EMAIL_USE_TLS` | – | `true` | STARTTLS |
 | `PORTAL_EMAIL_FROM` | ja | `Wedeler TSV Judo <portal@tlandsberger.de>` | Absender |
 | `PORTAL_VAPID_PUBLIC_KEY` / `PORTAL_VAPID_PRIVATE_KEY` | – | `manage.py generate_vapid_keys` | Schlüssel für Push-Benachrichtigungen; ohne sie geht alles per Mail (siehe unten) |
+| `PORTAL_ASSISTANT_URL` | – | `http://judo_portal_llm:8080` | Sprachmodell für den Assistenten Uke (siehe unten); leer = aus |
+| `PORTAL_ASSISTANT_TIMEOUT` | – | `90` | Sekunden, die das Portal auf eine Antwort des Modells wartet |
 | `PORTAL_DATA_DIR` | – | `/data` | Datenbank, Backups und Anhänge (`uploads/`) |
 | `PORTAL_BACKUP_HOUR` / `PORTAL_BACKUP_KEEP_DAYS` | – | `2` / `14` | nächtliches Backup |
 | `PORTAL_SECURE_COOKIES` | – | `true` | nur für lokale Tests ohne HTTPS auf `false` |
@@ -173,6 +175,25 @@ Anmeldecodes, Sicherheitshinweise und neue Verknüpfungen gehen immer per Mail. 
 - iPhone und iPad können Push-Benachrichtigungen nur, wenn das Portal zum Home-Bildschirm hinzugefügt ist (iOS ab 16.4).
 - Die Erinnerungen prüft der Zeitplaner im Container alle 5 Minuten. Was rausging, steht in der technischen
   Verwaltung unter „Versandte Benachrichtigungen“ (90 Tage).
+
+## Assistent Uke
+
+Uke beantwortet Fragen zu Terminen und zum Portal (ADR 0028). Das Sprachmodell läuft lokal in einem eigenen Container
+mit `llama.cpp`, nur im internen Docker-Netz; Fragen verlassen den NUC nicht.
+
+**Einrichten:** Im Stack (`tlandsberger/homecloud`, `application/judo-portal/`) den Dienst `judo_portal_llm` starten
+und im Portal `PORTAL_ASSISTANT_URL=http://judo_portal_llm:8080` setzen. Beim ersten Start lädt der Dienst das Modell
+(einige GB) in sein Volume; bis dahin antwortet Uke mit „gerade nicht erreichbar“.
+
+**Prüfen und messen:** `docker exec judo_portal python manage.py assistant_benchmark` schickt drei Beispielfragen an
+das Modell und zeigt Zeit, benutzte Werkzeuge und Antwort. Über etwa 10 Sekunden je Frage: ein kleineres Modell
+nehmen oder prüfen, ob die Grafik (`/dev/dri`) im Container ankommt (Log von `judo_portal_llm`: „Vulkan“).
+
+**Abschalten:** `PORTAL_ASSISTANT_URL` leeren; der Menüpunkt verschwindet, gespeicherte Gespräche werden nach 30
+Tagen wie immer gelöscht.
+
+**Daten:** Fragen und Antworten stehen 30 Tage in der Datenbank (Datenauskunft „Gespräche mit Uke“), danach löscht
+sie der nächtliche Job. Die technische Verwaltung zeigt sie nicht.
 
 ## Backup und Wiederherstellung
 

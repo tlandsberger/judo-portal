@@ -102,6 +102,20 @@ test("Screenshots für die Hilfe", async ({ browser }) => {
     await page.getByRole("link", { name: "Zugang einrichten" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Eigener Zugang für David" })).toBeVisible();
   });
+  await shoot(browser, parents, "uke", async (page) => {
+    await page.goto("/termine/");
+    await page.getByRole("button", { name: "Uke fragen" }).click();
+    const panel = page.getByRole("dialog", { name: /Uke/ });
+    // Jedes Bild mit frischem Gespräch (die Sitzung merkt sich das vorige)
+    await expect(panel.getByLabel("Deine Frage")).toBeVisible(); // erst fertig laden, dann neu anfangen
+    await Promise.all([
+      page.waitForResponse((response) => response.url().includes("/uke/?teil=1") && response.request().method() === "GET"),
+      panel.getByRole("button", { name: "Neues Gespräch" }).click(),
+    ]);
+    await panel.getByLabel("Deine Frage").fill("Welche Trainings sind diese Woche?");
+    await panel.getByRole("button", { name: "Senden" }).click();
+    await expect(panel.getByText(/Termine gefunden/)).toBeVisible();
+  });
   await shoot(browser, parents, "zugang", async (page) => {
     await page.goto("/zugang/anmeldung/");
     await expect(page.getByRole("heading", { level: 1, name: "Meine Anmeldung" })).toBeVisible();

@@ -1,0 +1,13 @@
+{% extends "layouts/page.html" %}
+{% block title %}KI-Assistent Uke{% endblock %}
+{% block width %}normal{% endblock %}
+{% block heading %}KI-Assistent Uke{% endblock %}
+{% block heading_extra %}<span class="badge badge-ghost">Testphase</span>{% endblock %}
+{% block primary %}{% if history %}<button type="submit" form="uke-neu" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i> Neues Gespräch</button>{% endif %}{% endblock %}
+{% block intro %}Dein Assistent für Termine und Fragen zum Portal. Uke sieht nur, was du auch siehst, und kann noch nichts ändern. Du erreichst ihn auch von jeder Seite über den runden Knopf unten rechts.{% endblock %}
+{% block page %}
+<form id="uke-neu" method="post" action="{% url 'assistant_new' %}" hidden>{% csrf_token %}</form>
+<div class="card border border-base-300 bg-base-100">
+  <div class="card-body">{% include "assistant/_chat.html" %}</div>
+</div>
+{% endblock %}

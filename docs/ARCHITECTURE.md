@@ -18,11 +18,13 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
                                       ├─ Gunicorn + Django (Seiten, Anmeldung, statische Dateien)
                                       ├─ Zeitplaner (Backup 02:00, Aufräumen, alle 5 Min. Erinnerungen)
                                       └─ /data: portal.sqlite3, backups/
+                                      ──▶ judo-portal-llm (llama.cpp, nur intern): Sprachmodell für Uke (ADR 0028)
                                       ──▶ IONOS-SMTP (Einladungen, Anmeldecodes, Sicherheitshinweise, Ersatz für Push-Benachrichtigungen)
                                       ──▶ Dienste für Push-Benachrichtigungen (Google, Apple, Mozilla)
 ```
 
-- **Ein Container**, ein Volume. Keine weitere Infrastruktur (kein Datenbank-Container, kein Keycloak).
+- **Ein Container** für das Portal, ein Volume. Keine weitere Infrastruktur (kein Datenbank-Container, kein Keycloak).
+  Nur der optionale Assistent Uke braucht einen zweiten Container für das Sprachmodell (ADR 0028).
 - **Seiten werden auf dem Server gerendert** (Django-Templates, Tailwind CSS mit DaisyUI). htmx ergänzt Teil-Aktualisierungen, wo
   es der Bedienung hilft.
 
@@ -37,6 +39,7 @@ Cloudflare-Tunnel ─▶ Traefik (TLS) ─▶ judo-portal (Docker)
 | `portal.notifications` | Push-Benachrichtigungen je Gerät mit Mail als Ersatz, Aktionsknöpfe (ADR 0011) |
 | `portal.privacy` | Auskunft, Löschen auf Wunsch und nach Austritt, Seite „Protokoll“ (ADR 0015) |
 | `portal.help` | Hilfe im Portal: Kapitel je Rolle, Kontexthilfe, Screenshots aus Playwright (ADR 0016) |
+| `portal.assistant` | KI-Assistent Uke: Chat, Werkzeuge mit den Rechten des Benutzers, Verlauf 30 Tage (ADR 0028) |
 | `portal.billing` | Übungsleiterabrechnung: Stundensätze, Monatsabrechnung, Freigabe, PDF und CSV (ADR 0014) |
 
 Texte von allauth (und anderen Paketen) in Du-Form und mit unseren Begriffen kommen aus eigenen Übersetzungen in
@@ -81,6 +84,8 @@ Geräteeinstellung oder Umschalter.
   verknüpfte Benutzer statt Kontaktdaten am Kind (ADR 0009).
 - Push-Benachrichtigungen sind Ende-zu-Ende-verschlüsselt und knapp gehalten. Sicherheitsrelevantes (Passwort, Passkey, neues
   Gerät) meldet das Portal immer per Mail (ADR 0011).
+- Der Assistent Uke nutzt ein lokales Sprachmodell; es sieht nur Ergebnisse von Werkzeugen, die mit den Rechten des
+  Benutzers laufen. Ändern geht nur nach Bestätigung im Portal (ADR 0028).
 - Änderungsprotokoll (1 Jahr), Auskunft der eigenen Daten unter „Meine Daten“, Löschung 3 Monate nach Austritt oder
   auf Wunsch (ADR 0015).
 

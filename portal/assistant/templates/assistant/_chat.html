@@ -1,0 +1,22 @@
+{# Chat mit Uke: auf der Seite /uke/ und im Fenster, das der Knopf unten rechts öffnet (static/js/uke.js). Ohne IDs, damit es überall passt. #}
+<div class="flex min-h-0 flex-1 flex-col gap-3" data-uke-chat>
+  <div class="min-h-0 flex-1 space-y-2 overflow-y-auto" role="log" aria-live="polite" aria-label="Gespräch mit Uke" data-uke-log>
+    <div class="chat chat-start">
+      <div class="chat-header">Uke</div>
+      <div class="chat-bubble">Hallo{% if user.first_name %} {{ user.first_name }}{% endif %}! Frag mich zum Beispiel „Welche Trainings sind diese Woche?“, „Wer ist morgen Trainer?“ oder „Wie richte ich einen Passkey ein?“</div>
+    </div>
+    {% for message in history %}{% include "assistant/_message.html" %}{% endfor %}
+  </div>
+  <div data-uke-errors></div>
+  <form method="post" action="{% url 'assistant_send' %}" class="flex items-end gap-2" data-uke>
+    {% csrf_token %}
+    <label class="floating-label flex-1">
+      <span>Deine Frage</span>
+      <textarea name="frage" rows="2" maxlength="{{ max_input }}" required class="textarea w-full" placeholder="Deine Frage an Uke" autocomplete="off"></textarea>
+    </label>
+    <button type="submit" class="btn btn-primary btn-square" aria-label="Senden" title="Senden"><i class="bi bi-send" aria-hidden="true"></i></button>
+  </form>
+  <p class="text-xs text-base-content/70">Uke ist eine KI und kann sich irren. Gespräche werden 30 Tage gespeichert, mehr in der <a class="link" href="{% url 'help_chapter' 'uke' %}">Hilfe zu Uke</a>.</p>
+  <template data-uke-question><div class="chat chat-end"><div class="chat-header">Du</div><div class="chat-bubble chat-bubble-primary" data-text></div></div></template>
+  <template data-uke-thinking><div class="chat chat-start"><div class="chat-header">Uke</div><div class="chat-bubble"><span class="loading loading-dots loading-sm" aria-hidden="true"></span><span class="sr-only">Uke denkt nach …</span></div></div></template>
+</div>
